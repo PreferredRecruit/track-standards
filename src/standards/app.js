@@ -69,7 +69,8 @@ const better=(e,a,b)=>FIELD.has(e)?b-a:a-b;
 const S={tab:"standards",school:null,g:"m",e:"100m",mark:"",run:false,f:"",div:"",n:15,q:""};
 const seg=(k,v)=>`<div class="seg" role="group" aria-label="Team"><button type="button" data-${k}="m" aria-pressed="${v==="m"}">Men</button><button type="button" data-${k}="w" aria-pressed="${v==="w"}">Women</button></div>`;
 const evs=g=>EVENTS.filter(e=>CONV[e]||SCH.some(s=>s[g][e])).filter(e=>!(g==="m"&&e==="100m Hurdles")&&!(g==="w"&&e.startsWith("110m Hurdles")));
-const ph=e=>FIELD.has(e)?"22'6\"":e.includes("Hurdles")?(e.startsWith("300")?"38.50":e.startsWith("400")?"54.20":"14.80"):SHORT.has(e)?"10.85":e==="3200m"?"9:20.00":"4:21.50";
+const PH={"100m":"10.85","200m":"22.10","400m":"49.50","800m":"1:58.00","1500m":"4:05.00","1600m":"4:21.50","Mile":"4:23.00","3000m":"8:50.00","3200m":"9:20.00","5000m":"15:30.00","10000m":"32:00.00","100m Hurdles":"14.20","110m Hurdles":"14.80",'110m Hurdles (39")':"14.80","300m Hurdles":"38.50","400m Hurdles":"54.20","3000m Steeplechase":"9:45.00","High Jump":"6'6\"","Pole Vault":"14'6\"","Long Jump":"22'6\"","Triple Jump":"46'0\"","Shot Put":"52'0\"","Discus":"150'0\"","Hammer":"160'0\"","Javelin":"180'0\""};
+const ph=e=>PH[e]||(FIELD.has(e)?"22'6\"":"4:21.50");
 
 /* ---------- Recruitment Evaluation slide-in ---------- */
 const EV={shown:false,dismissed:false,t:null};
@@ -279,7 +280,7 @@ const tbl=(h,rows,numFrom=1)=>`<div class="scroll"><table><thead><tr>${h.map((x,
 const gl=g=>g==="w"?"women's":"men's";
 const quizLine=`<p><a href="${QUIZ}" target="_blank" rel="noopener">Looking to run in college? Get your recruitment evaluation ›</a></p>`;
 function spread(list,e,k){const v=list.map(s=>s[k]).filter(x=>parse(x,e)!=null).sort((a,b)=>better(e,parse(a,e),parse(b,e)));if(v.length<4)return null;return [v[Math.floor(v.length*.25)],v[Math.floor(v.length*.75)],v.length]}
-async function answer(raw){
+async function answerV1(raw){
   const d=detect(raw), g=d.g||"m", q=d.q;
   const isCmp=/\b(vs|versus|compare|compared|comparison|against|difference between)\b/.test(q);
   /* compare two or more schools */
@@ -367,6 +368,148 @@ async function answer(raw){
       f:[`Which ${div} schools fit a ${ph(d.e)} ${d.e}?`,`${d.e} ${div==="NCAA D1"?"NCAA D2":"NCAA D1"} standards`]};
   }
   return {html:`<p>I answer from this site's data. Ask about a school's standards, which colleges fit your mark, two schools or conferences side by side, rankings for any year back to 2016, an athlete, or a high school to college conversion.</p>`,f:SUGG.slice(0,3).map(s=>s[0])};
+}
+
+/* ---------- Recruiting chat v2: conversational, data-only (Ryan 2026-10-13) ----------
+   Remembers the conversation (event, gender, mark, school, division, conference, year), answers follow-ups
+   ("what about women?", "and D2?", "the 800 instead"), and asks clarifying questions with tap-able answers
+   when something is missing or ambiguous. Every number comes from the site's own data. */
+const CX={};
+const STATES={alabama:"AL",alaska:"AK",arizona:"AZ",arkansas:"AR",california:"CA",colorado:"CO",connecticut:"CT",delaware:"DE",florida:"FL",georgia:"GA",hawaii:"HI",idaho:"ID",illinois:"IL",indiana:"IN",iowa:"IA",kansas:"KS",kentucky:"KY",louisiana:"LA",maine:"ME",maryland:"MD",massachusetts:"MA",michigan:"MI",minnesota:"MN",mississippi:"MS",missouri:"MO",montana:"MT",nebraska:"NE",nevada:"NV","new hampshire":"NH","new jersey":"NJ","new mexico":"NM","new york":"NY","north carolina":"NC","north dakota":"ND",ohio:"OH",oklahoma:"OK",oregon:"OR",pennsylvania:"PA","rhode island":"RI","south carolina":"SC","south dakota":"SD",tennessee:"TN",texas:"TX",utah:"UT",vermont:"VT",virginia:"VA",washington:"WA","west virginia":"WV",wisconsin:"WI",wyoming:"WY"};
+const EVCH={m:["100m","200m","400m","800m","1600m","3200m","110m Hurdles","Long Jump","High Jump","Shot Put"],w:["100m","200m","400m","800m","1600m","3200m","100m Hurdles","Long Jump","High Jump","Shot Put"]};
+const RX={
+  define:/\b(mean|meaning|means|difference between (a )?(target|recruit|walk)|what is a|what's a|explain the levels?)\b/,
+  funnel:/\b(quiz|evaluation|get recruited|contact (a )?coach|help me get|preferred recruit|how do i get recruited|scholarship help)\b/,
+  convert:/\b(convert|conversion|equivalent|equal to|translate|in college terms|college time|college mark|worth in college)\b/,
+  count:/\bhow many\b/,
+  champ:/\b(won|win|winner|champion|champions|championship|nationals|national title|ncaa final|national final)\b/,
+  rank:/\b(fastest|best|top|leaders?|rank|ranked|ranking|rankings|record|results|who ran|longest|highest jump|farthest|furthest|list)\b/,
+  superl:/\b(easiest|hardest|toughest|lowest|highest|slowest|most competitive|least competitive)\b/,
+  cmp:/\b(vs|versus|compare|compared|comparison|against)\b/,
+  fit:/\b(fit|fits|qualify|qualifies|could i|can i|where can|where could|which (schools|colleges)|what (schools|colleges)|good enough|my (time|mark|pr|pb|best)|recruit me|walk on at|chance|chances|options?)\b/,
+  athlete:/\b(who is|athlete|profile|meet history|personal best of|bests? of)\b/,
+  hi:/^\s*(hi|hey|hello|yo|sup|what's up|whats up|good (morning|afternoon|evening))\b/,
+  thanks:/^\s*(thanks|thank you|thx|ty|appreciate it|cool|great|awesome|perfect|ok|okay|got it)\b/
+};
+const evChips=g=>EVCH[g||"m"].slice();
+const gChips=["Men's","Women's"];
+function askBack(slot,text,chips){CX.await=slot;return {html:`<p>${text}</p>`,f:chips||[]}}
+function stateOf(q){for(const [k,v] of Object.entries(STATES)){if(q.includes(" "+k+" "))return v}const m=q.match(/\b(in|from) ([a-z]{2})\b/);if(m&&Object.values(STATES).includes(m[2].toUpperCase()))return m[2].toUpperCase();return null}
+function ambiguousSchools(q){for(const [a] of ALIAS){if(q.includes(" "+a+" ")){const ids=[...new Set(ALIAS.filter(x=>x[0]===a).map(x=>x[1]))];return ids.length>1?ids:null}}return null}
+function scopeList(){return SCH.map((s,i)=>({s,i})).filter(({s})=>(!CX.div||s.d===CX.div)&&(!CX.conf||s.c===CX.conf)&&(!CX.state||s.s===CX.state))}
+const scopeName=()=>[CX.conf,CX.div,CX.state].filter(Boolean).join(" · ")||"all divisions";
+const fmtv=(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v);
+
+async function answer(raw){
+  const d=detect(raw), q=d.q;
+  /* 1. replies to a clarifying question */
+  const pending=CX.await; CX.await=null;
+  if(pending==="g"&&!d.g&&/\b(men|mens|man|boys?|guys?)\b/.test(q))d.g="m";
+  if(pending==="mark"&&!d.mark){const m=q.match(/(\d{1,2}:\d{2}(?:\.\d+)?|\d{1,2}'\s?\d{0,2}(?:\.\d+)?"?|\d{1,3}(?:\.\d{1,2})?m?)/);if(m)d.mark=m[0].trim()}
+  if((pending==="school"||pending==="school2")&&!d.schools.length){const h=hits(raw);if(h.length){d.school=h[0][1];d.schools=[h[0][1]]}}
+  if(pending==="school2"&&d.schools.length&&(CX.schools||[]).length===1)d.schools=[CX.schools[0],d.schools[0]];
+  /* 2. intent; a message with only new details is a follow-up to the last question */
+  let intent=null;
+  const inState=stateOf(q)&&/\b(schools?|colleges?|programs?|teams?|ones)\s+(in|from)\b|\b(in|from) (the state of )?[a-z]/.test(q)&&/\b(in|from)\b/.test(q)&&stateOf(q);
+  if(inState){d.school=null;d.schools=[]}                       /* "schools in Texas" is the state, not University of Texas */
+  if(inState&&CX.intent&&["fit","superl"].includes(CX.intent)&&/\b(only|just|what about|how about|in)\b/.test(q)&&!RX.count.test(q))intent=CX.intent;
+  if(!intent&&inState&&RX.count.test(q))intent="count";
+  if(!intent&&inState&&!d.e&&!d.mark)intent="state";
+  if(!intent)for(const k of ["define","funnel","convert","count","champ","superl","athlete"])if(RX[k].test(q)){intent=k;break}
+  if(!intent&&(d.schools.length>=2||d.confs.length>=2||(RX.cmp.test(q)&&(d.schools.length||d.confs.length))))intent="cmp";
+  if(!intent&&RX.rank.test(q)&&d.schools.length<2&&d.school==null)intent="rank";
+  if(!intent&&(d.mark&&d.e||RX.fit.test(q)))intent="fit";
+  if(!intent&&d.school!=null)intent="school";
+  if(!intent&&d.conf)intent="conf";
+  if(!intent&&stateOf(q)&&/\b(schools?|colleges?|programs?|teams?)\b/.test(q))intent="state";
+  if(!intent&&!pending&&RX.hi.test(q))return {html:"<p>Hey! Ask me about any college's standards, which schools fit your mark, this season's results, national champions, or how two schools compare.</p>",f:["Which D1 schools fit a 10.9 100m?","Oregon vs USC 400m","Who won the 2026 D1 men's 100m?"]};
+  if(!intent&&!pending&&RX.thanks.test(q)&&!d.e&&!d.g)return {html:"<p>Anytime. Want to look at another school or event?</p>",f:["Compare two schools","Top marks this season","What the levels mean"]};
+  const followup=!intent&&CX.intent&&(d.e||d.g||d.div||d.mark||d.year||d.season||/\b(what about|how about|and|instead|now|only|just)\b/.test(q));
+  if(!intent&&(followup||pending))intent=CX.intent;
+  /* 3. update memory */
+  if(d.mark&&d.e&&!FIELD.has(d.e))d.mark=d.mark.replace(/\s*m$/,"");
+  if(d.g)CX.g=d.g; if(d.e){if(CX.e&&CX.e!==d.e&&!d.mark)CX.mark=null;CX.e=d.e} if(d.mark)CX.mark=d.mark;
+  if(d.div)CX.div=d.div; if(d.year)CX.year=d.year; if(d.season)CX.season=d.season;
+  if(/\b(all divisions|any division|every division)\b/.test(q))CX.div=null;
+  if(d.confs.length)CX.conf=d.confs[0]; else if(!followup&&!pending&&intent!=="conf")CX.conf=null;
+  const st=stateOf(q); if(st)CX.state=st; else if(!followup&&!pending)CX.state=null;
+  if(d.schools.length)CX.schools=d.schools.slice(0,4);
+  if(d.schools.length===1&&pending!=="school"){const amb=ambiguousSchools(q);if(amb){CX.intent=intent||"school";return askBack("school","Which one did you mean?",amb.slice(0,4).map(i=>SCH[i].n))}}
+  if(intent)CX.intent=intent;
+  const g=CX.g, e=CX.e;
+  const needG=t=>!g?askBack("g",t||"Men's or women's?",gChips):null;
+  const needE=t=>!e?askBack("e",t||"Which event?",evChips(g)):null;
+  switch(intent){
+    case "define": return {html:`<p><b>Walk-On:</b> ${DEF.W}</p><p><b>Recruit:</b> ${DEF.R} Not a guarantee.</p><p><b>Target:</b> ${DEF.T}</p>`,f:["Which schools fit my mark?","What does it take to walk on in the SEC?"]};
+    case "funnel": return {html:`<p>Preferred Recruit gets athletes' marks in front of college coaches. Guaranteed genuine interest or a full refund.</p><p>The free recruitment evaluation takes about a minute and shows where you stand.</p>`+quizLine};
+    case "convert":{const x=needE("Which high school event? (1600m, 3200m, Mile, 300m hurdles or 39-inch 110m hurdles)");if(x)return x;
+      if(!CONV[e])return {html:`<p>The ${esc(e)} is the same in high school and college, so there's nothing to convert.</p>`};
+      if(!CX.mark)return askBack("mark",`What's the ${esc(e)} mark you want to convert?`);
+      const v=parse(CX.mark,e);if(v==null)return askBack("mark",`I couldn't read "${esc(CX.mark)}". Try something like ${esc(ph(e))}.`);
+      return {html:`<p>A <b>${esc(CX.mark)}</b> ${esc(e)} converts to:</p><p class="cvl">${convLine(e,g||"m",v)}</p><p>${esc(CONV[e].how)}.</p>`,f:[`Which schools fit a ${CX.mark} ${e}?`]}}
+    case "count":{const L=scopeList();const by={};L.forEach(({s})=>by[s.d]=(by[s.d]||0)+1);const off=L.filter(({s})=>s.o).length;
+      return {html:`<p><b>${L.length.toLocaleString()}</b> colleges in ${esc(scopeName())}, and <b>${off}</b> of them publish official standards (★).</p>`+tbl(["Division","Colleges"],DIVS.filter(x=>by[x]).map(x=>[x,by[x]])),f:["How many in the SEC?","How many in Texas?"]}}
+    case "state":{const L=scopeList();if(!L.length)return {html:`<p>I don't have any colleges listed in ${esc(CX.state)}.</p>`};
+      L.sort((a,b)=>DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||a.s.n.localeCompare(b.s.n));
+      return {html:`<p>${L.length} colleges in ${esc(CX.state)}${CX.div?` (${esc(CX.div)})`:""}:</p>`+tbl(["College","Division","Conference"],L.slice(0,40).map(({s})=>[s.n+(s.o?" ★":""),s.d,s.c]),9)+(L.length>40?`<p>Showing 40 of ${L.length}. Add a division to narrow it down.</p>`:""),f:[`D1 schools in ${CX.state}`,`D2 schools in ${CX.state}`]}}
+    case "fit":{let x=needE("Which event is the mark in?");if(x)return x;x=needG();if(x)return x;
+      if(!CX.mark)return askBack("mark",`What's your best ${gl(g)} ${esc(e)}? (for example ${esc(ph(e))})`);
+      const v=parse(CX.mark,e);if(v==null)return askBack("mark",`I couldn't read "${esc(CX.mark)}" as a ${esc(e)} mark. Try something like ${esc(ph(e))}.`);
+      const all=scopeList().map(({s,i})=>({s,i,t:tier(s,g,e,v)})).filter(z=>z.t);
+      all.sort((a,b)=>"TRW".indexOf(a.t)-"TRW".indexOf(b.t)||DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||a.s.n.localeCompare(b.s.n));
+      const c=k=>all.filter(z=>z.t===k).length, cl=convLine(e,g,v), by={};all.forEach(z=>by[z.s.d]=(by[z.s.d]||0)+1);
+      if(!all.length)return {html:(cl?`<p>College equivalent: ${cl}.</p>`:"")+`<p>A ${esc(CX.mark)} ${gl(g)} ${esc(e)} doesn't hit a listed standard in ${esc(scopeName())} yet.</p>`+quizLine,f:CX.div?["All divisions"]:["Only NAIA","Only NJCAA"]};
+      const spec={title:`Colleges a ${CX.mark} ${e} fits, by division`,type:"bar",labels:DIVS.filter(z=>by[z]),series:[{name:"Colleges",values:DIVS.filter(z=>by[z]).map(z=>by[z])}],value_format:"number"};
+      return {html:(cl?`<p>College equivalent: ${cl}.</p>`:"")+`<p>A <b>${esc(CX.mark)}</b> in the ${gl(g)} ${esc(e)} fits <b>${all.length}</b> colleges (${esc(scopeName())}): ${c("T")} Target, ${c("R")} Recruit, ${c("W")} Walk-On.</p>`+(Object.keys(by).length>1?chartSvg(spec):"")+
+        tbl(["College","Division","Level"],all.slice(0,12).map(z=>[z.s.n+(z.s.o?" ★":""),z.s.d,TN[z.t]]),9)+(all.length>12?`<p>Top 12 of ${all.length}. Ask for a division, conference or state to narrow it.</p>`:"")+quizLine,
+        f:[!CX.div?"Only D1":"All divisions","Only schools in Texas",g==="m"?"What about women?":"What about men?"]}}
+    case "school":{const i=(CX.schools||[])[0];if(i==null)return askBack("school","Which school?");const s=SCH[i],gg=g||"m",sd=s[gg];
+      if(e&&sd[e]){const t=sd[e];return {html:`<p><b>${esc(s.n)}</b>${s.o?" ★":""} · ${esc(s.d)} · ${esc(s.c)} · ${gl(gg)} ${esc(e)}:</p>`+tbl(["Level","Mark"],[["Target",t[0]||"–"],["Recruit",t[1]||"–"],["Walk-On",t[2]||"–"]])+`<p>${s.o?"Official standards published by the school.":esc(ruleText(s))}</p>`,f:[gg==="m"?"Women's":"Men's",`Which schools fit my ${e}?`,"Compare with another school"]}}
+      const ev=EVENTS.filter(z=>sd[z]);if(!ev.length)return {html:`<p>${esc(s.n)} doesn't list ${gl(gg)} standards.</p>`,f:[gg==="m"?"Women's":"Men's"]};
+      return {html:`<p><b>${esc(s.n)}</b>${s.o?" ★":""} · ${esc(s.d)} · ${esc(s.c)} · ${gl(gg)}${s.o?" (official standards)":""}:</p>`+tbl(["Event","Target","Recruit","Walk-On"],ev.map(z=>[z,sd[z][0]||"–",sd[z][1]||"–",sd[z][2]||"–"]))+quizLine,f:[gg==="m"?"Women's":"Men's","Compare with another school"]}}
+    case "cmp":{
+      if(d.confs.length>=2||(d.confs.length===1&&!d.schools.length&&CX.conf2)){const cs=d.confs.slice(0,5),ee=e||"100m",gg=g||"m",line=c=>{const s0=SCH.find(s=>s.c===c);return (((CT[(s0||{}).ck]||{})[gg]||{})[ee])||null},L=cs.map(line);
+        const spec={title:`${cs.join(" vs ")} · ${gl(gg)} ${ee}`,type:"bar",labels:cs,series:[["8th (Target line)",0],["15th (Recruit line)",1],["25th (Walk-On line)",2]].map(([n,j])=>({name:n,values:L.map(z=>z&&z[j]?parse(z[j][0],ee):null)})).filter(s=>s.values.some(v=>v!=null)),value_format:FIELD.has(ee)?"meters":"time",lower_is_better:!FIELD.has(ee)};
+        return {html:(e?"":`<p>Showing the ${gl(gg)} 100m.</p>`)+chartSvg(spec)+tbl(["Conference","8th","15th","25th"],cs.map((c,k)=>[c,...[0,1,2].map(j=>L[k]&&L[k][j]?L[k][j][0]:"–")])),f:["400m instead","Women's","800m instead"]}}
+      if((CX.schools||[]).length<2){if((CX.schools||[]).length===1)return askBack("school2",`Compare ${esc(SCH[CX.schools[0]].n)} with which school?`);return askBack("school","Which two schools should I compare?")}
+      const ss=CX.schools.slice(0,4).map(i=>SCH[i]),gg=g||"m";
+      if(!e){const evs2=EVENTS.filter(z=>ss.some(s=>s[gg][z])).slice(0,12);return {html:`<p>${gl(gg)} Recruit marks side by side (Walk-On where a school has no Recruit level):</p>`+tbl(["Event",...ss.map(s=>s.n+(s.o?" ★":""))],evs2.map(z=>[z,...ss.map(s=>{const t=s[gg][z];return t?(t[1]||t[2]||t[0]||"–"):"–"})])),f:["400m","1600m","Long Jump"]}}
+      const spec={title:`${gl(gg)[0].toUpperCase()+gl(gg).slice(1)} ${e} standards`,type:"bar",labels:ss.map(s=>s.n.replace(/ \(.*\)/,"")),series:[["Target",0],["Recruit",1],["Walk-On",2]].map(([n,j])=>({name:n,values:ss.map(s=>{const t=s[gg][e];return t?parse(t[j],e):null})})).filter(z=>z.values.some(v=>v!=null)),value_format:FIELD.has(e)?"meters":"time",lower_is_better:!FIELD.has(e)};
+      return {html:chartSvg(spec)+tbl(["School","Target","Recruit","Walk-On"],ss.map(s=>{const t=s[gg][e]||[];return [s.n+(s.o?" ★":""),t[0]||"–",t[1]||"–",t[2]||"–"]})),f:[gg==="m"?"Women's":"Men's","800m instead","Long Jump instead"]}}
+    case "conf":{let x=needE(`Which event in the ${esc(CX.conf)}?`);if(x)return x;const gg=g||"m";
+      const pool=SCH.filter(s=>s.c===CX.conf&&s[gg][e]);if(!pool.length)return {html:`<p>No ${esc(CX.conf)} school lists ${gl(gg)} ${esc(e)} standards.</p>`};
+      const k=d.tier?{T:0,R:1,W:2}[d.tier]:2,val=s=>parse(s[gg][e][k],e),rows=pool.slice().sort((a,b)=>{const va=val(a),vb=val(b);if(va==null)return 1;if(vb==null)return -1;return FIELD.has(e)?va-vb:vb-va});
+      return {html:`<p>${esc(CX.conf)} ${gl(gg)} ${esc(e)} standards, most reachable ${TN[["T","R","W"][k]]} first:</p>`+tbl(["School","Target","Recruit","Walk-On"],rows.map(s=>[s.n+(s.o?" ★":""),s[gg][e][0]||"–",s[gg][e][1]||"–",s[gg][e][2]||"–"]))+quizLine,f:[gg==="m"?"Women's":"Men's","Another event",`Compare ${CX.conf} with another conference`]}}
+    case "superl":{let x=needE();if(x)return x;x=needG();if(x)return x;
+      const tierK=d.tier||(/walk/.test(q)?"W":/recruit/.test(q)?"R":/target/.test(q)?"T":"W"),j={T:0,R:1,W:2}[tierK],hard=/\b(hardest|toughest|most competitive|highest)\b/.test(q);
+      const L=scopeList().map(({s})=>({s,v:s[g][e]?parse(s[g][e][j],e):null})).filter(z=>z.v!=null);
+      const easyFirst=(a,b)=>FIELD.has(e)?a.v-b.v:b.v-a.v; L.sort((a,b)=>hard?-easyFirst(a,b):easyFirst(a,b));
+      if(!L.length)return {html:`<p>No ${TN[tierK]} marks for the ${gl(g)} ${esc(e)} in ${esc(scopeName())}.</p>`};
+      const top=L.slice(0,10),spec={title:`${hard?"Toughest":"Most reachable"} ${TN[tierK]} marks · ${gl(g)} ${e} · ${scopeName()}`,type:"bar",labels:top.map(z=>z.s.n.replace(/ \(.*\)/,"")),series:[{name:TN[tierK],values:top.map(z=>z.v)}],value_format:FIELD.has(e)?"meters":"time",lower_is_better:!FIELD.has(e)};
+      return {html:chartSvg(spec)+tbl(["College","Division",TN[tierK]],top.map(z=>[z.s.n+(z.s.o?" ★":""),z.s.d,fmtv(e,z.v)]),2)+`<p>${hard?"Toughest":"Most reachable"} ${TN[tierK]} marks in ${esc(scopeName())}.</p>`,f:[hard?"Easiest instead":"Hardest instead","Only D1","Recruit level"]}}
+    case "rank": case "champ":{let x=needE();if(x)return x;x=needG();if(x)return x;
+      const div=CX.div||"NCAA D1",yy=CX.year||"2026",se=CX.season||"outdoor",r=RIDX.find(z=>z.year===yy&&z.season===se&&z.div===div);
+      if(!r)return {html:`<p>I don't have ${esc(yy)} ${esc(se)} ${esc(div)} results.</p>`,f:["2026 outdoor","2025 outdoor"]};
+      await load(r.key,true);const D=CACHE[r.key];if(!D||D.err)return {html:"<p>Those results aren't available right now.</p>"};
+      const L=intent==="champ"?(D.lists.find(l=>l.champ)||null):(CX.conf?D.lists.find(l=>l.label.toLowerCase()===CX.conf.toLowerCase())||D.lists.find(l=>l.label.toLowerCase().includes(CX.conf.toLowerCase())):D.lists.find(l=>l.nat)||D.lists[0]);
+      if(!L)return {html:`<p>${intent==="champ"?`There are no ${esc(div)} championship results for ${esc(yy)} ${esc(se)} on TFRRS`:"I couldn't find that list"}.</p>`};
+      const E=L.g[g]||{},want=TF[e]||e,ek=Object.keys(E).find(k=>k===want)||Object.keys(E).find(k=>evLabel(k)===e);
+      if(!ek)return {html:`<p>No ${gl(g)} ${esc(e)} on the ${esc(L.nat?div+" national":L.label)} ${esc(yy)} ${esc(se)} list.</p>`,f:evChips(g).slice(0,4)};
+      const rows=E[ek].slice(0,intent==="champ"?8:10),hiv=/m$/.test(rows[0][4])||/thlon/i.test(ek);
+      const head=intent==="champ"?`<p><b>${esc(rows[0][1]||D.teams[rows[0][3]])}</b> (${esc(D.teams[rows[0][3]])}) won the ${esc(yy)} ${esc(div)} ${esc(se)} ${gl(g)} ${esc(e)} in <b>${esc(rows[0][4])}</b>${rows[0][5]?` (wind ${esc(rows[0][5])})`:""}.</p>`:"";
+      const spec={title:`${intent==="champ"?"Final":"Top 10"} · ${gl(g)} ${e} · ${L.nat?div+" national list":L.label} · ${yy} ${se}`,type:"bar",labels:rows.map(z=>z[1]||D.teams[z[3]]),series:[{name:e,values:rows.map(z=>mval(z[4]))}],value_format:hiv?"meters":"time",lower_is_better:!hiv};
+      return {html:head+chartSvg(spec)+tbl(["#","Athlete","Team","Mark"],rows.map((z,k)=>[k+1,z[1]||D.teams[z[3]],D.teams[z[3]],z[4]+(z[5]?` (${z[5]})`:"")]),3),
+        f:[g==="m"?"Women's":"Men's",yy==="2026"?"2025":"2026",intent==="champ"?"Top marks all season":"Who won nationals?",div==="NCAA D1"?"NCAA D2":"NCAA D1"]}}
+    case "athlete":{loadAth();try{await ATHL}catch(e2){}const A=ATH||{};const name=raw.replace(/who is|athlete|profile|meet history|personal bests? of|bests? of|\?/gi,"").trim().toLowerCase();
+      const k=Object.keys(A).find(p=>(A[p].name||"").toLowerCase()===name)||Object.keys(A).find(p=>name.length>3&&(A[p].name||"").toLowerCase().includes(name));
+      if(!k)return {html:`<p>I have full meet histories for the top athletes in every D1 event. I couldn't find "${esc(name)}". Try their full name, or ask for an event's top marks.</p>`,f:["Top D1 men's 100m","Top D1 women's 400m"]};
+      const a=A[k];return {html:`<p><b>${esc(a.name)}</b> · ${esc(yr(a.year))} · ${esc(a.team)}</p>`+tbl(["Event","College best"],a.bests.map(b=>[evName(b[0]),b[1]+(b[2]?` (wind ${b[2]})`:"")]))+`<p>Recent meets:</p>`+tbl(["Meet","Date","Event","Mark","Place"],a.meets.slice(0,4).flatMap(m=>m.rows.slice(0,3).map(r=>[m.meet,m.date,evName(r[0]),r[1],r[3].replace(/\s*\(P\)/," · Prelim").replace(/\s*\(F\)/," · Final")])))+`<p><a href="https://tf.tfrrs.org/athletes/${esc(k)}" target="_blank" rel="noopener">Full profile on TFRRS ›</a></p>`}}
+  }
+  /* 4. a name we recognize as an athlete, even without "who is" */
+  if(!intent&&q.split(" ").filter(Boolean).length<=4){loadAth();try{await ATHL}catch(e2){}const A=ATH||{};const k=Object.keys(A).find(p=>{const n=(A[p].name||"").toLowerCase();return n&&q.includes(" "+n+" ")});if(k)return answer("who is "+A[k].name)}
+  /* 5. an event on its own: ask what they want to know about it */
+  if(d.e)return askBack("intent",`What do you want to know about the ${gl(g||"m")} ${esc(d.e)}?`,[`Which schools fit my ${d.e}?`,`Top ${d.e} marks this season`,`Who won the ${d.e} at nationals?`,`Easiest D1 schools to walk on in the ${d.e}`]);
+  return {html:"<p>I answer from this site's data. You can ask:</p><ul><li>Which colleges fit your mark (high school marks are converted)</li><li>Any school's standards, or two schools side by side</li><li>A conference's standards, or two conferences compared</li><li>Top marks and national champions for any year back to 2016</li><li>Easiest or toughest schools to walk on, by division, conference or state</li><li>An athlete's bests and meet history</li></ul>",f:["Which schools fit a 52.0 400m?","Who won the 2026 D1 women's 100m?","Easiest D1 schools to walk on in the 800m"]};
 }
 
 /* ---------- Recruiting AI, live (Ryan 2026-10-13: "literally a chat gpt trained on the data within this site") ----------
