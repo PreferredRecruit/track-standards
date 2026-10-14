@@ -467,3 +467,7 @@ h1.sname{font-size:clamp(30px,5vw,46px);letter-spacing:-.045em;line-height:1.06;
 .mcount{align-items:center}
 .mrow.mh{overflow:visible}.mtab{overflow:visible}
 th .lvi .cpop{text-align:left}
+
+.more{display:flex;flex-wrap:wrap;gap:6px 18px;margin:28px 0 0;padding-top:16px;border-top:1px solid var(--pr-line);font-size:14px}
+.more a{color:var(--pr-accent);font-weight:500}
+footer a{color:var(--pr-accent)}

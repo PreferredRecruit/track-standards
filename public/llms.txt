@@ -1,15 +1,27 @@
-# Preferred Recruit Track Standards
+# Preferred Recruit Track & Field Standards
 
-> Find your preferred college track and field recruiting standards. Compare your personal bests against target, recruit, and walk-on standards from colleges nationwide.
+> College track and field recruiting standards, results and rankings for every program: NCAA Division I, II, III, NAIA and NJCAA. Target, Recruit and Walk-On marks for 1,249 colleges (134 from the schools' own verified published standards), national top marks and national champions from 2016 to today, and a recruiting chat that answers from this data.
 
-Preferred Recruit Track Standards helps high school track and field athletes streamline their college recruitment by matching their performances to the standards of college programs that fit them best. Search by event and mark to discover schools where you would be a target recruit, recruit, or walk-on.
+## Key pages
 
-## Pages
+- [Home and standards search](https://trackandfieldstandards.com/): enter an event and personal best (high school 1600m, 3200m and 300m hurdles are converted) to see every college it fits.
+- [Explore](https://trackandfieldstandards.com/explore.html): every conference, state, event standard, national champion and top-marks list.
+- School pages: https://trackandfieldstandards.com/schools/<school-name>-track-standards (e.g. /schools/university-of-oregon-track-standards)
+- Conference pages: https://trackandfieldstandards.com/conferences/<conference>-track-standards.html (e.g. /conferences/sec-track-standards.html)
+- Standards by division and event: https://trackandfieldstandards.com/standards/<division>-<mens|womens>-<event>.html (e.g. /standards/ncaa-d1-mens-400m.html)
+- States: https://trackandfieldstandards.com/states/<state>-college-track-and-field.html
+- National champions: https://trackandfieldstandards.com/champions/<year>-<outdoor|indoor>-<division>.html
+- Top marks: https://trackandfieldstandards.com/results/<year>-<season>-<division>-<mens|womens>-<event>.html
+- [Sitemap](https://trackandfieldstandards.com/sitemap.xml)
 
-- [Home](/): Search college track and field programs by event and personal best.
-- [School Pages](/schools/): Each college program has its own standards page, e.g. https://trackandfieldstandards.com/schools/samford-university-track-standards
-- [Sitemap](https://trackandfieldstandards.com/sitemap.xml): Full list of school standards pages.
+## How the standards work
 
-## Domain
+- Target: marks that typically earn the strongest scholarship interest, depending on school funding.
+- Recruit: where coaches typically start recruiting conversations and scholarship discussions. Not a guarantee.
+- Walk-On: the minimum mark to earn a roster spot.
+- Schools marked official publish their own standards (2024 or newer, verified mark for mark). Others are set from that conference's 2026 results: NCAA D1/D2 Target = 8th, Recruit = 15th, Walk-On = 25th best mark; NCAA D3/NAIA Target = top 8, Walk-On = 40th.
+- Results come from TFRRS performance lists and national championship meet results, refreshed every Monday.
 
-- [Primary Site](https://trackandfieldstandards.com): Official domain.
+## Contact
+
+- [Free recruitment evaluation](https://app.thepreferredrecruit.com/parentfunnel/?utm_source=website&utm_medium=standards&utm_campaign=PRstandards)
