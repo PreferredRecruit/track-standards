@@ -7,8 +7,7 @@
      /guides/*.html, /for-parents.html, /for-coaches.html, hubs /how-fast.html /convert.html /guides.html
      /embed.html + /embed-data.json                   free standards widget for high school / club team sites (backlinks) */
 const DIVS = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA", "NJCAA"];
-/* NJCAA levels are still placeholder tiers (national 15/30/50, unconfirmed by Ryan), so they stay out of the summary tables */
-const AGG = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA"];
+const AGG = DIVS;
 /* boys throw lighter implements in high school (12 lb shot, 1.6 kg discus) than college men (16 lb, 2 kg); no reliable conversion */
 const IMPL = { "Shot Put": "High school boys throw a 12 lb shot; college men throw 16 lb. These are college marks with the 16 lb shot, so a high school mark will read higher than the college equivalent.", "Discus": "High school boys throw a 1.6 kg discus; college men throw 2 kg. These are college marks with the 2 kg discus, so a high school mark will read higher than the college equivalent." };
 const HS = g => (g === "m" ? "Boys" : "Girls");
@@ -115,11 +114,11 @@ ${cv ? `<p><a href="/convert.html">High school to college conversion tables ›<
     pathname: P1, crumbs: [["Home", "/"], ["Guides", "/guides.html"], ["Divisions compared", P1]], h1: "NCAA D1 vs D2 vs D3 vs NAIA vs NJCAA track &amp; field",
     intro: "The same mark can be a walk-on at one level and a target recruit at another. Here is how the divisions compare, using the median Walk-On mark across every program on this site.",
     body: `<div class="scroll"><table><tr><th>Division</th><th class="n">Programs</th>${cmpEv.map(([g, e]) => `<th class="n">${g === "m" ? "Men" : "Women"} ${esc(e)}</th>`).join("")}</tr>${AGG.map(d => `<tr><td>${esc(d)}</td><td class="n">${S.filter(s => s.d === d).length}</td>${cmpEv.map(([g, e]) => `<td class="n">${esc(med(d, g, e))}</td>`).join("")}</tr>`).join("")}</table></div>
-<p>Median Walk-On standard by division (NJCAA standards are shown on each school's page). NCAA D3 programs do not offer athletic scholarships.</p><div class="links">${DIVS.flatMap(d => [["m", "100m"], ["w", "100m"]].map(([g, e]) => `<a href="${evPath(d, g, e)}">${esc(d)} ${esc(gName(g))} ${e} standards</a>`)).join("")}</div>` }));
+<p>Median Walk-On standard by division. NCAA D3 programs do not offer athletic scholarships.</p><div class="links">${DIVS.flatMap(d => [["m", "100m"], ["w", "100m"]].map(([g, e]) => `<a href="${evPath(d, g, e)}">${esc(d)} ${esc(gName(g))} ${e} standards</a>`)).join("")}</div>` }));
   write(P2, page({ title: "Target, Recruit and Walk-On Track Standards Explained | Preferred Recruit", desc: "What Target, Recruit and Walk-On mean on college track and field recruiting standards, and how each school's levels are set.",
     pathname: P2, crumbs: [["Home", "/"], ["Guides", "/guides.html"], ["Levels explained", P2]], h1: "Target, Recruit and Walk-On, explained",
     body: `<h2>Target</h2><p>${DEF.T}</p><h2>Recruit</h2><p>${DEF.R}</p><h2>Walk-On</h2><p>${DEF.W}</p>
-<h2>How the levels are set</h2><p>${S.filter(s => s.o).length} schools publish their own standards. Those are marked ★ official and checked mark for mark against the school's site. For every other school, the levels come from its conference's 2026 results. In NCAA D1 and D2, Target is the 8th best mark in the conference, Recruit the 15th and Walk-On the 25th. In NCAA D3 and NAIA, Target is a top 8 conference mark and Walk-On the 40th.</p><p><a href="/">Search your mark ›</a></p>` }));
+<h2>How the levels are set</h2><p>${S.filter(s => s.o).length} schools publish their own standards. Those are marked ★ official and checked mark for mark against the school's site. For every other school, the levels come from its conference's 2026 results. In NCAA D1 and D2, Target is the 8th best mark in the conference, Recruit the 15th and Walk-On the 25th. In NCAA D3 and NAIA, Target is a top 8 conference mark and Walk-On the 40th. Junior colleges (NJCAA) compete nationally, so their levels come from the national list: Target is the 30th best mark in the country, Recruit the 75th and Walk-On the 150th.</p><p><a href="/">Search your mark ›</a></p>` }));
   const pop = g => ["100m", "400m", "800m", "1600m", "3200m", "Long Jump"].map(e => `<a href="${hsPath(g, e)}">${g === "m" ? "Boys" : "Girls"}: how fast for college in the ${e}?</a>`).join("");
   write("/for-parents.html", page({ title: "College Track & Field Recruiting Standards: A Guide for Parents | Preferred Recruit",
     desc: `Where could your athlete compete in college? See how their marks fit ${S.length.toLocaleString()} track and field programs in NCAA D1, D2, D3, NAIA and NJCAA.`,

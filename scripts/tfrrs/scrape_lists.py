@@ -59,7 +59,7 @@ def main(years, divisions=DIVISIONS, seasons=("outdoor", "indoor"), fresh=False)
                     for g in ("m", "f"):
                         out = os.path.join(out_dir, f"{name[:120]}_{g}.json")
                         if os.path.exists(out) and not fresh: continue
-                        try: ev = parse(get(f"{url}?gender={g}", fresh))
+                        try: ev = parse(get(f"{url}?gender={g}" + ("&limit=500" if div == "njcaa" else ""), fresh))  # NJCAA standards use the 150th national mark
                         except Exception as e: print("  FAILED", name, g, e, flush=True); continue
                         json.dump({"list": name.replace("_", " "), "division": div, "season": season, "year": year, "gender": g,
                                    "source": f"{url}?gender={g}", "events": ev}, open(out, "w"))

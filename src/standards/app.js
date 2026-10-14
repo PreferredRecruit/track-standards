@@ -2,10 +2,10 @@
 /* Preferred Recruit · College Track & Field Standards app. Generated from the approved design mockup by export_lovable.py.
    Data: /data/db.json (standards), /data/rank_index.json + /data/rank/<key>.dat (gzip results, refreshed Mondays), /data/athletes.json. */
 const LIVE_BASE = "https://raw.githubusercontent.com/emery-moye/Track-standards/data/";   // Monday refresh (data branch)
-const LIVE = new Set();
+const LIVE_KEYS = new Set();   // keys published on the data branch (not the chat's LIVE flag)
 async function unpack(r){ return await new Response(r.body.pipeThrough(new DecompressionStream("gzip"))).json(); }
 async function getRank(key){
-  if (LIVE.has(key) && typeof DecompressionStream !== "undefined") {
+  if (LIVE_KEYS.has(key) && typeof DecompressionStream !== "undefined") {
     try { const lr = await fetch(LIVE_BASE + "rank/" + key + ".dat", { cache: "no-cache" }); if (lr.ok) return await unpack(lr); } catch (e) {}
   }
   const r = await fetch("/data/rank/" + key + ".dat");
@@ -19,7 +19,7 @@ export async function mount(opts = {}) {
   window.__prStandardsMounted = true;
   const [DB, RIDX, LIVEIDX] = await Promise.all([fetch("/data/db.json").then(r => r.json()), fetch("/data/rank_index.json").then(r => r.json()),
     fetch(LIVE_BASE + "rank_index.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).catch(() => [])]);
-  for (const x of LIVEIDX) { LIVE.add(x.key); if (!RIDX.some(y => y.key === x.key)) RIDX.push(x); }
+  for (const x of LIVEIDX) { LIVE_KEYS.add(x.key); if (!RIDX.some(y => y.key === x.key)) RIDX.push(x); }
 
 const EVENTS=["100m", "200m", "400m", "800m", "1500m", "1600m", "Mile", "3000m", "3200m", "5000m", "10000m", "100m Hurdles", "110m Hurdles", "110m Hurdles (39\")", "300m Hurdles", "400m Hurdles", "3000m Steeplechase", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Hammer", "Javelin"], CT=DB.ct, RULES=DB.rules;
 const SCH=DB.schools.map(x=>{const side=g=>{if(x.em)return (x.em[g]||{});const o=(x.om||{})[g]||{},c=(CT[x.ck]||{})[g]||{},r={};EVENTS.forEach(e=>{if(o[e])r[e]=o[e];else if(c[e])r[e]=c[e].map(v=>v?v[0]:"")});return r};return Object.assign(x,{m:side("m"),w:side("w")})});
