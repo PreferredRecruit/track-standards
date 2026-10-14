@@ -140,7 +140,7 @@ export function generate(root, out) {
   }
   /* high school athletes, parents and coaches */
   const writeRaw = (p, txt) => { const f = path.join(out, p); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, txt); };
-  hsPages({ S, CT, write, writeRaw, page, parse, esc, slug, schoolUrl: sl, evPath, FIELD, SITE, gName });
+  hsPages({ S, CT, NJ: DB.nj, write, writeRaw, page, parse, esc, slug, schoolUrl: sl, evPath, FIELD, SITE, gName });
   /* hub */
   const groupLinks = (items) => `<div class="links">${items.map(([u, t]) => `<a href="${u}">${esc(t)}</a>`).join("")}</div>`;
   const evLinks = DIVS.map(d => `<h2 id="${slug(d)}">${esc(d)}</h2><h3>Conferences</h3>${groupLinks([...confs.keys()].filter(k => k.startsWith(d + "|")).sort().map(k => [confName.get(k), k.split("|")[1]]))}<h3>Standards by event</h3>${groupLinks(["m", "w"].flatMap(g => evAvail(S.filter(s => s.d === d), g).map(e => [evPath(d, g, e), `${gName(g)} ${e}`])))}`).join("");

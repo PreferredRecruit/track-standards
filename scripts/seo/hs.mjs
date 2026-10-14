@@ -21,7 +21,7 @@ const CONV = {
 const HS_EVENTS = ["100m", "200m", "400m", "800m", "1600m", "3200m", "100m Hurdles", '110m Hurdles (39")', "300m Hurdles", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus"];
 const COLLEGE_EVENTS = ["100m", "200m", "400m", "800m", "1500m", "3000m", "5000m", "100m Hurdles", "110m Hurdles", "400m Hurdles", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus"];
 
-export function hsPages({ S, CT, write, writeRaw, page, parse, esc, slug, schoolUrl, evPath, FIELD, SITE, gName }) {
+export function hsPages({ S, CT, NJ = {}, write, writeRaw, page, parse, esc, slug, schoolUrl, evPath, FIELD, SITE, gName }) {
   const raw = (s, g, e) => { const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? v[0] : "")) : null; };
   const isF = e => FIELD.has(e);
   const ftin = x => { let i = Math.round((x / 0.0254) * 4) / 4, f = Math.floor(i / 12); i = i - f * 12; return `${f}'${String(i).replace(/\.0+$/, "")}"`; };
@@ -32,6 +32,7 @@ export function hsPages({ S, CT, write, writeRaw, page, parse, esc, slug, school
   const ce = e => (CONV[e] ? CONV[e].to : e);
   const meets = (e, v, m) => { const sv = parse(m, e); if (sv == null) return false; return isF(e) ? v >= sv - 1e-9 : v <= sv + 1e-9; };
   function tierOf(s, g, e, v) {
+    if (s.d === "NJCAA") return raw(s, g, e) || toCollege(e, g, v).some(x => raw(s, g, x.e)) ? "JUCO" : null;   /* JUCOs: no cutoffs, national rank instead */
     const cand = raw(s, g, e) ? [{ e, v }] : toCollege(e, g, v).filter(x => raw(s, g, x.e));
     if (!cand.length) return null; const x = cand[0], t = raw(s, g, x.e);
     return meets(x.e, x.v, t[0]) ? "Target" : meets(x.e, x.v, t[1]) ? "Recruit" : t[2] && meets(x.e, x.v, t[2]) ? "Walk-On" : null;
@@ -43,6 +44,10 @@ export function hsPages({ S, CT, write, writeRaw, page, parse, esc, slug, school
   const fitPath = (g, e, v) => `/colleges-for/${G(g)}-${slug(e)}-${slug(nice(e, v))}.html`;
   const roundNice = (e, x) => { if (e === "High Jump" || e === "Pole Vault") return Math.round(x / 0.0508) * 0.0508; if (isF(e)) return Math.round(x / (e.includes("Jump") ? 0.1524 : 0.6096)) * (e.includes("Jump") ? 0.1524 : 0.6096);
     return x < 15 ? Math.round(x * 10) / 10 : x < 60 ? Math.round(x * 2) / 2 : x < 300 ? Math.round(x / 5) * 5 : Math.round(x / 10) * 10; };
+  /* national NJCAA rank of a high school mark (Ryan 2026-10-14: JUCOs get a ranking, not cutoffs) */
+  const njRank = (g, e, v) => { const x = (NJ[g] || {})[e] ? { e, v } : toCollege(e, g, v).find(y => (NJ[g] || {})[y.e]); if (!x) return null; const L = NJ[g][x.e], f = isF(x.e);
+    let r = 0; for (const m of L) { if (f ? m > x.v + 1e-9 : m < x.v - 1e-9) r++; else break; } return { rank: r + 1, n: L.length, e: x.e }; };
+  const njText = r => !r ? "" : r.rank > r.n ? `outside the top ${r.n} NJCAA athletes this season` : `about #${r.rank} of ${r.n}${r.n >= 500 ? "+" : ""} NJCAA athletes in the ${r.e} this season`;
   const ladders = [];
 
   /* 1. how fast do you need to run X in college */
@@ -54,7 +59,7 @@ export function hsPages({ S, CT, write, writeRaw, page, parse, esc, slug, school
     const all = rows.flatMap(([, cl]) => cl.filter(Boolean).flatMap(r => [r[0], r[2]])).sort((a, b) => a - b);
     const lo0 = all[0], hi0 = all[all.length - 1], sp = hi0 - lo0, lo = isF(c) ? lo0 - sp * .3 : lo0, hi = isF(c) ? hi0 : hi0 + sp * .3;
     const ladder = [...new Set(Array.from({ length: 14 }, (_, i) => roundNice(e, lo + (hi - lo) * i / 13)).map(x => +x.toFixed(4)))]
-      .filter(v => v > 0 && S.some(s => tierOf(s, g, e, v)));
+      .filter(v => v > 0 && S.some(s => s.d !== "NJCAA" && tierOf(s, g, e, v)));
     if (isF(c)) ladder.reverse();
     ladders.push([g, e, ladder]);
     const name = `${HS(g)} ${e}`, p = hsPath(g, e), cv = CONV[e];
@@ -64,8 +69,8 @@ export function hsPages({ S, CT, write, writeRaw, page, parse, esc, slug, school
       desc: `${name} marks it takes to walk on, get recruited or be a target recruit in NCAA D1, D2, D3, NAIA and NJCAA, from ${S.length.toLocaleString()} college programs.${cv ? ` High school ${e} converted to the college ${cv.to}.` : ""}`,
       pathname: p, crumbs: [["Home", "/"], ["How fast?", "/how-fast.html"], [name, p]], h1: `How fast do you need to run the ${esc(e)} in college? (${HS(g)})`,
       intro: `The ${isF(c) ? "marks" : "times"} college programs list for ${esc(gName(g).toLowerCase())} ${esc(c)}, by division. Each range is the middle half of programs (25th to 75th percentile); a dash means too few programs list that level (NCAA D3 and NAIA use Target and Walk-On).${g === "m" && IMPL[e] ? ` <b>${esc(IMPL[e])}</b>` : ""}${cv ? ` Colleges run the ${esc(cv.to)}, so these are converted back to the high school ${esc(e)}: ${esc(cv.how)}.` : ""}`,
-      body: `<div class="scroll"><table><tr><th>Division</th><th class="n">Walk-On</th><th class="n">Recruit</th><th class="n">Target</th></tr>${rows.map(([d, cl]) => `<tr><td>${esc(d)}</td>${[2, 1, 0].map(j => `<td class="n">${cl[j] ? esc(span(cl[j])) : "–"}</td>`).join("")}</tr>`).join("")}</table></div>
-<p><b>Walk-On:</b> ${DEF.W} <b>Recruit:</b> ${DEF.R} <b>Target:</b> ${DEF.T}</p>
+      body: `<div class="scroll"><table><tr><th>Division</th><th class="n">Walk-On</th><th class="n">Recruit</th><th class="n">Target</th></tr>${rows.map(([d, cl]) => `<tr><td>${d === "NJCAA" ? "NJCAA <small>(150th / 75th / 30th nationally)</small>" : esc(d)}</td>${[2, 1, 0].map(j => `<td class="n">${cl[j] ? esc(span(cl[j])) : "–"}</td>`).join("")}</tr>`).join("")}</table></div>
+<p>Junior colleges (NJCAA) are shown as national benchmarks, the 150th, 75th and 30th best marks in the country this season, not cutoffs. <b>Walk-On:</b> ${DEF.W} <b>Recruit:</b> ${DEF.R} <b>Target:</b> ${DEF.T}</p>
 <h2>What colleges can I ${isF(c) ? "compete" : "run"} for?</h2><p>Pick the mark closest to yours, or <a href="/">enter your exact mark</a>.</p><div class="links">${ladder.map(v => `<a href="${fitPath(g, e, v)}">${esc(nice(e, v))} ${esc(e)}</a>`).join("")}</div>
 <h2>Every school's ${esc(c)} standards</h2><div class="links">${DIVS.map(d => `<a href="${evPath(d, g, c)}">${esc(d)} ${esc(gName(g))} ${esc(c)}</a>`).join("")}</div>
 ${cv ? `<p><a href="/convert.html">High school to college conversion tables ›</a></p>` : ""}`,
@@ -78,13 +83,14 @@ ${cv ? `<p><a href="/convert.html">High school to college conversion tables ›<
     const hits = S.map(s => ({ s, t: tierOf(s, g, e, v) })).filter(z => z.t), by = l => hits.filter(z => z.t === l);
     const conv = CONV[e] ? toCollege(e, g, v).map(z => `${fmt(z.e, z.v)} ${z.e}`).join(" / ") : "";
     const counts = DIVS.map(d => [d, hits.filter(z => z.s.d === d).length]).filter(z => z[1]);
-    const list = l => { const L = by(l).sort((a, b) => DIVS.indexOf(a.s.d) - DIVS.indexOf(b.s.d) || a.s.n.localeCompare(b.s.n)); return L.length ? `<h2>${l} (${L.length})</h2><p>${DEF[l[0]]}</p><div class="links">${L.slice(0, 150).map(z => `<a href="${schoolUrl(z.s)}">${esc(z.s.n)} <small>${esc(z.s.d)}</small></a>`).join("")}</div>${L.length > 150 ? `<p>And ${L.length - 150} more. <a href="/">Search your exact mark</a>.</p>` : ""}` : ""; };
+    const nr = njRank(g, e, v), juco = by("JUCO");
+    const list = l => { const L = by(l).sort((a, b) => DIVS.indexOf(a.s.d) - DIVS.indexOf(b.s.d) || a.s.n.localeCompare(b.s.n)); return L.length ? `<h2>${l === "JUCO" ? "Junior colleges" : l} (${L.length})</h2><p>${l === "JUCO" ? `This mark would rank ${esc(njText(nr))}. Junior college marks show where you'd stack up nationally, not a cutoff.` : DEF[l[0]]}</p><div class="links">${L.slice(0, 150).map(z => `<a href="${schoolUrl(z.s)}">${esc(z.s.n)} <small>${esc(z.s.d)}</small></a>`).join("")}</div>${L.length > 150 ? `<p>And ${L.length - 150} more. <a href="/">Search your exact mark</a>.</p>` : ""}` : ""; };
     const nb = [ladder[i - 1], ladder[i + 1]].filter(x => x != null).map(x => `<a href="${fitPath(g, e, x)}">${esc(nice(e, x))} ${esc(e)}</a>`).join(" · ");
     write(p, page({ title: `What Colleges Can I ${isF(c) ? "Compete" : "Run"} For With a ${mk} ${e}? (${HS(g)}) | Preferred Recruit`,
-      desc: `A ${HS(g).toLowerCase().slice(0, -1)}s' ${mk} ${e} meets a listed standard at ${hits.length} college track programs: ${by("Target").length} Target, ${by("Recruit").length} Recruit and ${by("Walk-On").length} Walk-On across NCAA D1, D2, D3, NAIA and NJCAA.`,
+      desc: `A ${HS(g).toLowerCase().slice(0, -1)}s' ${mk} ${e} meets a listed standard at ${hits.length} college track programs: ${by("Target").length} Target, ${by("Recruit").length} Recruit and ${by("Walk-On").length} Walk-On across NCAA D1, D2, D3 and NAIA${juco.length ? `, plus ${juco.length} junior colleges` : ""}.`,
       pathname: p, crumbs: [["Home", "/"], [`How fast: ${HS(g)} ${e}`, hsPath(g, e)], [`${mk} ${e}`, p]], h1: `What colleges can I ${isF(c) ? "compete" : "run"} for with a ${esc(mk)} ${esc(e)}?`,
-      intro: `A ${HS(g).toLowerCase().slice(0, -1)}s' ${esc(mk)} ${esc(e)}${conv ? ` (about ${esc(conv)} in college)` : ""} meets a listed standard at <b>${hits.length}</b> college programs. ${counts.map(([d, n]) => `${esc(d)}: ${n}`).join(" · ")}. <a href="/">Enter your exact mark</a> for your own list.${g === "m" && IMPL[e] ? ` <b>${esc(IMPL[e])}</b>` : ""}`,
-      body: (list("Target") + list("Recruit") + list("Walk-On") || "<p>No listed standard at this mark yet.</p>") + (nb ? `<h2>Nearby marks</h2><p>${nb}</p>` : ""),
+      intro: `A ${HS(g).toLowerCase().slice(0, -1)}s' ${esc(mk)} ${esc(e)}${conv ? ` (about ${esc(conv)} in college)` : ""} fits <b>${hits.length}</b> college programs, including ${juco.length} junior colleges${nr ? `, where it would rank ${esc(njText(nr))}` : ""}. ${counts.map(([d, n]) => `${esc(d)}: ${n}`).join(" · ")}. <a href="/">Enter your exact mark</a> for your own list.${g === "m" && IMPL[e] ? ` <b>${esc(IMPL[e])}</b>` : ""}`,
+      body: (list("Target") + list("Recruit") + list("Walk-On") + list("JUCO") || "<p>No listed standard at this mark yet.</p>") + (nb ? `<h2>Nearby marks</h2><p>${nb}</p>` : ""),
       ld: [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: [{ "@type": "Question", name: `What colleges can I ${isF(c) ? "compete" : "run"} for with a ${mk} ${e}?`, acceptedAnswer: { "@type": "Answer", text: `A ${gName(g).toLowerCase()} ${mk} ${e} meets a listed recruiting standard at ${hits.length} college track programs (${counts.map(([d, n]) => `${d} ${n}`).join(", ")}).` } }] }] }));
   });
 
@@ -113,7 +119,7 @@ ${cv ? `<p><a href="/convert.html">High school to college conversion tables ›<
     desc: `How college track and field divisions compare: number of programs and the typical walk-on mark in key events for NCAA D1, D2, D3, NAIA and NJCAA, from ${S.length.toLocaleString()} programs.`,
     pathname: P1, crumbs: [["Home", "/"], ["Guides", "/guides.html"], ["Divisions compared", P1]], h1: "NCAA D1 vs D2 vs D3 vs NAIA vs NJCAA track &amp; field",
     intro: "The same mark can be a walk-on at one level and a target recruit at another. Here is how the divisions compare, using the median Walk-On mark across every program on this site.",
-    body: `<div class="scroll"><table><tr><th>Division</th><th class="n">Programs</th>${cmpEv.map(([g, e]) => `<th class="n">${g === "m" ? "Men" : "Women"} ${esc(e)}</th>`).join("")}</tr>${AGG.map(d => `<tr><td>${esc(d)}</td><td class="n">${S.filter(s => s.d === d).length}</td>${cmpEv.map(([g, e]) => `<td class="n">${esc(med(d, g, e))}</td>`).join("")}</tr>`).join("")}</table></div>
+    body: `<div class="scroll"><table><tr><th>Division</th><th class="n">Programs</th>${cmpEv.map(([g, e]) => `<th class="n">${g === "m" ? "Men" : "Women"} ${esc(e)}</th>`).join("")}</tr>${AGG.map(d => `<tr><td>${d === "NJCAA" ? "NJCAA <small>(150th nationally)</small>" : esc(d)}</td><td class="n">${S.filter(s => s.d === d).length}</td>${cmpEv.map(([g, e]) => `<td class="n">${esc(med(d, g, e))}</td>`).join("")}</tr>`).join("")}</table></div>
 <p>Median Walk-On standard by division. NCAA D3 programs do not offer athletic scholarships.</p><div class="links">${DIVS.flatMap(d => [["m", "100m"], ["w", "100m"]].map(([g, e]) => `<a href="${evPath(d, g, e)}">${esc(d)} ${esc(gName(g))} ${e} standards</a>`)).join("")}</div>` }));
   write(P2, page({ title: "Target, Recruit and Walk-On Track Standards Explained | Preferred Recruit", desc: "What Target, Recruit and Walk-On mean on college track and field recruiting standards, and how each school's levels are set.",
     pathname: P2, crumbs: [["Home", "/"], ["Guides", "/guides.html"], ["Levels explained", P2]], h1: "Target, Recruit and Walk-On, explained",
@@ -183,9 +189,9 @@ function check(){const g=$("g").value,e=$("e").value,v=parse($("v").value,e),o=$
  if(!D){o.textContent="Loading…";setTimeout(check,300);return}
  const c=CONV[e],f=FIELD.has(e),ok=t=>t!=null&&(f?v>=t-1e-9:v<=t+1e-9);
  const T={Target:0,Recruit:0,"Walk-On":0},byD=D.divs.map(()=>0);
- for(const[d,t,rc,w,n]of(D.ev[g+"|"+e]||[])){const l=ok(t)?"Target":ok(rc)?"Recruit":ok(w)?"Walk-On":null;if(l){T[l]+=n;byD[d]+=n}}
+ let J=0;for(const[d,t,rc,w,n]of(D.ev[g+"|"+e]||[])){if(D.divs[d]==="NJCAA"){J+=n;continue}const l=ok(t)?"Target":ok(rc)?"Recruit":ok(w)?"Walk-On":null;if(l){T[l]+=n;byD[d]+=n}}
  const tot=T.Target+T.Recruit+T["Walk-On"];
- o.innerHTML='<div class="big">'+tot.toLocaleString()+' college programs</div><div class="lv"><span><b>'+T.Target+'</b> Target</span><span><b>'+T.Recruit+'</b> Recruit</span><span><b>'+T["Walk-On"]+'</b> Walk-On</span></div><div class="dv">'+D.divs.map((d,i)=>byD[i]?d+": "+byD[i]:"").filter(Boolean).join(" · ")+'</div>'+(g==="m"&&IMPL[e]?'<div class="dv">'+IMPL[e]+'</div>':"")+(c?'<div class="dv">High school '+e+' converted to the college '+c.to+' where needed.</div>':"");}
+ o.innerHTML='<div class="big">'+tot.toLocaleString()+' college programs</div><div class="lv"><span><b>'+T.Target+'</b> Target</span><span><b>'+T.Recruit+'</b> Recruit</span><span><b>'+T["Walk-On"]+'</b> Walk-On</span></div><div class="dv">'+D.divs.map((d,i)=>byD[i]?d+": "+byD[i]:"").filter(Boolean).join(" · ")+'</div>'+(J?'<div class="dv">Plus '+J+' junior colleges, shown by national rank on the full site.</div>':"")+(g==="m"&&IMPL[e]?'<div class="dv">'+IMPL[e]+'</div>':"")+(c?'<div class="dv">High school '+e+' converted to the college '+c.to+' where needed.</div>':"");}
 $("go").onclick=check;$("v").onkeydown=ev=>{if(ev.key==="Enter")check()};
 </script></body></html>`);
 }
