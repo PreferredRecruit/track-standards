@@ -1,7 +1,7 @@
 // @ts-nocheck
 /* Preferred Recruit · College Track & Field Standards app. Generated from the approved design mockup by export_lovable.py.
    Data: /data/db.json (standards), /data/rank_index.json + /data/rank/<key>.dat (gzip results, refreshed Mondays), /data/athletes.json. */
-const LIVE_BASE = "https://raw.githubusercontent.com/emery-moye/track-targets/data/";   // Monday refresh (data branch)
+const LIVE_BASE = "https://raw.githubusercontent.com/emery-moye/Track-standards/data/";   // Monday refresh (data branch)
 const LIVE = new Set();
 async function unpack(r){ return await new Response(r.body.pipeThrough(new DecompressionStream("gzip"))).json(); }
 async function getRank(key){
