@@ -1,0 +1,33 @@
+# Monday TFRRS results refresh (Ryan 2026-10-13: Mondays only).
+# Scrapes the current season politely (3 s per page), builds the results files and force-pushes them to the `data` branch
+# (one commit, replaced weekly, so the repo doesn't grow). The site reads the newest season from that branch.
+name: TFRRS weekly refresh
+on:
+  schedule:
+    - cron: "0 10 * * 1"   # Mondays 10:00 UTC (6 AM Eastern)
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: tfrrs-weekly
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Scrape TFRRS and build this season's results
+        run: python3 scripts/tfrrs/weekly.py
+      - name: Publish to the data branch
+        run: |
+          cd scripts/tfrrs/out
+          git init -q -b data
+          git config user.name "tfrrs-weekly"
+          git config user.email "tfrrs-weekly@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Weekly TFRRS results $(date -u +%Y-%m-%d)"
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" data:data
