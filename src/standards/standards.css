@@ -436,3 +436,12 @@ td small{color:var(--pr-mute);font-size:12px;margin-left:4px}
 /* three-line headline (Ryan 2026-10-13) */
 h1 em{display:block;font-style:normal}
 h1{font-size:clamp(34px,5.6vw,58px);line-height:1.06}
+
+/* ---- school page SEO + links ---- */
+h1.sname{font-size:clamp(30px,5vw,46px);letter-spacing:-.045em;line-height:1.06;margin:14px 0 8px;font-weight:700}
+.intro{color:var(--pr-ink2);font-size:16px;line-height:1.55;max-width:46em;margin:0 0 14px}
+.slinks{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.sl{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:999px;background:var(--pr-card);box-shadow:var(--pr-rim);font-size:14px;font-weight:600;color:var(--pr-ink)}
+.sl::after{content:"↗";color:var(--pr-accent);font-weight:700}
+.sl:hover{color:var(--pr-accent)}
+.sl.off{background:var(--pr-violet);color:#fff}.sl.off::after{color:#fff}

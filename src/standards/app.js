@@ -22,9 +22,9 @@ export async function mount(opts = {}) {
   for (const x of LIVEIDX) { LIVE.add(x.key); if (!RIDX.some(y => y.key === x.key)) RIDX.push(x); }
 
 const EVENTS=["100m", "200m", "400m", "800m", "1500m", "1600m", "Mile", "3000m", "3200m", "5000m", "10000m", "100m Hurdles", "110m Hurdles", "110m Hurdles (39\")", "300m Hurdles", "400m Hurdles", "3000m Steeplechase", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Hammer", "Javelin"], CT=DB.ct, RULES=DB.rules;
-const SCH=DB.schools.map(x=>{const side=g=>{const o=(x.om||{})[g]||{},c=(CT[x.ck]||{})[g]||{},r={};EVENTS.forEach(e=>{if(o[e])r[e]=o[e];else if(c[e])r[e]=c[e].map(v=>v?v[0]:"")});return r};return Object.assign(x,{m:side("m"),w:side("w")})});
+const SCH=DB.schools.map(x=>{const side=g=>{if(x.em)return (x.em[g]||{});const o=(x.om||{})[g]||{},c=(CT[x.ck]||{})[g]||{},r={};EVENTS.forEach(e=>{if(o[e])r[e]=o[e];else if(c[e])r[e]=c[e].map(v=>v?v[0]:"")});return r};return Object.assign(x,{m:side("m"),w:side("w")})});
 const ACR=SCH.map(s=>s.n.toLowerCase().replace(/\(.*?\)/g," ").split(/[^a-z&]+/).filter(w=>w&&!["of","the","at","and","in","for"].includes(w)).map(w=>w[0]).join(""));
-const TOK=SCH.map(s=>(s.n+" "+s.t).toLowerCase().split(/[^a-z0-9&]+/).filter(Boolean));
+const TOK=SCH.map(s=>[...new Set((s.n+" "+s.t+" "+(s.a||[]).join(" ")).toLowerCase().split(/[^a-z0-9&]+/).filter(Boolean))]);
 const DIVS=["NCAA D1","NCAA D2","NCAA D3","NAIA","NJCAA"];
 const QUIZ="https://app.thepreferredrecruit.com/parentfunnel/?utm_source=website&utm_medium=standards&utm_campaign=PRstandards";
 const FIELD=new Set(["High Jump","Pole Vault","Long Jump","Triple Jump","Shot Put","Discus","Hammer","Javelin"]);
@@ -135,13 +135,22 @@ function hits(q){q=q.trim().toLowerCase().replace(/\s+/g," ");if(q.length<2)retu
 const star=s=>s.o?'<span class="star" title="Official standards, verified">★</span>':"";
 function drop(){const el=$("drop");if(!el)return;const h=hits(S.q.trim().toLowerCase());el.innerHTML=h.length?`<div class="drop">${h.map(([s,i])=>`<button data-school="${i}"><em>${esc(s.n)}${star(s)}</em><span>${s.d} · ${esc(s.c)}</span></button>`).join("")}</div>`:(S.q.trim().length>1?'<div class="drop"><p class="none">No college matches that. Try the full name or a short name like USC.</p></div>':"")}
 const disp=(s,g,e,i)=>{const o=(s.om||{})[g]||{};if(o[e])return esc(o[e][i]||"–");const c=(((CT[s.ck]||{})[g]||{})[e]||[])[i];return c?(c[1]?`${esc(c[1])} <small>${esc(c[0])}</small>`:esc(c[0])):"–"};
-function ruleText(s){const [t,r,w]=RULES[s.d]||[];const c=esc(s.c);
+function ruleText(s){if(s.est)return `These are Preferred Recruit estimates for ${esc(s.n)}. Its conference has no 2026 results list on TFRRS, so they can't be set from conference marks yet.`;const [t,r,w]=RULES[s.d]||[];const c=esc(s.c);
   if(s.d==="NJCAA") return `NJCAA results are national. Target is the ${ord(t)}-best mark in the country this season, Recruit the ${ord(r)}, Walk-On the ${ord(w)}.`;
   if(!r) return `${s.d==="NCAA D3"?"NCAA D3 programs don't give athletic scholarships, so every athlete is effectively a walk-on. ":""}Target is a top-${t} mark in the ${c} this season. Walk-On is the ${ord(w)}-best mark (or the last one listed).`;
   return `Target is the ${ord(t)}-best mark in the ${c} this season, Recruit the ${ord(r)}, Walk-On the ${ord(w)}.`}
+function schoolLinks(s){const L=[];
+  if(s.o&&s.src)L.push(`<a class="sl off" href="${esc(s.src)}" target="_blank" rel="noopener">★ Official standards</a>`);
+  if(s.rs)L.push(`<a class="sl" href="${esc(s.rs)}" target="_blank" rel="noopener">Track &amp; field roster</a>`);
+  if(s.cu&&s.cu!==s.rs)L.push(`<a class="sl" href="${esc(s.cu)}" target="_blank" rel="noopener">${/roster/i.test(s.cu)?"Roster":"Coaching staff"}</a>`);
+  if(s.ws)L.push(`<a class="sl" href="${esc(s.ws)}" target="_blank" rel="noopener">Athletics site</a>`);
+  if(s.u)L.push(`<a class="sl" href="${esc(s.u)}" target="_blank" rel="noopener">TFRRS team page</a>`);
+  return L.length?`<nav class="slinks" aria-label="${esc(s.n)} links">${L.join("")}</nav>`:""}
 function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src;
-  let o=`<div class="sec" style="padding-top:0"><button class="back" data-back>‹ Back</button><h2 class="sname">${esc(s.n)}${s.o?' <span class="star big" title="Official standards, verified">★</span>':""}</h2>
+  let o=`<div class="sec" style="padding-top:0"><button class="back" data-back>‹ Back</button><h1 class="sname">${esc(s.n)} Track &amp; Field Standards${s.o?' <span class="star big" title="Official standards, verified">★</span>':""}</h1>
   <div class="meta"><span>${s.d} · ${esc(s.c)}${s.s?" · "+esc(s.s):""}</span>${s.o?`<span class="badge off">★ Official standards · published ${esc(s.yr)}</span>`:'<span class="badge">Based on 2026 conference results</span>'}</div>
+  <p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)} track and field program in the ${esc(s.c)}${s.s?`, based in ${esc(s.s)}`:""}. Below are the marks it takes to be a Target recruit, a Recruit or a Walk-On for men and women in every event${s.o?", taken from the school's own published standards":""}.</p>
+  ${schoolLinks(s)}
   <div class="coach"><div><b>Interested in ${esc(s.n)}?</b><span>Let us help you contact the coach.</span></div><a href="${QUIZ}" target="_blank" rel="noopener">Get my recruitment evaluation</a></div>
   ${seg("g",g)}`;
   const off=s.o&&(s.off||{})[g];
@@ -574,12 +583,29 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
   evalIn(n?`Your ${S.mark} fits ${n} colleges.`:"Every mark has a path.",n?"Want those coaches to see it? Get a free recruitment evaluation from Preferred Recruit.":"Get a free recruitment evaluation and see which programs fit you.",2500)});
 
   /* ---- routing: /schools/<slug> opens that school; keeps the old site's URLs working ---- */
-  const SLUG = SCH.map(s => slugOf(s.n));
-  const setMeta = (title, desc) => { document.title = title; let m = document.querySelector('meta[name="description"]'); if (m) m.setAttribute("content", desc); };
+  const SLUG = SCH.map(s => (s.os && s.os[0]) || slugOf(s.n));   // old trackandfieldstandards.com URL first, so Google keeps its rankings
+  const ALT = new Map(); SCH.forEach((s, i) => { ALT.set(slugOf(s.n), i); (s.os || []).forEach(x => ALT.set(x, i)); });
+  const tag = (sel, make) => document.head.querySelector(sel) || document.head.appendChild(make());
+  const meta = (attr, key, val) => tag(`meta[${attr}="${key}"]`, () => { const m = document.createElement("meta"); m.setAttribute(attr, key); return m; }).setAttribute("content", val);
+  const setMeta = (title, desc, path, ld) => {
+    document.title = title; meta("name", "description", desc);
+    meta("property", "og:title", title); meta("property", "og:description", desc); meta("property", "og:type", "website");
+    meta("property", "og:url", "https://trackandfieldstandards.com" + path); meta("name", "twitter:card", "summary_large_image");
+    meta("name", "twitter:title", title); meta("name", "twitter:description", desc);
+    tag('link[rel="canonical"]', () => { const l = document.createElement("link"); l.rel = "canonical"; return l; }).href = "https://trackandfieldstandards.com" + path;
+    const s = tag("script#pr-ld", () => { const x = document.createElement("script"); x.id = "pr-ld"; x.type = "application/ld+json"; return x; }); s.textContent = JSON.stringify(ld || {});
+  };
   const route = slug => {
-    if (slug) { let i = SLUG.indexOf(slug); if (i < 0) { const h = hits(slug.replace(/-track-standards$/, "").replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
-      if (i >= 0) { S.school = i; const s = SCH[i]; setMeta(`${s.n} Track & Field Standards | Preferred Recruit`, `${s.n} track and field recruiting standards: Target, Recruit and Walk-On marks for men and women (${s.d}, ${s.c}).`); render(); scrollTo(0, 0); return; } }
-    S.school = null; setMeta("College Track & Field Standards & Results | Preferred Recruit", "College track and field standards, results and rankings for every school: NCAA D1, D2, D3, NAIA and NJCAA."); render();
+    if (slug) { let i = ALT.has(slug) ? ALT.get(slug) : -1; if (i < 0) { const h = hits(slug.replace(/-track-standards$/, "").replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
+      if (i >= 0) { S.school = i; const s = SCH[i], path = "/schools/" + SLUG[i];
+        if (location.pathname !== path) history.replaceState({}, "", path);
+        const desc = `${s.n} track and field recruiting standards: Target, Recruit and Walk-On marks for men and women (${s.d}, ${s.c})${s.o ? ", from the school's official published standards" : ""}.`;
+        setMeta(`${s.n} Track & Field Standards | Preferred Recruit`, desc, path, {"@context": "https://schema.org", "@type": "SportsOrganization", name: s.n + " Track & Field", sport: "Track and Field",
+          url: "https://trackandfieldstandards.com" + path, description: desc, memberOf: {"@type": "SportsOrganization", name: s.c}, ...(s.s ? {address: {"@type": "PostalAddress", addressRegion: s.s}} : {}),
+          sameAs: [s.ws, s.rs, s.src, s.u].filter(Boolean)});
+        render(); scrollTo(0, 0); return; } }
+    S.school = null; setMeta("College Track & Field Standards & Results | Preferred Recruit", "Every college track and field standard, every NCAA result and a recruiting AI: NCAA D1, D2, D3, NAIA and NJCAA.", "/",
+      {"@context": "https://schema.org", "@type": "WebSite", name: "Preferred Recruit Track & Field Standards", url: "https://trackandfieldstandards.com/"}); render();
   };
   window.__prStandardsRoute = route;
   document.addEventListener("click", ev => { const b = ev.target.closest("[data-school]"); if (b) history.pushState({}, "", "/schools/" + SLUG[+b.dataset.school]);
