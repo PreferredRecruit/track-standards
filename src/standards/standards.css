@@ -37,7 +37,7 @@ header{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--pr-ca
 /* hero + switcher (one centered, balanced block) */
 .hero{text-align:center;padding:64px 22px 0;max-width:820px;margin:0 auto}
 h1{font-size:clamp(40px,6.6vw,66px);line-height:1.03;font-weight:700;letter-spacing:-.047em;margin:0;color:var(--pr-ink)}
-h1 span{display:block;background:linear-gradient(90deg,#8F8E9C 0%,#B49BDD 38%,#7A45F0 78%,#5A2BD6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.06em}
+h1 span{display:block;background:linear-gradient(90deg,#A98BFF 0%,#8A5CF5 32%,#7A45F0 58%,#5A2BD6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.06em}
 .inl{margin:20px auto 0;font-size:16px;color:var(--pr-mute)}
 .inl a{color:var(--pr-accent);font-weight:600;white-space:nowrap}
 .inl a:hover{text-decoration:underline;text-underline-offset:4px}
