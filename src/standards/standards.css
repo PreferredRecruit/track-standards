@@ -445,3 +445,9 @@ h1.sname{font-size:clamp(30px,5vw,46px);letter-spacing:-.045em;line-height:1.06;
 .sl::after{content:"↗";color:var(--pr-accent);font-weight:700}
 .sl:hover{color:var(--pr-accent)}
 .sl.off{background:var(--pr-violet);color:#fff}.sl.off::after{color:#fff}
+
+/* "or" between the stats search and the one-school search */
+.orsep{display:flex;align-items:center;gap:14px;margin:22px auto 0;max-width:560px;color:var(--pr-faint);font-size:13px;font-weight:500;letter-spacing:.02em}
+.orsep::before,.orsep::after{content:"";flex:1;height:1px;background:color-mix(in srgb,var(--pr-faint) 40%,transparent)}
+.one{margin:18px auto 0}
+.levels{margin-top:40px}

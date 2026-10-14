@@ -105,6 +105,8 @@ function standards(){
     <div class="evw"><label class="sr" for="ev">Event</label><select class="in" id="ev">${list.map(e=>`<option value="${esc(e)}" ${e===S.e?"selected":""}>${esc(e)}${CONV[e]?" · converted":""}</option>`).join("")}</select>${CONV[S.e]?cinfo(S.e):""}</div>
     <label class="sr" for="mk">Personal best</label><input class="in" id="mk" placeholder="Personal best, e.g. ${esc(ph(S.e))}" value="${esc(S.mark)}" autocomplete="off" inputmode="decimal">
     <button class="go">Search colleges</button></div><div class="hint" id="hint"></div></form>`;
+  /* order (Ryan 2026-10-13): search by stats · or · search one school · what the levels mean · results */
+  o+=`<div class="orsep" role="separator"><span>or</span></div><div class="one"><h4>Search for one school</h4><p>${SCH.length.toLocaleString()} colleges across NCAA D1, D2, D3, NAIA and NJCAA.</p><div class="search">${MAG}<label class="sr" for="q">Search colleges</label><input class="in" id="q" placeholder="Try USC, Oregon or Ole Miss" autocomplete="off" value="${esc(S.q)}"><div id="drop"></div></div></div>`;
   o+=levels();
   if(S.run){
     const v=parse(S.mark,S.e),all=[];SCH.forEach((s,i)=>{const t=tier(s,S.g,S.e,v);if(t)all.push({s,i,t})});
@@ -127,7 +129,7 @@ function standards(){
       <p class="vnote"><span class="star">★</span> Official standards, published by the school and verified by Preferred Recruit. Every other college is set from its 2026 conference results.</p>
     </section>`;
   }
-  return o+`<div class="one"><h4>Search for one school</h4><p>${SCH.length.toLocaleString()} colleges across NCAA D1, D2, D3, NAIA and NJCAA.</p><div class="search">${MAG}<label class="sr" for="q">Search colleges</label><input class="in" id="q" placeholder="Try USC, Oregon or Ole Miss" autocomplete="off" value="${esc(S.q)}"><div id="drop"></div></div></div></div>`;
+  return o+`</div>`;
 }
 function hits(q){q=q.trim().toLowerCase().replace(/\s+/g," ");if(q.length<2)return [];const ws=q.split(" ");
   return SCH.map((s,i)=>{let b=0;if(s.a.includes(q))b=100;else if(ACR[i]===q)b=92;else if(s.a.some(a=>a.startsWith(q)))b=80;else if(ws.every(w=>TOK[i].some(t=>t.startsWith(w))))b=60;
