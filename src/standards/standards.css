@@ -451,3 +451,19 @@ h1.sname{font-size:clamp(30px,5vw,46px);letter-spacing:-.045em;line-height:1.06;
 .orsep::before,.orsep::after{content:"";flex:1;height:1px;background:color-mix(in srgb,var(--pr-faint) 40%,transparent)}
 .one{margin:18px auto 0}
 .levels{margin-top:40px}
+
+/* levels explained in an (i) next to the levels (Ryan 2026-10-13: not a block on the page) */
+.lvi{margin-left:6px;vertical-align:middle}
+.lvi .cib{width:18px;height:18px;font-size:11px;border-width:1.5px}
+.lvi .cpop{width:min(320px,86vw);top:26px;right:-6px;text-transform:none;letter-spacing:0;font-weight:400}
+.lvi.left .cpop{left:-6px;right:auto}
+.lvi .cpop>b{font-size:14px;margin-bottom:8px}
+.lvrow{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--pr-line)}
+.lvrow:first-of-type{border-top:0}
+.lvrow i{flex:none;width:9px;height:9px;border-radius:50%;margin-top:5px}
+.lvrow.T i{background:var(--pr-t)}.lvrow.R i{background:var(--pr-r)}.lvrow.W i{background:var(--pr-w)}
+.lvrow b{display:block;color:var(--pr-ink);font-size:13px;margin:0}
+.lvrow span{font-size:13px;line-height:1.4;color:var(--pr-ink2)}
+.mcount{align-items:center}
+.mrow.mh{overflow:visible}.mtab{overflow:visible}
+th .lvi .cpop{text-align:left}
