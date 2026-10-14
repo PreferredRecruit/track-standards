@@ -22,3 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# TFRRS weekly refresh working files (results are published to the data branch)
+scripts/tfrrs/lists/
+scripts/tfrrs/cache/
+scripts/tfrrs/cache_champs/
+scripts/tfrrs/champs/
+scripts/tfrrs/out/
+scripts/tfrrs/rank/
+scripts/tfrrs/rank_tmp/
+scripts/tfrrs/__pycache__/
