@@ -10,31 +10,10 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
     <link rel="manifest" href="/site.webmanifest">
     
-    <!-- Performance optimizations -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <!-- Preload critical assets -->
-    <link rel="preload" as="image" href="/lovable-uploads/32e64d19-2b4a-46c0-bcb0-0c1657cf2992.png" fetchpriority="high">
-    <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2" crossorigin>
-    
-    <!-- Inline critical font CSS -->
-    <style>
-      @font-face {
-        font-family: 'Inter';
-        font-style: normal;
-        font-weight: 400;
-        font-display: swap;
-        src: url(https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2) format('woff2');
-      }
-    </style>
-    
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <title>Preferred Recruit Track Standards</title>
-    <meta name="description" content="Find your preferred college track and field recruiting standards. Compare your PRs against track and field standards from colleges nationwide.">
+    <!-- Standards data starts downloading with the page (the app needs it before it can draw anything) -->
+    <link rel="preload" href="/data/db.json" as="fetch" crossorigin>
+    <title>College Track &amp; Field Standards, NCAA Results &amp; Recruiting AI | Preferred Recruit</title>
+    <meta name="description" content="Recruiting standards for 1,269 college track and field programs (NCAA D1, D2, D3, NAIA, NJCAA), every NCAA result since 2016, and a recruiting AI. Enter your mark and see which colleges you fit.">
 
     <link rel="canonical" href="https://trackandfieldstandards.com/" />
     
@@ -42,13 +21,13 @@
     <meta property="og:site_name" content="Preferred Recruit Track Standards" />
     <meta name="application-name" content="Preferred Recruit Track Standards" />
     <meta property="og:url" content="https://trackandfieldstandards.com/" />
-    <meta property="og:title" content="Preferred Recruit Track Standards" />
-    <meta property="og:description" content="Find your preferred college track and field recruiting standards. Compare your PRs against track and field standards from colleges nationwide." />
+    <meta property="og:title" content="College Track &amp; Field Standards, NCAA Results &amp; Recruiting AI | Preferred Recruit" />
+    <meta property="og:description" content="Recruiting standards for 1,269 college track and field programs (NCAA D1, D2, D3, NAIA, NJCAA), every NCAA result since 2016, and a recruiting AI. Enter your mark and see which colleges you fit." />
     <meta property="og:image" content="https://trackandfieldstandards.com/lovable-uploads/32e64d19-2b4a-46c0-bcb0-0c1657cf2992.png" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Preferred Recruit Track Standards" />
-    <meta name="twitter:description" content="Find your preferred college track and field recruiting standards. Compare your PRs against track and field standards from colleges nationwide." />
+    <meta name="twitter:title" content="College Track &amp; Field Standards, NCAA Results &amp; Recruiting AI | Preferred Recruit" />
+    <meta name="twitter:description" content="Recruiting standards for 1,269 college track and field programs (NCAA D1, D2, D3, NAIA, NJCAA), every NCAA result since 2016, and a recruiting AI. Enter your mark and see which colleges you fit." />
     <meta name="twitter:image" content="https://trackandfieldstandards.com/lovable-uploads/32e64d19-2b4a-46c0-bcb0-0c1657cf2992.png" />
     
 
@@ -68,8 +47,17 @@
           "@id": "https://trackandfieldstandards.com/#website",
           "name": "Preferred Recruit Track Standards",
           "url": "https://trackandfieldstandards.com/",
-          "description": "Find your preferred college track and field recruiting standards. Compare your PRs against track and field standards from colleges nationwide.",
+          "description": "Recruiting standards for 1,269 college track and field programs (NCAA D1, D2, D3, NAIA, NJCAA), every NCAA result since 2016, and a recruiting AI. Enter your mark and see which colleges you fit.",
           "publisher": { "@id": "https://trackandfieldstandards.com/#organization" }
+        },
+        {
+          "@type": "Dataset",
+          "name": "College track and field recruiting standards",
+          "description": "Target, Recruit and Walk-On marks for 1,269 college track and field programs in NCAA D1, D2, D3, NAIA and NJCAA, from official school charts and TFRRS conference results, refreshed weekly.",
+          "url": "https://trackandfieldstandards.com/",
+          "creator": { "@id": "https://trackandfieldstandards.com/#organization" },
+          "keywords": ["college track and field standards", "recruiting standards", "NCAA track and field", "walk-on standards", "TFRRS"],
+          "isAccessibleForFree": true
         }
       ]
     }

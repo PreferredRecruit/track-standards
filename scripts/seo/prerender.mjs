@@ -13,6 +13,7 @@ import path from "node:path";
 import zlib from "node:zlib";
 
 import { hsPages } from "./hs.mjs";
+import { schoolPages } from "./schools.mjs";
 const SITE = "https://trackandfieldstandards.com";
 const QUIZ = "https://app.thepreferredrecruit.com/parentfunnel/?utm_source=website&utm_medium=standards&utm_campaign=PRstandards";
 const EVENTS = ["100m", "200m", "400m", "800m", "1500m", "1600m", "Mile", "3000m", "3200m", "5000m", "10000m", "100m Hurdles", "110m Hurdles",
@@ -141,6 +142,9 @@ export function generate(root, out) {
   /* high school athletes, parents and coaches */
   const writeRaw = (p, txt) => { const f = path.join(out, p); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, txt); };
   hsPages({ S, CT, NJ: DB.nj, write, writeRaw, page, parse, esc, slug, schoolUrl: sl, evPath, FIELD, SITE, gName });
+  /* pre-built HTML for every school page (served at /schools/<slug> by vercel.json); already in the sitemap */
+  try { schoolPages({ root, out, S, SITE, QUIZ, esc, schoolSlug, std, EVENTS, STATE, evLabel, confUrl: s => confName.get(s.d + "|" + s.c), statePath, evPath, gName }); }
+  catch (e) { console.warn("school pages skipped:", e && e.message); }
   /* hub */
   const groupLinks = (items) => `<div class="links">${items.map(([u, t]) => `<a href="${u}">${esc(t)}</a>`).join("")}</div>`;
   const evLinks = DIVS.map(d => `<h2 id="${slug(d)}">${esc(d)}</h2><h3>Conferences</h3>${groupLinks([...confs.keys()].filter(k => k.startsWith(d + "|")).sort().map(k => [confName.get(k), k.split("|")[1]]))}<h3>Standards by event</h3>${groupLinks(["m", "w"].flatMap(g => evAvail(S.filter(s => s.d === d), g).map(e => [evPath(d, g, e), `${gName(g)} ${e}`])))}`).join("");

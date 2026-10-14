@@ -129,9 +129,9 @@ function standards(){
     const sh=all.filter(x=>ok(x)).sort((a,b)=>"TRWJ".indexOf(a.t)-"TRWJ".indexOf(b.t)||DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||a.s.n.localeCompare(b.s.n));CUR=sh;
     const opts=(skip,key)=>[...new Set(all.filter(x=>ok(x,skip)).map(key))].filter(Boolean);
     const dd=(id,label,cur,list,fmt=x=>x)=>`<label class="dd${cur?" on":""}"><span class="sr">${label}</span><select id="${id}"><option value="">${label}</option>${list.map(x=>`<option value="${esc(x)}" ${x===cur?"selected":""}>${esc(fmt(x))}</option>`).join("")}</select></label>`;
-    const cl=convLine(S.e,S.g,v), c=k=>all.filter(x=>x.t===k).length;NJR=njRank(S.g,S.e,v);
+    const cl=convLine(S.e,S.g,v), c=k=>all.filter(x=>x.t===k).length;NJR=njRank(S.g,S.e,v);LASTSUM={mark:S.mark,e:S.e,g:S.g,n:all.length,T:c("T"),R:c("R"),W:c("W"),J:c("J")};
     o+=`<div class="mhead"><p class="sum">${esc(S.mark)} in the ${S.g==="m"?"men's":"women's"} ${esc(S.e)} fits <b>${all.length}</b> colleges</p>
-      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${c("J")?`<span class="lv J">${c("J")} junior colleges</span>`:""}${levelsInfo("left")}</p>${cl?`<p class="cvl"><b>College equivalent</b> ${cl}${cinfo(S.e)}</p>`:""}${c("J")?njMeter(S.g,S.e,v,S.mark):""}</div>
+      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${c("J")?`<span class="lv J">${c("J")} junior colleges</span>`:""}${levelsInfo("left")}</p>${cl?`<p class="cvl"><b>College equivalent</b> ${cl}${cinfo(S.e)}</p>`:""}${c("J")?njMeter(S.g,S.e,v,S.mark):""}${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}</div>
     <section class="mtab" aria-label="Your college matches">
       <div class="mbar"><h3>Your college matches</h3><div class="dds">
         ${dd("fd","All divisions",S.div,DIVS.filter(d=>opts("d",x=>x.s.d).includes(d)))}
@@ -187,7 +187,34 @@ function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src;
     ${ev.map(e=>`<tr><td>${e}</td><td class="num">${disp(s,g,e,0)}</td><td class="num">${disp(s,g,e,1)}</td><td class="num">${disp(s,g,e,2)}</td></tr>`).join("")||'<tr><td>No marks listed for this team yet.</td></tr>'}</tbody></table></div>
     <div class="verify"><b>How these are set</b><span>${ruleText(s)} ${esc(s.n)} doesn't publish an official chart we could verify. High school 1600m, 3200m, 300m hurdle and 39" hurdle marks are converted to these college events automatically.</span>${src?`<a href="${esc(src)}" target="_blank" rel="noopener">See the ${esc(s.c)} list on TFRRS ›</a>`:""}${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
   }
-  return o+schoolMore(s)+`</div>`}
+  setTimeout(()=>teamBest(S.school),0);
+  return o+`<div id="tbest"></div>`+schoolMore(s)+`</div>`}
+/* season bests (Ryan 2026-10-14 "optimize everything"): /data/teams/<slug>.json is written at build from the latest outdoor TFRRS lists */
+const TB={};
+function teamBest(i){const slug=window.__prSlug?window.__prSlug(i):null;if(!slug||i==null)return;
+  const fill=d=>{const el=document.getElementById("tbest");if(!el||S.school!==i)return;const L=d?d[S.g]||[]:[];if(!L.length){el.innerHTML="";return}
+    el.innerHTML=`<h3 class="tbh">${esc(d.y)} season bests<small>${S.g==="m"?"Men":"Women"} · TFRRS outdoor</small></h3><p class="tbp">${esc(SCH[i].n)}'s best mark in each event this season${d.conf?`, with its rank on the ${esc(d.conf)} list`:""}.</p>
+    <div class="scroll"><table><thead><tr><th>Event</th><th class="num">Mark</th><th>Athlete</th>${d.conf?'<th class="num">Conference rank</th>':""}<th class="num">National rank</th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.e)}</td><td class="num">${esc(r.mk)}${parseFloat(r.w)>2?"<small>w</small>":""}</td><td>${r.ap?`<a href="https://tf.tfrrs.org/athletes/${esc(r.ap)}" target="_blank" rel="noopener nofollow">${esc(r.a)}</a>`:esc(r.a)}</td>${d.conf?`<td class="num">${r.cp?"#"+r.cp:"–"}</td>`:""}<td class="num">${r.np?"#"+r.np:"–"}</td></tr>`).join("")}</tbody></table></div>`};
+  if(slug in TB)return fill(TB[slug]);
+  fetch("/data/teams/"+slug+".json").then(r=>r.ok?r.json():null).catch(()=>null).then(d=>{TB[slug]=d;fill(d)})}
+/* share my results: branded image card + a link that reopens this exact search (?g=&e=&m=) */
+let LASTSUM=null;
+function shareCard(L){const c=document.createElement("canvas");c.width=1080;c.height=1350;const x=c.getContext("2d"),F="-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif";
+  const gr=x.createLinearGradient(0,0,1080,1350);gr.addColorStop(0,"#B196FF");gr.addColorStop(.55,"#7A45F0");gr.addColorStop(1,"#4E22C2");x.fillStyle=gr;x.fillRect(0,0,1080,1350);
+  x.fillStyle="#fff";x.font=`600 42px ${F}`;x.fillText("Preferred Recruit · Track Standards",80,130);
+  x.font=`700 170px ${F}`;x.fillText(L.mark,76,430);x.font=`500 56px ${F}`;x.fillText(`${L.g==="m"?"Men's":"Women's"} ${L.e}`,80,515);
+  x.font=`700 92px ${F}`;x.fillText(`fits ${L.n.toLocaleString()} colleges`,80,700);
+  x.font=`500 50px ${F}`;[["Target",L.T],["Recruit",L.R],["Walk-On",L.W],["Junior colleges",L.J]].filter(z=>z[1]).forEach((z,k)=>x.fillText(`${z[1].toLocaleString()}  ${z[0]}`,80,830+k*76));
+  x.font=`600 46px ${F}`;x.fillText("Find yours: trackandfieldstandards.com",80,1250);
+  return new Promise(r=>c.toBlob(r,"image/png"))}
+async function doShare(btn){const L=LASTSUM;if(!L)return;
+  const url=`https://trackandfieldstandards.com/?g=${L.g}&e=${encodeURIComponent(L.e)}&m=${encodeURIComponent(L.mark)}`,text=`My ${L.mark} ${L.e} fits ${L.n.toLocaleString()} college track programs. Check yours:`;
+  try{const blob=await shareCard(L),file=new File([blob],"my-college-matches.png",{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:text+" "+url});return}
+    if(navigator.share){await navigator.share({title:"My college matches",text,url});return}
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="my-college-matches.png";a.click();
+    try{await navigator.clipboard.writeText(url)}catch(e){}btn.textContent="Image saved · link copied"}catch(e){}}
+document.addEventListener("click",ev=>{const b=ev.target.closest("[data-share]");if(b){ev.preventDefault();doShare(b)}});
 
 /* ---------- Results (TFRRS, organized) ---------- */
 const R={season:"2026-outdoor",div:"NCAA D1",list:0,g:"m",ev:null,q:"",team:null,ath:null,n:9999,swap:true};
@@ -762,6 +789,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     const s = tag("script#pr-ld", () => { const x = document.createElement("script"); x.id = "pr-ld"; x.type = "application/ld+json"; return x; }); s.textContent = JSON.stringify(ld || {});
   };
   const route = slug => {
+    if (slug) slug = String(slug).replace(/\.html$/, "");   /* pre-built /schools/<slug>.html pages */
     if (slug) { let i = ALT.has(slug) ? ALT.get(slug) : -1; if (i < 0) { const h = hits(slug.replace(/-track-standards$/, "").replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
       if (i >= 0) { S.school = i; const s = SCH[i], path = "/schools/" + SLUG[i];
         if (location.pathname !== path) history.replaceState({}, "", path);
@@ -770,10 +798,13 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
           url: "https://trackandfieldstandards.com" + path, description: desc, memberOf: {"@type": "SportsOrganization", name: s.c}, ...(s.s ? {address: {"@type": "PostalAddress", addressRegion: s.s}} : {}),
           sameAs: [s.ws, s.rs, s.src, s.u].filter(Boolean)});
         render(); scrollTo(0, 0); return; } }
+    { const q = new URLSearchParams(location.search);   /* shared result links: /?g=m&e=100m&m=10.95 */
+      if (q.get("m") && q.get("e") && !S.run) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; } }
     S.school = null; setMeta("College Track & Field Standards & Results | Preferred Recruit", "Every college track and field standard, every NCAA result and a recruiting AI: NCAA D1, D2, D3, NAIA and NJCAA.", "/",
       {"@context": "https://schema.org", "@type": "WebSite", name: "Preferred Recruit Track & Field Standards", url: "https://trackandfieldstandards.com/"}); render();
   };
   window.__prStandardsRoute = route;
+  window.__prSlug = i => SLUG[i];
   document.addEventListener("click", ev => { const b = ev.target.closest("[data-school]"); if (b) history.pushState({}, "", "/schools/" + SLUG[+b.dataset.school]);
     if (ev.target.closest("[data-back]") || ev.target.closest("[data-tab]")) { if (location.pathname !== "/") history.pushState({}, "", "/"); } }, true);
   addEventListener("popstate", () => { const m = location.pathname.match(/^\/schools\/([^/]+)/); route(m ? m[1] : null); });
