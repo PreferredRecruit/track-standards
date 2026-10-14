@@ -12,6 +12,7 @@ import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 
+import { hsPages } from "./hs.mjs";
 const SITE = "https://trackandfieldstandards.com";
 const QUIZ = "https://app.thepreferredrecruit.com/parentfunnel/?utm_source=website&utm_medium=standards&utm_campaign=PRstandards";
 const EVENTS = ["100m", "200m", "400m", "800m", "1500m", "1600m", "Mile", "3000m", "3200m", "5000m", "10000m", "100m Hurdles", "110m Hurdles",
@@ -52,12 +53,12 @@ th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font
 .cta{margin:30px 0;padding:18px 20px;border-radius:18px;background:linear-gradient(135deg,#A98BFF,#7A45F0 55%,#4E22C2);color:#fff}.cta a{color:#fff;font-weight:700}
 .links{columns:3 220px;gap:24px;font-size:14px}.links a{display:block;padding:3px 0;text-decoration:none}.links a:hover{text-decoration:underline}
 footer{border-top:1px solid var(--line);font-size:13px;color:var(--mute);padding:20px}footer div{max-width:1000px;margin:0 auto}footer a{color:var(--mute);margin-right:14px}
-.star{color:#7A45F0}</style></head><body>
+.star{color:#7A45F0}header nav a.cta{white-space:nowrap}@media(max-width:560px){header nav a:not(.cta){display:none}header nav a.cta{margin-left:0}}</style></head><body>
 <header><div><a class="logo" href="/"><img src="/icon-192.png" alt="">Preferred Recruit · Track Standards</a><nav><a href="/">Standards</a><a href="/explore.html">Explore</a><a class="cta" href="${QUIZ}">Free recruitment evaluation</a></nav></div></header>
 <main><div class="bc">${crumbs.map(([n, u], i) => i < crumbs.length - 1 ? `<a href="${u}">${esc(n)}</a> › ` : esc(n)).join("")}</div>
 <h1>${h1}</h1>${intro ? `<p class="intro">${intro}</p>` : ""}${body}
 <div class="cta"><b>Looking to run in college?</b> Preferred Recruit gets athletes' marks in front of college coaches. <a href="${QUIZ}">Get your free recruitment evaluation ›</a></div></main>
-<footer><div><a href="/">Search standards</a><a href="/explore.html">All conferences, states and events</a><a href="/explore.html#champions">National champions</a><a href="/explore.html#results">Results</a><span>© ${new Date().getFullYear()} Preferred Recruit</span></div></footer></body></html>`;
+<footer><div><a href="/">Search standards</a><a href="/explore.html">All conferences, states and events</a><a href="/explore.html#champions">National champions</a><a href="/explore.html#results">Results</a><a href="/how-fast.html">How fast for college?</a><a href="/convert.html">Conversions</a><a href="/for-parents.html">For parents</a><a href="/for-coaches.html">For coaches</a><span>© ${new Date().getFullYear()} Preferred Recruit</span></div></footer></body></html>`;
 }
 
 export function generate(root, out) {
@@ -137,6 +138,9 @@ export function generate(root, out) {
         body: `<div class="scroll"><table><tr><th>#</th><th>Athlete</th><th>Class</th><th>Team</th><th class="n">Mark</th><th>Meet</th></tr>${r.slice(0, 50).map((z, i) => `<tr><td>${i + 1}</td><td>${esc(z[1] || D.teams[z[3]])}</td><td>${esc(z[2] || "")}</td><td>${esc(D.teams[z[3]])}</td><td class="n">${esc(z[4])}${z[8] ? ` <small>(${esc(z[8])})</small>` : z[5] ? ` <small>(${esc(z[5])})</small>` : ""}</td><td>${esc(D.meets[z[6]] || "")} <small>${esc(z[7] || "")}</small></td></tr>`).join("")}</table></div>` }));
     }
   }
+  /* high school athletes, parents and coaches */
+  const writeRaw = (p, txt) => { const f = path.join(out, p); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, txt); };
+  hsPages({ S, CT, write, writeRaw, page, parse, esc, slug, schoolUrl: sl, evPath, FIELD, SITE, gName });
   /* hub */
   const groupLinks = (items) => `<div class="links">${items.map(([u, t]) => `<a href="${u}">${esc(t)}</a>`).join("")}</div>`;
   const evLinks = DIVS.map(d => `<h2 id="${slug(d)}">${esc(d)}</h2><h3>Conferences</h3>${groupLinks([...confs.keys()].filter(k => k.startsWith(d + "|")).sort().map(k => [confName.get(k), k.split("|")[1]]))}<h3>Standards by event</h3>${groupLinks(["m", "w"].flatMap(g => evAvail(S.filter(s => s.d === d), g).map(e => [evPath(d, g, e), `${gName(g)} ${e}`])))}`).join("");
@@ -146,7 +150,7 @@ export function generate(root, out) {
   write("/explore.html", page({ title: "Explore College Track & Field: Conferences, States, Events, Champions | Preferred Recruit", desc: "Every college track and field conference, state, event standard, national champion and top-marks list: NCAA D1, D2, D3, NAIA and NJCAA, 2016 to today.",
     pathname: "/explore.html", crumbs: [["Home", "/"], ["Explore", "/explore.html"]], h1: "Explore College Track &amp; Field",
     intro: `${S.length.toLocaleString()} college programs, ${confs.size} conferences, every event's recruiting standards, national champions and top marks from 2016 to today.`,
-    body: `<h2>States</h2>${groupLinks([...byState.keys()].sort((a, b) => (STATE[a] || a).localeCompare(STATE[b] || b)).map(st => [statePath(st), STATE[st] || st]))}${evLinks}<h2 id="champions">National champions</h2>${groupLinks(champPages.map(([u, t]) => [u, t]))}<h2 id="results">Top marks by season</h2>${resultsHtml}` }));
+    body: `<h2 id="high-school">High school athletes, parents and coaches</h2>${groupLinks([["/how-fast.html", "How fast do you need to run in college? (every event)"], ["/convert.html", "High school to college conversions"], ["/guides.html", "Recruiting guides"], ["/for-parents.html", "For parents"], ["/for-coaches.html", "Free widget for coaches"]])}<h2>States</h2>${groupLinks([...byState.keys()].sort((a, b) => (STATE[a] || a).localeCompare(STATE[b] || b)).map(st => [statePath(st), STATE[st] || st]))}${evLinks}<h2 id="champions">National champions</h2>${groupLinks(champPages.map(([u, t]) => [u, t]))}<h2 id="results">Top marks by season</h2>${resultsHtml}` }));
   /* sitemap: every school page + every page above */
   const today = new Date().toISOString().slice(0, 10);
   const urls = ["/", ...[...new Set(S.map(sl))].sort(), ...files.sort()];
