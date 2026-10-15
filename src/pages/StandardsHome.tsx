@@ -22,7 +22,7 @@ const StandardsHome = () => {
         {!schoolSlug && (
           <meta
             name="description"
-            content="Recruiting standards for 1,269 college track and field programs (NCAA D1, D2, D3, NAIA, NJCAA), every NCAA result since 2016, and a recruiting AI. Enter your mark and see which colleges you fit."
+            content="Recruiting standards for every college track and field program (NCAA D1, D2, D3 and NAIA), every NCAA result since 2016, and a recruiting AI. Enter your mark and see which colleges you fit."
           />
         )}
         <link rel="canonical" href={`https://trackandfieldstandards.com${schoolSlug ? `/schools/${schoolSlug}` : "/"}`} />

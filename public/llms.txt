@@ -1,6 +1,6 @@
 # Preferred Recruit Track & Field Standards
 
-> College track and field recruiting standards, results and rankings for every program: NCAA Division I, II, III, NAIA and NJCAA. Target, Recruit and Walk-On marks for 1,249 colleges (134 from the schools' own verified published standards), national top marks and national champions from 2016 to today, and a recruiting chat that answers from this data.
+> College track and field recruiting standards, results and rankings for every program: NCAA Division I, II, III and NAIA. Target, Recruit and Walk-On marks for {{SCHOOLS}} colleges (134 from the schools' own verified published standards), national top marks and national champions from 2016 to today, and a recruiting chat that answers from this data.
 
 ## Key pages
 
@@ -31,6 +31,7 @@
 - "What colleges can I run for with a [mark]?" pages, e.g. https://trackandfieldstandards.com/colleges-for/mens-1600m-4-30.html
 - High school to college conversions (1600m to 1500m, 3200m to 3000m/5000m, 300m to 400m hurdles, 39-inch to 42-inch hurdles): https://trackandfieldstandards.com/convert.html
 - Target, Recruit and Walk-On explained: https://trackandfieldstandards.com/guides/target-recruit-walk-on-explained.html
-- NCAA D1 vs D2 vs D3 vs NAIA vs NJCAA compared: https://trackandfieldstandards.com/guides/ncaa-d1-vs-d2-vs-d3-vs-naia-vs-njcaa-track-and-field.html
+- NCAA D1 vs D2 vs D3 vs NAIA compared: https://trackandfieldstandards.com/guides/ncaa-d1-vs-d2-vs-d3-vs-naia-track-and-field.html
+- Junior college (NJCAA) track and field recruiting, programs by state and national results: https://trackandfieldstandards.com/guides/junior-college-track-and-field-recruiting.html (junior colleges have results, not predicted levels)
 - For parents: https://trackandfieldstandards.com/for-parents.html
 - Free embeddable standards finder for high school and club coaches: https://trackandfieldstandards.com/for-coaches.html

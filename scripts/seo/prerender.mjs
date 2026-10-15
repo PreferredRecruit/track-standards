@@ -19,7 +19,8 @@ const QUIZ = "https://app.thepreferredrecruit.com/parentfunnel/?utm_source=websi
 const EVENTS = ["100m", "200m", "400m", "800m", "1500m", "1600m", "Mile", "3000m", "3200m", "5000m", "10000m", "100m Hurdles", "110m Hurdles",
   "300m Hurdles", "400m Hurdles", "3000m Steeplechase", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Hammer", "Javelin"];
 const FIELD = new Set(["High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Hammer", "Javelin"]);
-const DIVS = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA", "NJCAA"];
+const DIVS = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA"];
+const RDIVS = [...DIVS, "NJCAA"];   /* results and champions pages: junior colleges included (results only, no levels) */
 const STATE = { AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado", CT: "Connecticut", DE: "Delaware", DC: "Washington DC", FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", BC: "British Columbia" };
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -70,6 +71,9 @@ export function generate(root, out) {
   const DB = JSON.parse(fs.readFileSync(path.join(root, "public/data/db.json"), "utf8"));
   const RIDX = JSON.parse(fs.readFileSync(path.join(out, "data/rank_index.json"), "utf8"));   /* dist copy: includes the newest Monday data (seoPages) */
   const S = DB.schools, CT = DB.ct;
+  const NS = S.filter(x => !x.j).length, NJ = S.filter(x => x.j).length;   /* schools with levels / junior colleges (results only) */
+  const JG = "/guides/junior-college-track-and-field-recruiting.html";
+  for (const name of ["index.html", "llms.txt"]) { const f = path.join(out, name); if (fs.existsSync(f)) fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace(/\{\{SCHOOLS\}\}/g, NS.toLocaleString())); }
   /* real dates (Ryan 2026-10-14 "just for seo"): standards = when db.json was built, results = the Monday data refresh */
   DATES.db = DB.built || new Date().toISOString().slice(0, 10);
   try { DATES.data = JSON.parse(fs.readFileSync(path.join(out, "data/updated.json"), "utf8")).updated.slice(0, 10); } catch { DATES.data = DATES.db; }
@@ -89,11 +93,13 @@ export function generate(root, out) {
     const [d, c] = k.split("|"); list.sort((a, b) => a.n.localeCompare(b.n));
     const line = (CT[(list[0] || {}).ck] || {});
     const evRows = g => EVENTS.filter(e => (line[g] || {})[e]).map(e => `<tr><td><a href="${evPath(d, g, e)}">${esc(e)}</a></td>${[0, 1, 2].map(j => `<td class="n">${esc(((line[g][e] || [])[j] || [])[0] || "–")}</td>`).join("")}</tr>`).join("");
-    const body = `<h2>${esc(c)} track &amp; field programs (${list.length})</h2><div class="scroll"><table><tr><th>School</th><th>State</th><th>Standards</th></tr>${list.map(s => `<tr><td><a href="${sl(s)}">${esc(s.n)}</a>${s.o ? ' <span class="star">★ official</span>' : ""}</td><td>${esc(STATE[s.s] || s.s || "")}</td><td>${s.o ? "Published by the school" : s.est ? "Estimate" : "Set from 2026 conference results"}</td></tr>`).join("")}</table></div>` +
+    const body = `<h2>${esc(c)} track &amp; field programs (${list.length})</h2><div class="scroll"><table><tr><th>School</th><th>State</th><th>${d === "NJCAA" ? "On this site" : "Standards"}</th></tr>${list.map(s => `<tr><td><a href="${sl(s)}">${esc(s.n)}</a>${s.o ? ' <span class="star">★ official</span>' : ""}</td><td>${esc(STATE[s.s] || s.s || "")}</td><td>${s.j ? "Season results" : s.o ? "Published by the school" : s.est ? "Estimate" : "Set from 2026 conference results"}</td></tr>`).join("")}</table></div>` +
       (Object.keys(line.m || {}).length ? ["m", "w"].map(g => `<h2>${esc(c)} ${gName(g).toLowerCase()} marks: what it took this season</h2><p>The 8th, 15th and 25th best marks in the ${esc(c)} in 2026, which set the Target, Recruit and Walk-On levels for conference schools without an official chart.</p><div class="scroll"><table><tr><th>Event</th><th class="n">8th (Target)</th><th class="n">15th (Recruit)</th><th class="n">25th (Walk-On)</th></tr>${evRows(g)}</table></div>`).join("") : "");
-    write(confName.get(k), page({ title: `${c} Track & Field Recruiting Standards (${d}) | Preferred Recruit`, desc: `${c} track and field recruiting standards: Target, Recruit and Walk-On marks for all ${list.length} ${d} ${c} programs, plus what it took to score in the ${c} this season.`,
-      pathname: confName.get(k), crumbs: [["Home", "/"], ["Explore", "/explore.html"], [d, "/explore.html#" + slug(d)], [c, confName.get(k)]], h1: `${esc(c)} Track &amp; Field Recruiting Standards`,
-      intro: `Every ${esc(d)} ${esc(c)} track and field program, with links to each school's Target, Recruit and Walk-On standards for men and women.`, body,
+    const juco = d === "NJCAA";
+    write(confName.get(k), page({ title: juco ? `NJCAA Junior College Track & Field Programs (${list.length}) | Preferred Recruit` : `${c} Track & Field Recruiting Standards (${d}) | Preferred Recruit`,
+      desc: juco ? `All ${list.length} NJCAA junior college track and field programs on TFRRS, with each program's season results, roster and site links. Junior colleges compete nationally, so this site shows results rather than predicted recruiting levels.` : `${c} track and field recruiting standards: Target, Recruit and Walk-On marks for all ${list.length} ${d} ${c} programs, plus what it took to score in the ${c} this season.`,
+      pathname: confName.get(k), crumbs: [["Home", "/"], ["Explore", "/explore.html"], juco ? ["Junior colleges", JG] : [d, "/explore.html#" + slug(d)], [c, confName.get(k)]], h1: juco ? "NJCAA Junior College Track &amp; Field Programs" : `${esc(c)} Track &amp; Field Recruiting Standards`,
+      intro: juco ? `${list.length} junior college programs compete in NJCAA track and field. There are no conference lists, so this site doesn't set recruiting levels for them; each program's page shows its season bests, roster and TFRRS links, and the <a href="${JG}">junior college guide</a> explains how NJCAA recruiting works.` : `Every ${esc(d)} ${esc(c)} track and field program, with links to each school's Target, Recruit and Walk-On standards for men and women.`, body,
       ld: [{ "@context": "https://schema.org", "@type": "ItemList", name: `${c} track and field programs`, itemListElement: list.map((s, i) => ({ "@type": "ListItem", position: i + 1, url: SITE + sl(s), name: s.n })) }] }));
   }
   /* division x event */
@@ -119,14 +125,14 @@ export function generate(root, out) {
   const byState = new Map(); for (const s of S) if (s.s) { if (!byState.has(s.s)) byState.set(s.s, []); byState.get(s.s).push(s); }
   for (const [st, list] of byState) {
     const nm = STATE[st] || st, p = statePath(st);
-    const body = DIVS.filter(d => list.some(s => s.d === d)).map(d => `<h2>${esc(d)} (${list.filter(s => s.d === d).length})</h2><div class="scroll"><table><tr><th>School</th><th>Conference</th></tr>${list.filter(s => s.d === d).sort((a, b) => a.n.localeCompare(b.n)).map(s => `<tr><td><a href="${sl(s)}">${esc(s.n)}</a>${s.o ? ' <span class="star">★ official</span>' : ""}</td><td><a href="${confName.get(s.d + "|" + s.c)}">${esc(s.c)}</a></td></tr>`).join("")}</table></div>`).join("");
-    write(p, page({ title: `College Track & Field Programs in ${nm} (${list.length}) | Preferred Recruit`, desc: `All ${list.length} college track and field programs in ${nm}: NCAA D1, D2, D3, NAIA and NJCAA, with recruiting standards for every school.`,
-      pathname: p, crumbs: [["Home", "/"], ["Explore", "/explore.html"], [nm, p]], h1: `College Track &amp; Field Programs in ${esc(nm)}`, intro: `${list.length} college track and field programs in ${esc(nm)}. Open any school for its Target, Recruit and Walk-On standards.`, body }));
+    const body = [...DIVS, "NJCAA"].filter(d => list.some(s => s.d === d)).map(d => `<h2>${esc(d)}${d === "NJCAA" ? " junior colleges" : ""} (${list.filter(s => s.d === d).length})</h2><div class="scroll"><table><tr><th>School</th><th>Conference</th></tr>${list.filter(s => s.d === d).sort((a, b) => a.n.localeCompare(b.n)).map(s => `<tr><td><a href="${sl(s)}">${esc(s.n)}</a>${s.o ? ' <span class="star">★ official</span>' : ""}</td><td><a href="${confName.get(s.d + "|" + s.c)}">${esc(s.c)}</a></td></tr>`).join("")}</table></div>`).join("");
+    write(p, page({ title: `College Track & Field Programs in ${nm} (${list.length}) | Preferred Recruit`, desc: `All ${list.length} college track and field programs in ${nm}: NCAA D1, D2, D3 and NAIA with recruiting standards${list.some(s => s.j) ? `, plus ${list.filter(s => s.j).length} NJCAA junior colleges with season results` : ""}.`,
+      pathname: p, crumbs: [["Home", "/"], ["Explore", "/explore.html"], [nm, p]], h1: `College Track &amp; Field Programs in ${esc(nm)}`, intro: `${list.length} college track and field programs in ${esc(nm)}. Open any NCAA or NAIA school for its Target, Recruit and Walk-On standards${list.some(s => s.j) ? "; junior colleges show season results instead of levels" : ""}.`, body }));
   }
   /* champions + results (from the packed TFRRS results) */
   const champPages = [], resultPages = [];
   for (const x of RIDX) {
-    if (!DIVS.includes(x.div)) continue;
+    if (!RDIVS.includes(x.div)) continue;
     let D; try { D = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(out, "data/rank", x.key + ".dat"))).toString()); } catch { continue; }
     const seasonName = x.season[0].toUpperCase() + x.season.slice(1);
     const champ = D.lists.find(l => l.champ), nat = D.lists.find(l => l.nat);
@@ -149,20 +155,41 @@ export function generate(root, out) {
   }
   /* high school athletes, parents and coaches */
   const writeRaw = (p, txt) => { const f = path.join(out, p); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, txt); };
-  hsPages({ S, CT, NJ: DB.nj, write, writeRaw, page, parse, esc, slug, schoolUrl: sl, evPath, FIELD, SITE, gName });
+  hsPages({ S: S.filter(x => !x.j), CT, write, writeRaw, page, parse, esc, slug, schoolUrl: sl, evPath, FIELD, SITE, gName });
   /* pre-built HTML for every school page (served at /schools/<slug> by vercel.json); already in the sitemap */
   try { schoolPages({ root, out, S, DATES, SITE, QUIZ, esc, schoolSlug, std, EVENTS, STATE, evLabel, confUrl: s => confName.get(s.d + "|" + s.c), statePath, evPath, gName }); }
   catch (e) { console.warn("school pages skipped:", e && e.message); }
-  /* hub */
   const groupLinks = (items) => `<div class="links">${items.map(([u, t]) => `<a href="${u}">${esc(t)}</a>`).join("")}</div>`;
+  /* junior college guide (Ryan 2026-10-15: JUCOs get no levels, but every junior-college search should still land here) */
+  {
+    const jucos = S.filter(x => x.j).sort((a, b) => (STATE[a.s] || a.s || "zz").localeCompare(STATE[b.s] || b.s || "zz") || a.n.localeCompare(b.n));
+    const latest = RIDX.filter(x => x.div === "NJCAA" && x.season === "outdoor").map(x => x.year).sort().pop();
+    const njResults = resultPages.filter(([, x]) => x.div === "NJCAA" && x.year === latest && x.season === "outdoor");
+    const njChamps = champPages.filter(([u]) => /-njcaa\.html$/.test(u)).slice(-4).reverse();
+    const byStateJ = new Map(); for (const x of jucos) { const k = STATE[x.s] || x.s || "Other"; if (!byStateJ.has(k)) byStateJ.set(k, []); byStateJ.get(k).push(x); }
+    const faq = [
+      ["Does this site list recruiting standards for junior colleges?", `No. Target, Recruit and Walk-On levels are set from conference results, and NJCAA junior colleges compete nationally rather than in conferences, so their marks can't be predicted reliably. Instead, every NJCAA program has a page with its season bests, roster and TFRRS links, and this season's NJCAA national list is on the site by event.`],
+      ["Where can I see NJCAA track and field results?", `This season's NJCAA outdoor national list is on this site by event (${njResults.length} event lists${latest ? ` for ${latest}` : ""}), refreshed every Monday from TFRRS, along with NJCAA national champions by year.`],
+      ["How many junior colleges have track and field?", `${NJ} NJCAA programs appear on this season's TFRRS national list. They are listed by state on this page, each with its own page.`]];
+    write(JG, page({ title: "Junior College (NJCAA) Track & Field Recruiting: Programs, Results & How It Works | Preferred Recruit",
+      desc: `Junior college track and field recruiting: all ${NJ} NJCAA programs by state, this season's NJCAA national results by event, national champions, and why junior colleges don't have predicted recruiting standards.`,
+      pathname: JG, crumbs: [["Home", "/"], ["Guides", "/guides.html"], ["Junior colleges", JG]], h1: "Junior college (NJCAA) track &amp; field recruiting",
+      intro: `${NJ} junior college programs compete in NJCAA track and field. Unlike NCAA and NAIA schools, they have no conference lists, which is how this site sets Target, Recruit and Walk-On levels, so junior colleges get no predicted standards here. What you get instead: every program's season bests, roster and TFRRS links, and the national list for every event.`,
+      body: `<h2>This season's NJCAA national lists</h2>${njResults.length ? groupLinks(njResults.map(([u, , g, ev]) => [u, `${gName(g)} ${ev}`])) : `<p><a href="/?tab=results&div=NJCAA">Open the NJCAA national list in Results ›</a></p>`}
+${njChamps.length ? `<h2>NJCAA national champions</h2>${groupLinks(njChamps)}` : ""}
+<h2>Every NJCAA program by state</h2>${[...byStateJ.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([st, L]) => `<h3>${esc(st)} (${L.length})</h3>${groupLinks(L.map(x => [sl(x), x.n]))}`).join("")}
+<h2>Common questions</h2>${faq.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join("")}`,
+      ld: [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) }] }));
+  }
+  /* hub */
   const evLinks = DIVS.map(d => `<h2 id="${slug(d)}">${esc(d)}</h2><h3>Conferences</h3>${groupLinks([...confs.keys()].filter(k => k.startsWith(d + "|")).sort().map(k => [confName.get(k), k.split("|")[1]]))}<h3>Standards by event</h3>${groupLinks(["m", "w"].flatMap(g => evAvail(S.filter(s => s.d === d), g).map(e => [evPath(d, g, e), `${gName(g)} ${e}`])))}`).join("");
   const resultsByKey = new Map(); for (const [p, x, g, ev] of resultPages) { if (!resultsByKey.has(x.key)) resultsByKey.set(x.key, [x, []]); resultsByKey.get(x.key)[1].push([p, `${gName(g)} ${ev}`]); }
-  const resultsHtml = [...resultsByKey.values()].sort((a, b) => b[0].year.localeCompare(a[0].year) || a[0].season.localeCompare(b[0].season) || DIVS.indexOf(a[0].div) - DIVS.indexOf(b[0].div))
+  const resultsHtml = [...resultsByKey.values()].sort((a, b) => b[0].year.localeCompare(a[0].year) || a[0].season.localeCompare(b[0].season) || RDIVS.indexOf(a[0].div) - RDIVS.indexOf(b[0].div))
     .map(([x, list]) => `<h3 id="r-${x.key}">${x.year} ${x.season} · ${esc(x.div)}</h3>${groupLinks(list)}`).join("");
-  write("/explore.html", page({ title: "Explore College Track & Field: Conferences, States, Events, Champions | Preferred Recruit", desc: "Every college track and field conference, state, event standard, national champion and top-marks list: NCAA D1, D2, D3, NAIA and NJCAA, 2016 to today.",
+  write("/explore.html", page({ title: "Explore College Track & Field: Conferences, States, Events, Champions | Preferred Recruit", desc: "Every college track and field conference, state, event standard, national champion and top-marks list: NCAA D1, D2, D3 and NAIA, 2016 to today.",
     pathname: "/explore.html", crumbs: [["Home", "/"], ["Explore", "/explore.html"]], h1: "Explore College Track &amp; Field",
-    intro: `${S.length.toLocaleString()} college programs, ${confs.size} conferences, every event's recruiting standards, national champions and top marks from 2016 to today.`,
-    body: `<h2 id="high-school">High school athletes, parents and coaches</h2>${groupLinks([["/how-fast.html", "How fast do you need to run in college? (every event)"], ["/convert.html", "High school to college conversions"], ["/guides.html", "Recruiting guides"], ["/for-parents.html", "For parents"], ["/for-coaches.html", "Free widget for coaches"]])}<h2>States</h2>${groupLinks([...byState.keys()].sort((a, b) => (STATE[a] || a).localeCompare(STATE[b] || b)).map(st => [statePath(st), STATE[st] || st]))}${evLinks}<h2 id="champions">National champions</h2>${groupLinks(champPages.map(([u, t]) => [u, t]))}<h2 id="results">Top marks by season</h2>${resultsHtml}` }));
+    intro: `${NS.toLocaleString()} college programs with recruiting standards, ${NJ} junior colleges with results, ${confs.size} conferences, every event's recruiting standards, national champions and top marks from 2016 to today.`,
+    body: `<h2 id="high-school">High school athletes, parents and coaches</h2>${groupLinks([["/how-fast.html", "How fast do you need to run in college? (every event)"], ["/convert.html", "High school to college conversions"], ["/guides.html", "Recruiting guides"], ["/for-parents.html", "For parents"], ["/for-coaches.html", "Free widget for coaches"]])}<h2 id="njcaa">Junior colleges (NJCAA)</h2>${groupLinks([[JG, "Junior college track & field recruiting guide"], [confName.get("NJCAA|NJCAA") || JG, `All ${NJ} NJCAA programs`], ["/?tab=results&div=NJCAA", "NJCAA national results list"]])}<h2>States</h2>${groupLinks([...byState.keys()].sort((a, b) => (STATE[a] || a).localeCompare(STATE[b] || b)).map(st => [statePath(st), STATE[st] || st]))}${evLinks}<h2 id="champions">National champions</h2>${groupLinks(champPages.map(([u, t]) => [u, t]))}<h2 id="results">Top marks by season</h2>${resultsHtml}` }));
   /* sitemap: every school page + every page above */
   /* home page: real content in #root so crawlers see the site's main page (the app replaces it when it starts).
      Runs after schoolPages, which reads the clean shell. */
@@ -174,11 +201,12 @@ export function generate(root, out) {
       const latestYear = champPages.length ? champPages.map(([u]) => u.match(/\/champions\/(\d{4})/)).filter(Boolean).map(m => m[1]).sort().pop() : null;
       const home = `<main style="max-width:1000px;margin:0 auto;padding:28px 20px 60px;font:16px/1.55 -apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;color:#0B0B0F">
 <h1>College Track &amp; Field Standards and Results</h1>
-<p>Recruiting standards for ${S.length.toLocaleString()} college track and field programs in NCAA D1, D2, D3, NAIA and NJCAA, every NCAA result since 2016, and a recruiting AI. Enter your event and best mark to see every college where it's a Target, Recruit or Walk-On level. High school 1600m, 3200m, 300m hurdle and 39-inch hurdle marks are converted automatically.</p>
+<p>Recruiting standards for ${NS.toLocaleString()} college track and field programs in NCAA D1, D2, D3 and NAIA, every NCAA result since 2016, results for ${NJ} NJCAA junior colleges, and a recruiting AI. Enter your event and best mark to see every college where it's a Target, Recruit or Walk-On level. High school 1600m, 3200m, 300m hurdle and 39-inch hurdle marks are converted automatically.</p>
 <h2>How fast do you need to run in college?</h2>${L(["m", "w"].flatMap(g => ["100m", "200m", "400m", "800m", "1600m", "3200m", "Long Jump", "Shot Put"].map(e => [`/how-fast/${g === "m" ? "mens" : "womens"}-${slug(e)}.html`, `${g === "m" ? "Boys" : "Girls"} ${e}`])).concat([["/convert.html", "High school to college conversions"], ["/guides.html", "Recruiting guides"], ["/for-parents.html", "For parents"], ["/for-coaches.html", "For coaches"]]))}
 <h2>Standards by division</h2>${DIVS.map(d => `<h3>${esc(d)}</h3>${L(["m", "w"].flatMap(g => ["100m", "400m", "800m", "1500m", "5000m", "Long Jump"].map(e => [evPath(d, g, e), `${d} ${gName(g)} ${e} standards`])))}`).join("")}
 <h2>Schools with official published standards</h2>${L(S.filter(x => x.o).sort((a, b) => a.n.localeCompare(b.n)).map(x => [sl(x), x.n]))}
-<h2>Conferences</h2>${L([...confs.keys()].sort().map(k => [confName.get(k), `${k.split("|")[1]} (${k.split("|")[0]})`]))}
+<h2>Conferences</h2>${L([...confs.keys()].sort().map(k => [confName.get(k), k === "NJCAA|NJCAA" ? "NJCAA junior colleges" : `${k.split("|")[1]} (${k.split("|")[0]})`]))}
+<h2>Junior colleges</h2>${L([[JG, "Junior college (NJCAA) track & field recruiting guide"], ["/?tab=results&div=NJCAA", "NJCAA national results list"]])}
 <h2>College track and field by state</h2>${L([...byState.keys()].sort((a, b) => (STATE[a] || a).localeCompare(STATE[b] || b)).map(st => [statePath(st), STATE[st] || st]))}
 ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter(([u]) => u.includes(latestYear)).map(([u, t]) => [u, t + " champions"]).concat([["/explore.html#results", "Top marks by season, 2016 to today"], ["/explore.html", "Explore everything"]]))}` : ""}
 </main>`;

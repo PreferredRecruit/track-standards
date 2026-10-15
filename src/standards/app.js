@@ -25,7 +25,8 @@ const EVENTS=["100m", "200m", "400m", "800m", "1500m", "1600m", "Mile", "3000m",
 const SCH=DB.schools.map(x=>{const side=g=>{if(x.em)return (x.em[g]||{});const o=(x.om||{})[g]||{},c=(CT[x.ck]||{})[g]||{},r={};EVENTS.forEach(e=>{if(o[e])r[e]=o[e];else if(c[e])r[e]=c[e].map(v=>v?v[0]:"")});return r};return Object.assign(x,{m:side("m"),w:side("w")})});
 const ACR=SCH.map(s=>s.n.toLowerCase().replace(/\(.*?\)/g," ").split(/[^a-z&]+/).filter(w=>w&&!["of","the","at","and","in","for"].includes(w)).map(w=>w[0]).join(""));
 const TOK=SCH.map(s=>[...new Set((s.n+" "+s.t+" "+(s.a||[]).join(" ")).toLowerCase().split(/[^a-z0-9&]+/).filter(Boolean))]);
-const DIVS=["NCAA D1","NCAA D2","NCAA D3","NAIA","NJCAA"];
+const DIVS=["NCAA D1","NCAA D2","NCAA D3","NAIA"];
+const NSTD=SCH.filter(s=>!s.j).length;   /* schools with levels (junior colleges are results-only) */
 const QUIZ="https://app.thepreferredrecruit.com/parentfunnel/?utm_source=website&utm_medium=standards&utm_campaign=PRstandards";
 const FIELD=new Set(["High Jump","Pole Vault","Long Jump","Triple Jump","Shot Put","Discus","Hammer","Javelin"]);
 const SHORT=new Set(["100m","200m","400m","100m Hurdles","110m Hurdles","300m Hurdles","400m Hurdles"]);
@@ -62,21 +63,9 @@ function convert(e,g,v){const c=CONV[e];if(!c||v==null)return null;
 function convLine(e,g,v){const c=convert(e,g,v);if(!c)return "";
   return c.map(x=>`<span class="cvx"><b>${fmtT(x.v)}</b> ${esc(x.lab||x.e)} <small>range ${fmtT(x.lo)} to ${fmtT(x.hi)}</small></span>`).join("")}
 function tier0(t,e,v){if(meets(e,v,t[0]))return "T";if(meets(e,v,t[1]))return "R";if(t[2]&&meets(e,v,t[2]))return "W";return null}
-function tier(s,g,e,v){if(s.d==="NJCAA")return v!=null&&(s[g][e]||(convert(e,g,v)||[]).some(x=>s[g][x.e]))?"J":null;const t=s[g][e];if(t)return tier0(t,e,v);const c=convert(e,g,v);if(!c)return null;
+function tier(s,g,e,v){const t=s[g][e];if(t)return tier0(t,e,v);const c=convert(e,g,v);if(!c)return null;
   for(const x of c){if(s[g][x.e])return tier0(s[g][x.e],x.e,x.v)}return null}
-const TN={T:"Target",R:"Recruit",W:"Walk-On",J:"Junior college"};
-/* Junior colleges (Ryan 2026-10-14): no cutoffs. Every JUCO with the event is listed, and the athlete sees a ranking meter:
-   where the mark would rank on this season's NJCAA national list (DB.nj = every listed mark, best first). */
-const NJ=DB.nj||{};
-const njf=(e,x)=>FIELD.has(e)?x.toFixed(2)+"m":fmtT(x);
-function njRank(g,e,v){if(v==null||!NJ[g])return null;let x=NJ[g][e]?{e,v}:null;if(!x){const c=convert(e,g,v)||[];for(const y of c)if(NJ[g][y.e]){x={e:y.e,v:y.v};break}}if(!x)return null;
-  const L=NJ[g][x.e],f=FIELD.has(x.e);let r=0;for(const m of L){if(f?m>x.v+1e-9:m<x.v-1e-9)r++;else break}return {rank:r+1,n:L.length,e:x.e,v:x.v,L}}
-const njBand=r=>r.rank<=30?"Top 30 nationally":r.rank<=75?"Top 75 nationally":r.rank<=150?"Top 150 nationally":"Junior college";
-function njMeter(g,e,v,mark){const r=njRank(g,e,v);if(!r)return "";const N=r.n,cap=N>=500,pos=k=>Math.min(100,Math.sqrt(Math.max(0,k-.5)/N)*100),tk=[30,75,150].filter(k=>k<N);
-  const where=r.rank>N?`would sit outside the top ${N} NJCAA athletes`:`would rank about <b>#${r.rank}</b> of ${N}${cap?"+":""} NJCAA athletes`;
-  return `<div class="njm"><h5>Junior colleges: where you'd rank nationally <small>· NJCAA ${esc(r.e)}, this season</small></h5><div class="njbar">${tk.map(k=>`<i style="left:${pos(k)}%"></i>`).join("")}<b style="left:${r.rank>N?100:pos(r.rank)}%"></b></div>
-  <div class="njlab"><span class="l" style="left:0">#1<br>${njf(r.e,r.L[0])}</span>${tk.map(k=>`<span style="left:${pos(k)}%">Top ${k}<br>${njf(r.e,r.L[k-1])}</span>`).join("")}<span class="r" style="left:100%">#${N}${cap?"+":""}</span></div>
-  <p>Your ${esc(mark)}${r.e!==e?` (${njf(r.e,r.v)} ${esc(r.e)})`:""} ${where} in the ${esc(r.e)} this season. Junior college marks show where you'd stack up nationally, not a cutoff.</p></div>`}
+const TN={T:"Target",R:"Recruit",W:"Walk-On"};
 const better=(e,a,b)=>FIELD.has(e)?b-a:a-b;
 const S={tab:"standards",school:null,g:"m",e:"100m",mark:"",run:false,f:"",div:"",n:15,q:""};
 const seg=(k,v)=>`<div class="seg" role="group" aria-label="Team"><button type="button" data-${k}="m" aria-pressed="${v==="m"}">Men</button><button type="button" data-${k}="w" aria-pressed="${v==="w"}">Women</button></div>`;
@@ -99,14 +88,12 @@ addEventListener("scroll",()=>{scrolled+=Math.abs(scrollY-lastY);lastY=scrollY;
 
 /* ---------- Standards (the current site's flow, rebranded) ---------- */
 const DEF={W:"The minimum mark required to earn a spot on the team.",R:"The range where coaches typically start recruiting conversations and scholarship discussions begin.",T:"The marks that typically grant a full-ride scholarship, depending on school funding."};
-const levelsInfo=(side)=>`<span class="ci lvi${side?" "+side:""}"><button type="button" class="cib" data-cinfo aria-expanded="false" aria-label="What Target, Recruit and Walk-On mean">i</button><span class="cpop" role="tooltip"><b>What the levels mean</b><span class="lvrow T"><i></i><span><b>Target</b>${DEF.T}</span></span><span class="lvrow R"><i></i><span><b>Recruit</b>${DEF.R} Not a guarantee.</span></span><span class="lvrow W"><i></i><span><b>Walk-On</b>${DEF.W}</span></span><span class="lvrow J"><i></i><span><b>Junior colleges</b>Shown as your national rank among NJCAA athletes this season, not a cutoff.</span></span></span></span>`;
+const levelsInfo=(side)=>`<span class="ci lvi${side?" "+side:""}"><button type="button" class="cib" data-cinfo aria-expanded="false" aria-label="What Target, Recruit and Walk-On mean">i</button><span class="cpop" role="tooltip"><b>What the levels mean</b><span class="lvrow T"><i></i><span><b>Target</b>${DEF.T}</span></span><span class="lvrow R"><i></i><span><b>Recruit</b>${DEF.R} Not a guarantee.</span></span><span class="lvrow W"><i></i><span><b>Walk-On</b>${DEF.W}</span></span></span></span>`;
 const levels=()=>`<div class="levels"><h4>What the levels mean</h4><div class="lg3">
   <div class="lvc W"><b>Walk-On</b><p>${DEF.W}</p></div><div class="lvc R"><b>Recruit</b><p>${DEF.R}</p><em>Not a guarantee</em></div><div class="lvc T"><b>Target</b><p>${DEF.T}</p></div></div></div>`;
 let CUR=[],IO=null;
 function stdFor(s){const g=S.g;if(s[g][S.e])return [S.e,s[g][S.e]];const c=convert(S.e,g,parse(S.mark,S.e))||[];for(const x of c)if(s[g][x.e])return [x.e,s[g][x.e]];return [S.e,null]}
-let NJR=null;
 function cards(list,from,to){let o="";for(let k=from;k<Math.min(to,list.length);k++){const x=list[k],[ev,t]=stdFor(x.s),j={T:0,R:1,W:2}[x.t];
-  if(x.t==="J"){o+=`<button class="mrow" data-school="${x.i}"><span class="mn"><b>${esc(x.s.n)}</b><small>${esc(x.s.d)} · ${esc(x.s.c)}</small></span><span class="mdv"><i>JUCO</i></span><span class="mc">${esc(x.s.c)}</span><span class="mk">${NJR&&NJR.rank<=NJR.n?"#"+NJR.rank:"–"}<small>NJCAA rank</small></span><span><span class="pill2 J">${NJR?njBand(NJR):"Junior college"}</span></span></button>`;continue}
   o+=`<button class="mrow" data-school="${x.i}"><span class="mn"><b>${esc(x.s.n)}${star(x.s)}</b><small>${esc(x.s.d)} · ${esc(x.s.c)}</small></span><span class="mdv"><i>${esc(x.s.d.replace("NCAA ",""))}</i></span><span class="mc">${esc(x.s.c)}</span>
     <span class="mk">${t&&t[j]?`${esc(t[j])}${ev!==S.e?`<small>${esc(ev)}</small>`:""}`:"–"}</span><span><span class="pill2 ${x.t}">${TN[x.t]}</span></span></button>`}
   return o}
@@ -122,26 +109,26 @@ function standards(){
     <label class="sr" for="mk">Personal best</label><input class="in" id="mk" placeholder="PR, e.g. ${esc(ph(S.e))}" value="${esc(S.mark)}" autocomplete="off" inputmode="decimal">
     <button class="go">Search colleges</button></div><div class="hint" id="hint"></div></form>`;
   /* order (Ryan 2026-10-13): search by stats · or · search one school · what the levels mean · results */
-  o+=`<div class="orsep" role="separator"><span>or</span></div><div class="one"><h4>Search for one school</h4><p>${SCH.length.toLocaleString()} colleges across NCAA D1, D2, D3, NAIA and NJCAA.</p><div class="search">${MAG}<label class="sr" for="q">Search colleges</label><input class="in" id="q" placeholder="Try USC, Oregon or Ole Miss" autocomplete="off" value="${esc(S.q)}"><div id="drop"></div></div></div>`;
+  o+=`<div class="orsep" role="separator"><span>or</span></div><div class="one"><h4>Search for one school</h4><p>${NSTD.toLocaleString()} colleges across NCAA D1, D2, D3 and NAIA, plus every NJCAA junior college.</p><div class="search">${MAG}<label class="sr" for="q">Search colleges</label><input class="in" id="q" placeholder="Try USC, Oregon or Ole Miss" autocomplete="off" value="${esc(S.q)}"><div id="drop"></div></div></div>`;
   if(S.run){
     const v=parse(S.mark,S.e),all=[];SCH.forEach((s,i)=>{const t=tier(s,S.g,S.e,v);if(t)all.push({s,i,t})});
     const ok=(x,skip)=>(skip==="d"||!S.div||x.s.d===S.div)&&(skip==="c"||!S.conf||x.s.c===S.conf)&&(skip==="t"||!S.f||x.t===S.f)&&(skip==="s"||!S.st||x.s.s===S.st);
-    const sh=all.filter(x=>ok(x)).sort((a,b)=>"TRWJ".indexOf(a.t)-"TRWJ".indexOf(b.t)||DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||a.s.n.localeCompare(b.s.n));CUR=sh;
+    const sh=all.filter(x=>ok(x)).sort((a,b)=>"TRW".indexOf(a.t)-"TRW".indexOf(b.t)||DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||a.s.n.localeCompare(b.s.n));CUR=sh;
     const opts=(skip,key)=>[...new Set(all.filter(x=>ok(x,skip)).map(key))].filter(Boolean);
     const dd=(id,label,cur,list,fmt=x=>x)=>`<label class="dd${cur?" on":""}"><span class="sr">${label}</span><select id="${id}"><option value="">${label}</option>${list.map(x=>`<option value="${esc(x)}" ${x===cur?"selected":""}>${esc(fmt(x))}</option>`).join("")}</select></label>`;
-    const cl=convLine(S.e,S.g,v), c=k=>all.filter(x=>x.t===k).length;NJR=njRank(S.g,S.e,v);LASTSUM={mark:S.mark,e:S.e,g:S.g,n:all.length,T:c("T"),R:c("R"),W:c("W"),J:c("J")};
+    const cl=convLine(S.e,S.g,v), c=k=>all.filter(x=>x.t===k).length;LASTSUM={mark:S.mark,e:S.e,g:S.g,n:all.length,T:c("T"),R:c("R"),W:c("W")};
     o+=`<div class="mhead"><p class="sum">${esc(S.mark)} in the ${S.g==="m"?"men's":"women's"} ${esc(S.e)} fits <b>${all.length}</b> colleges</p>
-      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${c("J")?`<span class="lv J">${c("J")} junior colleges</span>`:""}${levelsInfo("left")}</p>${cl?`<p class="cvl"><b>College equivalent</b> ${cl}${cinfo(S.e)}</p>`:""}${c("J")?njMeter(S.g,S.e,v,S.mark):""}${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}</div>
+      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p>${cl?`<p class="cvl"><b>College equivalent</b> ${cl}${cinfo(S.e)}</p>`:""}${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}</div>
     <section class="mtab" aria-label="Your college matches">
       <div class="mbar"><h3>Your college matches</h3><div class="dds">
         ${dd("fd","All divisions",S.div,DIVS.filter(d=>opts("d",x=>x.s.d).includes(d)))}
         ${dd("fc","All conferences",S.conf,opts("c",x=>x.s.c).sort())}
-        ${dd("ft","All tiers",S.f,["T","R","W","J"].filter(k=>opts("t",x=>x.t).includes(k)),k=>TN[k])}
+        ${dd("ft","All tiers",S.f,["T","R","W"].filter(k=>opts("t",x=>x.t).includes(k)),k=>TN[k])}
         ${dd("fs","All states",S.st,opts("s",x=>x.s.s).sort())}
         ${S.div||S.conf||S.f||S.st?'<button class="clr" data-clear>Clear</button>':""}</div></div>
       <div class="mrow mh" aria-hidden="true"><span>School</span><span>Division</span><span>Conference</span><span class="mk">Mark to hit</span><span>Your level ${levelsInfo()}</span></div>
       ${sh.length?`<div id="sgrid">${cards(sh,0,S.n)}</div>${sh.length>S.n?'<div class="sent" id="sent" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span></div>':""}`:'<p class="empty">No colleges match these filters.</p>'}
-      <p class="vnote"><span class="star">★</span> Official standards, published by the school and verified by Preferred Recruit. Every other college is set from its 2026 conference results. Junior colleges are shown by national NJCAA rank.</p>
+      <p class="vnote"><span class="star">★</span> Official standards, published by the school and verified by Preferred Recruit. Every other college is set from its 2026 conference results.</p>
     </section>`;
   }
   return o+`</div>`;
@@ -153,7 +140,6 @@ const star=s=>s.o?'<span class="star" title="Official standards, verified">★</
 function drop(){const el=$("drop");if(!el)return;const h=hits(S.q.trim().toLowerCase());el.innerHTML=h.length?`<div class="drop">${h.map(([s,i])=>`<button data-school="${i}"><em>${esc(s.n)}${star(s)}</em><span>${s.d} · ${esc(s.c)}</span></button>`).join("")}</div>`:(S.q.trim().length>1?'<div class="drop"><p class="none">No college matches that. Try the full name or a short name like USC.</p></div>':"")}
 const disp=(s,g,e,i)=>{const o=(s.om||{})[g]||{};if(o[e])return esc(o[e][i]||"–");const c=(((CT[s.ck]||{})[g]||{})[e]||[])[i];return c?(c[1]?`${esc(c[1])} <small>${esc(c[0])}</small>`:esc(c[0]))+(c[2]?'<sup class="dest" title="Too few athletes in this conference event to set it, so this is the division median">est</sup>':""):"–"};
 function ruleText(s){if(s.est)return `These are Preferred Recruit estimates for ${esc(s.n)}. Its conference has no 2026 results list on TFRRS, so they can't be set from conference marks yet.`;const [t,r,w]=RULES[s.d]||[];const c=esc(s.c);
-  if(s.d==="NJCAA") return `Junior college benchmarks come from this season's NJCAA national list on TFRRS: the ${ord(t)}, ${ord(r)} and ${ord(w)} best marks in the country. They show where you'd rank nationally, not a cutoff.`;
   if(!r) return `${s.d==="NCAA D3"?"NCAA D3 programs don't give athletic scholarships, so every athlete is effectively a walk-on. ":""}Target is a top-${t} mark in the ${c} this season. Walk-On is the ${ord(w)}-best mark (or the last one listed).`;
   return `Target is the ${ord(t)}-best mark in the ${c} this season, Recruit the ${ord(r)}, Walk-On the ${ord(w)}.`}
 const slugx=x=>String(x).toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
@@ -162,17 +148,17 @@ const confUrl=s=>{const dup=SCH.some(x=>x.c===s.c&&x.d!==s.d);return `/conferenc
 const stateUrl=st=>`/states/${slugx(ST_NAME[st]||st)}-college-track-and-field.html`;
 /* common questions + related programs (same text the pre-built page and its FAQ structured data carry) */
 const FAQ_EV=["100m","200m","400m","800m","1500m","5000m","110m Hurdles","100m Hurdles","Long Jump","High Jump","Shot Put"];
-function schoolExtra(s){const J=s.d==="NJCAA",lvl=J?"top-150 national":"Walk-On",i=SCH.indexOf(s);
+function schoolExtra(s){const lvl="Walk-On",i=SCH.indexOf(s);
   const mk=g=>FAQ_EV.map(e=>{const t=s[g][e];return t&&t[2]?`${e} ${t[2]}`:null}).filter(Boolean).slice(0,6),m=mk("m"),w=mk("w");
-  const q=[[`What are the ${s.n} track and field recruiting standards?`,`${s.n} is ${/^[AEIOUN]/.test(s.d)?"an":"a"} ${s.d} program${s.c!==s.d?` in the ${s.c}`:""}. ${s.o?`Its standards come from the school's own published chart${s.yr?` (${s.yr})`:""}.`:J?"As a junior college, its benchmarks come from this season's NJCAA national list: the 30th, 75th and 150th best marks in the country.":"Its Target, Recruit and Walk-On levels are set from 2026 conference results."} The full table for men and women is above.`]];
-  if(m.length||w.length)q.push([J?`What marks rank in the NJCAA top 150 for ${s.n}?`:`What times do you need to walk on at ${s.n}?`,[m.length?`Men's ${lvl}: ${m.join(", ")}.`:"",w.length?`Women's ${lvl}: ${w.join(", ")}.`:""].filter(Boolean).join(" ")]);
-  q.push([`What conference is ${s.n} track and field in?`,`${s.n} competes in ${s.c!==s.d?`the ${s.c} (${s.d})`:`the ${s.d}`}${s.s?` and is based in ${ST_NAME[s.s]||s.s}`:""}.`]);
+  const q=[[`What are the ${s.n} track and field recruiting standards?`,s.j?`${s.n} is an NJCAA junior college program${s.s?` in ${ST_NAME[s.s]||s.s}`:""}. This site doesn't set Target, Recruit or Walk-On levels for junior colleges, because NJCAA competition is national rather than conference-based and a program's marks can't be predicted reliably. Its season bests are above, and the full NJCAA national list is in Results.`:`${s.n} is ${/^[AEIOUN]/.test(s.d)?"an":"a"} ${s.d} program${s.c!==s.d?` in the ${s.c}`:""}. ${s.o?`Its standards come from the school's own published chart${s.yr?` (${s.yr})`:""}.`:"Its Target, Recruit and Walk-On levels are set from 2026 conference results."} The full table for men and women is above.`]];
+  if(!s.j&&(m.length||w.length))q.push([`What times do you need to walk on at ${s.n}?`,[m.length?`Men's ${lvl}: ${m.join(", ")}.`:"",w.length?`Women's ${lvl}: ${w.join(", ")}.`:""].filter(Boolean).join(" ")]);
+  q.push([`What conference is ${s.n} track and field in?`,`${s.n} competes in ${s.c!==s.d?`the ${s.c} (${s.d})`:s.j?"the NJCAA (junior colleges compete nationally)":`the ${s.d}`}${s.s?` and is based in ${ST_NAME[s.s]||s.s}`:""}.`]);
   const conf=SCH.map((x,k)=>[x,k]).filter(([x,k])=>k!==i&&x.d===s.d&&x.c===s.c).sort((a,b)=>a[0].n.localeCompare(b[0].n)).slice(0,12);
   const st=s.s?SCH.map((x,k)=>[x,k]).filter(([x,k])=>k!==i&&x.s===s.s&&!(x.d===s.d&&x.c===s.c)).sort((a,b)=>a[0].n.localeCompare(b[0].n)).slice(0,12):[];
   const list=(t,L)=>L.length?`<h3 class="tbh">${t}</h3><div class="rel">${L.map(([x,k])=>`<button type="button" data-school="${k}">${esc(x.n)}<small>${esc(x.d)}</small></button>`).join("")}</div>`:"";
   return `<section class="faq"><h3 class="tbh">Common questions</h3>${q.map(([a,b])=>`<details><summary>${esc(a)}</summary><p>${esc(b)}</p></details>`).join("")}</section>`+list(`More ${esc(s.c)} programs`,conf)+list(`More college programs in ${esc(ST_NAME[s.s]||s.s||"")}`,st)}
 function schoolMore(s){const L=[`<a href="${confUrl(s)}">All ${esc(s.c)} schools</a>`];if(s.s)L.push(`<a href="${stateUrl(s.s)}">Colleges in ${esc(ST_NAME[s.s]||s.s)}</a>`);
-  L.push(`<a href="/standards/${slugx(s.d)}-mens-400m.html">${esc(s.d)} standards by event</a>`,`<a href="/explore.html">Explore every conference and state</a>`);return `<nav class="more" aria-label="More">${L.join("")}</nav>`}
+  L.push(s.j?`<a href="/guides/junior-college-track-and-field-recruiting.html">Junior college recruiting guide</a>`:`<a href="/standards/${slugx(s.d)}-mens-400m.html">${esc(s.d)} standards by event</a>`,`<a href="/explore.html">Explore every conference and state</a>`);return `<nav class="more" aria-label="More">${L.join("")}</nav>`}
 function schoolLinks(s){const L=[];
   if(s.o&&s.src)L.push(`<a class="sl off" href="${esc(s.src)}" target="_blank" rel="noopener">★ Official standards</a>`);
   if(s.rs)L.push(`<a class="sl" href="${esc(s.rs)}" target="_blank" rel="noopener">Track &amp; field roster</a>`);
@@ -181,20 +167,23 @@ function schoolLinks(s){const L=[];
   if(s.u)L.push(`<a class="sl" href="${esc(s.u)}" target="_blank" rel="noopener">TFRRS team page</a>`);
   return L.length?`<nav class="slinks" aria-label="${esc(s.n)} links">${L.join("")}</nav>`:""}
 function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src;
-  let o=`<div class="sec" style="padding-top:0"><button class="back" data-back>‹ Back</button><h1 class="sname">${esc(s.n)} Track &amp; Field Standards${s.o?' <span class="star big" title="Official standards, verified">★</span>':""}</h1>
-  <div class="meta"><span>${s.d} · ${esc(s.c)}${s.s?" · "+esc(s.s):""}</span>${s.o?`<span class="badge off">★ Official standards · published ${esc(s.yr)}</span>`:'<span class="badge">Based on 2026 conference results</span>'}</div>
-  <p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)} track and field program${s.c!==s.d?` in the ${esc(s.c)}`:""}${s.s?`, based in ${esc(s.s)}`:""}. ${s.d==="NJCAA"?"Below are this season's NJCAA national benchmarks for men and women in every event: the marks that rank in the top 30, top 75 and top 150 in the country.":`Below are the marks it takes to be a Target recruit, a Recruit or a Walk-On for men and women in every event${s.o?", taken from the school's own published standards":""}.`}</p>
+  let o=`<div class="sec" style="padding-top:0"><button class="back" data-back>‹ Back</button><h1 class="sname">${esc(s.n)} Track &amp; Field${s.j?" (NJCAA)":" Standards"}${s.o?' <span class="star big" title="Official standards, verified">★</span>':""}</h1>
+  <div class="meta"><span>${s.d} · ${esc(s.c)}${s.s?" · "+esc(s.s):""}</span>${s.o?`<span class="badge off">★ Official standards · published ${esc(s.yr)}</span>`:s.j?'<span class="badge">Junior college · season results, no levels</span>':'<span class="badge">Based on 2026 conference results</span>'}</div>
+  <p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)}${s.j?" junior college":""} track and field program${s.c!==s.d?` in the ${esc(s.c)}`:""}${s.s?`, based in ${esc(ST_NAME[s.s]||s.s)}`:""}. ${s.j?"Junior colleges compete nationally rather than in conferences, so this site shows its season results instead of predicted recruiting levels.":`Below are the marks it takes to be a Target recruit, a Recruit or a Walk-On for men and women in every event${s.o?", taken from the school's own published standards":""}.`}</p>
   ${schoolLinks(s)}
   <div class="coach"><div><b>Interested in ${esc(s.n)}?</b><span>Let us help you contact the coach.</span></div><a href="${QUIZ}" target="_blank" rel="noopener">Get my recruitment evaluation</a></div>
   ${seg("g",g)}`;
+  if(s.j){
+    o+=`<div class="verify" style="margin-top:16px"><b>No recruiting levels for junior colleges</b><span>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: junior colleges compete nationally rather than in conferences, so there's no reliable way to predict a program's marks. Below are ${esc(s.n)}'s best marks this season; the full national list, by event, is in Results.</span><a href="/?tab=results&div=NJCAA">NJCAA national list ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
+    setTimeout(()=>teamBest(S.school),0);
+    return o+`<div id="tbest"></div>`+schoolExtra(s)+schoolMore(s)+`</div>`}
   const off=s.o&&(s.off||{})[g];
   if(off){
     o+=`<div class="scroll" style="margin-top:16px"><table><thead><tr><th>Event</th>${off.tiers.map(t=>`<th class="num">${esc(t)}</th>`).join("")}</tr></thead><tbody>${off.rows.map(r=>`<tr><td>${esc(r[0])}</td>${off.tiers.map((_,i)=>`<td class="num">${esc(r[i+1]||"–")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
     <div class="verify"><b>★ Official standards</b><span>Published by ${esc(s.n)} (${esc(s.yr)}) and checked mark for mark by Preferred Recruit.</span><a href="${esc(s.src)}" target="_blank" rel="noopener">View the official source ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
   } else {
-    const ev=EVENTS.filter(e=>s[g][e]),J=s.d==="NJCAA",mv=S.mark?parse(S.mark,S.e):null;
-    if(J)o+=mv!=null&&g===S.g?njMeter(g,S.e,mv,S.mark):`<p class="intro" style="margin-top:14px">Search your mark on the Standards page to see where you'd rank nationally.</p>`;
-    o+=`<div class="scroll" style="margin-top:16px"><table><thead><tr><th>Event</th>${J?'<th class="num">Top 30 nationally</th><th class="num">Top 75</th><th class="num">Top 150</th>':`<th class="num">Target</th><th class="num">Recruit</th><th class="num">Walk-On ${levelsInfo()}</th>`}</tr></thead><tbody>
+    const ev=EVENTS.filter(e=>s[g][e]);
+    o+=`<div class="scroll" style="margin-top:16px"><table><thead><tr><th>Event</th><th class="num">Target</th><th class="num">Recruit</th><th class="num">Walk-On ${levelsInfo()}</th></tr></thead><tbody>
     ${ev.map(e=>`<tr><td>${e}</td><td class="num">${disp(s,g,e,0)}</td><td class="num">${disp(s,g,e,1)}</td><td class="num">${disp(s,g,e,2)}</td></tr>`).join("")||'<tr><td>No marks listed for this team yet.</td></tr>'}</tbody></table></div>
     <div class="verify"><b>How these are set</b><span>${ruleText(s)} ${esc(s.n)} doesn't publish an official chart we could verify.${EVENTS.some(e=>["m","w"].some(g=>((((CT[s.ck]||{})[g]||{})[e])||[]).some(v=>v&&v[2])))?" Levels marked est: the conference has too few athletes in that event to set a level, so it uses the median of the same level across its division.":""} High school 1600m, 3200m, 300m hurdle and 39" hurdle marks are converted to these college events automatically.</span>${src?`<a href="${esc(src)}" target="_blank" rel="noopener">See the ${esc(s.c)} list on TFRRS ›</a>`:""}${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
   }
@@ -215,7 +204,7 @@ function shareCard(L){const c=document.createElement("canvas");c.width=1080;c.he
   x.fillStyle="#fff";x.font=`600 42px ${F}`;x.fillText("Preferred Recruit · Track Standards",80,130);
   x.font=`700 170px ${F}`;x.fillText(L.mark,76,430);x.font=`500 56px ${F}`;x.fillText(`${L.g==="m"?"Men's":"Women's"} ${L.e}`,80,515);
   x.font=`700 92px ${F}`;x.fillText(`fits ${L.n.toLocaleString()} colleges`,80,700);
-  x.font=`500 50px ${F}`;[["Target",L.T],["Recruit",L.R],["Walk-On",L.W],["Junior colleges",L.J]].filter(z=>z[1]).forEach((z,k)=>x.fillText(`${z[1].toLocaleString()}  ${z[0]}`,80,830+k*76));
+  x.font=`500 50px ${F}`;[["Target",L.T],["Recruit",L.R],["Walk-On",L.W]].filter(z=>z[1]).forEach((z,k)=>x.fillText(`${z[1].toLocaleString()}  ${z[0]}`,80,830+k*76));
   x.font=`600 46px ${F}`;x.fillText("Find yours: trackandfieldstandards.com",80,1250);
   return new Promise(r=>c.toBlob(r,"image/png"))}
 async function doShare(btn){const L=LASTSUM;if(!L)return;
@@ -308,7 +297,7 @@ function results(){
   const last=all.length-1;
   o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
   <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(listName)} · ${esc(seasonLabel(R.season))} · ${all.length} marks</span></div>
-  <div class="stats">${st(0,"#1 · "+(L.nat?R.div:L.label),"lead")}${(RULES[R.div]||[8,15,25]).map((k,j)=>k&&all[k-1]?st(k-1,`${ord(k)} · ${["Target","Recruit","Walk-On"][j]} line`):"").join("")}</div>${curve(all,R.ev)}
+  <div class="stats">${st(0,"#1 · "+(L.nat?R.div:L.label),"lead")}${(RULES[R.div]||[]).map((k,j)=>k&&all[k-1]?st(k-1,`${ord(k)} · ${["Target","Recruit","Walk-On"][j]} line`):"").join("")}</div>${curve(all,R.ev)}
   <div class="grid"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span><span>Meet</span></div>
   ${rows.slice(0,R.n).map((r,i)=>{const k=all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span><span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span></div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
   </div>${hookRow()}
@@ -331,7 +320,7 @@ function detect(raw){
   {let rq=q;out.confs=[];for(const c of CONFS){const k=" "+c.toLowerCase()+" ";if(rq.includes(k)){out.confs.push(c);rq=rq.replace(k," | ")}}out.conf=out.confs[0];}
   const yy=q.match(/\b(20(1[6-9]|2[0-6]))\b/);if(yy)out.year=yy[1];out.season=/\bindoor\b/.test(q)?"indoor":/\boutdoor\b/.test(q)?"outdoor":null;
   const dv=q.match(/\b(d1|di|division 1|division i|d2|dii|division 2|division ii|d3|diii|division 3|division iii)\b/); if(dv) out.div=/3|iii/.test(dv[0])?"NCAA D3":/2|ii/.test(dv[0])?"NCAA D2":"NCAA D1";
-  if(/\bnaia\b/.test(q)) out.div="NAIA"; if(/\b(njcaa|juco)\b/.test(q)) out.div="NJCAA";
+  if(/\bnaia\b/.test(q)) out.div="NAIA"; 
   out.tier=/walk.?on/.test(q)?"W":/\brecruit/.test(q)?"R":/\btarget/.test(q)?"T":null;
   return out;
 }
@@ -392,11 +381,11 @@ async function answerV1(raw){
   if(d.e&&d.mark){
     const v=parse(d.mark,d.e); if(v==null) return {html:`<p>I couldn't read "${esc(d.mark)}" as a ${esc(d.e)} mark. Try something like ${esc(ph(d.e))}.</p>`};
     let pool=SCH.filter(s=>(!d.div||s.d===d.div)&&(!d.conf||s.c===d.conf)); const hit=pool.map(s=>({s,t:tier(s,g,d.e,v)})).filter(x=>x.t);
-    const c=k=>hit.filter(x=>x.t===k).length; hit.sort((a,b)=>"TRWJ".indexOf(a.t)-"TRWJ".indexOf(b.t)||a.s.n.localeCompare(b.s.n));
+    const c=k=>hit.filter(x=>x.t===k).length; hit.sort((a,b)=>"TRW".indexOf(a.t)-"TRW".indexOf(b.t)||a.s.n.localeCompare(b.s.n));
     const scope=[d.div,d.conf].filter(Boolean).join(" · ")||"all divisions";
     if(!hit.length) return {html:`<p>A ${esc(d.mark)} ${gl(g)} ${esc(d.e)} doesn't meet a listed standard in ${esc(scope)} yet.</p>`+quizLine,f:[`Which D3 schools fit a ${d.mark} ${d.e}?`]};
     const cvl=convLine(d.e,g,v);
-    return {html:(cvl?`<p>College equivalent: ${cvl}.</p>`:"")+`<p>A <b>${esc(d.mark)}</b> in the ${gl(g)} ${esc(d.e)} fits <b>${hit.length}</b> colleges (${esc(scope)}): ${c("T")} at Target, ${c("R")} at Recruit and ${c("W")} at Walk-On.${c("J")?(()=>{const r=njRank(g,d.e,v);return ` Plus ${c("J")} junior colleges${r&&r.rank<=r.n?`, where it would rank about #${r.rank} of ${r.n}${r.n>=500?"+":""} NJCAA athletes this season`:""}.`})():""}</p>`+tbl(["College","Division","Level"],hit.slice(0,10).map(x=>[x.s.n,x.s.d,TN[x.t]]),9)+(hit.length>10?`<p>Showing 10 of ${hit.length}. The full list is on College Track Standards.</p>`:"")+quizLine,
+    return {html:(cvl?`<p>College equivalent: ${cvl}.</p>`:"")+`<p>A <b>${esc(d.mark)}</b> in the ${gl(g)} ${esc(d.e)} fits <b>${hit.length}</b> colleges (${esc(scope)}): ${c("T")} at Target, ${c("R")} at Recruit and ${c("W")} at Walk-On.</p>`+tbl(["College","Division","Level"],hit.slice(0,10).map(x=>[x.s.n,x.s.d,TN[x.t]]),9)+(hit.length>10?`<p>Showing 10 of ${hit.length}. The full list is on College Track Standards.</p>`:"")+quizLine,
       f:d.div?[]:[`Only D1 schools for a ${d.mark} ${d.e}`]};
   }
   if(d.school!=null){
@@ -455,12 +444,13 @@ const gChips=["Men's","Women's"];
 function askBack(slot,text,chips){CX.await=slot;return {html:`<p>${text}</p>`,f:chips||[]}}
 function stateOf(q){for(const [k,v] of Object.entries(STATES)){if(q.includes(" "+k+" "))return v}const m=q.match(/\b(in|from) ([a-z]{2})\b/);if(m&&Object.values(STATES).includes(m[2].toUpperCase()))return m[2].toUpperCase();return null}
 function ambiguousSchools(q){for(const [a] of ALIAS){if(q.includes(" "+a+" ")){const ids=[...new Set(ALIAS.filter(x=>x[0]===a).map(x=>x[1]))];return ids.length>1?ids:null}}return null}
-function scopeList(){return SCH.map((s,i)=>({s,i})).filter(({s})=>(!CX.div||s.d===CX.div)&&(!CX.conf||s.c===CX.conf)&&(!CX.state||s.s===CX.state))}
+function scopeList(){return SCH.map((s,i)=>({s,i})).filter(({s})=>!s.j&&(!CX.div||s.d===CX.div)&&(!CX.conf||s.c===CX.conf)&&(!CX.state||s.s===CX.state))}
 const scopeName=()=>[CX.conf,CX.div,CX.state].filter(Boolean).join(" · ")||"all divisions";
 const fmtv=(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v);
 
 async function answer(raw){
   const d=detect(raw), q=d.q;
+  if(/\b(jucos?|njcaa|junior colleges?|community colleges?)\b/i.test(raw))return {html:`<p>This site doesn't set Target, Recruit or Walk-On levels for junior colleges: NJCAA competition is national rather than conference-based, so a program's marks can't be predicted reliably.</p><p>What you can do here: open <b>Results</b> and pick <b>NJCAA</b> to see this season's national list for any event, or search a junior college by name for its season bests, roster and TFRRS links.</p>`,f:["What does Walk-On mean?","Only NAIA","Only NCAA D3"]};
   /* 1. replies to a clarifying question */
   const pending=CX.await; CX.await=null;
   if(pending==="g"&&!d.g&&/\b(men|mens|man|boys?|guys?)\b/.test(q))d.g="m";
@@ -515,15 +505,16 @@ async function answer(raw){
       if(!CX.mark)return askBack("mark",`What's your best ${gl(g)} ${esc(e)}? (for example ${esc(ph(e))})`);
       const v=parse(CX.mark,e);if(v==null)return askBack("mark",`I couldn't read "${esc(CX.mark)}" as a ${esc(e)} mark. Try something like ${esc(ph(e))}.`);
       const all=scopeList().map(({s,i})=>({s,i,t:tier(s,g,e,v)})).filter(z=>z.t);
-      all.sort((a,b)=>"TRWJ".indexOf(a.t)-"TRWJ".indexOf(b.t)||DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||a.s.n.localeCompare(b.s.n));
+      all.sort((a,b)=>"TRW".indexOf(a.t)-"TRW".indexOf(b.t)||DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||a.s.n.localeCompare(b.s.n));
       const c=k=>all.filter(z=>z.t===k).length, cl=convLine(e,g,v), by={};all.forEach(z=>by[z.s.d]=(by[z.s.d]||0)+1);
-      if(!all.length)return {html:(cl?`<p>College equivalent: ${cl}.</p>`:"")+`<p>A ${esc(CX.mark)} ${gl(g)} ${esc(e)} doesn't hit a listed standard in ${esc(scopeName())} yet.</p>`+quizLine,f:CX.div?["All divisions"]:["Only NAIA","Only NJCAA"]};
+      if(!all.length)return {html:(cl?`<p>College equivalent: ${cl}.</p>`:"")+`<p>A ${esc(CX.mark)} ${gl(g)} ${esc(e)} doesn't hit a listed standard in ${esc(scopeName())} yet.</p>`+quizLine,f:CX.div?["All divisions"]:["Only NAIA","Only NCAA D3"]};
       const spec={title:`Colleges a ${CX.mark} ${e} fits, by division`,type:"bar",labels:DIVS.filter(z=>by[z]),series:[{name:"Colleges",values:DIVS.filter(z=>by[z]).map(z=>by[z])}],value_format:"number"};
-      return {html:(cl?`<p>College equivalent: ${cl}.</p>`:"")+`<p>A <b>${esc(CX.mark)}</b> in the ${gl(g)} ${esc(e)} fits <b>${all.length}</b> colleges (${esc(scopeName())}): ${c("T")} Target, ${c("R")} Recruit, ${c("W")} Walk-On.${c("J")?(()=>{const r=njRank(g,e,v);return ` Plus ${c("J")} junior colleges${r&&r.rank<=r.n?`, where it would rank about #${r.rank} of ${r.n}${r.n>=500?"+":""} NJCAA athletes this season`:""}.`})():""}</p>`+(Object.keys(by).length>1?chartSvg(spec):"")+
+      return {html:(cl?`<p>College equivalent: ${cl}.</p>`:"")+`<p>A <b>${esc(CX.mark)}</b> in the ${gl(g)} ${esc(e)} fits <b>${all.length}</b> colleges (${esc(scopeName())}): ${c("T")} Target, ${c("R")} Recruit, ${c("W")} Walk-On.</p>`+(Object.keys(by).length>1?chartSvg(spec):"")+
         tbl(["College","Division","Level"],all.slice(0,12).map(z=>[z.s.n+(z.s.o?" ★":""),z.s.d,TN[z.t]]),9)+(all.length>12?`<p>Top 12 of ${all.length}. Ask for a division, conference or state to narrow it.</p>`:"")+quizLine,
         f:[!CX.div?"Only D1":"All divisions","Only schools in Texas",g==="m"?"What about women?":"What about men?"]}}
     case "school":{const i=(CX.schools||[])[0];if(i==null)return askBack("school","Which school?");const s=SCH[i],gg=g||"m",sd=s[gg];
       if(e&&sd[e]){const t=sd[e];return {html:`<p><b>${esc(s.n)}</b>${s.o?" ★":""} · ${esc(s.d)} · ${esc(s.c)} · ${gl(gg)} ${esc(e)}:</p>`+tbl(["Level","Mark"],[["Target",t[0]||"–"],["Recruit",t[1]||"–"],["Walk-On",t[2]||"–"]])+`<p>${s.o?"Official standards published by the school.":esc(ruleText(s))}</p>`,f:[gg==="m"?"Women's":"Men's",`Which schools fit my ${e}?`,"Compare with another school"]}}
+      if(s.j)return {html:`<p><b>${esc(s.n)}</b> is an NJCAA junior college. This site doesn't set Target, Recruit or Walk-On levels for junior colleges (NJCAA competition is national, not conference-based, so levels can't be predicted reliably). Its page has this season's bests, roster and TFRRS links, and the NJCAA national list is under Results.</p>`,f:["Only NAIA","Only NCAA D3","What does Walk-On mean?"]};
       const ev=EVENTS.filter(z=>sd[z]);if(!ev.length)return {html:`<p>${esc(s.n)} doesn't list ${gl(gg)} standards.</p>`,f:[gg==="m"?"Women's":"Men's"]};
       return {html:`<p><b>${esc(s.n)}</b>${s.o?" ★":""} · ${esc(s.d)} · ${esc(s.c)} · ${gl(gg)}${s.o?" (official standards)":""}:</p>`+tbl(["Event","Target","Recruit","Walk-On"],ev.map(z=>[z,sd[z][0]||"–",sd[z][1]||"–",sd[z][2]||"–"]))+quizLine,f:[gg==="m"?"Women's":"Men's","Compare with another school"]}}
     case "cmp":{
@@ -580,11 +571,11 @@ let SAMPLE=null, LIVE=false, CTL=null;
 const num=(m,e)=>{const v=parse(m,e);return v==null?null:Math.round(v*1000)/1000};
 const evKey=e=>{e=String(e||"").trim();const hit=EVENTS.find(x=>x.toLowerCase()===e.toLowerCase());if(hit)return hit;for(const [k,re] of EVP){if(re.test(nq(e)))return k}return null};
 const gk=g=>/^(w|f|women|womens|women's|girls?)$/i.test(String(g||"m"))?"w":"m";
-const divK=d=>{d=String(d||"").toLowerCase();if(!d)return "";if(/naia/.test(d))return "NAIA";if(/njcaa|juco/.test(d))return "NJCAA";if(/3|iii/.test(d))return "NCAA D3";if(/2|ii/.test(d))return "NCAA D2";if(/1|i/.test(d))return "NCAA D1";return ""};
+const divK=d=>{d=String(d||"").toLowerCase();if(!d)return "";if(/naia/.test(d))return "NAIA";if(/3|iii/.test(d))return "NCAA D3";if(/2|ii/.test(d))return "NCAA D2";if(/1|i/.test(d))return "NCAA D1";return ""};
 const confK=c=>{c=String(c||"").toLowerCase().trim();if(!c)return "";return CONFS.find(x=>x.toLowerCase()===c)||CONFS.find(x=>x.toLowerCase().includes(c))||""};
 const schoolOut=(s,i)=>({id:i,name:s.n,division:s.d,conference:s.c,state:s.s||"",official:!!s.o});
 const tierObj=(t,e)=>t?{target:t[0]||null,recruit:t[1]||null,walk_on:t[2]||null,target_value:num(t[0],e),recruit_value:num(t[1],e),walk_on_value:num(t[2],e)}:null;
-function ruleOf(s){const [t,r,w]=RULES[s.d]||[];return s.o?`official ${s.yr} chart published by the school`:(s.d==="NJCAA"?`national list: Target=${t}th, Recruit=${r}th, Walk-On=${w}th best mark`:`${s.c} 2026 conference marks: Target=${t}th best${r?`, Recruit=${r}th`:""}, Walk-On=${w}th`)}
+function ruleOf(s){const [t,r,w]=RULES[s.d]||[];return s.j?"junior college: season results only, no levels":s.o?`official ${s.yr} chart published by the school`:`${s.c} 2026 conference marks: Target=${t}th best${r?`, Recruit=${r}th`:""}, Walk-On=${w}th`}
 function stdFor2(s,g,e,v){if(s[g][e])return [e,s[g][e]];for(const x of convert(e,g,v)||[])if(s[g][x.e])return [x.e,s[g][x.e]];return [e,null]}
 
 const CHARTS={};let CHART_N=0;
@@ -602,7 +593,7 @@ const TOOLS=[
   execute:({event,mark,gender,division,conference,state,limit})=>{const e=evKey(event);if(!e)throw new Error("unknown event");const g=gk(gender),v=parse(String(mark),e);if(v==null)throw new Error("couldn't read that mark for "+e);
     status("Matching your "+e);const d=divK(division),c=confK(conference),st=String(state||"").toUpperCase();
     const all=[];SCH.forEach((s,i)=>{if(d&&s.d!==d||c&&s.c!==c||st&&s.s!==st)return;const t=tier(s,g,e,v);if(t)all.push({s,i,t})});
-    all.sort((a,b)=>"TRWJ".indexOf(a.t)-"TRWJ".indexOf(b.t)||DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||a.s.n.localeCompare(b.s.n));
+    all.sort((a,b)=>"TRW".indexOf(a.t)-"TRW".indexOf(b.t)||DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||a.s.n.localeCompare(b.s.n));
     const cnt=k=>all.filter(x=>x.t===k).length,byDiv={};all.forEach(x=>{byDiv[x.s.d]=(byDiv[x.s.d]||0)+1});
     return {event:e,mark:String(mark),converted:(convert(e,g,v)||[]).map(x=>({event:x.e,mark:fmtT(x.v),range:fmtT(x.lo)+" to "+fmtT(x.hi)})),
       total:all.length,target:cnt("T"),recruit:cnt("R"),walk_on:cnt("W"),by_division:byDiv,
@@ -644,8 +635,8 @@ function rulesTurn(){return `You are Track Recruiting AI on Preferred Recruit's 
 Answer ANY question about college track standards, results, athletes, schools, conferences and recruiting levels by calling the tools, which read this website's data. Pull, compare and contrast data across schools, divisions, conferences, events and years. Use make_chart whenever a comparison or trend is clearer as a chart.
 
 Data facts:
-- ${SCH.length} colleges: NCAA D1, NCAA D2, NCAA D3, NAIA, NJCAA. Levels: Target (the marks that typically earn the strongest scholarship interest, depending on school funding), Recruit (where coaches typically start recruiting conversations and scholarship talks; not a guarantee), Walk-On (minimum mark to earn a roster spot).
-- Starred (official) schools use their own published chart (2024 or newer, verified mark for mark). Others: NCAA D1/D2 Target=8th, Recruit=15th, Walk-On=25th best mark in their 2026 conference; NCAA D3/NAIA Target=top 8, Walk-On=40th, no Recruit level (NCAA D3 gives no athletic scholarships); NJCAA uses the national list (15th/30th/50th).
+- ${NSTD} colleges with levels: NCAA D1, NCAA D2, NCAA D3, NAIA. Junior colleges (NJCAA) have pages with season results only, no levels. Levels: Target (the marks that typically earn the strongest scholarship interest, depending on school funding), Recruit (where coaches typically start recruiting conversations and scholarship talks; not a guarantee), Walk-On (minimum mark to earn a roster spot).
+- Starred (official) schools use their own published chart (2024 or newer, verified mark for mark). Others: NCAA D1/D2 Target=8th, Recruit=15th, Walk-On=25th best mark in their 2026 conference; NCAA D3/NAIA Target=top 8, Walk-On=40th, no Recruit level (NCAA D3 gives no athletic scholarships).
 - High school conversions: 1600m x0.9314 = 1500m; Mile x0.926 = 1500m; 3200m x0.9314 = 3000m, then x1.7186 = 5000m; 300m hurdles x1.41 men / x1.45 women = 400m hurdles; boys 39-inch 110m hurdles +0.5s = 42-inch.
 - Results (TFRRS performance lists) available: ${yearsAvail()}.
 - Events: ${EVENTS.join(", ")}.
@@ -782,7 +773,9 @@ document.addEventListener("change",ev=>{const t=ev.target;
 document.addEventListener("submit",ev=>{ev.preventDefault();
   if(ev.target.id==="cf"){send($("ct").value);return}
   if(parse(S.mark,S.e)==null){$("hint").textContent=`Enter a mark like ${ph(S.e)}`;return}
-  S.run=true;S.f="";S.div="";S.conf="";S.st="";S.n=24;render();{const el=document.querySelector(".sum");if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-74,behavior:"smooth"})}
+  S.run=true;S.f="";S.div="";S.conf="";S.st="";S.n=24;render();
+  /* each search gets its own URL: shareable, back button returns to the form, and analytics counts it as a page view (Ryan 2026-10-15: bounce rate) */
+  try{const u=`/?g=${S.g}&e=${encodeURIComponent(S.e)}&m=${encodeURIComponent(S.mark.trim())}`;if(location.pathname+location.search!==u)history.pushState({},"",u)}catch(e){}{const el=document.querySelector(".sum");if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-74,behavior:"smooth"})}
   const v=parse(S.mark,S.e), n=SCH.filter(s=>tier(s,S.g,S.e,v)).length;
   evalIn(n?`Your ${S.mark} fits ${n} colleges.`:"Every mark has a path.",n?"Want those coaches to see it? Get a free recruitment evaluation from Preferred Recruit.":"Get a free recruitment evaluation and see which programs fit you.",2500)});
 
@@ -804,14 +797,15 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     if (slug) { let i = ALT.has(slug) ? ALT.get(slug) : -1; if (i < 0) { const h = hits(slug.replace(/-track-standards$/, "").replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
       if (i >= 0) { S.school = i; const s = SCH[i], path = "/schools/" + SLUG[i];
         if (location.pathname !== path) history.replaceState({}, "", path);
-        const desc = `${s.n} track and field recruiting standards: Target, Recruit and Walk-On marks for men and women (${s.d}, ${s.c})${s.o ? ", from the school's official published standards" : ""}.`;
-        setMeta(`${s.n} Track & Field Standards | Preferred Recruit`, desc, path, {"@context": "https://schema.org", "@type": "SportsOrganization", name: s.n + " Track & Field", sport: "Track and Field",
+        const desc = s.j ? `${s.n} is an NJCAA junior college track and field program. Season bests, roster and TFRRS links; junior colleges get results here, not predicted recruiting standards.` : `${s.n} track and field recruiting standards: Target, Recruit and Walk-On marks for men and women (${s.d}, ${s.c})${s.o ? ", from the school's official published standards" : ""}.`;
+        setMeta(s.j ? `${s.n} Track & Field (NJCAA Junior College): Results, Roster & Recruiting | Preferred Recruit` : `${s.n} Track & Field Standards | Preferred Recruit`, desc, path, {"@context": "https://schema.org", "@type": "SportsOrganization", name: s.n + " Track & Field", sport: "Track and Field",
           url: "https://trackandfieldstandards.com" + path, description: desc, memberOf: {"@type": "SportsOrganization", name: s.c}, ...(s.s ? {address: {"@type": "PostalAddress", addressRegion: s.s}} : {}),
           sameAs: [s.ws, s.rs, s.src, s.u].filter(Boolean)});
         render(); scrollTo(0, 0); return; } }
     { const q = new URLSearchParams(location.search);   /* shared result links: /?g=m&e=100m&m=10.95 */
-      if (q.get("m") && q.get("e") && !S.run) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; } }
-    S.school = null; setMeta("College Track & Field Standards, NCAA Results & Recruiting AI | Preferred Recruit", "Recruiting standards for 1,269 college track and field programs (NCAA D1, D2, D3, NAIA, NJCAA), every NCAA result since 2016, and a recruiting AI. Enter your mark and see which colleges you fit.", "/",
+      if (q.get("m") && q.get("e") && !S.run) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; }
+      if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); } }
+    S.school = null; setMeta("College Track & Field Standards, NCAA Results & Recruiting AI | Preferred Recruit", `Recruiting standards for ${NSTD.toLocaleString()} college track and field programs (NCAA D1, D2, D3 and NAIA), every NCAA result since 2016, and a recruiting AI. Enter your mark and see which colleges you fit.`, "/",
       {"@context": "https://schema.org", "@type": "WebSite", name: "Preferred Recruit Track & Field Standards", url: "https://trackandfieldstandards.com/"}); render();
   };
   window.__prStandardsRoute = route;
