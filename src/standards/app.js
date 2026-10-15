@@ -803,15 +803,18 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     if (slug) { let i = ALT.has(slug) ? ALT.get(slug) : -1; if (i < 0) { const h = hits(slug.replace(/-track-standards$/, "").replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
       if (i >= 0) { S.school = i; const s = SCH[i], path = "/schools/" + SLUG[i];
         if (location.pathname !== path) history.replaceState({}, "", path);
-        const desc = s.j ? `${s.n} is an NJCAA junior college track and field program. Season bests, roster and TFRRS links; junior colleges get results here, not predicted recruiting standards.` : `${s.n} track and field recruiting standards: Target, Recruit and Walk-On marks for men and women (${s.d}, ${s.c})${s.o ? ", from the school's official published standards" : ""}.`;
-        setMeta(s.j ? `${s.n} Track & Field (NJCAA Junior College): Results, Roster & Recruiting | Preferred Recruit` : `${s.n} Track & Field Standards | Preferred Recruit`, desc, path, {"@context": "https://schema.org", "@type": "SportsOrganization", name: s.n + " Track & Field", sport: "Track and Field",
+        const lw = s.d === "NCAA D3" ? "walk-on and target" : s.d === "NAIA" ? "walk-on and scholarship-level" : "walk-on, recruit and scholarship-level";
+        const desc = s.j ? `${s.n} (NJCAA) junior college track and field: season bests in every event, roster and TFRRS links, and how junior college recruiting works.` : `${s.n} track and field recruiting standards 2026-27 (${s.d}${s.c !== s.d ? ", " + s.c : ""}): ${lw} marks for every men's and women's event${s.o ? ", from the official team chart" : ""}. Free, updated weekly.`;
+        const descPrev = s.j ? `${s.n} is an NJCAA junior college track and field program. Season bests, roster and TFRRS links; junior colleges get results here, not predicted recruiting standards.` : `${s.n} track and field recruiting standards: Target, Recruit and Walk-On marks for men and women (${s.d}, ${s.c})${s.o ? ", from the school's official published standards" : ""}.`;
+        const short = s.n.length <= 32 ? s.n : (s.t || s.n), T0 = s.j ? `${short} Track & Field (NJCAA): Results & Roster` : `${short} Track & Field Recruiting Standards 2026-27`;
+        setMeta((T0 + " | Preferred Recruit").length <= 62 ? T0 + " | Preferred Recruit" : T0, desc, path, {"@context": "https://schema.org", "@type": "SportsOrganization", name: s.n + " Track & Field", sport: "Track and Field",
           url: "https://trackandfieldstandards.com" + path, description: desc, memberOf: {"@type": "SportsOrganization", name: s.c}, ...(s.s ? {address: {"@type": "PostalAddress", addressRegion: s.s}} : {}),
           sameAs: [s.ws, s.rs, s.src, s.u].filter(Boolean)});
         render(); scrollTo(0, 0); return; } }
     { const q = new URLSearchParams(location.search);   /* shared result links: /?g=m&e=100m&m=10.95 */
       if (q.get("m") && q.get("e") && !S.run) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; }
       if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); } }
-    S.school = null; setMeta("College Track & Field Standards, NCAA Results & Recruiting AI | Preferred Recruit", `Recruiting standards for ${NSTD.toLocaleString()} college track and field programs (NCAA D1, D2, D3 and NAIA), every NCAA result since 2016, and a recruiting AI. Enter your mark and see which colleges you fit.`, "/",
+    S.school = null; setMeta("College Track & Field Recruiting Standards & Rankings 2026-27", `Recruiting standards for ${NSTD.toLocaleString()} college track and field programs: walk-on, recruit and scholarship times for NCAA D1, D2, D3 and NAIA, plus results since 2016.`, "/",
       {"@context": "https://schema.org", "@type": "WebSite", name: "Preferred Recruit Track & Field Standards", url: "https://trackandfieldstandards.com/"}); render();
   };
   window.__prStandardsRoute = route;

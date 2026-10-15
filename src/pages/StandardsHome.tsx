@@ -18,11 +18,11 @@ const StandardsHome = () => {
     <>
       {/* school pages get their title + description from the app once the school's data has loaded */}
       <Helmet>
-        {!schoolSlug && <title>College Track &amp; Field Standards, NCAA Results &amp; Recruiting AI | Preferred Recruit</title>}
+        {!schoolSlug && <title>College Track &amp; Field Recruiting Standards &amp; Rankings 2026-27</title>}
         {!schoolSlug && (
           <meta
             name="description"
-            content="Recruiting standards for every college track and field program (NCAA D1, D2, D3 and NAIA), every NCAA result since 2016, and a recruiting AI. Enter your mark and see which colleges you fit."
+            content="Recruiting standards for every college track and field program: walk-on, recruit and scholarship times for NCAA D1, D2, D3 and NAIA, plus results since 2016."
           />
         )}
         <link rel="canonical" href={`https://trackandfieldstandards.com${schoolSlug ? `/schools/${schoolSlug}` : "/"}`} />

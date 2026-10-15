@@ -7,6 +7,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
+import { fitTitle, fitDesc, pickDesc, levelWords, SEASON } from "./meta.mjs";
 const JG = "/guides/junior-college-track-and-field-recruiting.html";
 
 const DK = { "NCAA D1": "d1", "NCAA D2": "d2", "NCAA D3": "d3", NAIA: "naia", NJCAA: "njcaa" };   /* NJCAA: season bests only */
@@ -85,8 +86,18 @@ export function schoolPages({ root, out, S, DATES = {}, SITE, QUIZ, esc, schoolS
     if (B) { const f = path.join(out, "data/teams", slug + ".json"); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, JSON.stringify(B)); }
     const pick = (g, e) => { const t = std(s, g, e); return t ? t[2] : null; };
     const ex = [["m", "100m"], ["w", "400m"], ["m", "1500m"]].map(([g, e]) => [g, e, pick(g, e)]).filter(x => x[2]).slice(0, 2);
-    const title = J ? `${s.n} Track & Field (NJCAA Junior College): ${B ? B.y + " Results, " : ""}Roster & Recruiting | Preferred Recruit` : `${s.n} Track & Field Standards (${s.d}) | Preferred Recruit`;
-    const desc = J ? `${s.n} is an NJCAA junior college track and field program${s.s ? ` in ${STATE[s.s] || s.s}` : ""}. ${B ? `Its ${B.y} season bests by event, ` : "Its "}roster and TFRRS links, and why this site shows results instead of predicted recruiting standards for junior colleges.` : `${s.n} track and field recruiting standards for men and women (${s.d}${s.c !== s.d ? ", " + s.c : ""})${s.o ? ", from the school's official published standards" : ""}${ex.length ? `: ${ex.map(([g, e, v]) => `${g === "m" ? "men's" : "women's"} ${e} walk-on ${v}`).join(", ")}` : ""}${B ? `, plus ${B.y} season bests` : ""}.`;
+    const short = s.n.length <= 32 ? s.n : (s.t || s.n);
+    const title = fitTitle(J ? `${short} Track & Field (NJCAA): ${B ? B.y + " " : ""}Results & Roster` : `${short} Track & Field Recruiting Standards ${SEASON}`);
+    const lw = levelWords(s.d), ofc = s.o ? ", from the official team chart" : "", conf = s.c !== s.d ? ", " + s.c : "";
+    const exTxt = ex.length ? " " + ex.map(([g, e, v]) => `${g === "m" ? "Men's" : "Women's"} ${e} walk-on: ${v}.`).join(" ") : "";
+    const weekly = B ? [" Season bests updated weekly.", " Free, no sign-up.", " Free."] : [" Free, no sign-up.", " Free to use.", " Free."];
+    const desc = J ? pickDesc([`${s.n} (NJCAA) junior college track and field: ${B ? `${B.y} season bests in every event, ` : ""}roster and TFRRS links, and how junior college recruiting works.`,
+        `${short} (NJCAA) junior college track and field: season bests, roster and TFRRS links.`], weekly)
+      : pickDesc([`${s.n} track and field recruiting standards ${SEASON} (${s.d}${conf}): ${lw} marks for every men's and women's event${ofc}.${exTxt}`,
+        `${s.n} track and field recruiting standards ${SEASON} (${s.d}${conf}): ${lw} marks for every men's and women's event${ofc}.`,
+        `${s.n} track and field recruiting standards ${SEASON} (${s.d}): ${lw} marks for every men's and women's event${ofc}.`,
+        `${short} track and field recruiting standards ${SEASON} (${s.d}): ${lw} marks for every event, men and women.`,
+        `${short} track and field recruiting standards ${SEASON}: ${lw} marks for every event.`], weekly);
     const ld = [{ "@context": "https://schema.org", "@type": "SportsOrganization", name: s.n + " Track & Field", sport: "Track and Field", url, description: desc,
       memberOf: { "@type": "SportsOrganization", name: s.c }, ...(s.s ? { address: { "@type": "PostalAddress", addressRegion: s.s } } : {}), sameAs: [s.ws, s.rs, s.src, s.u].filter(Boolean) },
       { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq(s, B).map(([qq, aa]) => ({ "@type": "Question", name: qq, acceptedAnswer: { "@type": "Answer", text: aa } })) },
