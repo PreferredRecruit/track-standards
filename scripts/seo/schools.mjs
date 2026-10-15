@@ -10,7 +10,7 @@ import zlib from "node:zlib";
 
 const DK = { "NCAA D1": "d1", "NCAA D2": "d2", "NCAA D3": "d3", NAIA: "naia", NJCAA: "njcaa" };
 
-export function schoolPages({ root, out, S, SITE, QUIZ, esc, schoolSlug, std, EVENTS, STATE, evLabel, confUrl, statePath, evPath, gName }) {
+export function schoolPages({ root, out, S, DATES = {}, SITE, QUIZ, esc, schoolSlug, std, EVENTS, STATE, evLabel, confUrl, statePath, evPath, gName }) {
   const shellFile = path.join(out, "index.html");
   if (!fs.existsSync(shellFile)) return [];
   const shell = fs.readFileSync(shellFile, "utf8");
@@ -82,6 +82,7 @@ export function schoolPages({ root, out, S, SITE, QUIZ, esc, schoolSlug, std, EV
     const ld = [{ "@context": "https://schema.org", "@type": "SportsOrganization", name: s.n + " Track & Field", sport: "Track and Field", url, description: desc,
       memberOf: { "@type": "SportsOrganization", name: s.c }, ...(s.s ? { address: { "@type": "PostalAddress", addressRegion: s.s } } : {}), sameAs: [s.ws, s.rs, s.src, s.u].filter(Boolean) },
       { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq(s, B).map(([qq, aa]) => ({ "@type": "Question", name: qq, acceptedAnswer: { "@type": "Answer", text: aa } })) },
+      { "@context": "https://schema.org", "@type": "WebPage", name: title, url, dateModified: DATES.max || DATES.db },
       { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [["Home", "/"], [s.c, confUrl(s)], [s.n, p]].map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) }];
     const side = g => {
       const off = s.o && (s.off || {})[g];
@@ -101,6 +102,7 @@ ${B ? `<h2>${B.y} season bests</h2><p>${esc(s.n)}'s best mark in each event this
 ${(() => { const q = faq(s, B); return `<h2>Common questions</h2>${q.map(([qq, aa]) => `<h3>${esc(qq)}</h3><p>${esc(aa)}</p>`).join("")}`; })()}
 ${(() => { const [c, st] = related(s); return (c.length ? `<h2>More ${esc(s.c)} programs</h2><ul style="columns:3 200px">${c.map(x => `<li><a href="/schools/${schoolSlug(x)}">${esc(x.n)}</a></li>`).join("")}</ul>` : "") + (st.length ? `<h2>More college programs in ${esc(STATE[s.s] || s.s)}</h2><ul style="columns:3 200px">${st.map(x => `<li><a href="/schools/${schoolSlug(x)}">${esc(x.n)}</a> <small>${esc(x.d)}</small></li>`).join("")}</ul>` : ""); })()}
 ${links.length ? `<h2>Links</h2><ul>${links.map(([, u, t]) => `<li><a href="${esc(u)}" rel="noopener">${t}</a></li>`).join("")}</ul>` : ""}
+<p style="font-size:13px;color:#4A4A52">Standards updated ${DATES.db}${B ? ` · Season bests updated ${DATES.data}` : ""}</p>
 <p><a href="${confUrl(s)}">All ${esc(s.c)} standards</a>${s.s ? ` · <a href="${statePath(s.s)}">College track in ${esc(STATE[s.s] || s.s)}</a>` : ""} · <a href="/how-fast.html">How fast do you need to run in college?</a> · <a href="${QUIZ}">Free recruitment evaluation</a></p>
 </main>`;
     const meta = (h, attr, key, val) => { const re = new RegExp(`<meta ${attr}="${key}" content="[^"]*"\\s*/?>`); const tag = `<meta ${attr}="${key}" content="${esc(val)}" />`; return re.test(h) ? h.replace(re, tag) : h.replace("</head>", tag + "\n</head>"); };
@@ -114,6 +116,6 @@ ${links.length ? `<h2>Links</h2><ul>${links.map(([, u, t]) => `<li><a href="${es
     for (const alt of new Set([...(s.os || []), nameSlug])) if (alt !== slug && !fs.existsSync(path.join(out, "schools", alt + ".html"))) fs.writeFileSync(path.join(out, "schools", alt + ".html"), h);
   }
   /* any other unknown URL: the app shell, which finds the closest school (Vercel serves 404.html for missing files) */
-  fs.writeFileSync(path.join(out, "404.html"), shell);
+  fs.writeFileSync(path.join(out, "404.html"), shell.replace("</head>", '<meta name="robots" content="noindex">\n</head>'));
   return files;
 }

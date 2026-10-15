@@ -34,6 +34,10 @@ function parse(str, e) {
   return secs(s);
 }
 
+const DATES = { db: "", data: "", max: "" };
+/* past seasons never change: they keep the date the archive was built; only the current season moves with the Monday data */
+const ARCHIVE_DATE = "2026-10-13";
+const resultsDate = u => { const y = (u.match(/\/(\d{4})-/) || [])[1]; return y && DATES.data && y < DATES.data.slice(0, 4) ? ARCHIVE_DATE : DATES.data; };
 function page({ title, desc, pathname, crumbs, h1, intro, body, ld }) {
   const url = SITE + pathname;
   const bc = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: crumbs.map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) };
@@ -42,7 +46,7 @@ function page({ title, desc, pathname, crumbs, h1, intro, body, ld }) {
 <meta property="og:type" content="website"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${url}"><meta property="og:image" content="${SITE}/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:image" content="${SITE}/og.jpg">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(desc)}">
 <link rel="icon" href="/favicon-32.png" sizes="32x32"><script defer src="/_vercel/insights/script.js"></script><script defer src="/_vercel/speed-insights/script.js"></script><link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<script type="application/ld+json">${JSON.stringify(bc)}</script>${(ld || []).map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join("")}
+<script type="application/ld+json">${JSON.stringify(bc)}</script><script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@type": "WebPage", name: title, url, dateModified: /^\/(results|champions)\//.test(pathname) ? resultsDate(pathname) : DATES.db })}</script>${(ld || []).map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join("")}
 <style>:root{--ink:#0B0B0F;--ink2:#2E2E36;--mute:#4A4A52;--line:#E4E3EA;--soft:#F3F2F7;--accent:#7A45F0}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#FDFDFE,#F1F0F6);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
 a{color:var(--accent)}header{background:rgba(255,255,255,.85);border-bottom:1px solid var(--line)}header div{max-width:1000px;margin:0 auto;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
@@ -59,13 +63,17 @@ footer{border-top:1px solid var(--line);font-size:13px;color:var(--mute);padding
 <main><div class="bc">${crumbs.map(([n, u], i) => i < crumbs.length - 1 ? `<a href="${u}">${esc(n)}</a> › ` : esc(n)).join("")}</div>
 <h1>${h1}</h1>${intro ? `<p class="intro">${intro}</p>` : ""}${body}
 <div class="cta"><b>Looking to run in college?</b> Preferred Recruit gets athletes' marks in front of college coaches. <a href="${QUIZ}">Get your free recruitment evaluation ›</a></div></main>
-<footer><div><a href="/">Search standards</a><a href="/explore.html">All conferences, states and events</a><a href="/explore.html#champions">National champions</a><a href="/explore.html#results">Results</a><a href="/how-fast.html">How fast for college?</a><a href="/convert.html">Conversions</a><a href="/for-parents.html">For parents</a><a href="/for-coaches.html">For coaches</a><span>© ${new Date().getFullYear()} Preferred Recruit</span></div></footer></body></html>`;
+<footer><div><a href="/">Search standards</a><a href="/explore.html">All conferences, states and events</a><a href="/explore.html#champions">National champions</a><a href="/explore.html#results">Results</a><a href="/how-fast.html">How fast for college?</a><a href="/convert.html">Conversions</a><a href="/for-parents.html">For parents</a><a href="/for-coaches.html">For coaches</a><span>Standards updated ${DATES.db} · Results updated ${DATES.data}</span><span>© ${new Date().getFullYear()} Preferred Recruit</span></div></footer></body></html>`;
 }
 
 export function generate(root, out) {
   const DB = JSON.parse(fs.readFileSync(path.join(root, "public/data/db.json"), "utf8"));
   const RIDX = JSON.parse(fs.readFileSync(path.join(out, "data/rank_index.json"), "utf8"));   /* dist copy: includes the newest Monday data (seoPages) */
   const S = DB.schools, CT = DB.ct;
+  /* real dates (Ryan 2026-10-14 "just for seo"): standards = when db.json was built, results = the Monday data refresh */
+  DATES.db = DB.built || new Date().toISOString().slice(0, 10);
+  try { DATES.data = JSON.parse(fs.readFileSync(path.join(out, "data/updated.json"), "utf8")).updated.slice(0, 10); } catch { DATES.data = DATES.db; }
+  DATES.max = DATES.data > DATES.db ? DATES.data : DATES.db;
   const std = (s, g, e) => { const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? (v[1] ? `${v[1]} (${v[0]})` : v[0]) + (v[2] ? " est." : "") : "")) : null; };
   const raw = (s, g, e) => { const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? v[0] : "")) : null; };
   const sl = (s) => `/schools/${schoolSlug(s)}`;
@@ -143,7 +151,7 @@ export function generate(root, out) {
   const writeRaw = (p, txt) => { const f = path.join(out, p); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, txt); };
   hsPages({ S, CT, NJ: DB.nj, write, writeRaw, page, parse, esc, slug, schoolUrl: sl, evPath, FIELD, SITE, gName });
   /* pre-built HTML for every school page (served at /schools/<slug> by vercel.json); already in the sitemap */
-  try { schoolPages({ root, out, S, SITE, QUIZ, esc, schoolSlug, std, EVENTS, STATE, evLabel, confUrl: s => confName.get(s.d + "|" + s.c), statePath, evPath, gName }); }
+  try { schoolPages({ root, out, S, DATES, SITE, QUIZ, esc, schoolSlug, std, EVENTS, STATE, evLabel, confUrl: s => confName.get(s.d + "|" + s.c), statePath, evPath, gName }); }
   catch (e) { console.warn("school pages skipped:", e && e.message); }
   /* hub */
   const groupLinks = (items) => `<div class="links">${items.map(([u, t]) => `<a href="${u}">${esc(t)}</a>`).join("")}</div>`;
@@ -177,9 +185,16 @@ ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter((
       fs.writeFileSync(shellFile, shell.replace('<div id="root"></div>', `<div id="root">${home}</div>`));
     }
   } catch (e) { console.warn("home page content skipped:", e && e.message); }
-  const today = new Date().toISOString().slice(0, 10);
-  const urls = ["/", ...[...new Set(S.map(sl))].sort(), ...files.sort()];
-  fs.writeFileSync(path.join(out, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod></url>`).join("\n")}\n</urlset>\n`);
+  /* sitemap index + one sitemap per section, each URL dated by the data it shows (so Google can trust lastmod) */
+  const schoolUrls = [...new Set(S.map(sl))].sort();
+  const lastmod = u => /^\/(results|champions)\//.test(u) ? resultsDate(u) : u === "/" || u.startsWith("/schools/") ? DATES.max : DATES.db;
+  const groups = { schools: schoolUrls, results: files.filter(u => /^\/(results|champions)\//.test(u)).sort(),
+    standards: ["/", ...files.filter(u => /^\/(standards|conferences|states)\//.test(u) || u === "/explore.html").sort()] };
+  const used = new Set([...groups.schools, ...groups.results, ...groups.standards]);
+  groups.guides = files.filter(u => !used.has(u)).sort();
+  const urls = Object.values(groups).flat();
+  for (const [k, list] of Object.entries(groups)) fs.writeFileSync(path.join(out, `sitemap-${k}.xml`), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${list.map(u => `  <url><loc>${SITE}${u}</loc><lastmod>${lastmod(u)}</lastmod></url>`).join("\n")}\n</urlset>\n`);
+  fs.writeFileSync(path.join(out, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${Object.entries(groups).map(([k, list]) => `  <sitemap><loc>${SITE}/sitemap-${k}.xml</loc><lastmod>${list.map(lastmod).sort().pop()}</lastmod></sitemap>`).join("\n")}\n</sitemapindex>\n`);
   return { pages: files.length, urls: urls.length };
 }
 
@@ -195,6 +210,7 @@ async function freshData(out) {
     fs.writeFileSync(path.join(out, "data/rank", x.key + ".dat"), Buffer.from(await d.arrayBuffer())); n++;
     const i = idx.findIndex(y => y.key === x.key); if (i >= 0) idx[i] = x; else idx.push(x);
   }
+  try { const u = await fetch(LIVE_BASE + "updated.json", { signal: AbortSignal.timeout(15000) }); if (u.ok) fs.writeFileSync(path.join(out, "data/updated.json"), await u.text()); } catch {}
   fs.writeFileSync(f, JSON.stringify(idx)); console.log(`Monday data: ${n} result files from the data branch`);
 }
 

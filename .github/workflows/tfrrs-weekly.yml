@@ -40,3 +40,24 @@ jobs:
           HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
         run: |
           if [ -n "$HOOK" ]; then curl -fsS -X POST "$HOOK" > /dev/null && echo "rebuild triggered"; else echo "VERCEL_DEPLOY_HOOK not set, skipping rebuild"; fi
+      - name: Tell Bing and other IndexNow engines which pages changed
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          [ -n "$HOOK" ] || { echo "no rebuild this run, skipping IndexNow"; exit 0; }
+          sleep 300   # let the Vercel rebuild finish first
+          python3 - <<'PY'
+          # IndexNow (Bing, Yandex, Seznam, Naver; Bing feeds ChatGPT search, Copilot and DuckDuckGo). The key is public by
+          # design: https://trackandfieldstandards.com/9fca9ca5284c2ff286008601e0e776fd.txt. Sends only URLs whose sitemap lastmod is the newest date.
+          import json, re, urllib.request
+          host, key = "trackandfieldstandards.com", "9fca9ca5284c2ff286008601e0e776fd"
+          rows = []
+          for k in ("schools", "results", "standards", "guides"):
+              x = urllib.request.urlopen(f"https://{host}/sitemap-{k}.xml", timeout=30).read().decode()
+              rows += re.findall(r"<loc>([^<]+)</loc><lastmod>([^<]+)</lastmod>", x)
+          newest = max(d for _, d in rows)
+          urls = [u for u, d in rows if d == newest][:10000]
+          body = json.dumps({"host": host, "key": key, "keyLocation": f"https://{host}/{key}.txt", "urlList": urls}).encode()
+          req = urllib.request.Request("https://api.indexnow.org/indexnow", data=body, headers={"Content-Type": "application/json; charset=utf-8"})
+          print("IndexNow:", urllib.request.urlopen(req, timeout=60).status, len(urls), "URLs dated", newest)
+          PY
