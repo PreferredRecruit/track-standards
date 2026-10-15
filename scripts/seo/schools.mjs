@@ -86,6 +86,11 @@ ${links.length ? `<h2>Links</h2><ul>${links.map(([, u, t]) => `<li><a href="${es
     h = meta(h, "name", "twitter:title", title); h = meta(h, "name", "twitter:description", desc);
     h = h.replace("</head>", ld.map(x => `<script type="application/ld+json">${JSON.stringify(x).replace(/</g, "\\u003c")}</script>`).join("") + "\n</head>").replace('<div id="root"></div>', `<div id="root">${body}</div>`);
     const f = path.join(out, "schools", slug + ".html"); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, h); files.push(p);
+    /* the school's other old URLs get the same page (canonical stays on the main URL) so none of them 404 */
+    const nameSlug = String(s.n).toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim() + "-track-standards";
+    for (const alt of new Set([...(s.os || []), nameSlug])) if (alt !== slug && !fs.existsSync(path.join(out, "schools", alt + ".html"))) fs.writeFileSync(path.join(out, "schools", alt + ".html"), h);
   }
+  /* any other unknown URL: the app shell, which finds the closest school (Vercel serves 404.html for missing files) */
+  fs.writeFileSync(path.join(out, "404.html"), shell);
   return files;
 }
