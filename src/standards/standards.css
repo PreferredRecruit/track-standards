@@ -476,7 +476,7 @@ th .lvi .cpop{text-align:left}
 .rel{display:flex;flex-wrap:wrap;gap:8px}.rel button{border:0;border-radius:999px;background:var(--pr-soft);padding:8px 14px;font:inherit;font-size:13px;font-weight:600;color:var(--pr-ink);cursor:pointer}.rel button:hover{color:var(--pr-accent)}.rel small{margin-left:6px;font-weight:500;color:var(--pr-mute)}
 .more{display:flex;flex-wrap:wrap;gap:6px 18px;margin:28px 0 0;padding-top:16px;border-top:1px solid var(--pr-line);font-size:14px}
 .more a{color:var(--pr-accent);font-weight:500}
-footer a{color:var(--pr-accent)}
+footer a{color:var(--pr-accent)}footer .soc{display:block;margin-top:10px;font-size:10px;color:var(--pr-faint);opacity:.7}footer .soc a{color:inherit;text-decoration:none}footer .soc a:hover{text-decoration:underline}
 
 /* ---- phones (Ryan 2026-10-15: iPhone + dark mode polish) ---- */
 @media (prefers-color-scheme:dark){html:not([data-theme="light"]){background:#0A0A0D}:root:not([data-theme="light"]) .evwrap::after{background:linear-gradient(90deg,transparent,#0E0C16)}}
