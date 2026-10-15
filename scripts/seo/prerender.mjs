@@ -66,7 +66,7 @@ export function generate(root, out) {
   const DB = JSON.parse(fs.readFileSync(path.join(root, "public/data/db.json"), "utf8"));
   const RIDX = JSON.parse(fs.readFileSync(path.join(root, "public/data/rank_index.json"), "utf8"));
   const S = DB.schools, CT = DB.ct;
-  const std = (s, g, e) => { const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? (v[1] ? `${v[1]} (${v[0]})` : v[0]) : "")) : null; };
+  const std = (s, g, e) => { const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? (v[1] ? `${v[1]} (${v[0]})` : v[0]) + (v[2] ? " est." : "") : "")) : null; };
   const raw = (s, g, e) => { const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? v[0] : "")) : null; };
   const sl = (s) => `/schools/${schoolSlug(s)}`;
   const files = []; const write = (p, html) => { const f = path.join(out, p); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, html); files.push(p); };
