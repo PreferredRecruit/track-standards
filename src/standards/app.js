@@ -188,7 +188,13 @@ function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src;
     <div class="verify"><b>How these are set</b><span>${ruleText(s)} ${esc(s.n)} doesn't publish an official chart we could verify.${EVENTS.some(e=>["m","w"].some(g=>((((CT[s.ck]||{})[g]||{})[e])||[]).some(v=>v&&v[2])))?" Levels marked est: the conference has too few athletes in that event to set a level, so it uses the median of the same level across its division.":""} High school 1600m, 3200m, 300m hurdle and 39" hurdle marks are converted to these college events automatically.</span>${src?`<a href="${esc(src)}" target="_blank" rel="noopener">See the ${esc(s.c)} list on TFRRS ›</a>`:""}${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
   }
   setTimeout(()=>teamBest(S.school),0);
-  return o+`<div id="tbest"></div>`+schoolExtra(s)+schoolMore(s)+`</div>`}
+  setTimeout(()=>schoolVids(S.school),0);
+  return o+`<div id="tbest"></div><div id="svid"></div>`+schoolExtra(s)+schoolMore(s)+`</div>`}
+/* Ryan's videos about this school (YouTube + Instagram reels), /data/videos.json written at build */
+let VIDS=null;
+function schoolVids(i){if(i==null)return;const fill=()=>{const el=document.getElementById("svid");if(!el||S.school!==i)return;const v=(VIDS||{})[SCH[i].n];if(!v){el.innerHTML="";return}
+  el.innerHTML=`<h3 class="tbh">Watch<small>Preferred Recruit</small></h3><div class="vids">${(v.yt||[]).map(x=>`<a class="vcard" href="https://www.youtube.com/watch?v=${esc(x.id)}" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/${esc(x.id)}/hqdefault.jpg" alt="" loading="lazy"><span>${esc(x.t)}</span><small>YouTube</small></a>`).join("")}${(v.ig||[]).map(x=>`<a class="vcard ig" href="https://www.instagram.com/reel/${esc(x.code)}/" target="_blank" rel="noopener"><span>${esc(SCH[i].n)} standards reel</span><small>Instagram · @preferredrecruit</small></a>`).join("")}</div>`};
+  if(VIDS)return fill();fetch("/data/videos.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>{VIDS=d||{};fill()})}
 /* season bests (Ryan 2026-10-14 "optimize everything"): /data/teams/<slug>.json is written at build from the latest outdoor TFRRS lists */
 const TB={};
 function teamBest(i){const slug=window.__prSlug?window.__prSlug(i):null;if(!slug||i==null)return;
@@ -223,7 +229,7 @@ const DIVINFO={"NCAA D1":"NCAA D1","NCAA D2":"NCAA D2","NCAA D3":"NCAA D3",NAIA:
 const evLabel=e=>e.replace(/^(\d[\d,]*) Meters$/,"$1m").replace(/^(\d+) Hurdles$/,"$1m Hurdles").replace(/^(\d+) Steeplechase$/,"$1m Steeple").replace(/^4 x (\d+) Relay$/,"4×$1 Relay");
 const years=()=>[...new Set(RIDX.map(x=>x.year))].sort().reverse();
 const seasons=()=>[...new Set(RIDX.map(x=>x.year+"-"+x.season))].sort().reverse();
-const seasonLabel=k=>{const [y,s]=k.split("-");return `${y} ${s[0].toUpperCase()+s.slice(1)}`};
+const seasonLabel=k=>{const [y,s]=k.split("-");return `${y} ${s==="xc"?"Cross Country":s[0].toUpperCase()+s.slice(1)}`};
 const curKey=()=>{const x=RIDX.find(x=>x.year+"-"+x.season===R.season&&x.div===R.div)||RIDX.find(x=>x.year+"-"+x.season===R.season);if(x)R.div=x.div;return x&&x.key};
 function load(key,quiet){if(CACHE[key]||LOADING[key])return LOADING[key];
   LOADING[key]=getRank(key).then(d=>{CACHE[key]=d}).catch(()=>{CACHE[key]={err:1,lists:[]}})
@@ -276,7 +282,7 @@ function athView(D){
 function results(){
   const key=curKey(), D=key&&CACHE[key]; if(key&&!D) load(key);
   let o=`<div class="sec"><p class="lede">The top marks in college track this season. Pick a level, then an event.</p><div class="rcard">${divTabs()}`;
-  const ctl=(L)=>`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor"].map(x=>{const ok=RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${x==="outdoor"?"Outdoor":"Indoor"}</button>`}).join("")}</div>${seg("rg",R.g)}
+  const ctl=(L)=>`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}
     ${L?`<label class="sr" for="rl">List</label><select class="in" id="rl">${D.lists.map((l,i)=>`<option value="${i}" ${i===R.list?"selected":""}>${l.nat?"National list":esc(l.label)}</option>`).join("")}</select>`:'<span></span>'}
     <div class="search">${MAG}<label class="sr" for="rq">Find an athlete or team</label><input class="in" id="rq" placeholder="Athlete or team" value="${esc(R.q)}" autocomplete="off"></div></div></div>`;
   if(!D||D.err){o+=ctl(null)+(D&&D.err?`<div class="loading">These results aren't available in the preview.</div>`:skeleton());return o+`</div>`}
@@ -297,7 +303,7 @@ function results(){
   const last=all.length-1;
   o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
   <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(listName)} · ${esc(seasonLabel(R.season))} · ${all.length} marks</span></div>
-  <div class="stats">${st(0,"#1 · "+(L.nat?R.div:L.label),"lead")}${(RULES[R.div]||[]).map((k,j)=>k&&all[k-1]?st(k-1,`${ord(k)} · ${["Target","Recruit","Walk-On"][j]} line`):"").join("")}</div>${curve(all,R.ev)}
+  <div class="stats">${st(0,"#1 · "+(L.nat?R.div:L.label),"lead")}${(R.season.endsWith("xc")?[]:RULES[R.div]||[]).map((k,j)=>k&&all[k-1]?st(k-1,`${ord(k)} · ${["Target","Recruit","Walk-On"][j]} line`):"").join("")}</div>${curve(all,R.ev)}
   <div class="grid"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span><span>Meet</span></div>
   ${rows.slice(0,R.n).map((r,i)=>{const k=all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span><span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span></div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
   </div>${hookRow()}

@@ -9,11 +9,13 @@ import datetime, glob, gzip, json, os, subprocess, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out"); os.makedirs(os.path.join(OUT, "rank"), exist_ok=True)
 sys.path.insert(0, HERE)
-import scrape_lists, scrape_champs
+import scrape_lists, scrape_champs, scrape_xc
 
 year = datetime.date.today().year
 scrape_lists.main([str(year)], fresh=True)
 scrape_champs.main(year, year)
+try: scrape_xc.main([year], fresh=True)   # cross country championships (Sep-Nov), results only
+except Exception as e: print("xc scrape failed:", e)
 tmp = os.path.join(HERE, "rank_tmp")
 subprocess.run([sys.executable, os.path.join(HERE, "build_rank.py")], check=True,
                env={**os.environ, "TFRRS_LISTS": os.path.join(HERE, "lists"), "TFRRS_CHAMPS": os.path.join(HERE, "champs"), "RANK_OUT": tmp})

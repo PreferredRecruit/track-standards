@@ -1,0 +1,782 @@
+{
+ "schools": {
+  "Charleston (W.V.)": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "__keBRmdF",
+     "d": "2026-10-14"
+    }
+   ]
+  },
+  "Butler University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BBKJs4B6uD",
+     "d": "2026-10-14"
+    }
+   ]
+  },
+  "Bradley University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "_mXcZyhG2",
+     "d": "2026-10-14"
+    }
+   ]
+  },
+  "Arkansas State University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAAcewjsPR",
+     "d": "2026-10-14"
+    }
+   ]
+  },
+  "Abilene Christian University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BATx7QoU3r",
+     "d": "2026-10-14"
+    }
+   ]
+  },
+  "Virginia Military Institute": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAOS2_AyDR",
+     "d": "2026-10-14"
+    }
+   ]
+  },
+  "Western Kentucky University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BASXh5D31O",
+     "d": "2026-10-13"
+    }
+   ]
+  },
+  "The University of Texas at Arlington": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BA-X1bxCcn",
+     "d": "2026-10-13"
+    }
+   ]
+  },
+  "University of Massachusetts Amherst": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAXrsXX5FR",
+     "d": "2026-10-13"
+    }
+   ]
+  },
+  "United States Naval Academy (Navy)": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAW8QTt9m4",
+     "d": "2026-10-13"
+    }
+   ]
+  },
+  "Northeastern University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAlkjTfIO_",
+     "d": "2026-10-13"
+    }
+   ]
+  },
+  "Appalachian State University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BARupNk1lj",
+     "d": "2026-10-12"
+    }
+   ]
+  },
+  "University at Buffalo, The State University of New York": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAWYcvDzX_",
+     "d": "2026-10-12"
+    }
+   ]
+  },
+  "Columbia University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BApVe8PSqT",
+     "d": "2026-10-12"
+    }
+   ]
+  },
+  "Coastal Carolina University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "_kbRhIJMV",
+     "d": "2026-10-12"
+    }
+   ]
+  },
+  "University of California, Irvine": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAV-hYttSq",
+     "d": "2026-10-12"
+    }
+   ]
+  },
+  "Marshall University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAOWPRX7rf",
+     "d": "2026-10-11"
+    }
+   ]
+  },
+  "Lafayette College": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "_5i37-ReJ",
+     "d": "2026-10-11"
+    }
+   ]
+  },
+  "College of the Holy Cross": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BBfMl4Fm1r",
+     "d": "2026-10-11"
+    }
+   ]
+  },
+  "East Carolina University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "_pqV9zmEp",
+     "d": "2026-10-11"
+    }
+   ]
+  },
+  "Eastern Michigan University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BBWwHG8-RY",
+     "d": "2026-10-11"
+    }
+   ]
+  },
+  "UNLV (University of Nevada, Las Vegas)": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "_pa3XKZxg",
+     "d": "2026-10-09"
+    }
+   ]
+  },
+  "Duke University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAdDS6cKZn",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "SMU (Southern Methodist University)": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "_79VTKOdL",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "University of Pennsylvania": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAPEjKv8Wf",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "University of North Texas": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "_0gsyPn3S",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "UCLA": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BANAulB2kW",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "Harvard University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BB-2X_gJl-",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "California State University, Fullerton": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAXsjJs4nU",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "Yale University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "_opi6cWHW",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "Clemson University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "__FAWI2Fo",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "Colorado State University": {
+   "yt": [
+    {
+     "id": "Rz6gu80adbw",
+     "t": "POV: you go to Colorado State?!?!",
+     "d": "2025-12-10",
+     "desc": "",
+     "k": "shorts"
+    },
+    {
+     "id": "igrp1dlOfOY",
+     "t": "FULL Interview With Colorado State Track and Field Coach (Maria Creech) 2026",
+     "d": "2026-04-15",
+     "desc": "",
+     "k": "videos"
+    }
+   ],
+   "ig": [
+    {
+     "code": "BAcZ0BVloA",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "Texas State University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAZi6tcFNK",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "UT Rio Grande Valley": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "_xVfvKT-3",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "University of Southern California": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "_qZZ0AeBf",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "San Jos\u00e9 State University": {
+   "yt": [
+    {
+     "id": "IT5RIGLn7oY",
+     "t": "SJSU Recruitment Standards T&F",
+     "d": "2025-04-18",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": [
+    {
+     "code": "BAGol0QlhB",
+     "d": "2026-10-08"
+    }
+   ]
+  },
+  "California State University, Sacramento": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAdBSeuzZ0",
+     "d": "2026-10-07"
+    }
+   ]
+  },
+  "Florida State University": {
+   "yt": [],
+   "ig": [
+    {
+     "code": "BAZXaYdXPv",
+     "d": "2026-10-07"
+    }
+   ]
+  },
+  "Rutgers, The State University of New Jersey": {
+   "yt": [
+    {
+     "id": "xGRzRjGiEeA",
+     "t": "RUTGERS RECRUITMENT STANDARDS",
+     "d": "2025-10-31",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": [
+    {
+     "code": "BAZdgXVZdX",
+     "d": "2026-10-07"
+    }
+   ]
+  },
+  "Arizona State University": {
+   "yt": [
+    {
+     "id": "XHLsXFL1DJU",
+     "t": "ARIZONA STATE T&F RECRUITMENT STANDARDS",
+     "d": "2026-02-22",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "Bridgewater College": {
+   "yt": [
+    {
+     "id": "pmBijGCXhLM",
+     "t": "BRIDGEWATER T&F RECRUITMENT STANDARDS",
+     "d": "2026-02-23",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "Chadron State College": {
+   "yt": [
+    {
+     "id": "Cvkqk15fDEE",
+     "t": "D2 Chadron State T&F Standards",
+     "d": "2025-12-10",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "Dartmouth College": {
+   "yt": [
+    {
+     "id": "ztklfFIpIUs",
+     "t": "Dartmouth Recruitment Standards",
+     "d": "2025-04-18",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "University of Florida": {
+   "yt": [
+    {
+     "id": "S1psuLnbuMA",
+     "t": "UNIVERSITY OF FLORIDA RECRUITING STANDARDS",
+     "d": "2025-03-24",
+     "desc": "",
+     "k": "shorts"
+    },
+    {
+     "id": "fHjAl5LZ-tM",
+     "t": "Preferred Recruit - Case Study (HE GOT RECRUITED TO FLORIDA)",
+     "d": "2024-09-14",
+     "desc": "",
+     "k": "videos"
+    }
+   ],
+   "ig": []
+  },
+  "Kent State University": {
+   "yt": [
+    {
+     "id": "blb0PeoDsxg",
+     "t": "KENT STATE DISTANCE STANDARDS",
+     "d": "2025-10-31",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "Mansfield University": {
+   "yt": [
+    {
+     "id": "tFmTneGMQ00",
+     "t": "MANSFIELD T&F RECRUITING STANDARDS",
+     "d": "2026-02-22",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "NC State University": {
+   "yt": [
+    {
+     "id": "WWNn4Zqy3Zk",
+     "t": "NC STATE TRACK STANDARDS",
+     "d": "2025-04-17",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "Northwestern State University": {
+   "yt": [
+    {
+     "id": "FoOo0O5vFRg",
+     "t": "Northwestern State T&F Standards",
+     "d": "2025-12-18",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "Samford University": {
+   "yt": [
+    {
+     "id": "7JLmWyzhX6A",
+     "t": "SAMFORD TRACK STANDARDS",
+     "d": "2025-04-17",
+     "desc": "",
+     "k": "shorts"
+    },
+    {
+     "id": "kMpDPHxrSAs",
+     "t": "SAMFORD WOMENS T&F Standards",
+     "d": "2025-04-18",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "Syracuse University": {
+   "yt": [
+    {
+     "id": "UTBxvAKeB9I",
+     "t": "Syracuse T&F recruitment Standards",
+     "d": "2025-04-18",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "University of Alabama": {
+   "yt": [
+    {
+     "id": "FzbEyNugC1Q",
+     "t": "ALABAMA RECRUITING STANDARDS",
+     "d": "2025-03-24",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "University of Georgia": {
+   "yt": [
+    {
+     "id": "skPSmfNCouA",
+     "t": "University of Georgia Men\u2019s DISTANCE T&F Standards",
+     "d": "2025-04-18",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "University of Louisville": {
+   "yt": [
+    {
+     "id": "W8BV3-vDl40",
+     "t": "LOUISVILLE TRACK AND FIELD STANDARDS!!",
+     "d": "2025-06-07",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "University of Oklahoma": {
+   "yt": [
+    {
+     "id": "6HCZVgffpeY",
+     "t": "Oklahoma T&F Recruitment Standards",
+     "d": "2025-04-18",
+     "desc": "",
+     "k": "shorts"
+    },
+    {
+     "id": "K0BBRlUdMMQ",
+     "t": "FULL Interview With Oklahoma Head Track and Field Coach (James Thomas) 2026",
+     "d": "2026-02-23",
+     "desc": "",
+     "k": "videos"
+    },
+    {
+     "id": "FlTEIwgzNi8",
+     "t": "Interview With Oklahoma T&F Jumps Coach 2026 (Austin Davis)",
+     "d": "2026-03-03",
+     "desc": "",
+     "k": "videos"
+    }
+   ],
+   "ig": []
+  },
+  "West Texas A&M University": {
+   "yt": [
+    {
+     "id": "rZmpu_hb7U8",
+     "t": "West Texas A&M T&F Standards?!?!",
+     "d": "2025-12-10",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "University of North Carolina Wilmington": {
+   "yt": [
+    {
+     "id": "wFldszXBcSc",
+     "t": "UNC WILMINGTON T&F STANDARDS!",
+     "d": "2025-06-25",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "University of Michigan": {
+   "yt": [
+    {
+     "id": "JwqRPMDcmr8",
+     "t": "MICHIGAN RECRUITS SLOW SPRINTERS?!",
+     "d": "2025-03-24",
+     "desc": "",
+     "k": "shorts"
+    },
+    {
+     "id": "cMJJsyVd6pE",
+     "t": "MICHIGAN TRACK STANDARDS",
+     "d": "2025-04-17",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "University of Iowa": {
+   "yt": [
+    {
+     "id": "xLFaWsa1774",
+     "t": "IOWA TRACK AND FIELD STANDARDS! WHATTT",
+     "d": "2025-06-07",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "Cal State Northridge": {
+   "yt": [
+    {
+     "id": "S6ahEyQPsVY",
+     "t": "CSUN T&F Recruitment Standards",
+     "d": "2025-04-18",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "University of Colorado Boulder": {
+   "yt": [
+    {
+     "id": "9NWWhvfRh5c",
+     "t": "Boulder T&F Recruitment Standards",
+     "d": "2025-04-18",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "University of North Carolina at Asheville": {
+   "yt": [
+    {
+     "id": "rqxgPowJwnA",
+     "t": "UNCA TRACK STANDARDS",
+     "d": "2025-04-17",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "LSU (Louisiana State University)": {
+   "yt": [
+    {
+     "id": "R6d5kQ9x2uQ",
+     "t": "LSU ONLY RECRUITS NATIONAL CHAMPIONS",
+     "d": "2025-03-24",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "Louisiana Tech University": {
+   "yt": [
+    {
+     "id": "tB-LLi6Nmf8",
+     "t": "LA TECH 200/400m men\u2019s standards T&F",
+     "d": "2025-04-18",
+     "desc": "",
+     "k": "shorts"
+    }
+   ],
+   "ig": []
+  },
+  "Boise State": {
+   "yt": [
+    {
+     "id": "HgXgQ6gcIIk",
+     "t": "How We Got This Family a D1 Scholarship to Boise State in Less Than 1 Month",
+     "d": "2025-09-09",
+     "desc": "",
+     "k": "videos"
+    },
+    {
+     "id": "RA5itZ0EwpY",
+     "t": "How THIS ATHLETE Went From Unknown to Boise State in 3 Weeks (+3 D1 offers and 48 responses)",
+     "d": "2025-08-05",
+     "desc": "",
+     "k": "videos"
+    }
+   ],
+   "ig": []
+  }
+ },
+ "pages": {
+  "/guides/target-recruit-walk-on-explained.html": [
+   {
+    "id": "NpXosPngj7E",
+    "t": "HOW TRACK STANDARDS ACTUALLY WORK",
+    "d": "2025-11-04",
+    "desc": "",
+    "k": "shorts"
+   }
+  ],
+  "/how-fast.html": [
+   {
+    "id": "niip40i4hrM",
+    "t": "Top 10 D1 Schools for EVERY Event",
+    "d": "2025-12-12",
+    "desc": "",
+    "k": "shorts"
+   },
+   {
+    "id": "QOQ6D5CAlkU",
+    "t": "Top 10 D1 Schools for EVERY Event (Women's Edition)",
+    "d": "2025-12-12",
+    "desc": "",
+    "k": "shorts"
+   }
+  ],
+  "/conferences/sec-track-standards.html": [
+   {
+    "id": "dj0rjTHqg3Q",
+    "t": "SEC Track Standards",
+    "d": "2025-04-17",
+    "desc": "",
+    "k": "shorts"
+   }
+  ],
+  "/conferences/ivy-league-track-standards.html": [
+   {
+    "id": "mRhpBx28Y7Y",
+    "t": "How to Get Recruited to an Ivy League",
+    "d": "2024-09-08",
+    "desc": "",
+    "k": "videos"
+   }
+  ],
+  "/": [
+   {
+    "id": "zbjmcRi3-qo",
+    "t": "Track and Field Recruiting Standards",
+    "d": "2024-09-08",
+    "desc": "",
+    "k": "videos"
+   }
+  ]
+ }
+}

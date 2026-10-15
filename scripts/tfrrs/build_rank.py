@@ -33,6 +33,8 @@ def label(name):
     return n
 
 def national(name):
+    # cross country (scrape_xc.py): the national championship meet is the division's main list; regions/conferences are not
+    if "Cross_Country" in name: return bool(re.search(r"^(NCAA_Division_I+|NAIA|NJCAA_Division_I+)_Cross_Country_Championships$", name))
     return bool(re.search(r"Qualifying|Division_I_Indoor_List|All_Schools|^\d{4}_NAIA", name)) and not re.search(r"East|West|NJCAA_DIII", name)
 
 def person(a):

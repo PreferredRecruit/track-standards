@@ -50,6 +50,13 @@ export function schoolPages({ root, out, S, DATES = {}, SITE, QUIZ, esc, schoolS
     return o.m.length || o.w.length ? o : null;
   }
 
+  /* Ryan's YouTube videos + Instagram reels about a school (scripts/seo/videos.json, matched by title/caption) */
+  let VID = { schools: {} };
+  try { VID = JSON.parse(fs.readFileSync(path.join(root, "scripts/seo/videos.json"), "utf8")); } catch {}
+  fs.mkdirSync(path.join(out, "data"), { recursive: true }); fs.writeFileSync(path.join(out, "data/videos.json"), JSON.stringify(VID.schools || {}));
+  const ytThumb = id => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+  const vidHtml = v => !v ? "" : `<h2>Watch</h2>${(v.yt || []).map(x => `<p><a href="https://www.youtube.com/watch?v=${x.id}" rel="noopener"><img src="${ytThumb(x.id)}" alt="${esc(x.t)}" width="320" height="180" loading="lazy" style="border-radius:12px;display:block;max-width:100%"></a><a href="https://www.youtube.com/watch?v=${x.id}" rel="noopener">${esc(x.t)}</a> · YouTube · Preferred Recruit</p>`).join("")}${(v.ig || []).map(x => `<p><a href="https://www.instagram.com/reel/${x.code}/" rel="noopener">Watch the standards reel on Instagram</a> (@preferredrecruit, ${esc(x.d)})</p>`).join("")}`;
+  const vidLd = (v, s) => (v && v.yt || []).filter(x => x.d).map(x => ({ "@context": "https://schema.org", "@type": "VideoObject", name: x.t, description: x.desc || `${s.n} track and field recruiting standards, by Preferred Recruit.`, thumbnailUrl: [ytThumb(x.id)], uploadDate: x.d, embedUrl: `https://www.youtube.com/embed/${x.id}`, contentUrl: `https://www.youtube.com/watch?v=${x.id}`, publisher: { "@type": "Organization", name: "Preferred Recruit" } }));
   const files = [];
   const tbl = (head, rows) => `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:14px"><tr>${head.map(h => `<th style="text-align:left;padding:8px;border-bottom:1px solid #E4E3EA">${h}</th>`).join("")}</tr>${rows.map(r => `<tr>${r.map(c => `<td style="padding:8px;border-bottom:1px solid #EEE">${c}</td>`).join("")}</tr>`).join("")}</table></div>`;
   const byConf = new Map(), byState = new Map();
@@ -83,7 +90,7 @@ export function schoolPages({ root, out, S, DATES = {}, SITE, QUIZ, esc, schoolS
     const ld = [{ "@context": "https://schema.org", "@type": "SportsOrganization", name: s.n + " Track & Field", sport: "Track and Field", url, description: desc,
       memberOf: { "@type": "SportsOrganization", name: s.c }, ...(s.s ? { address: { "@type": "PostalAddress", addressRegion: s.s } } : {}), sameAs: [s.ws, s.rs, s.src, s.u].filter(Boolean) },
       { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq(s, B).map(([qq, aa]) => ({ "@type": "Question", name: qq, acceptedAnswer: { "@type": "Answer", text: aa } })) },
-      { "@context": "https://schema.org", "@type": "WebPage", name: title, url, dateModified: DATES.max || DATES.db },
+      { "@context": "https://schema.org", "@type": "WebPage", name: title, url, dateModified: DATES.max || DATES.db }, ...vidLd((VID.schools || {})[s.n], s),
       { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [["Home", "/"], [s.c, confUrl(s)], [s.n, p]].map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) }];
     const side = g => {
       const off = s.o && (s.off || {})[g];
@@ -100,6 +107,7 @@ export function schoolPages({ root, out, S, DATES = {}, SITE, QUIZ, esc, schoolS
 <p>${esc(s.n)} is ${/^[AEIOUN]/.test(s.d) ? "an" : "a"} ${esc(s.d)}${J ? " junior college" : ""} track and field program${s.c !== s.d ? ` in the ${esc(s.c)}` : ""}${s.s ? `, based in ${esc(STATE[s.s] || s.s)}` : ""}. ${J ? `Junior colleges compete nationally rather than in conferences, so this site shows ${esc(s.n)}'s season results instead of predicted recruiting levels.` : `Below are the marks it takes to be a Target recruit, a Recruit or a Walk-On for men and women in every event${s.o ? ", from the school's own published standards" : ", set from its 2026 conference results"}.`}</p>
 ${J ? `<h2>No recruiting levels for junior colleges</h2><p>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: there's no reliable way to predict a junior college's marks. ${B ? `Below are ${esc(s.n)}'s best marks this season. ` : ""}The full NJCAA national list, by event, is in <a href="/?tab=results&div=NJCAA">Results</a>, and the <a href="${JG}">junior college recruiting guide</a> explains how NJCAA track works.</p>` : `<h2>Men's standards</h2>${side("m")}<h2>Women's standards</h2>${side("w")}`}
 ${B ? `<h2>${B.y} season bests</h2><p>${esc(s.n)}'s best mark in each event this outdoor season on TFRRS${B.conf ? `, with its rank in the ${esc(B.conf)} list` : ""}. A w marks a wind-aided mark.</p>${bestTbl("m")}${bestTbl("w")}` : ""}
+${vidHtml((VID.schools || {})[s.n])}
 ${(() => { const q = faq(s, B); return `<h2>Common questions</h2>${q.map(([qq, aa]) => `<h3>${esc(qq)}</h3><p>${esc(aa)}</p>`).join("")}`; })()}
 ${(() => { const [c, st] = related(s); return (c.length ? `<h2>More ${esc(s.c)} programs</h2><ul style="columns:3 200px">${c.map(x => `<li><a href="/schools/${schoolSlug(x)}">${esc(x.n)}</a></li>`).join("")}</ul>` : "") + (st.length ? `<h2>More college programs in ${esc(STATE[s.s] || s.s)}</h2><ul style="columns:3 200px">${st.map(x => `<li><a href="/schools/${schoolSlug(x)}">${esc(x.n)}</a> <small>${esc(x.d)}</small></li>`).join("")}</ul>` : ""); })()}
 ${links.length ? `<h2>Links</h2><ul>${links.map(([, u, t]) => `<li><a href="${esc(u)}" rel="noopener">${t}</a></li>`).join("")}</ul>` : ""}

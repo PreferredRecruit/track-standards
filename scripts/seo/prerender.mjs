@@ -134,22 +134,22 @@ export function generate(root, out) {
   for (const x of RIDX) {
     if (!RDIVS.includes(x.div)) continue;
     let D; try { D = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(out, "data/rank", x.key + ".dat"))).toString()); } catch { continue; }
-    const seasonName = x.season[0].toUpperCase() + x.season.slice(1);
-    const champ = D.lists.find(l => l.champ), nat = D.lists.find(l => l.nat);
+    const XC = x.season === "xc", seasonName = XC ? "Cross Country" : x.season[0].toUpperCase() + x.season.slice(1);
+    const nat = D.lists.find(l => l.nat), champ = XC ? nat : D.lists.find(l => l.champ);   /* XC: the national meet is both */
     if (champ) {
       const p = `/champions/${x.year}-${x.season}-${slug(x.div)}.html`; champPages.push([p, `${x.year} ${seasonName} ${x.div}`]);
       const rows = g => Object.entries(champ.g[g] || {}).filter(([, r]) => r.length).map(([e, r]) => `<tr><td>${esc(evLabel(e))}</td><td>${esc(r[0][1] || D.teams[r[0][3]])}</td><td>${esc(D.teams[r[0][3]])}</td><td class="n">${esc(r[0][4])}${r[0][5] ? ` <small>(${esc(r[0][5])})</small>` : ""}</td></tr>`).join("");
-      write(p, page({ title: `${x.year} ${x.div} ${seasonName} Track & Field National Champions | Preferred Recruit`, desc: `Every ${x.year} ${x.div} ${x.season} track and field national champion, men and women, with winning marks from the national championship meet.`,
+      write(p, page({ title: XC ? `${x.year} ${x.div} Cross Country National Champions (Individual & Team) | Preferred Recruit` : `${x.year} ${x.div} ${seasonName} Track & Field National Champions | Preferred Recruit`, desc: XC ? `${x.year} ${x.div} cross country national champions, men and women: individual winners and winning teams from the national championship race.` : `Every ${x.year} ${x.div} ${x.season} track and field national champion, men and women, with winning marks from the national championship meet.`,
         pathname: p, crumbs: [["Home", "/"], ["Explore", "/explore.html"], ["National champions", "/explore.html#champions"], [`${x.year} ${seasonName} ${x.div}`, p]], h1: `${x.year} ${esc(x.div)} ${seasonName} National Champions`,
-        intro: `Winners of every event at the ${x.year} ${esc(x.div)} ${x.season} track and field national championships. Source: TFRRS meet results.`,
+        intro: XC ? `Individual and team winners at the ${x.year} ${esc(x.div)} cross country national championships. Source: TFRRS meet results.` : `Winners of every event at the ${x.year} ${esc(x.div)} ${x.season} track and field national championships. Source: TFRRS meet results.`,
         body: ["m", "w"].map(g => `<h2>${gName(g)} champions</h2><div class="scroll"><table><tr><th>Event</th><th>Champion</th><th>Team</th><th class="n">Mark</th></tr>${rows(g)}</table></div>`).join("") }));
     }
     if (nat) for (const g of ["m", "w"]) for (const [e, r] of Object.entries(nat.g[g] || {})) {
       if (!r.length) continue;
       const ev = evLabel(e), p = `/results/${x.year}-${x.season}-${slug(x.div)}-${g === "m" ? "mens" : "womens"}-${slug(ev)}.html`; resultPages.push([p, x, g, ev]);
-      write(p, page({ title: `${x.year} ${x.div} ${gName(g)} ${ev} Top Marks (${seasonName}) | Preferred Recruit`, desc: `Top ${Math.min(50, r.length)} ${gName(g).toLowerCase()} ${ev} marks in ${x.div} for ${x.year} ${x.season}, led by ${r[0][1] || D.teams[r[0][3]]} (${D.teams[r[0][3]]}) at ${r[0][4]}.`,
+      write(p, page({ title: XC ? `${x.year} ${x.div} ${gName(g)} ${ev} Cross Country Championship Results | Preferred Recruit` : `${x.year} ${x.div} ${gName(g)} ${ev} Top Marks (${seasonName}) | Preferred Recruit`, desc: `Top ${Math.min(50, r.length)} ${gName(g).toLowerCase()} ${ev} marks in ${x.div} for ${x.year} ${x.season}, led by ${r[0][1] || D.teams[r[0][3]]} (${D.teams[r[0][3]]}) at ${r[0][4]}.`,
         pathname: p, crumbs: [["Home", "/"], ["Explore", "/explore.html"], ["Results", "/explore.html#results"], [`${x.year} ${seasonName} ${x.div}`, "/explore.html#r-" + x.key], [`${gName(g)} ${ev}`, p]],
-        h1: `${x.year} ${esc(x.div)} ${gName(g)} ${esc(ev)}: Top Marks`, intro: `The best ${gName(g).toLowerCase()} ${esc(ev)} marks in ${esc(x.div)} during the ${x.year} ${x.season} season, from the TFRRS national list plus the national championship meet.`,
+        h1: XC ? `${x.year} ${esc(x.div)} ${gName(g)} ${esc(ev)} Cross Country Championship` : `${x.year} ${esc(x.div)} ${gName(g)} ${esc(ev)}: Top Marks`, intro: XC ? `${/Team/.test(ev) ? "Team standings" : "Individual results"} from the ${x.year} ${esc(x.div)} ${gName(g).toLowerCase()} cross country national championship (${esc(ev.replace(" Team", ""))}). Source: TFRRS.` : `The best ${gName(g).toLowerCase()} ${esc(ev)} marks in ${esc(x.div)} during the ${x.year} ${x.season} season, from the TFRRS national list plus the national championship meet.`,
         body: `<div class="scroll"><table><tr><th>#</th><th>Athlete</th><th>Class</th><th>Team</th><th class="n">Mark</th><th>Meet</th></tr>${r.slice(0, 50).map((z, i) => `<tr><td>${i + 1}</td><td>${esc(z[1] || D.teams[z[3]])}</td><td>${esc(z[2] || "")}</td><td>${esc(D.teams[z[3]])}</td><td class="n">${esc(z[4])}${z[8] ? ` <small>(${esc(z[8])})</small>` : z[5] ? ` <small>(${esc(z[5])})</small>` : ""}</td><td>${esc(D.meets[z[6]] || "")} <small>${esc(z[7] || "")}</small></td></tr>`).join("")}</table></div>` }));
     }
   }
