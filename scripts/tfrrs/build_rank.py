@@ -60,6 +60,7 @@ for d in sorted(glob.glob(os.path.join(SRC, "*", "*", "*"))):
         for e, rows in j["events"].items():
             ev[e] = [[r.get("place"), person(r.get("athlete", "")), r.get("year", ""), tid(r.get("team", ""), teams, ti),
                       r.get("mark", ""), r.get("wind", ""), tid(r.get("meet", ""), meets, mi), r.get("date", ""), (r.get("conv") or "").strip(), (re.search(r"/athletes/(\d+/[^/?#]+/[^/?#]+)", (r.get("links") or {}).get("athletes") or "") or [None, ""])[1]] for r in rows]
+        ev = dict(sorted(ev.items(), key=lambda kv: (kv[0].endswith(" Team"), kv[0] if re.search(r" DI+\b", kv[0]) else "")))   # XC: individual first, NJCAA DI/DII/DIII in order
         L = lists.setdefault(name, {"label": label(name), "nat": national(name), "region": "Region" in name, "g": {}})
         L["g"]["m" if g == "m" else "w"] = ev
     # --- national championship results (Ryan 2026-10-13: final lists close before nationals; TFRRS has the meets) ---

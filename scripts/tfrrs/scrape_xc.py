@@ -29,12 +29,20 @@ def conf_divisions():
             return {k: v for k, v in out.items() if k and v}
     return {}
 
+ALIAS = {   # XC meet names that differ from the conference labels on the site
+    "ivyleagueheptagonal": "d1", "heptagonal": "d1", "missourivalley": "d1", "slc": "d1", "southland": "d1", "wcc": "d1", "atlanticsun": "d1",
+    "sunshinestate": "d2", "eastcoast": "d2", "ncac": "d3", "southernathletic": "d3", "saa": "d3", "c2c": "d3", "unitedeast": "d3",
+    "appalachian": "naia", "californiapacific": "naia", "cascadecollegiate": "naia", "continentalindependents": "naia", "gsac": "naia",
+    "greatplains": "naia", "greatsouthwest": "naia", "hbcu": "naia", "heartofamerica": "naia", "kansascollegiate": "naia",
+    "northstar": "naia", "redriver": "naia", "sooner": "naia", "wolverinehoosier": "naia", "americanmidwest": "naia"}
+
 def division(name, confs):
     m = re.search(r"NCAA Division (III|II|I)\b", name)
     if m: return {"I": "d1", "II": "d2", "III": "d3"}[m.group(1)]
     if re.search(r"\bNAIA\b", name): return "naia"
     if re.search(r"\bNJCAA\b", name): return "njcaa"
-    return confs.get(norm(name))
+    k = norm(name)
+    return confs.get(k) or ALIAS.get(k)
 
 def meets_for_year(year, fresh=False):
     seen, out = set(), []
@@ -58,13 +66,20 @@ def parse_meet(page):
     out = {"m": {}, "f": {}}
     for h, body in re.findall(r"<h3[^>]*>(.*?)</h3>(.*?)(?=<h3|\Z)", page, re.S):
         head = SL.txt(h)
-        gm = re.match(r"\s*(Women|Men)", head, re.I); km = re.search(r"\b(Team|Individual)\s+Results", head, re.I)
-        dmx = re.search(r"(\d+(?:\.\d+)?)\s*k\b", head, re.I)
-        if not (gm and km and dmx): continue
-        g = "f" if gm.group(1).lower() == "women" else "m"
-        dist = dmx.group(1)
+        # gender/distance appear in many styles: "Women 6k Run CC", "Women's Race - 6K", "Collegiate 6K - Women",
+        # "(W) 6k Run CC", "Mens Division I 8000M ... (8k)"
+        km = re.search(r"\b(Team|Individual)\s+Results", head, re.I)
+        if re.search(r"\bwom[ae]n'?s?\b|\(w\)", head, re.I): g = "f"
+        elif re.search(r"\bm[ae]n'?s?\b|\(m\)", head, re.I): g = "m"
+        else: g = None
+        dmx = re.search(r"\((\d+(?:\.\d+)?)\s*k\)", head, re.I) or re.search(r"(\d+(?:\.\d+)?)\s*k\b", head, re.I)
+        dm2 = None if dmx else re.search(r"(\d{4,5})\s*m\b", head, re.I)
+        if not (g and km and (dmx or dm2)): continue
+        dist = dmx.group(1) if dmx else str(int(dm2.group(1)) / 1000)
         if dist.endswith(".0"): dist = dist[:-2]
         dist += "K"
+        sd = re.search(r"\bDivision\s+(III|II|I)\b", head)   # combined meets (NJCAA) run several divisions' races
+        if sd: dist += " D" + {"I": "I", "II": "II", "III": "III"}[sd.group(1)]
         kind = km.group(1).lower()
         tb = re.search(r"<table.*?</table>", body, re.S)
         if not tb: continue
