@@ -1,28 +1,17 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import StandardsHome from "./pages/StandardsHome";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
-
+/* The whole site is the standards app (src/standards). Lovable's query/tooltip/toast providers were unused and are
+   left out so phones download less (Ryan 2026-10-14 "optimize everything"). */
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<StandardsHome />} />
-          <Route path="/schools/:schoolSlug" element={<StandardsHome />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <BrowserRouter>
+    <Routes>
+      <Route path="/" element={<StandardsHome />} />
+      <Route path="/schools/:schoolSlug" element={<StandardsHome />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  </BrowserRouter>
 );
 
 export default App;

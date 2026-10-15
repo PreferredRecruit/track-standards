@@ -163,7 +163,7 @@ ${cv ? `<p><a href="/convert.html">High school to college conversion tables ›<
     if (cnt.size) data.ev[g + "|" + e] = [...cnt].map(([k, n]) => [...JSON.parse(k), n]);
   }
   writeRaw("/embed-data.json", JSON.stringify(data));
-  writeRaw("/embed.html", `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>College Track Standards Finder</title>
+  writeRaw("/embed.html", `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>College Track Standards Finder</title><script defer src="/_vercel/insights/script.js"></script><script defer src="/_vercel/speed-insights/script.js"></script>
 <style>*{box-sizing:border-box}html,body{margin:0;background:#fff}body{font:15px/1.45 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#0B0B0F;padding:18px}
 h1{font-size:19px;letter-spacing:-.02em;margin:0 0 4px}p.s{margin:0 0 14px;color:#4A4A52;font-size:13px}.row{display:flex;gap:8px;flex-wrap:wrap}
 select,input,button{font:inherit;padding:10px 12px;border:1px solid #DCDAE5;border-radius:12px;background:#FAFAFC;color:#0B0B0F}select{flex:1 1 120px}input{flex:1 1 110px;min-width:0}

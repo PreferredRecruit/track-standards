@@ -1,6 +1,9 @@
 # Monday TFRRS results refresh (Ryan 2026-10-13: Mondays only).
 # Scrapes the current season politely (3 s per page), builds the results files and force-pushes them to the `data` branch
 # (one commit, replaced weekly, so the repo doesn't grow). The site reads the newest season from that branch.
+# Runs in PreferredRecruit/track-standards only (the repo Vercel deploys); afterwards it triggers a Vercel rebuild so the
+# pre-built pages (season bests, champions, top marks) refresh too. Set the repo secret VERCEL_DEPLOY_HOOK to the
+# project's deploy hook URL (Vercel > track-standards > Settings > Git > Deploy Hooks).
 name: TFRRS weekly refresh
 on:
   schedule:
@@ -13,6 +16,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   refresh:
+    if: github.repository == 'PreferredRecruit/track-standards'
     runs-on: ubuntu-latest
     timeout-minutes: 300
     steps:
@@ -31,3 +35,8 @@ jobs:
           git add -A
           git commit -q -m "Weekly TFRRS results $(date -u +%Y-%m-%d)"
           git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" data:data
+      - name: Rebuild the site on Vercel
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$HOOK" ]; then curl -fsS -X POST "$HOOK" > /dev/null && echo "rebuild triggered"; else echo "VERCEL_DEPLOY_HOOK not set, skipping rebuild"; fi

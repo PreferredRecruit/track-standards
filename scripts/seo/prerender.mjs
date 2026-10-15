@@ -39,9 +39,9 @@ function page({ title, desc, pathname, crumbs, h1, intro, body, ld }) {
   const bc = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: crumbs.map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) };
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}">
-<meta property="og:type" content="website"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${url}"><meta property="og:image" content="${SITE}/icon-512.png">
-<meta name="twitter:card" content="summary"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(desc)}">
-<link rel="icon" href="/favicon-32.png" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="website"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${url}"><meta property="og:image" content="${SITE}/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:image" content="${SITE}/og.jpg">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(desc)}">
+<link rel="icon" href="/favicon-32.png" sizes="32x32"><script defer src="/_vercel/insights/script.js"></script><script defer src="/_vercel/speed-insights/script.js"></script><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <script type="application/ld+json">${JSON.stringify(bc)}</script>${(ld || []).map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join("")}
 <style>:root{--ink:#0B0B0F;--ink2:#2E2E36;--mute:#4A4A52;--line:#E4E3EA;--soft:#F3F2F7;--accent:#7A45F0}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#FDFDFE,#F1F0F6);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
@@ -64,7 +64,7 @@ footer{border-top:1px solid var(--line);font-size:13px;color:var(--mute);padding
 
 export function generate(root, out) {
   const DB = JSON.parse(fs.readFileSync(path.join(root, "public/data/db.json"), "utf8"));
-  const RIDX = JSON.parse(fs.readFileSync(path.join(root, "public/data/rank_index.json"), "utf8"));
+  const RIDX = JSON.parse(fs.readFileSync(path.join(out, "data/rank_index.json"), "utf8"));   /* dist copy: includes the newest Monday data (seoPages) */
   const S = DB.schools, CT = DB.ct;
   const std = (s, g, e) => { const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? (v[1] ? `${v[1]} (${v[0]})` : v[0]) + (v[2] ? " est." : "") : "")) : null; };
   const raw = (s, g, e) => { const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? v[0] : "")) : null; };
@@ -119,7 +119,7 @@ export function generate(root, out) {
   const champPages = [], resultPages = [];
   for (const x of RIDX) {
     if (!DIVS.includes(x.div)) continue;
-    let D; try { D = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(root, "public/data/rank", x.key + ".dat"))).toString()); } catch { continue; }
+    let D; try { D = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(out, "data/rank", x.key + ".dat"))).toString()); } catch { continue; }
     const seasonName = x.season[0].toUpperCase() + x.season.slice(1);
     const champ = D.lists.find(l => l.champ), nat = D.lists.find(l => l.nat);
     if (champ) {
@@ -156,10 +156,46 @@ export function generate(root, out) {
     intro: `${S.length.toLocaleString()} college programs, ${confs.size} conferences, every event's recruiting standards, national champions and top marks from 2016 to today.`,
     body: `<h2 id="high-school">High school athletes, parents and coaches</h2>${groupLinks([["/how-fast.html", "How fast do you need to run in college? (every event)"], ["/convert.html", "High school to college conversions"], ["/guides.html", "Recruiting guides"], ["/for-parents.html", "For parents"], ["/for-coaches.html", "Free widget for coaches"]])}<h2>States</h2>${groupLinks([...byState.keys()].sort((a, b) => (STATE[a] || a).localeCompare(STATE[b] || b)).map(st => [statePath(st), STATE[st] || st]))}${evLinks}<h2 id="champions">National champions</h2>${groupLinks(champPages.map(([u, t]) => [u, t]))}<h2 id="results">Top marks by season</h2>${resultsHtml}` }));
   /* sitemap: every school page + every page above */
+  /* home page: real content in #root so crawlers see the site's main page (the app replaces it when it starts).
+     Runs after schoolPages, which reads the clean shell. */
+  try {
+    const shellFile = path.join(out, "index.html");
+    if (fs.existsSync(shellFile)) {
+      const shell = fs.readFileSync(shellFile, "utf8");
+      const L = items => `<ul style="columns:3 200px;padding-left:18px">${items.map(([u, t]) => `<li><a href="${u}">${esc(t)}</a></li>`).join("")}</ul>`;
+      const latestYear = champPages.length ? champPages.map(([u]) => u.match(/\/champions\/(\d{4})/)).filter(Boolean).map(m => m[1]).sort().pop() : null;
+      const home = `<main style="max-width:1000px;margin:0 auto;padding:28px 20px 60px;font:16px/1.55 -apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;color:#0B0B0F">
+<h1>College Track &amp; Field Standards and Results</h1>
+<p>Recruiting standards for ${S.length.toLocaleString()} college track and field programs in NCAA D1, D2, D3, NAIA and NJCAA, every NCAA result since 2016, and a recruiting AI. Enter your event and best mark to see every college where it's a Target, Recruit or Walk-On level. High school 1600m, 3200m, 300m hurdle and 39-inch hurdle marks are converted automatically.</p>
+<h2>How fast do you need to run in college?</h2>${L(["m", "w"].flatMap(g => ["100m", "200m", "400m", "800m", "1600m", "3200m", "Long Jump", "Shot Put"].map(e => [`/how-fast/${g === "m" ? "mens" : "womens"}-${slug(e)}.html`, `${g === "m" ? "Boys" : "Girls"} ${e}`])).concat([["/convert.html", "High school to college conversions"], ["/guides.html", "Recruiting guides"], ["/for-parents.html", "For parents"], ["/for-coaches.html", "For coaches"]]))}
+<h2>Standards by division</h2>${DIVS.map(d => `<h3>${esc(d)}</h3>${L(["m", "w"].flatMap(g => ["100m", "400m", "800m", "1500m", "5000m", "Long Jump"].map(e => [evPath(d, g, e), `${d} ${gName(g)} ${e} standards`])))}`).join("")}
+<h2>Schools with official published standards</h2>${L(S.filter(x => x.o).sort((a, b) => a.n.localeCompare(b.n)).map(x => [sl(x), x.n]))}
+<h2>Conferences</h2>${L([...confs.keys()].sort().map(k => [confName.get(k), `${k.split("|")[1]} (${k.split("|")[0]})`]))}
+<h2>College track and field by state</h2>${L([...byState.keys()].sort((a, b) => (STATE[a] || a).localeCompare(STATE[b] || b)).map(st => [statePath(st), STATE[st] || st]))}
+${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter(([u]) => u.includes(latestYear)).map(([u, t]) => [u, t + " champions"]).concat([["/explore.html#results", "Top marks by season, 2016 to today"], ["/explore.html", "Explore everything"]]))}` : ""}
+</main>`;
+      fs.writeFileSync(shellFile, shell.replace('<div id="root"></div>', `<div id="root">${home}</div>`));
+    }
+  } catch (e) { console.warn("home page content skipped:", e && e.message); }
   const today = new Date().toISOString().slice(0, 10);
   const urls = ["/", ...[...new Set(S.map(sl))].sort(), ...files.sort()];
   fs.writeFileSync(path.join(out, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod></url>`).join("\n")}\n</urlset>\n`);
   return { pages: files.length, urls: urls.length };
+}
+
+/* newest Monday results (data branch) copied over the repo's copy in dist/data before the pages are generated,
+   so the weekly rebuild refreshes season bests, champions and top marks */
+const LIVE_BASE = "https://raw.githubusercontent.com/PreferredRecruit/track-standards/data/";
+async function freshData(out) {
+  const r = await fetch(LIVE_BASE + "rank_index.json", { signal: AbortSignal.timeout(15000) }); if (!r.ok) throw new Error("index " + r.status);
+  const live = await r.json(), f = path.join(out, "data/rank_index.json"), idx = JSON.parse(fs.readFileSync(f, "utf8"));
+  let n = 0;
+  for (const x of live) {
+    const d = await fetch(LIVE_BASE + "rank/" + x.key + ".dat", { signal: AbortSignal.timeout(30000) }); if (!d.ok) continue;
+    fs.writeFileSync(path.join(out, "data/rank", x.key + ".dat"), Buffer.from(await d.arrayBuffer())); n++;
+    const i = idx.findIndex(y => y.key === x.key); if (i >= 0) idx[i] = x; else idx.push(x);
+  }
+  fs.writeFileSync(f, JSON.stringify(idx)); console.log(`Monday data: ${n} result files from the data branch`);
 }
 
 /* Vite plugin: generate after the app is built. A failure here never breaks the site build. */
@@ -168,7 +204,8 @@ export function seoPages() {
   return {
     name: "pr-seo-pages", apply: "build",
     configResolved(c) { outDir = path.resolve(c.root, c.build.outDir); root = c.root; },
-    closeBundle() {
+    async closeBundle() {
+      try { await freshData(outDir); } catch (e) { console.warn("Monday data not fetched, using the copy in the repo:", e && e.message); }
       try { const r = generate(root, outDir); console.log(`SEO pages: ${r.pages} pages, sitemap ${r.urls} URLs`); }
       catch (e) { console.warn("SEO pages skipped:", e && e.message); }
     },

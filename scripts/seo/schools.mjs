@@ -14,11 +14,11 @@ export function schoolPages({ root, out, S, SITE, QUIZ, esc, schoolSlug, std, EV
   const shellFile = path.join(out, "index.html");
   if (!fs.existsSync(shellFile)) return [];
   const shell = fs.readFileSync(shellFile, "utf8");
-  const idx = JSON.parse(fs.readFileSync(path.join(root, "public/data/rank_index.json"), "utf8"));
+  const idx = JSON.parse(fs.readFileSync(path.join(out, "data/rank_index.json"), "utf8"));
   const year = idx.filter(x => x.season === "outdoor").map(x => x.year).sort().pop();
   const RK = {};
   for (const [d, k] of Object.entries(DK)) {
-    const f = path.join(root, "public/data/rank", `${year}-outdoor-${k}.dat`);
+    const f = path.join(out, "data/rank", `${year}-outdoor-${k}.dat`);
     if (fs.existsSync(f)) RK[d] = JSON.parse(zlib.gunzipSync(fs.readFileSync(f)));
   }
   const order = e => { const i = EVENTS.indexOf(e); return i < 0 ? 99 : i; };
@@ -51,6 +51,26 @@ export function schoolPages({ root, out, S, SITE, QUIZ, esc, schoolSlug, std, EV
 
   const files = [];
   const tbl = (head, rows) => `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:14px"><tr>${head.map(h => `<th style="text-align:left;padding:8px;border-bottom:1px solid #E4E3EA">${h}</th>`).join("")}</tr>${rows.map(r => `<tr>${r.map(c => `<td style="padding:8px;border-bottom:1px solid #EEE">${c}</td>`).join("")}</tr>`).join("")}</table></div>`;
+  const byConf = new Map(), byState = new Map();
+  for (const x of S) { const k = x.d + "|" + x.c; if (!byConf.has(k)) byConf.set(k, []); byConf.get(k).push(x); if (x.s) { if (!byState.has(x.s)) byState.set(x.s, []); byState.get(x.s).push(x); } }
+  const KEY = ["100m", "200m", "400m", "800m", "1500m", "5000m", "110m Hurdles", "100m Hurdles", "Long Jump", "High Jump", "Shot Put"];
+  /* common questions, answered from the school's own standards (also sent as FAQPage structured data) */
+  function faq(s, B) {
+    const J = s.d === "NJCAA", lvl = J ? "top-150 national" : "Walk-On", q = [];
+    const marks = g => KEY.map(e => { const t = std(s, g, e); return t && t[2] ? `${e} ${t[2].replace(/ est\.$/, "")}` : null; }).filter(Boolean).slice(0, 6);
+    const m = marks("m"), w = marks("w");
+    q.push([`What are the ${s.n} track and field recruiting standards?`, `${s.n} is ${/^[AEIOUN]/.test(s.d) ? "an" : "a"} ${s.d} program${s.c !== s.d ? ` in the ${s.c}` : ""}. ${s.o ? `Its standards come from the school's own published chart${s.yr ? ` (${s.yr})` : ""}.` : J ? "As a junior college, its benchmarks come from this season's NJCAA national list: the 30th, 75th and 150th best marks in the country." : "Its Target, Recruit and Walk-On levels are set from 2026 conference results."} The full table for men and women is on this page.`]);
+    if (m.length || w.length) q.push([J ? `What marks rank in the NJCAA top 150 for ${s.n}?` : `What times do you need to walk on at ${s.n}?`, [m.length ? `Men's ${lvl}: ${m.join(", ")}.` : "", w.length ? `Women's ${lvl}: ${w.join(", ")}.` : ""].filter(Boolean).join(" ")]);
+    q.push([`What conference is ${s.n} track and field in?`, `${s.n} competes in ${s.c !== s.d ? `the ${s.c} (${s.d})` : `the ${s.d}`}${s.s ? ` and is based in ${STATE[s.s] || s.s}` : ""}.`]);
+    if (B) { const top = g => (B[g] || []).slice(0, 4).map(r => `${r.e} ${r.mk}${parseFloat(r.w) > 2 ? "w" : ""}`); const bm = top("m"), bw = top("w");
+      if (bm.length || bw.length) q.push([`What are ${s.n}'s best track and field marks in ${B.y}?`, [bm.length ? `Men: ${bm.join(", ")}.` : "", bw.length ? `Women: ${bw.join(", ")}.` : ""].filter(Boolean).join(" ") + " From TFRRS outdoor lists."]); }
+    return q;
+  }
+  const related = s => {
+    const conf = (byConf.get(s.d + "|" + s.c) || []).filter(x => x !== s).sort((a, b) => a.n.localeCompare(b.n)).slice(0, 12);
+    const st = s.s ? (byState.get(s.s) || []).filter(x => x !== s && !conf.includes(x)).sort((a, b) => a.n.localeCompare(b.n)).slice(0, 12) : [];
+    return [conf, st];
+  };
   for (const s of S) {
     const slug = schoolSlug(s), p = `/schools/${slug}`, url = SITE + p, J = s.d === "NJCAA";
     const B = bests(s);
@@ -61,6 +81,7 @@ export function schoolPages({ root, out, S, SITE, QUIZ, esc, schoolSlug, std, EV
     const desc = `${s.n} track and field recruiting standards for men and women (${s.d}${s.c !== s.d ? ", " + s.c : ""})${s.o ? ", from the school's official published standards" : ""}${ex.length ? `: ${ex.map(([g, e, v]) => `${g === "m" ? "men's" : "women's"} ${e} ${J ? "top-150" : "walk-on"} ${v}`).join(", ")}` : ""}${B ? `, plus ${B.y} season bests` : ""}.`;
     const ld = [{ "@context": "https://schema.org", "@type": "SportsOrganization", name: s.n + " Track & Field", sport: "Track and Field", url, description: desc,
       memberOf: { "@type": "SportsOrganization", name: s.c }, ...(s.s ? { address: { "@type": "PostalAddress", addressRegion: s.s } } : {}), sameAs: [s.ws, s.rs, s.src, s.u].filter(Boolean) },
+      { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq(s, B).map(([qq, aa]) => ({ "@type": "Question", name: qq, acceptedAnswer: { "@type": "Answer", text: aa } })) },
       { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [["Home", "/"], [s.c, confUrl(s)], [s.n, p]].map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) }];
     const side = g => {
       const off = s.o && (s.off || {})[g];
@@ -77,6 +98,8 @@ export function schoolPages({ root, out, S, SITE, QUIZ, esc, schoolSlug, std, EV
 <p>${esc(s.n)} is ${/^[AEIOUN]/.test(s.d) ? "an" : "a"} ${esc(s.d)} track and field program${s.c !== s.d ? ` in the ${esc(s.c)}` : ""}${s.s ? `, based in ${esc(STATE[s.s] || s.s)}` : ""}. ${J ? "Below are this season's NJCAA national benchmarks: the marks that rank in the top 30, top 75 and top 150 in the country." : `Below are the marks it takes to be a Target recruit, a Recruit or a Walk-On for men and women in every event${s.o ? ", from the school's own published standards" : ", set from its 2026 conference results"}.`}</p>
 <h2>Men's standards</h2>${side("m")}<h2>Women's standards</h2>${side("w")}
 ${B ? `<h2>${B.y} season bests</h2><p>${esc(s.n)}'s best mark in each event this outdoor season on TFRRS${B.conf ? `, with its rank in the ${esc(B.conf)} list` : ""}. A w marks a wind-aided mark.</p>${bestTbl("m")}${bestTbl("w")}` : ""}
+${(() => { const q = faq(s, B); return `<h2>Common questions</h2>${q.map(([qq, aa]) => `<h3>${esc(qq)}</h3><p>${esc(aa)}</p>`).join("")}`; })()}
+${(() => { const [c, st] = related(s); return (c.length ? `<h2>More ${esc(s.c)} programs</h2><ul style="columns:3 200px">${c.map(x => `<li><a href="/schools/${schoolSlug(x)}">${esc(x.n)}</a></li>`).join("")}</ul>` : "") + (st.length ? `<h2>More college programs in ${esc(STATE[s.s] || s.s)}</h2><ul style="columns:3 200px">${st.map(x => `<li><a href="/schools/${schoolSlug(x)}">${esc(x.n)}</a> <small>${esc(x.d)}</small></li>`).join("")}</ul>` : ""); })()}
 ${links.length ? `<h2>Links</h2><ul>${links.map(([, u, t]) => `<li><a href="${esc(u)}" rel="noopener">${t}</a></li>`).join("")}</ul>` : ""}
 <p><a href="${confUrl(s)}">All ${esc(s.c)} standards</a>${s.s ? ` · <a href="${statePath(s.s)}">College track in ${esc(STATE[s.s] || s.s)}</a>` : ""} · <a href="/how-fast.html">How fast do you need to run in college?</a> · <a href="${QUIZ}">Free recruitment evaluation</a></p>
 </main>`;

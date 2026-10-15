@@ -1,7 +1,7 @@
 // @ts-nocheck
 /* Preferred Recruit · College Track & Field Standards app. Generated from the approved design mockup by export_lovable.py.
    Data: /data/db.json (standards), /data/rank_index.json + /data/rank/<key>.dat (gzip results, refreshed Mondays), /data/athletes.json. */
-const LIVE_BASE = "https://raw.githubusercontent.com/emery-moye/Track-standards/data/";   // Monday refresh (data branch)
+const LIVE_BASE = "https://raw.githubusercontent.com/PreferredRecruit/track-standards/data/";   // Monday refresh (data branch)
 const LIVE_KEYS = new Set();   // keys published on the data branch (not the chat's LIVE flag)
 async function unpack(r){ return await new Response(r.body.pipeThrough(new DecompressionStream("gzip"))).json(); }
 async function getRank(key){
@@ -160,6 +160,17 @@ const slugx=x=>String(x).toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9]+
 const ST_NAME={AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",DC:"Washington DC",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming",BC:"British Columbia"};
 const confUrl=s=>{const dup=SCH.some(x=>x.c===s.c&&x.d!==s.d);return `/conferences/${slugx(s.c)}${dup?"-"+slugx(s.d):""}-track-standards.html`};
 const stateUrl=st=>`/states/${slugx(ST_NAME[st]||st)}-college-track-and-field.html`;
+/* common questions + related programs (same text the pre-built page and its FAQ structured data carry) */
+const FAQ_EV=["100m","200m","400m","800m","1500m","5000m","110m Hurdles","100m Hurdles","Long Jump","High Jump","Shot Put"];
+function schoolExtra(s){const J=s.d==="NJCAA",lvl=J?"top-150 national":"Walk-On",i=SCH.indexOf(s);
+  const mk=g=>FAQ_EV.map(e=>{const t=s[g][e];return t&&t[2]?`${e} ${t[2]}`:null}).filter(Boolean).slice(0,6),m=mk("m"),w=mk("w");
+  const q=[[`What are the ${s.n} track and field recruiting standards?`,`${s.n} is ${/^[AEIOUN]/.test(s.d)?"an":"a"} ${s.d} program${s.c!==s.d?` in the ${s.c}`:""}. ${s.o?`Its standards come from the school's own published chart${s.yr?` (${s.yr})`:""}.`:J?"As a junior college, its benchmarks come from this season's NJCAA national list: the 30th, 75th and 150th best marks in the country.":"Its Target, Recruit and Walk-On levels are set from 2026 conference results."} The full table for men and women is above.`]];
+  if(m.length||w.length)q.push([J?`What marks rank in the NJCAA top 150 for ${s.n}?`:`What times do you need to walk on at ${s.n}?`,[m.length?`Men's ${lvl}: ${m.join(", ")}.`:"",w.length?`Women's ${lvl}: ${w.join(", ")}.`:""].filter(Boolean).join(" ")]);
+  q.push([`What conference is ${s.n} track and field in?`,`${s.n} competes in ${s.c!==s.d?`the ${s.c} (${s.d})`:`the ${s.d}`}${s.s?` and is based in ${ST_NAME[s.s]||s.s}`:""}.`]);
+  const conf=SCH.map((x,k)=>[x,k]).filter(([x,k])=>k!==i&&x.d===s.d&&x.c===s.c).sort((a,b)=>a[0].n.localeCompare(b[0].n)).slice(0,12);
+  const st=s.s?SCH.map((x,k)=>[x,k]).filter(([x,k])=>k!==i&&x.s===s.s&&!(x.d===s.d&&x.c===s.c)).sort((a,b)=>a[0].n.localeCompare(b[0].n)).slice(0,12):[];
+  const list=(t,L)=>L.length?`<h3 class="tbh">${t}</h3><div class="rel">${L.map(([x,k])=>`<button type="button" data-school="${k}">${esc(x.n)}<small>${esc(x.d)}</small></button>`).join("")}</div>`:"";
+  return `<section class="faq"><h3 class="tbh">Common questions</h3>${q.map(([a,b])=>`<details><summary>${esc(a)}</summary><p>${esc(b)}</p></details>`).join("")}</section>`+list(`More ${esc(s.c)} programs`,conf)+list(`More college programs in ${esc(ST_NAME[s.s]||s.s||"")}`,st)}
 function schoolMore(s){const L=[`<a href="${confUrl(s)}">All ${esc(s.c)} schools</a>`];if(s.s)L.push(`<a href="${stateUrl(s.s)}">Colleges in ${esc(ST_NAME[s.s]||s.s)}</a>`);
   L.push(`<a href="/standards/${slugx(s.d)}-mens-400m.html">${esc(s.d)} standards by event</a>`,`<a href="/explore.html">Explore every conference and state</a>`);return `<nav class="more" aria-label="More">${L.join("")}</nav>`}
 function schoolLinks(s){const L=[];
@@ -188,7 +199,7 @@ function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src;
     <div class="verify"><b>How these are set</b><span>${ruleText(s)} ${esc(s.n)} doesn't publish an official chart we could verify.${EVENTS.some(e=>["m","w"].some(g=>((((CT[s.ck]||{})[g]||{})[e])||[]).some(v=>v&&v[2])))?" Levels marked est: the conference has too few athletes in that event to set a level, so it uses the median of the same level across its division.":""} High school 1600m, 3200m, 300m hurdle and 39" hurdle marks are converted to these college events automatically.</span>${src?`<a href="${esc(src)}" target="_blank" rel="noopener">See the ${esc(s.c)} list on TFRRS ›</a>`:""}${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
   }
   setTimeout(()=>teamBest(S.school),0);
-  return o+`<div id="tbest"></div>`+schoolMore(s)+`</div>`}
+  return o+`<div id="tbest"></div>`+schoolExtra(s)+schoolMore(s)+`</div>`}
 /* season bests (Ryan 2026-10-14 "optimize everything"): /data/teams/<slug>.json is written at build from the latest outdoor TFRRS lists */
 const TB={};
 function teamBest(i){const slug=window.__prSlug?window.__prSlug(i):null;if(!slug||i==null)return;
@@ -800,12 +811,12 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
         render(); scrollTo(0, 0); return; } }
     { const q = new URLSearchParams(location.search);   /* shared result links: /?g=m&e=100m&m=10.95 */
       if (q.get("m") && q.get("e") && !S.run) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; } }
-    S.school = null; setMeta("College Track & Field Standards & Results | Preferred Recruit", "Every college track and field standard, every NCAA result and a recruiting AI: NCAA D1, D2, D3, NAIA and NJCAA.", "/",
+    S.school = null; setMeta("College Track & Field Standards, NCAA Results & Recruiting AI | Preferred Recruit", "Recruiting standards for 1,269 college track and field programs (NCAA D1, D2, D3, NAIA, NJCAA), every NCAA result since 2016, and a recruiting AI. Enter your mark and see which colleges you fit.", "/",
       {"@context": "https://schema.org", "@type": "WebSite", name: "Preferred Recruit Track & Field Standards", url: "https://trackandfieldstandards.com/"}); render();
   };
   window.__prStandardsRoute = route;
   window.__prSlug = i => SLUG[i];
-  document.addEventListener("click", ev => { const b = ev.target.closest("[data-school]"); if (b) history.pushState({}, "", "/schools/" + SLUG[+b.dataset.school]);
+  document.addEventListener("click", ev => { const b = ev.target.closest("[data-school]"); if (b) { const i = +b.dataset.school; history.pushState({}, "", "/schools/" + SLUG[i]); setTimeout(() => route(SLUG[i]), 0); }
     if (ev.target.closest("[data-back]") || ev.target.closest("[data-tab]")) { if (location.pathname !== "/") history.pushState({}, "", "/"); } }, true);
   addEventListener("popstate", () => { const m = location.pathname.match(/^\/schools\/([^/]+)/); route(m ? m[1] : null); });
   route(opts.slug);
