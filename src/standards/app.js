@@ -119,7 +119,7 @@ function standards(){
   let o=`<div class="sec"><p class="lede">Select your gender, event, and enter your time to find the colleges that match you.</p>
   <form id="mf" class="panel"><div class="row">${seg("g",S.g)}
     <div class="evw"><label class="sr" for="ev">Event</label><select class="in" id="ev">${list.map(e=>`<option value="${esc(e)}" ${e===S.e?"selected":""}>${esc(e)}${CONV[e]?" · converted":""}</option>`).join("")}</select>${CONV[S.e]?cinfo(S.e):""}</div>
-    <label class="sr" for="mk">Personal best</label><input class="in" id="mk" placeholder="Personal best, e.g. ${esc(ph(S.e))}" value="${esc(S.mark)}" autocomplete="off" inputmode="decimal">
+    <label class="sr" for="mk">Personal best</label><input class="in" id="mk" placeholder="PR, e.g. ${esc(ph(S.e))}" value="${esc(S.mark)}" autocomplete="off" inputmode="decimal">
     <button class="go">Search colleges</button></div><div class="hint" id="hint"></div></form>`;
   /* order (Ryan 2026-10-13): search by stats · or · search one school · what the levels mean · results */
   o+=`<div class="orsep" role="separator"><span>or</span></div><div class="one"><h4>Search for one school</h4><p>${SCH.length.toLocaleString()} colleges across NCAA D1, D2, D3, NAIA and NJCAA.</p><div class="search">${MAG}<label class="sr" for="q">Search colleges</label><input class="in" id="q" placeholder="Try USC, Oregon or Ole Miss" autocomplete="off" value="${esc(S.q)}"><div id="drop"></div></div></div>`;
@@ -205,7 +205,7 @@ const TB={};
 function teamBest(i){const slug=window.__prSlug?window.__prSlug(i):null;if(!slug||i==null)return;
   const fill=d=>{const el=document.getElementById("tbest");if(!el||S.school!==i)return;const L=d?d[S.g]||[]:[];if(!L.length){el.innerHTML="";return}
     el.innerHTML=`<h3 class="tbh">${esc(d.y)} season bests<small>${S.g==="m"?"Men":"Women"} · TFRRS outdoor</small></h3><p class="tbp">${esc(SCH[i].n)}'s best mark in each event this season${d.conf?`, with its rank on the ${esc(d.conf)} list`:""}.</p>
-    <div class="scroll"><table><thead><tr><th>Event</th><th class="num">Mark</th><th>Athlete</th>${d.conf?'<th class="num">Conference rank</th>':""}<th class="num">National rank</th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.e)}</td><td class="num">${esc(r.mk)}${parseFloat(r.w)>2?"<small>w</small>":""}</td><td>${r.ap?`<a href="https://tf.tfrrs.org/athletes/${esc(r.ap)}" target="_blank" rel="noopener nofollow">${esc(r.a)}</a>`:esc(r.a)}</td>${d.conf?`<td class="num">${r.cp?"#"+r.cp:"–"}</td>`:""}<td class="num">${r.np?"#"+r.np:"–"}</td></tr>`).join("")}</tbody></table></div>`};
+    <div class="scroll"><table class="tbt"><thead><tr><th>Event</th><th class="num">Mark</th><th class="num">Rank</th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.e)}<small>${r.ap?`<a href="https://tf.tfrrs.org/athletes/${esc(r.ap)}" target="_blank" rel="noopener nofollow">${esc(r.a)}</a>`:esc(r.a)}</small></td><td class="num">${esc(r.mk)}${parseFloat(r.w)>2?"<small>wind-aided</small>":""}</td><td class="num">${[d.conf&&r.cp?`#${r.cp} ${esc(d.conf)}`:"",r.np?`#${r.np} national`:""].filter(Boolean).join("<br>")||"–"}</td></tr>`).join("")}</tbody></table></div>`};
   if(slug in TB)return fill(TB[slug]);
   fetch("/data/teams/"+slug+".json").then(r=>r.ok?r.json():null).catch(()=>null).then(d=>{TB[slug]=d;fill(d)})}
 /* share my results: branded image card + a link that reopens this exact search (?g=&e=&m=) */
