@@ -68,6 +68,13 @@
     </script>
     <!-- Vercel Web Analytics + Speed Insights (enable both in the Vercel project) -->
     <script defer src="/_vercel/insights/script.js"></script><script defer src="/_vercel/speed-insights/script.js"></script>
+    <script>/* recruitment-evaluation click tracking (Ryan 2026-10-15): Vercel event "Evaluation click" + utm_content per placement */
+window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest('a[href*="thepreferredrecruit.com/parentfunnel"]');if(!a)return;
+var p=a.closest(".pill,header nav")?"header":a.closest(".inl")?"hero":a.closest("#eval,.eval")?"popup":a.closest(".coach")?"school-page":a.closest(".hook")?"results":a.closest(".chat,.ask,.msgs,.msg,.ans")?"chat":a.closest(".cta")?"seo-page":"other";
+var path=location.pathname,kind=path==="/"?"home":path.indexOf("/schools/")===0?"school":path.split("/")[1].replace(".html","")||"home";
+try{var u=new URL(a.href);u.searchParams.set("utm_content",p);a.href=u.toString()}catch(x){}
+window.va("event",{name:"Evaluation click",data:{placement:p,page:kind,path:path.slice(0,120)}})},true);</script>
 </head>
 
   <body>
