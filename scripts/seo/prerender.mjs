@@ -15,6 +15,7 @@ import zlib from "node:zlib";
 import { hsPages } from "./hs.mjs";
 import { fitTitle, fitDesc, tailsFor, levelWords, SEASON } from "./meta.mjs";
 import { schoolPages } from "./schools.mjs";
+import { topicPages } from "./topics.mjs";
 const SITE = "https://trackandfieldstandards.com";
 const QUIZ = "https://app.thepreferredrecruit.com/parentfunnel/?utm_source=website&utm_medium=standards&utm_campaign=PRstandards";
 const EVENTS = ["100m", "200m", "400m", "800m", "1500m", "1600m", "Mile", "3000m", "3200m", "5000m", "10000m", "100m Hurdles", "110m Hurdles",
@@ -164,6 +165,17 @@ export function generate(root, out) {
   /* high school athletes, parents and coaches */
   const writeRaw = (p, txt) => { const f = path.join(out, p); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, txt); };
   hsPages({ S: S.filter(x => !x.j), CT, write, writeRaw, page, parse, esc, slug, schoolUrl: sl, evPath, FIELD, SITE, gName });
+  /* 25 SEO + AEO topic guides (Ryan 2026-10-16), then the guides hub is rebuilt to list them */
+  const TOPICS = topicPages({ S: S.filter(x => !x.j), CT, write, page, parse, esc, slug, evPath, FIELD, SITE, gName, STATE, statePath, resultPages, DATES, QUIZ });
+  write("/guides.html", page({ title: "College Track Recruiting Guides for Athletes, Parents and Coaches | Preferred Recruit",
+    desc: "College track and field recruiting guides: standards, scholarship times, walk-on marks, NCAA rules, emailing coaches, recruiting profiles, training and every division compared.",
+    pathname: "/guides.html", crumbs: [["Home", "/"], ["Guides", "/guides.html"]], h1: "College track recruiting guides",
+    intro: "Plain answers to the questions high school athletes and parents ask most, built from this site's standards for every college program.",
+    body: `<h2>Recruiting guides</h2><div class="links">${TOPICS.map(([u, t]) => `<a href="${u}">${esc(t)}</a>`).join("")}</div>
+<h2>Levels, divisions and tools</h2><div class="links"><a href="/guides/target-recruit-walk-on-explained.html">Target, Recruit and Walk-On explained</a><a href="/guides/ncaa-d1-vs-d2-vs-d3-vs-naia-track-and-field.html">D1 vs D2 vs D3 vs NAIA</a><a href="${JG}">Junior college (NJCAA) recruiting</a><a href="/for-parents.html">For parents</a><a href="/for-coaches.html">For coaches</a><a href="/how-fast.html">How fast do you need to run?</a><a href="/convert.html">Conversions</a></div>`,
+    ld: [{ "@context": "https://schema.org", "@type": "ItemList", name: "College track recruiting guides", itemListElement: TOPICS.map(([u, t], i) => ({ "@type": "ListItem", position: i + 1, name: t, url: SITE + u })) }] }));
+  /* AEO: give AI answer engines every guide's quick answer in llms.txt (numbers regenerate with the data each build) */
+  { const f = path.join(out, "llms.txt"); if (fs.existsSync(f)) fs.appendFileSync(f, `\n## Recruiting guides (quick answers)\n${TOPICS.map(([u, t, a]) => `- [${t}](${SITE}${u}): ${a}`).join("\n")}\n`); }
   /* pre-built HTML for every school page (served at /schools/<slug> by vercel.json); already in the sitemap */
   try { schoolPages({ root, out, S, DATES, SITE, QUIZ, esc, schoolSlug, std, EVENTS, STATE, evLabel, confUrl: s => confName.get(s.d + "|" + s.c), statePath, evPath, gName }); }
   catch (e) { console.warn("school pages skipped:", e && e.message); }
@@ -214,6 +226,7 @@ ${njChamps.length ? `<h2>NJCAA national champions</h2>${groupLinks(njChamps)}` :
 <h2>Standards by division</h2>${DIVS.map(d => `<h3>${esc(d)}</h3>${L(["m", "w"].flatMap(g => ["100m", "400m", "800m", "1500m", "5000m", "Long Jump"].map(e => [evPath(d, g, e), `${d} ${gName(g)} ${e} standards`])))}`).join("")}
 <h2>Schools with official published standards</h2>${L(S.filter(x => x.o).sort((a, b) => a.n.localeCompare(b.n)).map(x => [sl(x), x.n]))}
 <h2>Conferences</h2>${L([...confs.keys()].sort().map(k => [confName.get(k), k === "NJCAA|NJCAA" ? "NJCAA junior colleges" : `${k.split("|")[1]} (${k.split("|")[0]})`]))}
+<h2>Recruiting guides</h2>${L(TOPICS.map(([u, t]) => [u, t]))}
 <h2>Junior colleges</h2>${L([[JG, "Junior college (NJCAA) track & field recruiting guide"], ["/?tab=results&div=NJCAA", "NJCAA national results list"]])}
 <h2>College track and field by state</h2>${L([...byState.keys()].sort((a, b) => (STATE[a] || a).localeCompare(STATE[b] || b)).map(st => [statePath(st), STATE[st] || st]))}
 ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter(([u]) => u.includes(latestYear)).map(([u, t]) => [u, t + " champions"]).concat([["/explore.html#results", "Top marks by season, 2016 to today"], ["/explore.html", "Explore everything"]]))}` : ""}
