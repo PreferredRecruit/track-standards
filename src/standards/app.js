@@ -407,10 +407,11 @@ const evLabel=e=>e.replace(/^(\d[\d,]*) Meters$/,"$1m").replace(/^(\d+) Hurdles$
 const years=()=>[...new Set(RIDX.map(x=>x.year))].sort().reverse();
 const seasons=()=>[...new Set(RIDX.map(x=>x.year+"-"+x.season))].sort().reverse();
 const seasonLabel=k=>{const [y,s]=k.split("-");return `${y} ${s==="xc"?"Cross Country":s[0].toUpperCase()+s.slice(1)}`};
-const curKey=()=>{const x=RIDX.find(x=>x.year+"-"+x.season===R.season&&x.div===R.div)||RIDX.find(x=>x.year+"-"+x.season===R.season);if(x)R.div=x.div;return x&&x.key};
+const MULTI=()=>R.div==="ALL"||R.div==="CMP";
+const curKey=()=>{if(MULTI())return null;const x=RIDX.find(x=>x.year+"-"+x.season===R.season&&x.div===R.div)||RIDX.find(x=>x.year+"-"+x.season===R.season);if(x)R.div=x.div;return x&&x.key};
 function load(key,quiet){if(CACHE[key]||LOADING[key])return LOADING[key];
   LOADING[key]=getRank(key).then(d=>{CACHE[key]=d}).catch(()=>{CACHE[key]={err:1,lists:[]}})
-    .then(()=>{if(key===curKey()&&S.tab==="results"&&S.school==null){R.swap=true;render()} if(!quiet) prefetch()});
+    .then(()=>{if((key===curKey()||MULTI()&&key.startsWith(R.season+"-"))&&S.tab==="results"&&S.school==null){R.swap=true;render()} if(!quiet) prefetch()});
   return LOADING[key]}
 function prefetch(){const go=()=>RIDX.filter(x=>x.year+"-"+x.season===R.season&&!CACHE[x.key]).forEach(x=>load(x.key,true));(window.requestIdleCallback?requestIdleCallback(go,{timeout:2000}):setTimeout(go,600))}
 const yr=y=>({"FR-1":"Freshman","SO-2":"Sophomore","JR-3":"Junior","SR-4":"Senior"}[y]||y||"");
@@ -429,7 +430,9 @@ function curve(rows,e){
 }
 function divTabs(){
   const divs=RIDX.filter(x=>x.year+"-"+x.season===R.season).map(x=>x.div).sort((a,b)=>Object.keys(DIVINFO).indexOf(a)-Object.keys(DIVINFO).indexOf(b));
-  return `<div class="divs" role="tablist" aria-label="Division"><span class="dind" id="dind"></span>${divs.map(d=>`<button role="tab" data-rdiv="${d}" aria-selected="${d===R.div}"><b>${d}</b></button>`).join("")}</div>`;
+  /* All = one ranking across every division; Compare = the same event side by side (Ryan 2026-10-17) */
+  const tabs=[["ALL","All"],...divs.map(d=>[d,d]),["CMP","Compare"]];
+  return `<div class="divs" role="tablist" aria-label="Division"><span class="dind" id="dind"></span>${tabs.map(([d,l])=>`<button role="tab" data-rdiv="${d}" aria-selected="${d===R.div}"><b>${l}</b></button>`).join("")}</div>`;
 }
 function hookRow(){const d=R.div;
   const t=d==="D1"?"Looking at D1 marks? See if you actually qualify.":`Could you compete in ${d}? See where you fit.`;
@@ -456,7 +459,50 @@ function athView(D){
   else o+=`<div class="soon">Full meet history for every athlete comes with the live site. This preview includes it for the top 5 in each D1 outdoor event.${tlink?` <a href="${tlink}" target="_blank" rel="noopener">See ${esc(a.name)} on TFRRS ›</a>`:""}</div>`;
   return o+`${hookRow()}</div></div>`;
 }
+/* ---------- All divisions + Compare (Ryan 2026-10-17: "combine divisions ... all colleges ranked ... or even compare divisions") ----------
+   Uses each division's national list for the season (the same files the single-division view loads). */
+function multiResults(){
+  const ks=RIDX.filter(x=>x.year+"-"+x.season===R.season).sort((a,b)=>Object.keys(DIVINFO).indexOf(a.div)-Object.keys(DIVINFO).indexOf(b.div));
+  ks.forEach(x=>{if(!CACHE[x.key])load(x.key,true)});
+  const ready=ks.filter(x=>CACHE[x.key]&&!CACHE[x.key].err);
+  let o=`<div class="sec"><p class="lede">${R.div==="ALL"?"Every college division in one ranking. Pick an event.":"The same event, division by division."}</p><div class="rcard">${divTabs()}`;
+  const ctl=`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=x==="xc"||RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}`;
+  if(ready.length<ks.length)return o+ctl+`<span></span><span></span></div></div>`+skeleton()+`</div>`;
+  const nat=D=>D.lists.find(l=>l.nat)||D.lists[0];
+  const evNames=[...new Set(ready.flatMap(x=>Object.keys((nat(CACHE[x.key]).g||{})[R.g]||{})))];if(!evNames.includes(R.ev))R.ev=evNames[0];
+  const per=ready.map(x=>{const D=CACHE[x.key],rows=((nat(D).g||{})[R.g]||{})[R.ev]||[];return {div:x.div,D,rows}}).filter(p=>p.rows.length);
+  const gname=R.g==="m"?"Men's":"Women's";
+  if(R.div==="CMP"){
+    const P=[1,10,25,50];
+    o+=ctl+`<span></span><span></span></div></div><div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
+    <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))} by division</h3><span>${esc(seasonLabel(R.season))} · national lists</span></div>
+    <div class="scroll cmpt"><table><thead><tr><th>Division</th>${P.map(k=>`<th class="num">#${k}</th>`).join("")}<th class="num">Marks</th></tr></thead><tbody>${per.map(p=>`<tr><td>${esc(DIVINFO[p.div]||p.div)}</td>${P.map(k=>`<td class="num">${p.rows[k-1]?esc(p.rows[k-1][4]):"–"}</td>`).join("")}<td class="num">${p.rows.length}</td></tr>`).join("")}</tbody></table></div>
+    <p class="note">The mark it took to rank #1, #10, #25 and #50 on each division's national list. Source: TFRRS.</p>${hookRow()}</div></div>`;
+    return o;
+  }
+  /* ALL: merge every division's national list for the event and re-rank by mark */
+  /* every list in each division (national + conference lists), one best mark per athlete, so the ranking runs deep */
+  let all=[];const seen=new Map();
+  ready.forEach(x=>{const D=CACHE[x.key];D.lists.forEach(l=>(((l.g||{})[R.g]||{})[R.ev]||[]).forEach(r=>{const v=mval(r[4]);if(v==null)return;
+    const o={div:x.div,name:r[1],yr:r[2],team:D.teams[r[3]],mark:r[4],wind:r[8]||(r[5]?"wind "+r[5]:""),meet:D.meets[r[6]],date:r[7],path:r[9],v};
+    const id=x.div+"|"+(r[1]||"")+"|"+o.team,c=seen.get(id);if(!c)seen.set(id,o);else if(higher(R.ev,r[4])?v>c.v:v<c.v)seen.set(id,o)}))});
+  all=[...seen.values()];
+  const hi=all.length&&higher(R.ev,all[0].mark);all.sort((a,b)=>hi?b.v-a.v:a.v-b.v);
+  const sts=[...new Set(all.map(x=>teamSt(x.team)).filter(Boolean))].sort((a,b)=>(ST_NAME[a]||a).localeCompare(ST_NAME[b]||b));
+  o+=ctl+`<label class="sr" for="rs">State</label><select class="in" id="rs"><option value="">All states</option>${sts.map(x=>`<option value="${x}" ${x===R.st?"selected":""}>${esc(ST_NAME[x]||x)}</option>`).join("")}</select>
+    <div class="search">${MAG}<label class="sr" for="rq">Find an athlete or team</label><input class="in" id="rq" placeholder="Athlete or team" value="${esc(R.q)}" autocomplete="off"></div></div></div>`;
+  const q=R.q.trim().toLowerCase(),rows=all.filter(x=>(!q||(x.name||"").toLowerCase().includes(q)||(x.team||"").toLowerCase().includes(q))&&(!R.st||teamSt(x.team)===R.st));
+  const show=R.an||100;
+  o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
+  <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))}, all divisions</h3><span>${esc(seasonLabel(R.season))} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools`:`${all.length.toLocaleString()} marks from ${per.length} divisions`}</span></div>${curve(all.map(x=>[0,0,0,0,x.mark]),R.ev)}
+  <div class="grid"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span><span>Meet</span></div>
+  ${rows.slice(0,show).map(x=>{const k=all.indexOf(x)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw"><span class="gnm"><b>${esc(x.name||x.team)}</b></span><small>${esc(yr(x.yr))}${x.path?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(x.path)}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><span class="gtm" style="cursor:default">${esc(x.team)}<small class="dvt">${esc(DIVINFO[x.div]||x.div)}</small></span><span class="gmk">${esc(x.mark)}${x.wind?`<small>${esc(x.wind)}</small>`:""}</span><span class="gmt"><b>${esc(x.meet||"")}</b>${esc(x.date||"")}</span></div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
+  </div>${rows.length>show?`<button class="morer" data-amore>Show more</button>`:""}${hookRow()}
+  <p class="note">Every division's national and conference lists merged, one best mark per athlete, re-ranked by mark. Source: TFRRS performance lists.</p></div></div>`;
+  return o;
+}
 function results(){
+  if(MULTI())return multiResults();
   const key=curKey(), D=key&&CACHE[key]; if(key&&!D) load(key);
   let o=`<div class="sec"><p class="lede">The top marks in college track this season. Pick a level, then an event.</p><div class="rcard">${divTabs()}`;
   const ctl=(L)=>`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=x==="xc"||RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}
@@ -969,7 +1015,8 @@ document.addEventListener("click",ev=>{
   if(d.div!==undefined){S.div=d.div;S.n=24;render();return}
   if("more" in d){S.n=9999;render();return}
   if("clear" in d){S.div=S.conf=S.f=S.st="";S.n=24;render();return}
-  if(d.rdiv){if(d.rdiv!==R.div){R.div=d.rdiv;R.list=0;R.team=null;R.ath=null;R.swap=true;render()}return}
+  if(d.rdiv){if(d.rdiv!==R.div){R.div=d.rdiv;R.list=0;R.team=null;R.ath=null;R.an=100;R.swap=true;render()}return}
+  if("amore" in d){R.an=(R.an||100)+200;render();return}
   if(d.rg){R.g=d.rg;R.team=null;R.ath=null;R.swap=true;render();return}
   if(d.rev){R.ev=d.rev;R.swap=true;render();{const el=evLabel(d.rev);intent(el,R.g);log("results_event",{event:el,g:R.g,division:R.div,state:R.st?ST_NAME[R.st]:undefined})}const a=document.querySelector('.evs [aria-pressed="true"]');if(a)a.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});return}
   if(d.rsea){const y0=R.season.split("-")[0];const y=RIDX.some(r=>r.year===y0&&r.season===d.rsea)?y0:RIDX.filter(r=>r.season===d.rsea).map(r=>r.year).sort().pop();R.season=y+"-"+d.rsea;R.list=0;R.team=null;R.ath=null;R.swap=true;render();return}

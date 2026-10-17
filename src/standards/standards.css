@@ -716,3 +716,8 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
   .eval::before{content:"";position:absolute;left:50%;top:8px;width:38px;height:5px;margin-left:-19px;border-radius:3px;background:#D1D1D6}
   .eval .bd{padding:30px 22px 18px}
   .eval .evh{font-size:24px}}
+/* All divisions + Compare */
+.gtm .dvt{display:block;font-size:11.5px;font-weight:600;color:var(--pr-mute);margin-top:2px}
+.cmpt table td:first-child{font-weight:650}
+.cmpt{margin-top:12px}
+@media (max-width:760px){.divs button[data-rdiv="CMP"]{grid-column:1/-1}}
