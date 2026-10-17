@@ -147,8 +147,10 @@ function armOffer(){const o=offerCopy();if(!o||EV.shown||EV.dismissed)return;if(
 const EXIT={idle:null,lastY:scrollY,lastT:Date.now()};
 function exitOffer(trig){if(EV.shown||EV.dismissed||S.school!=null)return;if(!S.run&&Date.now()-T0<20000)return;
   const o=S.run?offerCopy():null;
-  evalIn(o&&o.n?`Leaving with ${o.n.toLocaleString()} colleges on the table?`:"Leaving without knowing where you stand?",
-    o&&o.n?`Find out which of those coaches would want your ${S.mark.trim()}. A free recruitment evaluation takes about a minute.`:"Find out which college coaches would want you. A free recruitment evaluation takes about a minute.",0,"exit"+(o?"-"+o.v:""),trig,o&&o.bs)}
+  /* no search yet: speak to the high school athlete about their own event when we know it (Ryan 2026-10-17: simpler, ICP-specific) */
+  const ie=INT.e?evSay(INT.e):"";
+  evalIn(o&&o.n?`Leaving with ${o.n.toLocaleString()} colleges on the table?`:ie?`Do college coaches know your ${ie} times?`:"Do college coaches know your times?",
+    o&&o.n?`Find out which of those coaches would want your ${S.mark.trim()}. A free recruitment evaluation takes about a minute.`:"See which college track programs would recruit you. It's free and takes about a minute.",0,"exit"+(o?"-"+o.v:""),trig,o&&o.bs)}
 document.addEventListener("mouseout",e=>{if(!e.relatedTarget&&e.clientY<=0&&innerWidth>=700)exitOffer("exit-desktop")});
 addEventListener("scroll",()=>{const now=Date.now(),dy=scrollY-EXIT.lastY,dt=Math.max(now-EXIT.lastT,1);EXIT.lastY=scrollY;EXIT.lastT=now;
   if(innerWidth<700&&S.run&&scrollY>400&&dy/dt*1000<-2500)exitOffer("exit-scrollup")},{passive:true});
@@ -178,7 +180,7 @@ const evBody=()=>INT.rs&&EV.bs&&EV.bs[INT.rs]?EV.bs[INT.rs]:INT.rs&&!EV.body?sta
 function openEval(log1){const el=$("eval");$("evt").textContent=EV.title||"See where you stand with college coaches.";
   $("evp").textContent=evBody();
   $("eva").href=quizFor();
-  const hk=EV.hook||hookLine(),ck=S.run||EV.hook?clock():"";EV.hook=null;$("evk").textContent=ck;$("evk").hidden=!ck;$("evm").innerHTML=hk?`<strong class="hk">${esc(hk)}</strong>`:`<strong class="lg">PR</strong>`;
+  const hk=EV.hook||hookLine(),ck=S.run||EV.hook?clock():"";EV.hook=null;$("evk").textContent=ck;$("evk").hidden=!ck;const head=hk||EV.title||"Do college coaches know your times?";$("evm").innerHTML=`<strong class="hk">${esc(head)}</strong>`;$("evt").hidden=!hk;{const qb=$("evq").querySelector("b");if(qb)qb.textContent=/coach/i.test(head)?"Have any reached out to you yet?":"Have college coaches reached out to you yet?"}
   const ask=!INT.rs;$("evq").hidden=!ask;$("evs").hidden=ask;
   el.classList.add("on");el.setAttribute("aria-hidden","false");$("evbg").hidden=false;requestAnimationFrame(()=>$("evbg").classList.add("on"));$("evpill").hidden=true;EV.shown=true;
   if(log1)log("popup_shown",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig});
@@ -994,7 +996,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
 
   /* return visit (new session, last search 30+ min ago): remind them of their own mark once, 15 s in, unless they search again */
   try{const first=!sessionStorage.getItem("prSeen");sessionStorage.setItem("prSeen","1");
-    if(first&&INT.e&&INT.m&&INT.t&&Date.now()-INT.t>18e5) setTimeout(()=>{if(!S.run)evalIn(`Welcome back. Do college coaches know about your ${INT.m} in the ${evSay(INT.e)} yet?`,"If they don't, they can't recruit you. A free recruitment evaluation shows which coaches would want you now. It takes about a minute.",0,"return"+(+INT.gr>=11?"-11-12":"-9-10"))},15000)}catch(e){}
+    if(first&&INT.e&&INT.m&&INT.t&&Date.now()-INT.t>18e5) setTimeout(()=>{if(!S.run)evalIn(`Welcome back. Do coaches know your ${INT.m} ${evSay(INT.e)} yet?`,"If they don't, they can't recruit you. See which college coaches would want you. It's free and takes about a minute.",0,"return"+(+INT.gr>=11?"-11-12":"-9-10"))},15000)}catch(e){}
   /* ---- routing: /schools/<slug> opens that school; keeps the old site's URLs working ---- */
   const SLUG = SCH.map(s => (s.os && s.os[0]) || slugOf(s.n));   // old trackandfieldstandards.com URL first, so Google keeps its rankings
   const ALT = new Map(); SCH.forEach((s, i) => { ALT.set(slugOf(s.n), i); (s.os || []).forEach(x => ALT.set(x, i)); });

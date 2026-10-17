@@ -615,3 +615,4 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .sec.still{animation:none}
 .simple .scroll thead th{overflow-wrap:break-word;hyphens:manual}@media (max-width:560px){.simple .scroll thead th{letter-spacing:.03em}}
 @media (max-width:560px){.simple .scroll thead th:first-child,.simple .scroll tbody td:first-child{width:25%}.simple .scroll thead th{font-size:10px}}
+.eval #evt[hidden]{display:none}
