@@ -616,3 +616,14 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .simple .scroll thead th{overflow-wrap:break-word;hyphens:manual}@media (max-width:560px){.simple .scroll thead th{letter-spacing:.03em}}
 @media (max-width:560px){.simple .scroll thead th:first-child,.simple .scroll tbody td:first-child{width:25%}.simple .scroll thead th{font-size:10px}}
 .eval #evt[hidden]{display:none}
+/* clean footer (Ryan 2026-10-17): one Similar programs row + a numbered Explore list; every link stays on the page */
+.simple .relh{margin:6px 0 8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.simple .more{display:block;margin:30px 0 0;padding:0;border:0}
+.simple .moreh{margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.simple .more ol{list-style:none;margin:0;padding:0;counter-reset:ex;border:1px solid var(--pr-line);border-radius:18px;background:var(--pr-card);overflow:hidden}
+.simple .more li{counter-increment:ex;border-bottom:1px solid var(--pr-line)}.simple .more li:last-child{border-bottom:0}
+.simple .more li a{display:flex;align-items:center;gap:12px;min-height:54px;padding:0 16px;color:var(--ink-1);font-weight:600;font-size:15px;text-decoration:none}
+.simple .more li a::before{content:counter(ex);display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:color-mix(in srgb,var(--sb) 10%,var(--pr-card));color:var(--sbi);font-size:13px;font-weight:700;flex:none}
+.simple .more li a::after{content:"";margin-left:auto;width:8px;height:8px;border-top:2px solid var(--ink-3);border-right:2px solid var(--ink-3);transform:rotate(45deg)}
+.simple .more li a:hover{background:var(--pr-soft)}
+.simple .bnote{margin-top:16px}
