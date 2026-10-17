@@ -28,6 +28,27 @@ const TOK=SCH.map(s=>[...new Set((s.n+" "+s.t+" "+(s.a||[]).join(" ")).toLowerCa
 const DIVS=["NCAA D1","NCAA D2","NCAA D3","NAIA"];
 const NSTD=SCH.filter(s=>!s.j).length;   /* schools with levels (junior colleges are results-only) */
 const QUIZ="https://app.thepreferredrecruit.com/parentfunnel/?utm_source=website&utm_medium=standards&utm_campaign=PRstandards";
+/* ---------- search intent (Ryan 2026-10-16) ----------
+   "if an athlete searches for distance or throws, the ad should target them specifically" and "we should be collecting all of the
+   data of what people are searching". The browser remembers the events, grade and mark looked at (localStorage prIntent, shared with
+   the SEO pages) so the pop-up speaks to that athlete, and each action goes to the anonymous insights log (Supabase function "track":
+   random browser id, event, mark, grade, state, page; never names, emails, IPs or chat text). */
+const TRACK="https://airqmzyuxyyiqjaocwmk.supabase.co/functions/v1/track";
+const GRP=e=>{e=String(e||"");return /hurdle/i.test(e)?"hurdles":/thlon/i.test(e)?"multis":/jump|vault/i.test(e)?"jumps":/shot|discus|hammer|javelin|weight|throw/i.test(e)?"throws":/relay/i.test(e)?(/800|1600|mile|medley|dmr/i.test(e)?"distance":"sprints"):/^(55|60|100|200|400)(m| meters|$)/i.test(e)?"sprints":"distance"};
+const GNAME={sprints:"the sprints",hurdles:"hurdles",distance:"distance",jumps:"the jumps",throws:"throws",multis:"the multis"};
+const GCOACH={sprints:"Sprint coaches",hurdles:"Hurdles coaches",distance:"Distance coaches",jumps:"Jumps coaches",throws:"Throws coaches",multis:"Multi-event coaches"};
+const evSay=e=>String(e).replace(/ \(39"\)/,"").replace(/^3000m Steeplechase$/,"steeplechase").replace(/^Mile$/,"mile").toLowerCase();
+const INT=(()=>{try{return JSON.parse(localStorage.getItem("prIntent"))||{}}catch(e){return {}}})();
+const SID=(()=>{try{let v=localStorage.getItem("prSid");if(!v){v=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36));localStorage.setItem("prSid",v)}return v}catch(e){return "anon-"+Math.random().toString(36).slice(2,12)}})();
+const saveInt=()=>{try{localStorage.setItem("prIntent",JSON.stringify(INT))}catch(e){}};
+function intent(e,g,mark){if(!e)return;const grp=GRP(e);INT.e=e;INT.grp=grp;if(g)INT.g=g;if(mark)INT.m=mark;INT.c=INT.c||{};INT.c[grp]=(INT.c[grp]||0)+1;saveInt()}
+const topGrp=()=>{const c=INT.c||{};return Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||INT.grp};
+window.prLog=(k,x)=>log(k,x);
+/* a signed-in coach (coach portal token on this origin) is verified server-side, so coach views are tagged with their school */
+function log(kind,x){try{let ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}const b=Object.assign({sid:SID,kind,coach:ct,grade:INT.gr||undefined,path:location.pathname+location.search,mobile:innerWidth<700,utm_source:new URLSearchParams(location.search).get("utm_source")||undefined},x||{});
+  if(b.event&&!b.grp)b.grp=GRP(b.event);fetch(TRACK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(()=>{})}catch(e){}}
+/* the funnel link carries the intent too, so the evaluation and CRM know the event and grade (utm_term = event, pr_grade = grade) */
+function quizFor(){try{const u=new URL(QUIZ);if(INT.e)u.searchParams.set("utm_term",INT.e);if(INT.grp)u.searchParams.set("pr_group",INT.grp);if(INT.gr)u.searchParams.set("pr_grade",INT.gr);if(INT.m)u.searchParams.set("pr_mark",INT.m);return u.toString()}catch(e){return QUIZ}}
 const FIELD=new Set(["High Jump","Pole Vault","Long Jump","Triple Jump","Shot Put","Discus","Hammer","Javelin"]);
 const SHORT=new Set(["100m","200m","400m","100m Hurdles","110m Hurdles","300m Hurdles","400m Hurdles"]);
 const TF={"100m":"100 Meters","200m":"200 Meters","400m":"400 Meters","800m":"800 Meters","1500m":"1500 Meters","5000m":"5000 Meters","10000m":"10,000 Meters","100m Hurdles":"100 Hurdles","110m Hurdles":"110 Hurdles","400m Hurdles":"400 Hurdles","3000m Steeplechase":"3000 Steeplechase","High Jump":"High Jump","Pole Vault":"Pole Vault","Long Jump":"Long Jump","Triple Jump":"Triple Jump","Shot Put":"Shot Put","Discus":"Discus","Hammer":"Hammer","Javelin":"Javelin"};
@@ -67,7 +88,7 @@ function tier(s,g,e,v){const t=s[g][e];if(t)return tier0(t,e,v);const c=convert(
   for(const x of c){if(s[g][x.e])return tier0(s[g][x.e],x.e,x.v)}return null}
 const TN={T:"Target",R:"Recruit",W:"Walk-On"};
 const better=(e,a,b)=>FIELD.has(e)?b-a:a-b;
-const S={tab:"standards",school:null,g:"m",e:"100m",mark:"",run:false,f:"",div:"",n:15,q:""};
+const S={tab:"standards",school:null,g:"m",e:"100m",mark:"",run:false,f:"",div:"",n:15,q:"",gr:INT.gr||""};
 const seg=(k,v)=>`<div class="seg" role="group" aria-label="Team"><button type="button" data-${k}="m" aria-pressed="${v==="m"}">Men</button><button type="button" data-${k}="w" aria-pressed="${v==="w"}">Women</button></div>`;
 const evs=g=>EVENTS.filter(e=>CONV[e]||SCH.some(s=>s[g][e])).filter(e=>!(g==="m"&&e==="100m Hurdles")&&!(g==="w"&&e.startsWith("110m Hurdles")));
 const PH={"100m":"10.85","200m":"22.10","400m":"49.50","800m":"1:58.00","1500m":"4:05.00","1600m":"4:21.50","Mile":"4:23.00","3000m":"8:50.00","3200m":"9:20.00","5000m":"15:30.00","10000m":"32:00.00","100m Hurdles":"14.20","110m Hurdles":"14.80",'110m Hurdles (39")':"14.80","300m Hurdles":"38.50","400m Hurdles":"54.20","3000m Steeplechase":"9:45.00","High Jump":"6'6\"","Pole Vault":"14'6\"","Long Jump":"22'6\"","Triple Jump":"46'0\"","Shot Put":"52'0\"","Discus":"150'0\"","Hammer":"160'0\"","Javelin":"180'0\""};
@@ -78,13 +99,13 @@ const EV={shown:false,dismissed:false,t:null};
 try{EV.dismissed=sessionStorage.getItem("prEvalDismissed")==="1"}catch(e){}
 function evalIn(title,body,delay){
   if(EV.shown||EV.dismissed) return; clearTimeout(EV.t);
-  EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||S.school!=null) return; $("evt").textContent=title; $("evp").textContent=body;
-    const el=$("eval"); el.classList.add("on"); el.setAttribute("aria-hidden","false"); EV.shown=true},delay||0);
+  EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||S.school!=null) return; $("evt").textContent=title; $("evp").textContent=body; $("eva").href=quizFor();
+    const el=$("eval"); el.classList.add("on"); el.setAttribute("aria-hidden","false"); EV.shown=true; log("popup_shown",{event:INT.e,placement:"popup"})},delay||0);
 }
 function evalOut(){const el=$("eval");el.classList.remove("on");el.setAttribute("aria-hidden","true");EV.dismissed=true;try{sessionStorage.setItem("prEvalDismissed","1")}catch(e){}}
 let scrolled=0,lastY=scrollY;
 addEventListener("scroll",()=>{scrolled+=Math.abs(scrollY-lastY);lastY=scrollY;
-  if(S.tab==="results"&&S.school==null&&scrolled>1400) evalIn("Close to these marks?","Coaches recruit from these lists. Get a free recruitment evaluation and see where you fit.",0)},{passive:true});
+  if(S.tab==="results"&&S.school==null&&scrolled>1400) {const gp=GRP(evLabel(R.ev||""))||topGrp();evalIn(gp?`Want to get recruited for ${GNAME[gp]}?`:"Close to these marks?",gp?`${GCOACH[gp]} recruit from lists like this one. Get a free recruitment evaluation and see where your marks fit.`:"Coaches recruit from these lists. Get a free recruitment evaluation and see where you fit.",0)}},{passive:true});
 
 /* ---------- Standards (the current site's flow, rebranded) ---------- */
 const DEF={W:"The minimum mark required to earn a spot on the team.",R:"The range where coaches typically start recruiting conversations and scholarship discussions begin.",T:"The marks that typically grant a full-ride scholarship, depending on school funding."};
@@ -107,6 +128,7 @@ function standards(){
   <form id="mf" class="panel"><div class="row">${seg("g",S.g)}
     <div class="evw"><label class="sr" for="ev">Event</label><select class="in" id="ev">${list.map(e=>`<option value="${esc(e)}" ${e===S.e?"selected":""}>${esc(e)}${CONV[e]?" · converted":""}</option>`).join("")}</select>${CONV[S.e]?cinfo(S.e):""}</div>
     <label class="sr" for="mk">Personal best</label><input class="in" id="mk" placeholder="PR, e.g. ${esc(ph(S.e))}" value="${esc(S.mark)}" autocomplete="off" inputmode="decimal">
+    <label class="sr" for="gr">Grade</label><select class="in gr${S.gr?"":" ph"}" id="gr"><option value="" ${S.gr?"":"selected"} disabled>Grade</option>${[9,10,11,12].map(n=>`<option value="${n}" ${+S.gr===n?"selected":""}>${n}th grade</option>`).join("")}</select>
     <button class="go">Search colleges</button></div><div class="hint" id="hint"></div></form>`;
   /* order (Ryan 2026-10-13): search by stats · or · search one school · what the levels mean · results */
   o+=`<div class="orsep" role="separator"><span>or</span></div><div class="one"><h4>Search for one school</h4><p>${NSTD.toLocaleString()} colleges across NCAA D1, D2, D3 and NAIA, plus every NJCAA junior college.</p><div class="search">${MAG}<label class="sr" for="q">Search colleges</label><input class="in" id="q" placeholder="Try USC, Oregon or Ole Miss" autocomplete="off" value="${esc(S.q)}"><div id="drop"></div></div></div>`;
@@ -223,7 +245,12 @@ async function doShare(btn){const L=LASTSUM;if(!L)return;
 document.addEventListener("click",ev=>{const b=ev.target.closest("[data-share]");if(b){ev.preventDefault();doShare(b)}});
 
 /* ---------- Results (TFRRS, organized) ---------- */
-const R={season:"2026-outdoor",div:"NCAA D1",list:0,g:"m",ev:null,q:"",team:null,ath:null,n:9999,swap:true};
+const R={season:"2026-outdoor",div:"NCAA D1",list:0,g:"m",ev:null,q:"",team:null,ath:null,n:9999,swap:true,st:""};
+/* team -> state for the Results state filter (Ryan 2026-10-16: "lets have an option to sort results per state"). TFRRS team names are
+   matched to the standards database by name, team name or alias; relay squads "(B)" and "St." are normalised first. */
+const tnorm=x=>String(x||"").toLowerCase().replace(/\s*\([a-z]\)\s*$/,"").replace(/\bst\.(?=\s|$)/g,"state").replace(/[^a-z0-9&]+/g," ").trim();
+const TST=new Map();SCH.forEach(s=>{if(!s.s)return;[s.n,s.t,...(s.a||[])].forEach(a=>{const k=tnorm(a);if(k&&!TST.has(k))TST.set(k,s.s)})});
+const teamSt=n=>TST.get(tnorm(n))||TST.get(tnorm(n).replace(/^university of /,""))||"";
 const CACHE={},LOADING={};
 const DIVINFO={"NCAA D1":"NCAA D1","NCAA D2":"NCAA D2","NCAA D3":"NCAA D3",NAIA:"NAIA",NJCAA:"NJCAA",NCCAA:"NCCAA",NWAC:"NWAC",USCAA:"USCAA"};
 const evLabel=e=>e.replace(/^(\d[\d,]*) Meters$/,"$1m").replace(/^(\d+) Hurdles$/,"$1m Hurdles").replace(/^(\d+) Steeplechase$/,"$1m Steeple").replace(/^4 x (\d+) Relay$/,"4×$1 Relay");
@@ -284,6 +311,7 @@ function results(){
   let o=`<div class="sec"><p class="lede">The top marks in college track this season. Pick a level, then an event.</p><div class="rcard">${divTabs()}`;
   const ctl=(L)=>`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=x==="xc"||RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}
     ${L?`<label class="sr" for="rl">List</label><select class="in" id="rl">${D.lists.map((l,i)=>`<option value="${i}" ${i===R.list?"selected":""}>${l.nat?"National list":esc(l.label)}</option>`).join("")}</select>`:'<span></span>'}
+    ${L?(()=>{const sts=[...new Set(D.teams.map(teamSt).filter(Boolean))].sort((a,b)=>(ST_NAME[a]||a).localeCompare(ST_NAME[b]||b));return `<label class="sr" for="rs">State</label><select class="in" id="rs"><option value="">All states</option>${sts.map(x=>`<option value="${x}" ${x===R.st?"selected":""}>${esc(ST_NAME[x]||x)}</option>`).join("")}</select>`})():""}
     <div class="search">${MAG}<label class="sr" for="rq">Find an athlete or team</label><input class="in" id="rq" placeholder="Athlete or team" value="${esc(R.q)}" autocomplete="off"></div></div></div>`;
   if(!D||D.err){o+=ctl(null)+(D&&D.err?`<div class="loading">These results aren't available in the preview.</div>`:skeleton());return o+`</div>`}
   if(R.list>=D.lists.length) R.list=0;
@@ -298,11 +326,11 @@ function results(){
     <div class="grid"><div class="gh"><span>Rank</span><span>Athlete</span><span>Event</span><span style="text-align:right">Mark</span><span>Meet</span></div>
     ${rows.map(([e,r])=>`<div class="gr"><span class="rkb">${esc(r[0])}</span>${r[1]?`<button class="gnm gath" data-ae="${esc(e)}" data-ai="${E[e].indexOf(r)}">`:'<span class="gnm">'}<b>${esc(r[1]||tn)}</b><small>${esc(yr(r[2]))}</small>${r[1]?"</button>":"</span>"}<span class="gtm" style="cursor:default">${esc(evLabel(e))}</span><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:""}</span><span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span></div>`).join("")}</div>${hookRow()}</div></div>`;
   }
-  const all=E[R.ev]||[], q=R.q.trim().toLowerCase(), rows=all.filter(r=>!q||r[1].toLowerCase().includes(q)||D.teams[r[3]].toLowerCase().includes(q));
+  const all=E[R.ev]||[], q=R.q.trim().toLowerCase(), rows=all.filter(r=>(!q||r[1].toLowerCase().includes(q)||D.teams[r[3]].toLowerCase().includes(q))&&(!R.st||teamSt(D.teams[r[3]])===R.st));
   const st=(i,lab,cls="")=>{const r=all[i];return r?`<div class="st ${cls}"><small>${lab}</small><b>${esc(r[4])}</b><span>${esc(r[1]||D.teams[r[3]])}${r[1]?" · "+esc(D.teams[r[3]]):""}</span></div>`:""};
   const last=all.length-1;
   o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
-  <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(listName)} · ${esc(seasonLabel(R.season))} · ${all.length} marks</span></div>
+  <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(listName)} · ${esc(seasonLabel(R.season))} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools (national rank shown)`:`${all.length} marks`}</span></div>
   <div class="stats">${st(0,"#1 · "+(L.nat?R.div:L.label),"lead")}${(R.season.endsWith("xc")?[]:RULES[R.div]||[]).map((k,j)=>k&&all[k-1]?st(k-1,`${ord(k)} · ${["Target","Recruit","Walk-On"][j]} line`):"").join("")}</div>${curve(all,R.ev)}
   <div class="grid"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span><span>Meet</span></div>
   ${rows.slice(0,R.n).map((r,i)=>{const k=all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span><span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span></div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
@@ -717,7 +745,8 @@ async function send(t){
       else if(c!=="cancelled")m.err="Something went wrong. Try asking again.";}
     m.busy=0;CHAT.busy=false;render();toBottom();const ct=$("ct");if(ct)ct.focus();
   }
-  if(CHAT.msgs.length>=4) evalIn("Want a real person on your recruiting?","Get a free recruitment evaluation from Preferred Recruit. It takes about a minute.",1800);
+  {const d=detect(t);if(d.e){intent(d.e,d.g,d.mark);log("chat",{event:d.e,g:d.g||undefined,mark:d.mark,school:d.school!=null?SCH[d.school].n:undefined,division:d.div})}else if(d.school!=null)log("chat",{school:SCH[d.school].n})}
+  if(CHAT.msgs.length>=4) evalIn(INT.e?`Want help getting recruited for the ${evSay(INT.e)}?`:"Want a real person on your recruiting?",INT.e?"A real person at Preferred Recruit can take it from here. Get a free recruitment evaluation. It takes about a minute.":"Get a free recruitment evaluation from Preferred Recruit. It takes about a minute.",1800);
 }
 document.addEventListener("click",ev=>{if(ev.target.closest("#stop"))CTL?.abort()});
 
@@ -749,7 +778,7 @@ document.addEventListener("click",ev=>{
   const b=ev.target.closest("button");if(!b)return;const d=b.dataset;
   if(d.tab){S.tab=d.tab;S.school=null;R.swap=true;render();if(b.classList.contains("logo"))scrollTo({top:0,behavior:"smooth"});return}
   if("back" in d){S.school=null;render();return}
-  if(d.school){S.school=+d.school;render();scrollTo({top:0});return}
+  if(d.school){S.school=+d.school;render();scrollTo({top:0});log("school",{school:SCH[S.school].n,division:SCH[S.school].d,state:ST_NAME[SCH[S.school].s]||SCH[S.school].s});return}
   if(d.g){S.g=d.g;render();return}
   if(d.f!==undefined){S.f=d.f;S.n=24;render();return}
   if(d.div!==undefined){S.div=d.div;S.n=24;render();return}
@@ -757,10 +786,10 @@ document.addEventListener("click",ev=>{
   if("clear" in d){S.div=S.conf=S.f=S.st="";S.n=24;render();return}
   if(d.rdiv){if(d.rdiv!==R.div){R.div=d.rdiv;R.list=0;R.team=null;R.ath=null;R.swap=true;render()}return}
   if(d.rg){R.g=d.rg;R.team=null;R.ath=null;R.swap=true;render();return}
-  if(d.rev){R.ev=d.rev;R.swap=true;render();const a=document.querySelector('.evs [aria-pressed="true"]');if(a)a.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});return}
+  if(d.rev){R.ev=d.rev;R.swap=true;render();{const el=evLabel(d.rev);intent(el,R.g);log("results_event",{event:el,g:R.g,division:R.div,state:R.st?ST_NAME[R.st]:undefined})}const a=document.querySelector('.evs [aria-pressed="true"]');if(a)a.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});return}
   if(d.rsea){const y0=R.season.split("-")[0];const y=RIDX.some(r=>r.year===y0&&r.season===d.rsea)?y0:RIDX.filter(r=>r.season===d.rsea).map(r=>r.year).sort().pop();R.season=y+"-"+d.rsea;R.list=0;R.team=null;R.ath=null;R.swap=true;render();return}
   if("rmore" in d){R.n=9999;render();return}
-  if(d.ai!==undefined){const D=CACHE[curKey()],E=D.lists[R.list].g[R.g],r=E[d.ae||R.ev][+d.ai];R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();const c=document.querySelector(".rcard");if(c)scrollTo({top:c.offsetTop-70,behavior:"smooth"});return}
+  if(d.ai!==undefined){const D=CACHE[curKey()],E=D.lists[R.list].g[R.g],r=E[d.ae||R.ev][+d.ai];R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();log("athlete",{athlete:r[1],team:D.teams[r[3]],event:evLabel(d.ae||R.ev),g:R.g,division:R.div});const c=document.querySelector(".rcard");if(c)scrollTo({top:c.offsetTop-70,behavior:"smooth"});return}
   if("athback" in d){R.ath=null;R.swap=true;render();return}
   if(d.team){R.ath=null;R.team=+d.team<0?null:+d.team;R.swap=true;render();return}
   if(d.ask){send(d.ask);return}
@@ -773,17 +802,25 @@ document.addEventListener("input",ev=>{const t=ev.target;
 document.addEventListener("keydown",ev=>{if(ev.target.id==="ct"&&ev.key==="Enter"&&!ev.shiftKey){ev.preventDefault();send(ev.target.value)}if(ev.key==="Escape"&&EV.shown&&!EV.dismissed)evalOut()});
 document.addEventListener("change",ev=>{const t=ev.target;
   if(t.id==="ev"){S.e=t.value;S.mark="";S.run=false;render()}
+  if(t.id==="gr"){S.gr=INT.gr=+t.value;saveInt();t.classList.remove("ph");log("grade",{});const h=$("hint");if(h&&/grade/.test(h.textContent))h.textContent=""}
+  if(t.id==="rs"){R.st=t.value;R.swap=true;render();if(R.st)log("results_state",{state:ST_NAME[R.st]||R.st,division:R.div,event:evLabel(R.ev||""),g:R.g})}
   if(["fd","fc","ft","fs"].includes(t.id)){S[{fd:"div",fc:"conf",ft:"f",fs:"st"}[t.id]]=t.value;S.n=24;render()}
   if(t.id==="ry"){const y=t.value,s=R.season.split("-")[1],f=RIDX.find(r=>r.year===y);R.season=RIDX.some(r=>r.year===y&&r.season===s)?y+"-"+s:f.year+"-"+f.season;R.list=0;R.team=null;R.ath=null;R.swap=true;render()}
   if(t.id==="rl"){R.list=+t.value;R.team=null;R.ath=null;R.swap=true;render()}});
 document.addEventListener("submit",ev=>{ev.preventDefault();
   if(ev.target.id==="cf"){send($("ct").value);return}
   if(parse(S.mark,S.e)==null){$("hint").textContent=`Enter a mark like ${ph(S.e)}`;return}
+  if(!S.gr){$("hint").textContent="Pick your grade (9th to 12th) to see your colleges.";const gs=$("gr");if(gs)gs.focus();return}
   S.run=true;S.f="";S.div="";S.conf="";S.st="";S.n=24;render();
   /* each search gets its own URL: shareable, back button returns to the form, and analytics counts it as a page view (Ryan 2026-10-15: bounce rate) */
   try{const u=`/?g=${S.g}&e=${encodeURIComponent(S.e)}&m=${encodeURIComponent(S.mark.trim())}`;if(location.pathname+location.search!==u)history.pushState({},"",u)}catch(e){}{const el=document.querySelector(".sum");if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-74,behavior:"smooth"})}
   const v=parse(S.mark,S.e), n=SCH.filter(s=>tier(s,S.g,S.e,v)).length;
-  evalIn(n?`Your ${S.mark} fits ${n} colleges.`:"Every mark has a path.",n?"Want those coaches to see it? Get a free recruitment evaluation from Preferred Recruit.":"Get a free recruitment evaluation and see which programs fit you.",2500)});
+  intent(S.e,S.g,S.mark.trim()); log("search",{g:S.g,event:S.e,mark:S.mark.trim(),n_fits:n});
+  /* copy follows the athlete's own event and grade: juniors and seniors get the "coaches are recruiting your class now" line */
+  const es=evSay(S.e), late=+S.gr>=11;
+  evalIn(n?`Your ${S.mark.trim()} in the ${es} fits ${n} colleges.`:`Every ${es} mark has a path.`,
+    n?(late?`If you want to get recruited for the ${es}, college coaches are recruiting your class right now. A free recruitment evaluation shows which of these ${n} schools would want you.`:`If you want to get recruited for the ${es}, a free recruitment evaluation shows which of these ${n} schools fit you and what to run next.`)
+     :`If you want to get recruited for the ${es}, a free recruitment evaluation shows which programs fit you right now.`,2500)});
 
   /* ---- routing: /schools/<slug> opens that school; keeps the old site's URLs working ---- */
   const SLUG = SCH.map(s => (s.os && s.os[0]) || slugOf(s.n));   // old trackandfieldstandards.com URL first, so Google keeps its rankings
@@ -801,7 +838,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
   const route = slug => {
     if (slug) slug = String(slug).replace(/\.html$/, "");   /* pre-built /schools/<slug>.html pages */
     if (slug) { let i = ALT.has(slug) ? ALT.get(slug) : -1; if (i < 0) { const h = hits(slug.replace(/-track-standards$/, "").replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
-      if (i >= 0) { S.school = i; const s = SCH[i], path = "/schools/" + SLUG[i];
+      if (i >= 0) { S.school = i; const s = SCH[i], path = "/schools/" + SLUG[i]; log("school", { school: s.n, division: s.d, state: ST_NAME[s.s] || s.s });
         if (location.pathname !== path) history.replaceState({}, "", path);
         const lw = s.d === "NCAA D3" ? "walk-on and target" : s.d === "NAIA" ? "walk-on and scholarship-level" : "walk-on, recruit and scholarship-level";
         const desc = s.j ? `${s.n} (NJCAA) junior college track and field: season bests in every event, roster and TFRRS links, and how junior college recruiting works.` : `${s.n} track and field recruiting standards 2026-27 (${s.d}${s.c !== s.d ? ", " + s.c : ""}): ${lw} marks for every men's and women's event${s.o ? ", from the official team chart" : ""}. Free, updated weekly.`;

@@ -19,6 +19,8 @@ th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertic
   <div class="row"><span class="muted">Every submission stays private until you approve it. Approving rebuilds the site.</span><span><button class="s" id="sync">Re-sync schools</button><button class="s" id="ref">Refresh</button><button class="s" id="out">Sign out</button></span></div>
   <h2>Submissions</h2><div id="subs"></div>
   <h2>Coach accounts</h2><div id="accts"></div>
+  <h2>Search insights <select id="idays" style="width:auto;font:inherit;margin-left:8px;padding:4px 8px;border-radius:8px"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select></h2>
+  <p class="muted">Anonymous: what athletes search (event, grade, state), how the pop-ups convert and what signed-in coaches look at. No names or emails.</p><div id="ins"></div>
   <h2>Recent activity</h2><div id="aud" class="card"></div>
 </section>
 </main>
@@ -35,6 +37,7 @@ async function call(route, body) {
 $("go").onclick = async () => { try { await call("admin/request", { email: $("em").value }); $("lm").textContent = "If that address is an admin, a sign-in link is on its way."; } catch (e) { $("lm").textContent = e.message; } };
 $("out").onclick = () => { store.set(null); location.reload(); };
 $("ref").onclick = () => load();
+$("idays").onchange = () => insights();
 $("sync").onclick = async () => { try { const r = await call("admin/sync-schools"); alert(`Synced ${r.schools} schools (${r.crm_matched} matched to coach records).`); } catch (e) { alert(e.message); } };
 function stdTable(st) {
   const t = el("table"); t.innerHTML = "<tr><th>Gender</th><th>Event</th><th>Target</th><th>Recruit</th><th>Walk-On</th></tr>";
@@ -47,6 +50,26 @@ async function act(action, id, extra) {
   if (needReason && !notes) return;
   if (action === "revoke_account" && !confirm("Revoke this coach? Their approved standards are unpublished too.")) return;
   try { await call("admin/act", { action, id, notes, ...(extra || {}) }); load(); } catch (e) { alert(e.message); }
+}
+const TRACK = "https://airqmzyuxyyiqjaocwmk.supabase.co/functions/v1/track";
+function tbl(title, cols, rows) { const c = el("div", null, "card"); c.appendChild(el("b", title)); if (!rows.length) { c.appendChild(el("p", "No data yet.", "muted")); return c; }
+  const t = el("table"); const h = el("tr"); cols.forEach(([k, lab]) => h.appendChild(el("th", lab))); t.appendChild(h);
+  for (const r of rows) { const tr = el("tr"); cols.forEach(([k]) => tr.appendChild(el("td", r[k] == null ? "–" : k === "last" ? new Date(r[k]).toLocaleString() : String(r[k])))); t.appendChild(tr); }
+  c.appendChild(t); return c; }
+async function insights() {
+  const box = $("ins"); box.replaceChildren(el("p", "Loading…", "muted"));
+  try { const r = await fetch(TRACK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ op: "report", admin: store.get(), days: +$("idays").value }) });
+    const d = await r.json(); if (!r.ok) throw new Error(d.error || "Error");
+    box.replaceChildren(
+      tbl("Activity", [["kind", "Action"], ["n", "Count"], ["people", "People"]], d.totals),
+      tbl("Event groups (people)", [["grp", "Group"], ["people", "People"]], d.groups),
+      tbl("Grades (people)", [["grade", "Grade"], ["people", "People"]], d.grades),
+      tbl("Top events searched", [["event", "Event"], ["g", "M/W"], ["grp", "Group"], ["n", "Searches"], ["people", "People"]], d.events),
+      tbl("States", [["state", "State"], ["n", "Views"]], d.states),
+      tbl("Schools looked at", [["school", "School"], ["n", "Views"]], d.schools),
+      tbl("Pop-ups", [["placement", "Placement"], ["shown", "Shown"], ["clicks", "Clicks"]], d.popup),
+      tbl("Signed-in coaches: what they looked at", [["coach_school", "Coach's school"], ["kind", "Type"], ["what", "Athlete / school / event"], ["team", "Team"], ["n", "Views"], ["last", "Last"]], d.coaches));
+  } catch (e) { box.replaceChildren(el("p", e.message, "muted")); }
 }
 async function load() {
   let d; try { d = await call("admin/list"); } catch (e) { if (e.status === 401) { store.set(null); $("lm").textContent = "Session expired. Sign in again."; } return; }
@@ -86,6 +109,7 @@ async function load() {
   const au = el("table"); au.innerHTML = "<tr><th>When</th><th>Who</th><th>Action</th><th>Target</th></tr>";
   for (const x of d.audit) { const tr = el("tr"); [new Date(x.at).toLocaleString(), x.actor, x.action, x.target].forEach(v => tr.appendChild(el("td", v || ""))); au.appendChild(tr); }
   $("aud").replaceChildren(au);
+  insights();
 }
 (async () => {
   const t = new URLSearchParams(location.hash.slice(1)).get("t");

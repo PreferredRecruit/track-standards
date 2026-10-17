@@ -499,3 +499,12 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .coachlnk{margin-left:auto;margin-right:16px;font-size:14px;font-weight:600;color:var(--pr-mute);text-decoration:none;white-space:nowrap}.coachlnk:hover{color:var(--pr-ink)}
 .coachlnk .pl-short{display:none}@media(max-width:700px){.coachlnk{display:none}}   /* phones: the hero line + footer carry it, so the evaluation button never gets pushed */
 .inl.coachl{margin-top:6px;font-size:14px}
+
+/* phones: slimmer evaluation slide-in (~20% of the screen, inside Google's mobile interstitial guidance) (Ryan 2026-10-17 audit) */
+@media (max-width:700px){.eval .top{display:none}.eval .x{background:var(--pr-soft,#F3F2F7);color:var(--pr-ink,#0B0B0F)}.eval .bd{padding:16px 18px 16px}.eval b{font-size:17px;padding-right:34px}.eval p{margin:4px 0 12px;font-size:14px}}
+/* grade picker on the search form + state filter on Results (Ryan 2026-10-16) */
+.row{grid-template-columns:auto minmax(0,1.1fr) minmax(0,1fr) minmax(0,.75fr) auto}
+.in.gr.ph{color:var(--pr-mute)}
+.rctl{grid-template-columns:auto auto auto minmax(0,1.1fr) minmax(0,.9fr) minmax(0,1fr)}
+@media (max-width:760px){.rctl{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.rctl #rl,.rctl #rs{grid-column:auto}}
+@media (max-width:700px){.row{grid-template-columns:1fr 1fr}.row .gr{grid-column:1/-1}}

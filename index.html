@@ -76,7 +76,7 @@ document.addEventListener("click",function(e){var a=e.target.closest&&e.target.c
 var p=a.closest(".pill,header nav")?"header":a.closest(".inl")?"hero":a.closest("#eval,.eval")?"popup":a.closest(".coach")?"school-page":a.closest(".hook")?"results":a.closest(".chat,.ask,.msgs,.msg,.ans")?"chat":a.closest(".cta")?"seo-page":"other";
 var path=location.pathname,kind=path==="/"?"home":path.indexOf("/schools/")===0?"school":path.split("/")[1].replace(".html","")||"home";
 try{var u=new URL(a.href);u.searchParams.set("utm_content",p);a.href=u.toString()}catch(x){}
-window.va("event",{name:"Evaluation click",data:{placement:p,page:kind,path:path.slice(0,120)}})},true);</script>
+window.va("event",{name:"Evaluation click",data:{placement:p,page:kind,path:path.slice(0,120)}});if(window.prLog)window.prLog("popup_click",{placement:p})},true);</script>
 </head>
 
   <body>

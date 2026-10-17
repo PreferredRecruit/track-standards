@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Coaches: Publish Your Official Recruiting Standards | Preferred Recruit Track Standards</title>
-<meta name="description" content="College track and field coaches: sign in with your school email to publish your program's official recruiting standards. Verified standards show a staff-verified badge.">
+<title>Coaches: Publish Your Recruiting Standards | Track Standards</title>
+<meta name="description" content="College track coaches: sign in with your school email to publish your official recruiting standards. Free, with a staff-verified badge.">
 <link rel="canonical" href="https://trackandfieldstandards.com/coaches.html">
 <link rel="icon" href="/pr-favicon-192.png" type="image/png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Coaches: publish your official recruiting standards","url":"https://trackandfieldstandards.com/coaches.html","publisher":{"@type":"Organization","name":"Preferred Recruit","url":"https://thepreferredrecruit.com"}}</script>
 <style>:root{--ink:#0B0B0F;--ink2:#2E2E36;--mute:#4A4A52;--line:#E4E3EA;--soft:#F3F2F7;--accent:#7A45F0;--ok:#12805C;--warn:#A15C00;--bad:#B42318}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#FDFDFE,#F1F0F6);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
 header{background:rgba(255,255,255,.85);border-bottom:1px solid var(--line)}header div{max-width:900px;margin:0 auto;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
@@ -15,7 +16,7 @@ button{font:inherit;font-weight:650;border:0;border-radius:999px;padding:11px 18
 button:disabled{opacity:.5;cursor:default}.msg{margin:10px 0;font-size:14px}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
 table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}th{font-size:12px;color:var(--mute);background:var(--soft)}td input{padding:7px 9px}
 .tabs{display:flex;gap:8px;margin:8px 0}.tabs button{padding:8px 14px}.tabs button.off{background:var(--soft);color:var(--ink)}.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:650}
-.p-verified{background:#E5F5EE;color:var(--ok)}.p-pending{background:#FFF3E0;color:var(--warn)}pre{white-space:pre-wrap;background:var(--soft);border-radius:12px;padding:12px;font-size:13px}.hide{display:none}.muted{color:var(--mute);font-size:14px}ol li{margin:4px 0}</style></head>
+.p-verified{background:#E5F5EE;color:var(--ok)}.p-pending{background:#FFF3E0;color:var(--warn)}pre{white-space:pre-wrap;background:var(--soft);border-radius:12px;padding:12px;font-size:13px}.hide{display:none}.muted{color:var(--mute);font-size:14px}ol li{margin:4px 0}.cb{position:relative}#sres{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;margin:0;padding:6px;list-style:none;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 40px -18px rgba(20,16,60,.35);max-height:320px;overflow:auto}#sres li{padding:9px 10px;border-radius:9px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:baseline}#sres li b{font-weight:600}#sres li small{color:var(--mute);white-space:nowrap}#sres li[aria-selected=true],#sres li:hover{background:var(--soft)}#sres .none{cursor:default;color:var(--mute)}#spick{margin-top:6px}</style></head>
 <body><header><div><a href="/"><img src="/icon-192.png" alt="">Preferred Recruit · Track Standards</a></div></header>
 <main>
 <h1>Coaches: publish your official recruiting standards</h1>
@@ -24,7 +25,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 8px;b
 <section id="signin" class="card">
   <h2 style="margin-top:0">Sign in with your school email</h2>
   <ol class="muted"><li>Pick your school and enter your work email (for example name@school.edu).</li><li>We email you a one-time sign-in link. Personal addresses (Gmail, Yahoo, Outlook) can't be used.</li><li>Enter your standards. Every submission is reviewed before it goes live.</li></ol>
-  <label for="school">School</label><input id="school" list="schools" placeholder="Start typing your school" autocomplete="off"><datalist id="schools"></datalist>
+  <label for="school">School</label><div class="cb"><input id="school" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="sres" placeholder="Type your school, team name or initials (e.g. LSU)" autocomplete="off" spellcheck="false"><ul id="sres" role="listbox" class="hide"></ul></div><div id="spick" class="muted"></div>
   <label for="email">Work email</label><input id="email" type="email" placeholder="name@school.edu" autocomplete="email">
   <p style="margin-top:14px"><button id="send">Email me a sign-in link</button></p><div id="m1" class="msg"></div>
 </section>
@@ -44,7 +45,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 8px;b
   <div class="card"><h2 style="margin-top:0">Your submissions</h2><div id="subs" class="muted">None yet.</div></div>
   <div class="card hide" id="badge"><h2 style="margin-top:0">Add the verified badge to your recruiting page</h2><p class="muted">Paste this on your program's recruiting or prospective student-athlete page so recruits can check your standards.</p><pre id="snip"></pre></div>
 </section>
-</main>
+<p class="muted" style="margin-top:24px"><a href="/privacy.html">Privacy</a></p></main>
 <script>
 const API = "https://airqmzyuxyyiqjaocwmk.supabase.co/functions/v1/portal";
 const EV = { m: ["100m","200m","400m","800m","1500m","Mile","5000m","10000m","110m Hurdles","400m Hurdles","3000m Steeplechase","High Jump","Pole Vault","Long Jump","Triple Jump","Shot Put","Discus","Hammer","Javelin","Decathlon"],
@@ -69,14 +70,64 @@ function drawRows() {
 }
 $("tm").onclick = () => { G = "m"; drawRows(); }; $("tw").onclick = () => { G = "w"; drawRows(); };
 const label = s => s.name + (s.state ? " (" + s.state + ")" : "");
-async function loadSchools() {
-  SCHOOLS = await call("public/schools").catch(() => []);
-  const dl = $("schools"); for (const s of SCHOOLS) { const o = document.createElement("option"); o.value = label(s); dl.appendChild(o); }
-  const q = new URLSearchParams(location.search).get("school"); const pre = SCHOOLS.find(s => s.slug === q); if (pre) $("school").value = label(pre);
+/* school finder (Ryan 2026-10-16: "the search function for coaches to find their school is awful"): ranked type-ahead on name,
+   team name, initials (LSU, UCLA), state and division instead of the browser datalist, which needs the exact full name */
+const nrm = x => (x || "").toLowerCase().replace(/\bst\.?(?=\s|$)/g, "state").replace(/&/g, " and ").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+const STOP = new Set(["of", "the", "at", "and", "in", "for", "university", "college"]);
+const ALIAS = { usc: "southern california", "penn st": "pennsylvania state", "penn state": "pennsylvania state" };
+let IDX = [], CHOSEN = null, HI = 0, HITS = [];
+function buildIdx() {
+  IDX = SCHOOLS.map(s => { const n = nrm(s.name), sh = nrm(s.short), w = (n + " " + sh).split(" ");
+    const acr = n.split(" ").filter(x => !["of", "the", "at", "and", "in", "for"].includes(x)).map(x => x[0]).join("");
+    const acr2 = n.split(" ").filter(x => !STOP.has(x)).map(x => x[0]).join("");
+    return { s, n, sh, w, acr, acr2, st: (s.state || "").toLowerCase(), dv: nrm(s.division) }; });
 }
-const pick = () => SCHOOLS.find(s => label(s) === $("school").value.trim());
+function score(x, q, toks) {
+  const dv = { "ncaa d1": 3, "ncaa d2": 2 }[x.dv] || 1;   /* on ties, the bigger program people usually mean */
+  if (x.sh === q || x.n === q || x.n.startsWith(q + " ") || (ALIAS[q] && x.n.includes(ALIAS[q]))) return 100 + dv;
+  if (x.acr === q || x.acr2 === q) return 90 + dv;
+  let sc = 0;
+  if (x.sh.startsWith(q) || x.n.startsWith(q)) sc = 80; else if (x.n.includes(q) || x.sh.includes(q)) sc = 55;
+  else if (q.length >= 2 && (x.acr.startsWith(q) || x.acr2.startsWith(q))) sc = 50;
+  let all = true;
+  for (const t of toks) { const hit = x.w.some(w => w.startsWith(t)) || x.st === t || x.dv.split(" ").includes(t) || (t.length >= 2 && (x.acr === t || x.acr2 === t));
+    if (!hit) { all = false; break; } }
+  if (all && !sc) sc = 40;
+  if (!sc) return 0;
+  return sc + dv / 10 - x.n.length / 1000;   /* shorter names first on ties: "Oregon" before "Oregon Tech" */
+}
+function find(raw) { const q = nrm(raw); if (!q) return []; const toks = q.split(" ");
+  return IDX.map(x => [score(x, q, toks), x.s]).filter(r => r[0] > 0).sort((a, b) => b[0] - a[0]).slice(0, 8).map(r => r[1]); }
+const box = $("sres"), inp = $("school");
+function close() { box.classList.add("hide"); inp.setAttribute("aria-expanded", "false"); }
+function show() {
+  box.replaceChildren(); HITS = find(inp.value); HI = 0;
+  if (!inp.value.trim()) return close();
+  if (!HITS.length) { const li = document.createElement("li"); li.className = "none"; li.textContent = "No match. Try the team name or the state, e.g. \"Texas A&M\" or \"Ohio\"."; box.appendChild(li); }
+  HITS.forEach((s, i) => { const li = document.createElement("li"); li.id = "so" + i; li.setAttribute("role", "option"); li.setAttribute("aria-selected", i === HI);
+    const b = document.createElement("b"); b.textContent = s.name; const sm = document.createElement("small"); sm.textContent = [s.division, s.state].filter(Boolean).join(" · ");
+    li.append(b, sm); li.onmousedown = e => { e.preventDefault(); choose(s); }; box.appendChild(li); });
+  box.classList.remove("hide"); inp.setAttribute("aria-expanded", "true");
+}
+function mark() { [...box.children].forEach((li, i) => li.setAttribute("aria-selected", i === HI)); const c = box.children[HI]; if (c) { c.scrollIntoView({ block: "nearest" }); inp.setAttribute("aria-activedescendant", c.id || ""); } }
+function choose(s, quiet) { CHOSEN = s; inp.value = label(s); $("spick").textContent = "✓ " + s.name + " · " + [s.division, s.state].filter(Boolean).join(" · "); close(); if (!quiet) $("email").focus(); }
+inp.addEventListener("input", () => { CHOSEN = null; $("spick").textContent = ""; show(); });
+inp.addEventListener("focus", () => { if (!CHOSEN && inp.value.trim()) show(); });
+inp.addEventListener("blur", () => setTimeout(close, 120));
+inp.addEventListener("keydown", e => {
+  if (box.classList.contains("hide") && e.key === "ArrowDown") { show(); return; }
+  if (e.key === "ArrowDown") { e.preventDefault(); HI = Math.min(HI + 1, HITS.length - 1); mark(); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); HI = Math.max(HI - 1, 0); mark(); }
+  else if (e.key === "Enter" && HITS[HI] && !box.classList.contains("hide")) { e.preventDefault(); choose(HITS[HI]); }
+  else if (e.key === "Escape") close();
+});
+async function loadSchools() {
+  SCHOOLS = await call("public/schools").catch(() => []); buildIdx();
+  const q = new URLSearchParams(location.search).get("school"); const pre = SCHOOLS.find(s => s.slug === q); if (pre) choose(pre, true);
+}
+const pick = () => CHOSEN || (HITS.length === 1 ? HITS[0] : null) || SCHOOLS.find(s => label(s) === inp.value.trim());
 $("send").onclick = async () => {
-  const s = pick(); if (!s) return say($("m1"), "Pick your school from the list.", "bad");
+  const s = pick(); if (!s) return say($("m1"), "Type your school and pick it from the list.", "bad");
   $("send").disabled = true;
   try { await call("coach/request", { email: $("email").value, school: s.slug }); say($("m1"), "Check your inbox for a sign-in link from verify@trackandfieldstandards.com. It expires in 20 minutes.", "ok"); }
   catch (e) { say($("m1"), e.message, "bad"); } finally { $("send").disabled = false; }

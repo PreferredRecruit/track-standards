@@ -7,10 +7,6 @@
     {
       "source": "/schools/:slug",
       "destination": "/schools/:slug.html"
-    },
-    {
-      "source": "/((?!.*\\.).*)",
-      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -42,6 +38,406 @@
     {
       "source": "/standards/njcaa-:rest*",
       "destination": "/conferences/njcaa-track-standards.html",
+      "permanent": true
+    },
+    {
+      "source": "/schools/the-university-of-texas-at-tyler-track-standards",
+      "destination": "/schools/university-of-texas-at-tyler-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/the-university-of-texas-at-tyler-track-standards.html",
+      "destination": "/schools/university-of-texas-at-tyler-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/uab-university-of-alabama-at-birmingham-track-standards",
+      "destination": "/schools/university-of-alabama-at-birmingham-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/uab-university-of-alabama-at-birmingham-track-standards.html",
+      "destination": "/schools/university-of-alabama-at-birmingham-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/byu-brigham-young-university-track-standards",
+      "destination": "/schools/brigham-young-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/byu-brigham-young-university-track-standards.html",
+      "destination": "/schools/brigham-young-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/university-at-buffalo-the-state-university-of-new-york-track-standards",
+      "destination": "/schools/university-at-buffalo-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/university-at-buffalo-the-state-university-of-new-york-track-standards.html",
+      "destination": "/schools/university-at-buffalo-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/west-chester-university-of-pennsylvania-track-standards",
+      "destination": "/schools/west-chester-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/west-chester-university-of-pennsylvania-track-standards.html",
+      "destination": "/schools/west-chester-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/vcu-virginia-commonwealth-university-track-standards",
+      "destination": "/schools/virginia-commonwealth-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/vcu-virginia-commonwealth-university-track-standards.html",
+      "destination": "/schools/virginia-commonwealth-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/fiu-florida-international-university-track-standards",
+      "destination": "/schools/florida-international-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/fiu-florida-international-university-track-standards.html",
+      "destination": "/schools/florida-international-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/university-of-nevada-reno-track-standards",
+      "destination": "/schools/university-of-nevada-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/university-of-nevada-reno-track-standards.html",
+      "destination": "/schools/university-of-nevada-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/california-state-university-sacramento-track-standards",
+      "destination": "/schools/sacramento-state-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/california-state-university-sacramento-track-standards.html",
+      "destination": "/schools/sacramento-state-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/marist-university-track-standards",
+      "destination": "/schools/marist-college-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/marist-university-track-standards.html",
+      "destination": "/schools/marist-college-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/ucf-university-of-central-florida-track-standards",
+      "destination": "/schools/university-of-central-florida-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/ucf-university-of-central-florida-track-standards.html",
+      "destination": "/schools/university-of-central-florida-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/california-state-polytechnic-university-humboldt-track-standards",
+      "destination": "/schools/cal-poly-humboldt-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/california-state-polytechnic-university-humboldt-track-standards.html",
+      "destination": "/schools/cal-poly-humboldt-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/lsu-new-orleans-formerly-university-of-new-orleans-track-standards",
+      "destination": "/schools/university-of-new-orleans-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/lsu-new-orleans-formerly-university-of-new-orleans-track-standards.html",
+      "destination": "/schools/university-of-new-orleans-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/mid-tenn-state-track-standards",
+      "destination": "/schools/middle-tennessee-state-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/mid-tenn-state-track-standards.html",
+      "destination": "/schools/middle-tennessee-state-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/shippensburg-university-of-pennsylvania-track-standards",
+      "destination": "/schools/shippensburg-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/shippensburg-university-of-pennsylvania-track-standards.html",
+      "destination": "/schools/shippensburg-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/ole-miss-university-of-mississippi-track-standards",
+      "destination": "/schools/university-of-mississippi-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/ole-miss-university-of-mississippi-track-standards.html",
+      "destination": "/schools/university-of-mississippi-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/california-state-university-fullerton-track-standards",
+      "destination": "/schools/cal-state-fullerton-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/california-state-university-fullerton-track-standards.html",
+      "destination": "/schools/cal-state-fullerton-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/smu-southern-methodist-university-track-standards",
+      "destination": "/schools/southern-methodist-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/smu-southern-methodist-university-track-standards.html",
+      "destination": "/schools/southern-methodist-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/utah-state-university-track-standards",
+      "destination": "/schools/utah-state-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/utah-state-university-track-standards.html",
+      "destination": "/schools/utah-state-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/slippery-rock-university-of-pennsylvania-track-standards",
+      "destination": "/schools/slippery-rock-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/slippery-rock-university-of-pennsylvania-track-standards.html",
+      "destination": "/schools/slippery-rock-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/san-jos-state-university-track-standards",
+      "destination": "/schools/san-jose-state-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/san-jos-state-university-track-standards.html",
+      "destination": "/schools/san-jose-state-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/united-states-air-force-academy-track-standards",
+      "destination": "/schools/air-force-academy-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/united-states-air-force-academy-track-standards.html",
+      "destination": "/schools/air-force-academy-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/eastern-illinois-university-track-standards",
+      "destination": "/schools/eastern-illinois-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/eastern-illinois-university-track-standards.html",
+      "destination": "/schools/eastern-illinois-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/mississippi-christian-university-formerly-mississippi-college-track-standards",
+      "destination": "/schools/mississippi-college-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/mississippi-christian-university-formerly-mississippi-college-track-standards.html",
+      "destination": "/schools/mississippi-college-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/unlv-university-of-nevada-las-vegas-track-standards",
+      "destination": "/schools/unlv-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/unlv-university-of-nevada-las-vegas-track-standards.html",
+      "destination": "/schools/unlv-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/university-of-california-irvine-track-standards",
+      "destination": "/schools/uc-irvine-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/university-of-california-irvine-track-standards.html",
+      "destination": "/schools/uc-irvine-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/university-of-massachusetts-boston-track-standards",
+      "destination": "/schools/umass-boston-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/university-of-massachusetts-boston-track-standards.html",
+      "destination": "/schools/umass-boston-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/utsa-university-of-texas-at-san-antonio-track-standards",
+      "destination": "/schools/university-of-texas-at-san-antonio-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/utsa-university-of-texas-at-san-antonio-track-standards.html",
+      "destination": "/schools/university-of-texas-at-san-antonio-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/lsu-louisiana-state-university-track-standards",
+      "destination": "/schools/louisiana-state-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/lsu-louisiana-state-university-track-standards.html",
+      "destination": "/schools/louisiana-state-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/the-university-of-texas-at-arlington-track-standards",
+      "destination": "/schools/university-of-texas-arlington-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/the-university-of-texas-at-arlington-track-standards.html",
+      "destination": "/schools/university-of-texas-arlington-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/tcu-texas-christian-university-track-standards",
+      "destination": "/schools/texas-christian-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/tcu-texas-christian-university-track-standards.html",
+      "destination": "/schools/texas-christian-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/university-at-albany-state-university-of-new-york-track-standards",
+      "destination": "/schools/university-at-albany-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/university-at-albany-state-university-of-new-york-track-standards.html",
+      "destination": "/schools/university-at-albany-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/the-university-of-north-carolina-at-pembroke-track-standards",
+      "destination": "/schools/unc-pembroke-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/the-university-of-north-carolina-at-pembroke-track-standards.html",
+      "destination": "/schools/unc-pembroke-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/university-of-maryland-baltimore-county-track-standards",
+      "destination": "/schools/university-of-maryland-baltimore-county-umbc-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/university-of-maryland-baltimore-county-track-standards.html",
+      "destination": "/schools/university-of-maryland-baltimore-county-umbc-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/rutgers-the-state-university-of-new-jersey-track-standards",
+      "destination": "/schools/rutgers-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/rutgers-the-state-university-of-new-jersey-track-standards.html",
+      "destination": "/schools/rutgers-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/the-catholic-university-of-america-track-standards",
+      "destination": "/schools/catholic-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/the-catholic-university-of-america-track-standards.html",
+      "destination": "/schools/catholic-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/maryville-university-of-st-louis-track-standards",
+      "destination": "/schools/maryville-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/maryville-university-of-st-louis-track-standards.html",
+      "destination": "/schools/maryville-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/embry-riddle-aeronautical-university-daytona-beach-track-standards",
+      "destination": "/schools/embry-riddle-aeronautical-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/embry-riddle-aeronautical-university-daytona-beach-track-standards.html",
+      "destination": "/schools/embry-riddle-aeronautical-university-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/colorado-state-university-track-standards",
+      "destination": "/schools/colorado-state-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/colorado-state-university-track-standards.html",
+      "destination": "/schools/colorado-state-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/utep-university-of-texas-at-el-paso-track-standards",
+      "destination": "/schools/university-of-texas-at-el-paso-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/utep-university-of-texas-at-el-paso-track-standards.html",
+      "destination": "/schools/university-of-texas-at-el-paso-track-standards",
       "permanent": true
     }
   ]

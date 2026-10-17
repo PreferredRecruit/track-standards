@@ -65,10 +65,10 @@ function page({ title, desc, pathname, crumbs, h1, intro, body, ld }) {
 <link rel="icon" href="/pr-favicon-192.png" type="image/png" sizes="192x192"><link rel="icon" href="/pr-favicon-48.png" type="image/png" sizes="48x48"><script defer src="/_vercel/insights/script.js"></script><script>/* recruitment-evaluation click tracking (Ryan 2026-10-15): Vercel event "Evaluation click" + utm_content per placement */
 window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};
 document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest('a[href*="thepreferredrecruit.com/parentfunnel"]');if(!a)return;
-var p=a.closest(".pill,header nav")?"header":a.closest(".inl")?"hero":a.closest("#eval,.eval")?"popup":a.closest(".coach")?"school-page":a.closest(".hook")?"results":a.closest(".chat,.ask,.msgs,.msg,.ans")?"chat":a.closest(".cta")?"seo-page":"other";
+var p=a.closest(".pill,header nav")?"header":a.closest(".inl")?"hero":a.closest("#eval,.eval")?"popup":a.closest(".coach")?"school-page":a.closest(".hook")?"results":a.closest(".chat,.ask,.msgs,.msg,.ans")?"chat":a.closest(".sbar")?"seo-bar":a.closest(".cta")?"seo-page":"other";
 var path=location.pathname,kind=path==="/"?"home":path.indexOf("/schools/")===0?"school":path.split("/")[1].replace(".html","")||"home";
 try{var u=new URL(a.href);u.searchParams.set("utm_content",p);a.href=u.toString()}catch(x){}
-window.va("event",{name:"Evaluation click",data:{placement:p,page:kind,path:path.slice(0,120)}})},true);</script><script defer src="/_vercel/speed-insights/script.js"></script><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+window.va("event",{name:"Evaluation click",data:{placement:p,page:kind,path:path.slice(0,120)}});if(window.prLog)window.prLog("popup_click",{placement:p})},true);</script><script defer src="/_vercel/speed-insights/script.js"></script><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <script type="application/ld+json">${JSON.stringify(bc)}</script><script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@type": "WebPage", name: title, url, dateModified: /^\/(results|champions)\//.test(pathname) ? resultsDate(pathname) : DATES.db })}</script>${(ld || []).map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join("")}
 <style>:root{--ink:#0B0B0F;--ink2:#2E2E36;--mute:#4A4A52;--line:#E4E3EA;--soft:#F3F2F7;--accent:#7A45F0}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#FDFDFE,#F1F0F6);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
@@ -81,12 +81,31 @@ th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font
 .cta{margin:30px 0;padding:18px 20px;border-radius:18px;background:linear-gradient(135deg,#A98BFF,#7A45F0 55%,#4E22C2);color:#fff}.cta a{color:#fff;font-weight:700}
 .links{columns:3 220px;gap:24px;font-size:14px}.links a{display:block;padding:3px 0;text-decoration:none}.links a:hover{text-decoration:underline}
 footer{border-top:1px solid var(--line);font-size:13px;color:var(--mute);padding:20px}footer div{max-width:1000px;margin:0 auto}footer a{color:var(--mute);margin-right:14px}
-${CHK_CSS}.star{color:#7A45F0}footer .soc{display:block;margin-top:8px;font-size:10px;color:#9A9AA3}footer .soc a{color:inherit;margin:0;text-decoration:none}header nav a.cta{white-space:nowrap}@media(max-width:560px){header nav a:not(.cta){display:none}header nav a.cta{margin-left:0}}</style></head><body>
+${CHK_CSS}.sbar{position:fixed;left:12px;right:12px;bottom:12px;z-index:50;max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px -18px rgba(20,16,60,.45);padding:10px 12px 10px 16px}.sbar[hidden]{display:none}.sbar p{margin:0;flex:1;font-size:14px;line-height:1.35}.sbar a{white-space:nowrap;background:#7A45F0;color:#fff;font-weight:650;text-decoration:none;border-radius:999px;padding:9px 14px;font-size:14px}.sbar button{border:0;background:var(--soft);border-radius:50%;width:28px;height:28px;font-size:17px;line-height:1;cursor:pointer}@media(max-width:560px){.sbar span{display:none}}.star{color:#7A45F0}footer .soc{display:block;margin-top:8px;font-size:10px;color:#9A9AA3}footer .soc a{color:inherit;margin:0;text-decoration:none}header nav a.cta{white-space:nowrap}@media(max-width:560px){header nav a:not(.cta){display:none}header nav a.cta{margin-left:0}}</style></head><body>
 <header><div><a class="logo" href="/"><img src="/icon-192.png" alt="">Preferred Recruit · Track Standards</a><nav><a href="/">Standards</a><a href="/explore.html">Explore</a><a class="cta" href="${QUIZ}">Free recruitment evaluation</a></nav></div></header>
 <main><div class="bc">${crumbs.map(([n, u], i) => i < crumbs.length - 1 ? `<a href="${u}">${esc(n)}</a> › ` : esc(n)).join("")}</div>
 <h1>${h1}</h1>${intro ? `<p class="intro">${intro}</p>` : ""}${body}
 <div class="cta"><b>Looking to run in college?</b> Preferred Recruit gets athletes' marks in front of college coaches. <a href="${QUIZ}">Get your free recruitment evaluation ›</a></div></main>
-<footer><div><a href="/explore.html">Explore every school, conference and result</a><span>Standards updated ${DATES.db} · Results updated ${DATES.data} · © ${new Date().getFullYear()} Preferred Recruit</span></div></footer></body></html>`;
+<footer><div><a href="/explore.html">Explore every school, conference and result</a> · <a href="/privacy.html">Privacy</a><span>Standards updated ${DATES.db} · Results updated ${DATES.data} · © ${new Date().getFullYear()} Preferred Recruit</span></div></footer>
+<div class="sbar" id="sbar" hidden role="complementary" aria-label="Free recruitment evaluation"><p><b>Want college coaches to see these marks?</b> <span>Get a free recruitment evaluation from Preferred Recruit.</span></p><a href="${QUIZ}" target="_blank" rel="noopener">Get my evaluation</a><button type="button" aria-label="Close" id="sbx">×</button></div>
+<script>/* SEO-page bottom bar (Ryan 2026-10-17): shows after 50% scroll or 25 s, once per visit, never on arrival; shares the app pop-up's dismiss flag.
+   Search intent (Ryan 2026-10-16): the copy names the athlete's event (this page's event, else the last one they looked at on the site,
+   from localStorage prIntent), the funnel link carries event + grade, and the page view goes to the anonymous insights log. */
+(function(){var T="https://airqmzyuxyyiqjaocwmk.supabase.co/functions/v1/track",I={},sid;
+try{I=JSON.parse(localStorage.getItem("prIntent"))||{};sid=localStorage.getItem("prSid");if(!sid){sid=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36));localStorage.setItem("prSid",sid)}}catch(e){sid="anon-"+Math.random().toString(36).slice(2,12)}
+function grp(e){e=String(e||"");return /hurdle/i.test(e)?"hurdles":/thlon/i.test(e)?"multis":/jump|vault/i.test(e)?"jumps":/shot|discus|hammer|javelin|weight|throw/i.test(e)?"throws":/relay/i.test(e)?(/800|1600|mile|medley/i.test(e)?"distance":"sprints"):/^(55|60|100|200|400)(m|$)/i.test(e)?"sprints":"distance"}
+window.prLog=function(k,x){try{var ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}var b={sid:sid,kind:k,coach:ct,grade:I.gr||undefined,path:location.pathname,mobile:innerWidth<700};for(var q in x||{})b[q]=x[q];if(b.event&&!b.grp)b.grp=grp(b.event);fetch(T,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(function(){})}catch(e){}};
+var m=location.pathname.match(/(?:^|[\/-])(boys|girls|mens|womens)-([a-z0-9-]+?)(?:-track-standards)?(?:\.html)?$/),ev=null,g=null;
+if(m){ev=m[2].replace(/-39$/,"").replace(/-/g," ");g=/^(boys|mens)$/.test(m[1])?"m":"w";I.e=ev;I.grp=grp(ev);I.g=g;I.c=I.c||{};I.c[I.grp]=(I.c[I.grp]||0)+1;try{localStorage.setItem("prIntent",JSON.stringify(I))}catch(e){}}
+prLog("seo_page",{event:ev||undefined,g:g||undefined});
+var b=document.getElementById("sbar"),say=I.e?String(I.e).toLowerCase():"";
+if(say){b.querySelector("b").textContent="If you want to get recruited for the "+say+",";b.querySelector("span").textContent=" let college coaches see your marks. Get a free recruitment evaluation from Preferred Recruit.";}
+try{var u=new URL(b.querySelector("a").href);if(I.e)u.searchParams.set("utm_term",I.e);if(I.grp)u.searchParams.set("pr_group",I.grp);if(I.gr)u.searchParams.set("pr_grade",I.gr);b.querySelector("a").href=u.toString()}catch(e){}
+var K="prEvalDismissed";try{if(sessionStorage.getItem(K)==="1"||sessionStorage.getItem("prBarShown")==="1")return}catch(e){}
+function show(){if(!b.hidden)return;b.hidden=false;try{sessionStorage.setItem("prBarShown","1")}catch(e){}removeEventListener("scroll",sc);prLog("popup_shown",{placement:"seo-bar",event:I.e||undefined})}
+function sc(){var h=document.documentElement;if((scrollY+innerHeight)/h.scrollHeight>.5)show()}
+addEventListener("scroll",sc,{passive:true});setTimeout(show,25000);
+document.getElementById("sbx").onclick=function(){b.hidden=true;try{sessionStorage.setItem(K,"1")}catch(e){}}})();</script></body></html>`;
 }
 
 export function generate(root, out) {
