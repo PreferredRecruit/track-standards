@@ -786,7 +786,9 @@ document.addEventListener("click",ev=>{
   {const ci=ev.target.closest("[data-cinfo]");document.querySelectorAll(".ci.open").forEach(x=>{if(!ci||x!==ci.parentNode){x.classList.remove("open");x.querySelector("button").setAttribute("aria-expanded","false")}});if(ci){const w=ci.parentNode;w.classList.toggle("open");ci.setAttribute("aria-expanded",w.classList.contains("open"));return}}
   if(ev.target.closest("#evx")){evalOut();return}
   const b=ev.target.closest("button");if(!b)return;const d=b.dataset;
-  if(d.tab){S.tab=d.tab;S.school=null;R.swap=true;render();if(b.classList.contains("logo"))scrollTo({top:0,behavior:"smooth"});return}
+  if(d.tab){const home=b.classList.contains("logo");S.tab=d.tab;S.school=null;R.swap=true;
+    if(home){S.run=false;S.mark="";S.f=S.div=S.conf=S.st="";try{if(location.pathname!=="/"||location.search)history.pushState({},"","/")}catch(e){}}
+    render();if(home)scrollTo({top:0,behavior:"smooth"});return}
   if("back" in d){S.school=null;render();return}
   if(d.school){S.school=+d.school;render();scrollTo({top:0});INT.sch=SCH[S.school].n;saveInt();log("school",{school:SCH[S.school].n,division:SCH[S.school].d,state:ST_NAME[SCH[S.school].s]||SCH[S.school].s});return}
   if(d.g){S.g=d.g;render();return}
@@ -853,6 +855,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     tag('link[rel="canonical"]', () => { const l = document.createElement("link"); l.rel = "canonical"; return l; }).href = "https://trackandfieldstandards.com" + path;
     const s = tag("script#pr-ld", () => { const x = document.createElement("script"); x.id = "pr-ld"; x.type = "application/ld+json"; return x; }); s.textContent = JSON.stringify(ld || {});
   };
+  let FIRST_ROUTE = true;
   const route = slug => {
     if (slug) slug = String(slug).replace(/\.html$/, "");   /* pre-built /schools/<slug>.html pages */
     if (slug) { let i = ALT.has(slug) ? ALT.get(slug) : -1; if (i < 0) { const h = hits(slug.replace(/-track-standards$/, "").replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
@@ -866,8 +869,14 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
           url: "https://trackandfieldstandards.com" + path, description: desc, memberOf: {"@type": "SportsOrganization", name: s.c}, ...(s.s ? {address: {"@type": "PostalAddress", addressRegion: s.s}} : {}),
           sameAs: [s.ws, s.rs, s.src, s.u].filter(Boolean)});
         render(); scrollTo(0, 0); return; } }
-    { const q = new URLSearchParams(location.search);   /* shared result links: /?g=m&e=100m&m=10.95 */
-      if (q.get("m") && q.get("e") && !S.run) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; }
+    { /* Ryan 2026-10-16: "if i search a standard and i go back home or refresh the standards are stuck on the screen".
+         Refresh = a fresh form (the search params are dropped); back/forward follow the URL; shared links still open the results. */
+      const nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+      if (FIRST_ROUTE && nav && nav.type === "reload" && location.search) history.replaceState({}, "", location.pathname);
+      FIRST_ROUTE = false;
+      const q = new URLSearchParams(location.search);   /* shared result links: /?g=m&e=100m&m=10.95 */
+      if (q.get("m") && q.get("e")) { if (!S.run || S.mark !== q.get("m") || S.e !== q.get("e")) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; } }
+      else if (S.run) { S.run = false; S.mark = ""; S.f = S.div = S.conf = S.st = ""; }
       if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); } }
     S.school = null; setMeta("College Track & Field Recruiting Standards & Rankings 2026-27", `Recruiting standards for ${NSTD.toLocaleString()} college track and field programs: walk-on, recruit and scholarship times for NCAA D1, D2, D3 and NAIA, plus results since 2016.`, "/",
       {"@context": "https://schema.org", "@type": "WebSite", name: "Preferred Recruit Track & Field Standards", url: "https://trackandfieldstandards.com/"}); render();
