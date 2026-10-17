@@ -50,6 +50,7 @@ LOGO_DIR = os.path.join(OUT_DIR, "logos")
 BRAND_JSON = os.path.join(OUT_DIR, "brand.json")
 STATE_JSON = os.path.join(HERE, "harvest-state.json")
 OVERRIDES = os.path.join(HERE, "overrides.json")
+WIKI_STATE = os.path.join(HERE, "wiki-state.json")   # written by wiki_fill.py
 
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36")
@@ -774,12 +775,24 @@ def write_json(p, obj, **kw):
 
 def merge_and_write(state, schools):
     overrides = load_json(OVERRIDES, {})
+    wiki = load_json(WIKI_STATE, {})
     brand = {}
     for s in schools:
         slug = school_slug(s)
         rec = dict((state.get(slug) or {}).get("rec") or
                    {"logo": None, "primary": None, "secondary": None, "ink": None, "on": None,
                     "src": None, "conf": None})
+        # Wikipedia fill (wiki_fill.py): only where the site gave no logo or a low-confidence record
+        w = (wiki.get(slug) or {}).get("rec") or {}
+        site_weak = not rec.get("logo") or rec.get("conf") in (None, "low")
+        if site_weak and (w.get("logo") or w.get("primary")):
+            if w.get("logo"):
+                rec["logo"], rec["src"], rec["logo_src"] = w["logo"], w.get("src"), "wikipedia"
+                if w.get("logo_kind") == "seal":
+                    rec["logo_kind"] = "seal"
+            if w.get("primary") and (not rec.get("primary") or rec.get("conf") == "low"):
+                rec["primary"], rec["secondary"] = w["primary"], w.get("secondary")
+            rec["conf"] = w.get("conf") or "medium"
         if rec.get("primary"):
             rec["ink"] = make_ink(hex_to_rgb(rec["primary"]))
             rec["on"] = make_on(hex_to_rgb(rec["primary"]))
@@ -809,6 +822,9 @@ def merge_and_write(state, schools):
                 rec["conf"] = "high"
             rec["src"] = rec.get("src") or "override"
         brand[slug] = {k: rec.get(k) for k in ("logo", "primary", "secondary", "ink", "on", "src", "conf")}
+        for k in ("logo_src", "logo_kind"):
+            if rec.get(k) and brand[slug]["logo"]:
+                brand[slug][k] = rec[k]
     write_json(BRAND_JSON, brand, separators=(",", ":"), sort_keys=True)
     return brand
 

@@ -94,3 +94,52 @@ school a page is about (nominative use), the way recruiting sites like Runcruit 
 affiliation is implied. The site should carry a line such as: "School names and logos are trademarks of
 their respective institutions and are used for identification only. No affiliation or endorsement is
 implied." Any takedown request is honoured with `hide_logo` straight away.
+
+## Wikipedia fill (`wiki_fill.py`)
+
+Ryan approved Wikipedia logos for the videos on 2026-10-06 ("pull the schools official logos from wikipedia") and
+asked on 2026-10-17 for official logos for every school, LSU included. `wiki_fill.py` fills the gaps the site
+harvest leaves: every school with no logo, plus every school whose harvested conf is `low`.
+
+```bash
+python3 scripts/brand/wiki_fill.py                 # resume: targets without a wiki-state record
+python3 scripts/brand/wiki_fill.py --only louisiana-state-university-track-standards
+python3 scripts/brand/wiki_fill.py --force         # redo every target
+python3 scripts/brand/wiki_fill.py --limit 10
+python3 scripts/brand/wiki_fill.py --merge-only    # rebuild brand.json only
+```
+
+Same method as `social/standards/wiki_logos.py`: the Wikipedia API through `curl`, the User-Agent
+`PreferredRecruit-standards-graphics/1.0 (internal content tool)`, about 2.5 s between requests, retries with
+back-off. One request at a time. A full run of ~450 schools takes about 1.5 hours. Nothing tries to get around a block.
+
+How it decides, per school:
+1. **Institution article**: `TITLES` override, else exact titles built from the school's names (`n`, `t`, aliases,
+   "CC" → "Community College", "(State)" disambiguators), else a search. The infobox must be a university/college
+   infobox, the state must match (infobox state/city/location or the short description), and search hits must
+   match the name token-for-token (so Eastern Illinois never matches Northern Illinois).
+2. **Athletics article**: the link in the institution's `sports_nickname`/`nickname`/`athletics` field (or a search
+   for "<name> athletics"), accepted only when its infobox `university` field points back at the same institution.
+3. **Logo**: athletics article logo → institution `athletics_logo` → institution `logo` → institution seal/crest
+   (last resort, recorded as `logo_kind: "seal"`). Photo-like images and white/reverse logos are rejected.
+   Wide wordmarks are kept (only banners over 8:1 are rejected).
+4. The PNG thumbnail (`imageinfo iiurlwidth=320`, works for SVG) goes through harvest.py's normaliser (160×160,
+   12 px padding, transparent, < 15 KB; wordmarks 1.6:1 or wider are scaled to ~92% of the badge width, centred) into `public/brand/logos/<slug>-wiki.webp`. The separate name means a
+   harvest re-run never deletes or overwrites it.
+5. **Colours** (only when the site gave none or was `low`): infobox school colours (`{{color box|#…}}`, colour
+   templates expanded through the API), else the logo's dominant non-neutral colour.
+
+`scripts/brand/wiki-state.json` logs each school: institution and athletics article used, candidate files and why
+each was accepted or rejected, colour source, status (`ok`, `colour-only`, `no-article`, `nothing`, `crash`).
+At the end `wiki_fill.py` re-reads the current brand.json and merges into it (hand edits made meanwhile survive;
+entries someone already set from Wikipedia by hand are left alone), saved compact like harvest.py.
+`harvest.merge_and_write()` also layers wiki-state in, so a harvest re-run keeps the Wikipedia logos: a site logo with conf high/medium always wins; otherwise the
+Wikipedia record is used with `logo_src: "wikipedia"`, `src` = the Wikipedia file page, conf high (athletics logo
+via a verified article chain) or medium. `overrides.json` still applies last. LSU is done by hand (skipped here); to survive a harvest
+re-run, hand edits like that belong in `overrides.json`. Bad matches found in QA go in the
+`REJECT` map (logo dropped) or `TITLES` map (correct article) at the top of `wiki_fill.py`.
+
+**Trademark note:** the logos on Wikipedia are the schools' trademarks, hosted there under fair use (non-free
+files) or as public-domain marks. We use them only to identify the program a page is about, the same way the
+standards videos do, under the identification-only disclaimer above. A takedown request is honoured with
+`hide_logo` in overrides.json.
