@@ -339,7 +339,10 @@ async function freshData(out) {
   const live = await r.json(), f = path.join(out, "data/rank_index.json"), idx = JSON.parse(fs.readFileSync(f, "utf8"));
   let n = 0;
   for (const x of live) {
-    const d = await fetch(LIVE_BASE + "rank/" + x.key + ".dat", { signal: AbortSignal.timeout(30000) }); if (!d.ok) continue;
+    /* retried: a dropped download used to skip that season and silently remove its results/champions pages (2026-10-17) */
+    let d = null;
+    for (let t = 0; t < 4 && !(d && d.ok); t++) { if (t) await new Promise(r => setTimeout(r, 1500 * t)); try { d = await fetch(LIVE_BASE + "rank/" + x.key + ".dat", { signal: AbortSignal.timeout(30000) }); } catch { d = null; } }
+    if (!d || !d.ok) { console.warn(`Monday data: ${x.key} failed after 4 tries (its pages use the repo copy if there is one)`); if (!idx.some(y => y.key === x.key) && fs.existsSync(path.join(out, "data/rank", x.key + ".dat"))) idx.push(x); continue; }
     fs.writeFileSync(path.join(out, "data/rank", x.key + ".dat"), Buffer.from(await d.arrayBuffer())); n++;
     const i = idx.findIndex(y => y.key === x.key); if (i >= 0) idx[i] = x; else idx.push(x);
   }
