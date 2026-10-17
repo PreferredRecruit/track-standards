@@ -444,6 +444,326 @@
       "source": "/schools/utep-university-of-texas-at-el-paso-track-standards.html",
       "destination": "/schools/university-of-texas-at-el-paso-track-standards",
       "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-300m-hurdles-41-5.html",
+      "destination": "/colleges-for/mens-300m-hurdles-41-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-300m-hurdles-42-5.html",
+      "destination": "/colleges-for/mens-300m-hurdles-42-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-300m-hurdles-43-5.html",
+      "destination": "/colleges-for/mens-300m-hurdles-43-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-300m-hurdles-49-0.html",
+      "destination": "/colleges-for/mens-300m-hurdles-48-5.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-300m-hurdles-50-0.html",
+      "destination": "/colleges-for/mens-300m-hurdles-48-5.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-400m-49-5.html",
+      "destination": "/colleges-for/mens-400m-49-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-400m-51-5.html",
+      "destination": "/colleges-for/mens-400m-51-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-400m-53-5.html",
+      "destination": "/colleges-for/mens-400m-53-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-hammer-106-0.html",
+      "destination": "/colleges-for/mens-hammer-110-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-hammer-116-0.html",
+      "destination": "/colleges-for/mens-hammer-120-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-hammer-126-0.html",
+      "destination": "/colleges-for/mens-hammer-130-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-hammer-136-0.html",
+      "destination": "/colleges-for/mens-hammer-138-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-hammer-146-0.html",
+      "destination": "/colleges-for/mens-hammer-148-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-hammer-156-0.html",
+      "destination": "/colleges-for/mens-hammer-158-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-hammer-66-0.html",
+      "destination": "/colleges-for/mens-hammer-72-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-hammer-76-0.html",
+      "destination": "/colleges-for/mens-hammer-72-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-hammer-86-0.html",
+      "destination": "/colleges-for/mens-hammer-82-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-hammer-96-0.html",
+      "destination": "/colleges-for/mens-hammer-100-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-javelin-104-0.html",
+      "destination": "/colleges-for/mens-javelin-100-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-javelin-114-0.html",
+      "destination": "/colleges-for/mens-javelin-110-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-javelin-126-0.html",
+      "destination": "/colleges-for/mens-javelin-130-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-javelin-136-0.html",
+      "destination": "/colleges-for/mens-javelin-140-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-javelin-146-0.html",
+      "destination": "/colleges-for/mens-javelin-150-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-javelin-158-0.html",
+      "destination": "/colleges-for/mens-javelin-160-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-javelin-168-0.html",
+      "destination": "/colleges-for/mens-javelin-170-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-javelin-178-0.html",
+      "destination": "/colleges-for/mens-javelin-180-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-javelin-60-0.html",
+      "destination": "/colleges-for/mens-javelin-80-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-javelin-72-0.html",
+      "destination": "/colleges-for/mens-javelin-80-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-javelin-82-0.html",
+      "destination": "/colleges-for/mens-javelin-80-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-javelin-92-0.html",
+      "destination": "/colleges-for/mens-javelin-90-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/mens-long-jump-15-6.html",
+      "destination": "/colleges-for/mens-long-jump-16-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-100m-12-1.html",
+      "destination": "/colleges-for/womens-100m-12-2.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-100m-12-3.html",
+      "destination": "/colleges-for/womens-100m-12-4.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-100m-12-5.html",
+      "destination": "/colleges-for/womens-100m-12-4.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-100m-12-7.html",
+      "destination": "/colleges-for/womens-100m-12-6.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-100m-13-2.html",
+      "destination": "/colleges-for/womens-100m-13-1.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-100m-13-4.html",
+      "destination": "/colleges-for/womens-100m-13-3.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-100m-14-2.html",
+      "destination": "/colleges-for/womens-100m-14-3.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-100m-hurdles-20-0.html",
+      "destination": "/colleges-for/womens-100m-hurdles-19-5.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-100m-hurdles-20-5.html",
+      "destination": "/colleges-for/womens-100m-hurdles-19-5.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-100m-hurdles-21-0.html",
+      "destination": "/colleges-for/womens-100m-hurdles-19-5.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-discus-52-0.html",
+      "destination": "/colleges-for/womens-discus-60-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-hammer-100-0.html",
+      "destination": "/colleges-for/womens-hammer-102-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-hammer-110-0.html",
+      "destination": "/colleges-for/womens-hammer-112-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-hammer-118-0.html",
+      "destination": "/colleges-for/womens-hammer-120-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-hammer-128-0.html",
+      "destination": "/colleges-for/womens-hammer-130-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-hammer-136-0.html",
+      "destination": "/colleges-for/womens-hammer-138-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-hammer-146-0.html",
+      "destination": "/colleges-for/womens-hammer-148-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-hammer-64-0.html",
+      "destination": "/colleges-for/womens-hammer-68-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-hammer-74-0.html",
+      "destination": "/colleges-for/womens-hammer-76-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-hammer-82-0.html",
+      "destination": "/colleges-for/womens-hammer-86-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-hammer-92-0.html",
+      "destination": "/colleges-for/womens-hammer-94-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-javelin-100-0.html",
+      "destination": "/colleges-for/womens-javelin-102-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-javelin-108-0.html",
+      "destination": "/colleges-for/womens-javelin-112-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-javelin-118-0.html",
+      "destination": "/colleges-for/womens-javelin-120-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-javelin-126-0.html",
+      "destination": "/colleges-for/womens-javelin-128-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-javelin-136-0.html",
+      "destination": "/colleges-for/womens-javelin-138-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-javelin-34-0.html",
+      "destination": "/colleges-for/womens-javelin-50-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-javelin-44-0.html",
+      "destination": "/colleges-for/womens-javelin-50-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-javelin-54-0.html",
+      "destination": "/colleges-for/womens-javelin-50-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-javelin-62-0.html",
+      "destination": "/colleges-for/womens-javelin-60-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-javelin-72-0.html",
+      "destination": "/colleges-for/womens-javelin-68-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-javelin-80-0.html",
+      "destination": "/colleges-for/womens-javelin-76-0.html",
+      "permanent": true
+    },
+    {
+      "source": "/colleges-for/womens-javelin-90-0.html",
+      "destination": "/colleges-for/womens-javelin-86-0.html",
+      "permanent": true
     }
   ]
 }
