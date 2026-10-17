@@ -445,6 +445,19 @@ function detect(raw){
   out.tier=/walk.?on/.test(q)?"W":/\brecruit/.test(q)?"R":/\btarget/.test(q)?"T":null;
   return out;
 }
+/* every event + mark in one message (Ryan 2026-10-16: "if you type in multiple events, it kinda bugs out").
+   Events are found most-specific first and blanked out so "400" never re-matches inside "400m hurdles"; each event takes the
+   nearest unused mark on the side this message uses. */
+function pairs(raw){let q=nq(raw);const evs=[],mks=[];
+  for(const [e,re] of EVP){const g=new RegExp(re.source,re.flags.includes("g")?re.flags:re.flags+"g");let m;
+    while((m=g.exec(q))){if(!evs.some(x=>x.e===e))evs.push({e,i:m.index,j:m.index+m[0].length});q=q.slice(0,m.index)+" ".repeat(m[0].length)+q.slice(m.index+m[0].length);g.lastIndex=m.index+m[0].length}}
+  const mr=/(\d{1,2}:\d{2}(?:\.\d+)?)|(\d{1,2}'\s?\d{1,2}(?:\.\d+)?"?)|(\d{1,3}\.\d{1,2})\s*m?\b/g;let m;while((m=mr.exec(q)))mks.push({v:m[0].trim(),i:m.index,used:false});
+  evs.sort((a,b)=>a.i-b.i);const out=[];
+  /* writers keep one order per message: "49.5 in the 400 and 22.1 in the 200" (mark first) or "400m 49.5, 200m 22.1" (event first) */
+  const markFirst=mks.length&&evs.length&&mks[0].i<evs[0].i;
+  for(const x of evs){let best=null,bd=1e9;for(const k of mks){if(k.used)continue;const after=k.i>=x.j,d=after?k.i-x.j:x.i-(k.i+k.v.length);const pen=after===!markFirst?0:40;if(d+pen<bd&&d<60){bd=d+pen;best=k}}
+    if(best){best.used=true;let mk=best.v;if(!FIELD.has(x.e))mk=mk.replace(/\s*m$/,"");if(parse(mk,x.e)!=null)out.push({e:x.e,mark:mk})}}
+  return out}
 const tbl=(h,rows,numFrom=1)=>`<div class="scroll"><table><thead><tr>${h.map((x,i)=>`<th class="${i>=numFrom?"num":""}">${x}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i>=numFrom?"num":""}">${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 const gl=g=>g==="w"?"women's":"men's";
 const quizLine=`<p><a href="${QUIZ}" target="_blank" rel="noopener">Looking to run in college? Get your recruitment evaluation ›</a></p>`;
@@ -569,6 +582,22 @@ function scopeList(){return SCH.map((s,i)=>({s,i})).filter(({s})=>!s.j&&(!CX.div
 const scopeName=()=>[CX.conf,CX.div,CX.state].filter(Boolean).join(" · ")||"all divisions";
 const fmtv=(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v);
 
+/* several events at once: per-event fit + an honest estimate built only from the site's standards */
+function multiAnswer(g,P){const L=scopeList(),rows=[],per=[];
+  for(const p of P){const v=parse(p.mark,p.e);const fit=L.map(({s,i})=>({s,i,t:tier(s,g,p.e,v)})).filter(z=>z.t);
+    const c=k=>fit.filter(z=>z.t===k).length,nm=nearMiss(g,p.e,v);per.push({...p,v,fit,T:c("T"),R:c("R"),W:c("W"),nm,cl:convLine(p.e,g,v)})}
+  const by=new Map();per.forEach(p=>p.fit.forEach(z=>{const o=by.get(z.i)||{s:z.s,best:"W",evs:[]};o.evs.push(p.e+" ("+TN[z.t]+")");if("TRW".indexOf(z.t)<"TRW".indexOf(o.best))o.best=z.t;by.set(z.i,o)}));
+  const comb=[...by.values()].sort((a,b)=>"TRW".indexOf(a.best)-"TRW".indexOf(b.best)||b.evs.length-a.evs.length||DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||a.s.n.localeCompare(b.s.n));
+  const both=comb.filter(o=>o.evs.length===P.length).length, top=[...per].sort((a,b)=>(b.T+b.R)-(a.T+a.R)||b.fit.length-a.fit.length)[0];
+  let h=`<p>Here's how your ${per.length} events stack up against ${esc(scopeName())} (${gl(g)}):</p>`+
+    tbl(["Event","Mark","Colleges","Target","Recruit","Walk-On"],per.map(p=>[p.e,p.mark,p.fit.length,p.T,p.R,p.W]),2);
+  h+=`<p><b>Estimate:</b> your strongest event is the <b>${esc(top.e)}</b>, which reaches Recruit or Target level at <b>${(top.T+top.R).toLocaleString()}</b> programs. `+
+     `Across all ${per.length} events, <b>${comb.length.toLocaleString()}</b> colleges have a spot for you${P.length>1?`, and <b>${both.toLocaleString()}</b> fit you in every event you listed`:""}.</p>`;
+  const nm=per.filter(p=>p.nm&&p.nm.n>=3);if(nm.length)h+=`<p>Closest to moving up: ${nm.map(p=>`your ${esc(p.e)} is ${esc(p.nm.gap)} from ${TN[p.nm.lvl]} level at ${p.nm.n} schools`).join("; ")}.</p>`;
+  const cv=per.filter(p=>p.cl);if(cv.length)h+=`<p>College equivalents: ${cv.map(p=>`${esc(p.e)} ${p.cl}`).join(" ")}</p>`;
+  if(comb.length)h+=tbl(["College","Division","Best level","Events that fit"],comb.slice(0,12).map(o=>[o.s.n+(o.s.o?" ★":""),o.s.d,TN[o.best],o.evs.join(", ")]),9)+(comb.length>12?`<p>Top 12 of ${comb.length}. Ask for a division, conference or state to narrow it.</p>`:"");
+  h+=`<p class="note">Estimates compare your marks with each program's standards on this site. They aren't offers or guarantees; coaches also weigh grades, progression and roster needs.</p>`;
+  return {html:h+quizLine,f:[!CX.div?"Only D1":"All divisions","Only schools in Texas",g==="m"?"What about women?":"What about men?"]}}
 async function answer(raw){
   const d=detect(raw), q=d.q;
   if(/\b(jucos?|njcaa|junior colleges?|community colleges?)\b/i.test(raw))return {html:`<p>This site doesn't set Target, Recruit or Walk-On levels for junior colleges: NJCAA competition is national rather than conference-based, so a program's marks can't be predicted reliably.</p><p>What you can do here: open <b>Results</b> and pick <b>NJCAA</b> to see this season's national list for any event, or search a junior college by name for its season bests, roster and TFRRS links.</p>`,f:["What does Walk-On mean?","Only NAIA","Only NCAA D3"]};
@@ -580,6 +609,7 @@ async function answer(raw){
   if(pending==="school2"&&d.schools.length&&(CX.schools||[]).length===1)d.schools=[CX.schools[0],d.schools[0]];
   /* 2. intent; a message with only new details is a follow-up to the last question */
   let intent=null;
+  {const P=pairs(raw);if(P.length>=2){CX.pairs=P;intent="multi";d.e=P[0].e;d.mark=P[0].mark}}
   const inState=stateOf(q)&&/\b(schools?|colleges?|programs?|teams?|ones)\s+(in|from)\b|\b(in|from) (the state of )?[a-z]/.test(q)&&/\b(in|from)\b/.test(q)&&stateOf(q);
   if(inState){d.school=null;d.schools=[]}                       /* "schools in Texas" is the state, not University of Texas */
   if(inState&&CX.intent&&["fit","superl"].includes(CX.intent)&&/\b(only|just|what about|how about|in)\b/.test(q)&&!RX.count.test(q))intent=CX.intent;
@@ -622,6 +652,7 @@ async function answer(raw){
     case "state":{const L=scopeList();if(!L.length)return {html:`<p>I don't have any colleges listed in ${esc(CX.state)}.</p>`};
       L.sort((a,b)=>DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||a.s.n.localeCompare(b.s.n));
       return {html:`<p>${L.length} colleges in ${esc(CX.state)}${CX.div?` (${esc(CX.div)})`:""}:</p>`+tbl(["College","Division","Conference"],L.slice(0,40).map(({s})=>[s.n+(s.o?" ★":""),s.d,s.c]),9)+(L.length>40?`<p>Showing 40 of ${L.length}. Add a division to narrow it down.</p>`:""),f:[`D1 schools in ${CX.state}`,`D2 schools in ${CX.state}`]}}
+    case "multi":{const x=needG();if(x)return x;return multiAnswer(g,CX.pairs||[])}
     case "fit":{let x=needE("Which event is the mark in?");if(x)return x;x=needG();if(x)return x;
       if(!CX.mark)return askBack("mark",`What's your best ${gl(g)} ${esc(e)}? (for example ${esc(ph(e))})`);
       const v=parse(CX.mark,e);if(v==null)return askBack("mark",`I couldn't read "${esc(CX.mark)}" as a ${esc(e)} mark. Try something like ${esc(ph(e))}.`);
