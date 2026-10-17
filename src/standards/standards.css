@@ -494,3 +494,8 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
   .scroll th .ci{display:none}.scroll th{white-space:normal}
   .scroll td.num small{display:block;white-space:nowrap}
 }
+
+/* coach portal entry points (Ryan 2026-10-17: coaches must find it from the front page) */
+.coachlnk{margin-left:auto;margin-right:16px;font-size:14px;font-weight:600;color:var(--pr-mute);text-decoration:none;white-space:nowrap}.coachlnk:hover{color:var(--pr-ink)}
+.coachlnk .pl-short{display:none}@media(max-width:700px){.coachlnk{display:none}}   /* phones: the hero line + footer carry it, so the evaluation button never gets pushed */
+.inl.coachl{margin-top:6px;font-size:14px}
