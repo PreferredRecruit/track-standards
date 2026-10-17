@@ -213,6 +213,36 @@ export function generate(root, out) {
   hsPages({ S: S.filter(x => !x.j), CT, write, writeRaw, page, parse, esc, slug, schoolUrl: sl, evPath, FIELD, SITE, gName });
   /* 25 SEO + AEO topic guides (Ryan 2026-10-16), then the guides hub is rebuilt to list them */
   const TOPICS = topicPages({ S: S.filter(x => !x.j), CT, write, page, parse, esc, slug, evPath, FIELD, SITE, gName, STATE, statePath, resultPages, DATES, QUIZ });
+  /* NJCAA marks by event (Ryan 2026-10-16, keyword gap "njcaa track standards"): this site sets no NJCAA levels (national, not
+     conference, competition), so the page shows what it took to rank #1/#10/#25/#50/#100 on the newest NJCAA national list (TFRRS). */
+  try {
+    const nk = RIDX.filter(x => x.div === "NJCAA" && x.season === "outdoor").sort((a, b) => b.year.localeCompare(a.year))[0];
+    const nd = nk && JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(out, "data/rank", nk.key + ".dat"))).toString());
+    const NL = nd && (nd.lists.find(l => /all schools/i.test(l.label || "")) || nd.lists.find(l => l.nat));
+    if (NL) {
+      const P = [1, 10, 25, 50, 100], clean = m => String(m || "").replace(/[@#*]/g, "").trim();
+      const nice = e => e.replace(/^(\d[\d,]*) Meters$/, "$1m").replace(/^(\d+) Hurdles$/, "$1m Hurdles").replace(/^(\d+) Steeplechase$/, "$1m Steeplechase");
+      const tab = g => { const E = NL.g[g] || {}; const rows = Object.keys(E).filter(e => !/Relay|thlon/.test(e) && E[e].length >= 50);
+        return { rows, html: `<div class="scroll"><table><thead><tr><th>Event</th>${P.map(k => `<th class="num">#${k}</th>`).join("")}</tr></thead><tbody>${rows.map(e => `<tr><td>${esc(nice(e))}</td>${P.map(k => `<td class="num">${E[e][k - 1] ? esc(clean(E[e][k - 1][4])) : "–"}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` }; };
+      const M = tab("m"), W = tab("w"), m50 = e => { const r = (NL.g.m[e] || [])[49]; return r ? clean(r[4]) : null; }, w50 = e => { const r = (NL.g.w[e] || [])[49]; return r ? clean(r[4]) : null; };
+      const yr = nk.year, up = DATES.data, url = "/guides/njcaa-track-and-field-marks-by-event.html";
+      const quick = `On the ${yr} NJCAA outdoor national list, the 50th-best men's marks were ${m50("100 Meters")} in the 100m, ${m50("400 Meters")} in the 400m and ${m50("1500 Meters")} in the 1500m; women's were ${w50("100 Meters")}, ${w50("400 Meters")} and ${w50("1500 Meters")}. Junior colleges don't publish one standard, so national rank is the best guide.`;
+      const faq = [[`What times do you need to run NJCAA track?`, quick],
+        [`Do NJCAA programs have recruiting standards?`, `Most junior colleges don't publish a standards chart, and NJCAA competition is national rather than conference-based, so this site doesn't set Target, Recruit or Walk-On levels for them. The national list shows where your mark would rank among every NJCAA athlete.`],
+        [`Where do these marks come from?`, `The ${yr} NJCAA outdoor national performance list on TFRRS (${esc(NL.label)}), updated ${up}. Wind-aided marks are included as listed.`]];
+      write(url, page({ title: `NJCAA Track and Field Marks by Event (${yr})`, desc: `What it took to rank #1, #10, #25, #50 and #100 nationally in every NJCAA track and field event in ${yr}, men and women, from the TFRRS national list.`,
+        pathname: url, crumbs: [["Home", "/"], ["Guides", "/guides.html"], ["NJCAA marks", url]], h1: `NJCAA track and field marks by event (${yr})`,
+        intro: `<div class="qa"><b>Quick answer</b><p>${esc(quick)}</p></div><p class="upd">Updated ${up} · Source: TFRRS national list</p>`,
+        body: `<h2>Men's NJCAA marks by national rank</h2>${M.html}<h2>Women's NJCAA marks by national rank</h2>${W.html}
+<h2>How should you use these marks?</h2><p>If your mark would rank in the top 100 on this list, you can compete in the NJCAA right away, and a top-25 mark puts you near the national meet. Junior college can also be a path to a four-year program: see the <a href="/guides/junior-college-track-and-field-recruiting.html">junior college recruiting guide</a>.</p>
+<h2>Common questions</h2>${faq.map(([q, a2]) => `<h3>${esc(q)}</h3><p>${esc(a2)}</p>`).join("")}
+<p><a href="/?tab=results&div=NJCAA">Full NJCAA national list ›</a> · <a href="/how-fast.html">How fast do you need to run in college?</a> · <a href="https://www.njcaa.org/" rel="noopener">NJCAA</a> · <a href="https://www.tfrrs.org/" rel="noopener">TFRRS</a></p>
+<div class="cta"><b>Looking to run in college?</b> Preferred Recruit gets athletes' marks in front of college coaches. <a href="${QUIZ}">Get your free recruitment evaluation ›</a></div>`,
+        ld: [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map(([q, a2]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a2 } })) },
+          { "@context": "https://schema.org", "@type": "Article", headline: `NJCAA track and field marks by event (${yr})`, dateModified: up, author: { "@type": "Organization", name: "Preferred Recruit" }, publisher: { "@type": "Organization", name: "Preferred Recruit" } }] }));
+      TOPICS.push([url, `NJCAA track and field marks by event (${yr})`, quick]);
+    }
+  } catch (e) { console.warn("NJCAA marks page skipped:", e && e.message); }
   write("/guides.html", page({ title: "College Track Recruiting Guides for Athletes, Parents and Coaches | Preferred Recruit",
     desc: "College track and field recruiting guides: standards, scholarship times, walk-on marks, NCAA rules, emailing coaches, recruiting profiles, training and every division compared.",
     pathname: "/guides.html", crumbs: [["Home", "/"], ["Guides", "/guides.html"]], h1: "College track recruiting guides",
