@@ -42,7 +42,19 @@ const DATES = { db: "", data: "", max: "" };
 /* past seasons never change: they keep the date the archive was built; only the current season moves with the Monday data */
 const ARCHIVE_DATE = "2026-10-13";
 const resultsDate = u => { const y = (u.match(/\/(\d{4})-/) || [])[1]; return y && DATES.data && y < DATES.data.slice(0, 4) ? ARCHIVE_DATE : DATES.data; };
+/* "Check your mark" box (Ryan 2026-10-17: bounce rate). Plain GET form into the app's search (/?g=&e=&m=), which counts as a new
+   page view and shows every college the mark fits. Pre-set to the page's own event and gender when the URL names them. */
+const CHECK_EV = ["100m", "200m", "400m", "800m", "1600m", "Mile", "1500m", "3200m", "3000m", "5000m", "100m Hurdles", "110m Hurdles", "300m Hurdles", "400m Hurdles", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Hammer", "Javelin"];
+function checker(pathname) {
+  const p = pathname.toLowerCase(), g = /(womens|girls)/.test(p) ? "w" : "m";
+  const e = [...CHECK_EV].sort((a, b) => b.length - a.length).find(x => p.includes("-" + slug(x) + ".") || p.includes("-" + slug(x) + "-") || p.includes("/" + slug(x) + ".")) || "1600m";
+  return `<form class="chk" action="/" method="get"><b>Check your mark against every college</b><div><select name="g" aria-label="Gender"><option value="m"${g === "m" ? " selected" : ""}>Boys / men</option><option value="w"${g === "w" ? " selected" : ""}>Girls / women</option></select>`
+    + `<select name="e" aria-label="Event">${CHECK_EV.map(x => `<option${x === e ? " selected" : ""}>${esc(x)}</option>`).join("")}</select><input name="m" required placeholder="Your mark, e.g. 4:35 or 20-6" aria-label="Your mark"><button>See colleges</button></div></form>`;
+}
+const CHK_CSS = `.chk{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:16px 0}.chk b{display:block;font-size:15px;margin-bottom:8px}.chk div{display:flex;gap:8px;flex-wrap:wrap}.chk select,.chk input{font:inherit;padding:10px 12px;border:1px solid #DCDAE5;border-radius:12px;background:#FAFAFC;flex:1 1 140px;min-width:0}.chk button{font:inherit;font-weight:650;border:0;border-radius:999px;padding:10px 18px;background:#7A45F0;color:#fff;cursor:pointer}`;
+const withChecker = (pathname, body) => { const c = checker(pathname), i = body.indexOf('<p class="upd">'); if (body.includes('<div class="qa">') && i > -1) { const j = body.indexOf("</p>", i) + 4; return body.slice(0, j) + c + body.slice(j); } return c + body; };
 function page({ title, desc, pathname, crumbs, h1, intro, body, ld }) {
+  if (!/^\/(guides|for-coaches)\.html$/.test(pathname)) body = withChecker(pathname, body);
   title = fitTitle(title); desc = fitDesc(desc, tailsFor(pathname));
   const url = SITE + pathname;
   const bc = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: crumbs.map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) };
@@ -69,7 +81,7 @@ th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font
 .cta{margin:30px 0;padding:18px 20px;border-radius:18px;background:linear-gradient(135deg,#A98BFF,#7A45F0 55%,#4E22C2);color:#fff}.cta a{color:#fff;font-weight:700}
 .links{columns:3 220px;gap:24px;font-size:14px}.links a{display:block;padding:3px 0;text-decoration:none}.links a:hover{text-decoration:underline}
 footer{border-top:1px solid var(--line);font-size:13px;color:var(--mute);padding:20px}footer div{max-width:1000px;margin:0 auto}footer a{color:var(--mute);margin-right:14px}
-.star{color:#7A45F0}footer .soc{display:block;margin-top:8px;font-size:10px;color:#9A9AA3}footer .soc a{color:inherit;margin:0;text-decoration:none}header nav a.cta{white-space:nowrap}@media(max-width:560px){header nav a:not(.cta){display:none}header nav a.cta{margin-left:0}}</style></head><body>
+${CHK_CSS}.star{color:#7A45F0}footer .soc{display:block;margin-top:8px;font-size:10px;color:#9A9AA3}footer .soc a{color:inherit;margin:0;text-decoration:none}header nav a.cta{white-space:nowrap}@media(max-width:560px){header nav a:not(.cta){display:none}header nav a.cta{margin-left:0}}</style></head><body>
 <header><div><a class="logo" href="/"><img src="/icon-192.png" alt="">Preferred Recruit · Track Standards</a><nav><a href="/">Standards</a><a href="/explore.html">Explore</a><a class="cta" href="${QUIZ}">Free recruitment evaluation</a></nav></div></header>
 <main><div class="bc">${crumbs.map(([n, u], i) => i < crumbs.length - 1 ? `<a href="${u}">${esc(n)}</a> › ` : esc(n)).join("")}</div>
 <h1>${h1}</h1>${intro ? `<p class="intro">${intro}</p>` : ""}${body}
