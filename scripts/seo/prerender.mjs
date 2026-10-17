@@ -68,7 +68,7 @@ document.addEventListener("click",function(e){var a=e.target.closest&&e.target.c
 var p=a.closest(".pill,header nav")?"header":a.closest(".inl")?"hero":a.closest("#eval,.eval")?"popup":a.closest(".coach")?"school-page":a.closest(".hook")?"results":a.closest(".chat,.ask,.msgs,.msg,.ans")?"chat":a.closest(".sbar")?"seo-bar":a.closest(".cta")?"seo-page":"other";
 var path=location.pathname,kind=path==="/"?"home":path.indexOf("/schools/")===0?"school":path.split("/")[1].replace(".html","")||"home";
 try{var u=new URL(a.href);u.searchParams.set("utm_content",p);a.href=u.toString()}catch(x){}
-window.va("event",{name:"Evaluation click",data:{placement:p,page:kind,path:path.slice(0,120)}});if(window.prLog)window.prLog("popup_click",{placement:p})},true);</script><script defer src="/_vercel/speed-insights/script.js"></script><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+window.va("event",{name:"Evaluation click",data:{placement:p,page:kind,path:path.slice(0,120)}});if(window.prLog)window.prLog("popup_click",{placement:p,variant:p==="seo-bar"?(document.querySelector("#sbar b").textContent.indexOf("If you want")===0?"bar-event":"bar-generic"):undefined,event:(function(){try{return JSON.parse(localStorage.getItem("prIntent")).e}catch(e){}})()})},true);</script><script defer src="/_vercel/speed-insights/script.js"></script><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <script type="application/ld+json">${JSON.stringify(bc)}</script><script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@type": "WebPage", name: title, url, dateModified: /^\/(results|champions)\//.test(pathname) ? resultsDate(pathname) : DATES.db })}</script>${(ld || []).map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join("")}
 <style>:root{--ink:#0B0B0F;--ink2:#2E2E36;--mute:#4A4A52;--line:#E4E3EA;--soft:#F3F2F7;--accent:#7A45F0}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#FDFDFE,#F1F0F6);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
@@ -102,7 +102,7 @@ var b=document.getElementById("sbar"),say=I.e?String(I.e).toLowerCase():"";
 if(say){b.querySelector("b").textContent="If you want to get recruited for the "+say+",";b.querySelector("span").textContent=" let college coaches see your marks. Get a free recruitment evaluation from Preferred Recruit.";}
 try{var u=new URL(b.querySelector("a").href);if(I.e)u.searchParams.set("utm_term",I.e);if(I.grp)u.searchParams.set("pr_group",I.grp);if(I.gr)u.searchParams.set("pr_grade",I.gr);b.querySelector("a").href=u.toString()}catch(e){}
 var K="prEvalDismissed";try{if(sessionStorage.getItem(K)==="1"||sessionStorage.getItem("prBarShown")==="1")return}catch(e){}
-function show(){if(!b.hidden)return;b.hidden=false;try{sessionStorage.setItem("prBarShown","1")}catch(e){}removeEventListener("scroll",sc);prLog("popup_shown",{placement:"seo-bar",event:I.e||undefined})}
+function show(){if(!b.hidden)return;b.hidden=false;try{sessionStorage.setItem("prBarShown","1")}catch(e){}removeEventListener("scroll",sc);prLog("popup_shown",{placement:"seo-bar",event:I.e||undefined,variant:say?"bar-event":"bar-generic"})}
 function sc(){var h=document.documentElement;if((scrollY+innerHeight)/h.scrollHeight>.5)show()}
 addEventListener("scroll",sc,{passive:true});setTimeout(show,25000);
 document.getElementById("sbx").onclick=function(){b.hidden=true;try{sessionStorage.setItem(K,"1")}catch(e){}}})();</script></body></html>`;

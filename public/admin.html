@@ -67,7 +67,9 @@ async function insights() {
       tbl("Top events searched", [["event", "Event"], ["g", "M/W"], ["grp", "Group"], ["n", "Searches"], ["people", "People"]], d.events),
       tbl("States", [["state", "State"], ["n", "Views"]], d.states),
       tbl("Schools looked at", [["school", "School"], ["n", "Views"]], d.schools),
-      tbl("Pop-ups", [["placement", "Placement"], ["shown", "Shown"], ["clicks", "Clicks"]], d.popup),
+      tbl("Funnel: people", [["searchers", "Searched"], ["saw_offer", "Saw an offer"], ["clicked", "Clicked to the evaluation"]], d.funnel),
+      tbl("Pop-ups by copy (CTR = clicks ÷ shown)", [["placement", "Placement"], ["variant", "Copy"], ["shown", "Shown"], ["clicks", "Clicks"], ["ctr", "CTR %"]], d.popup),
+      tbl("Pop-ups by event group and grade", [["grp", "Group"], ["grade", "Grade"], ["shown", "Shown"], ["clicks", "Clicks"], ["ctr", "CTR %"]], d.popup_by),
       tbl("Signed-in coaches: what they looked at", [["coach_school", "Coach's school"], ["kind", "Type"], ["what", "Athlete / school / event"], ["team", "Team"], ["n", "Views"], ["last", "Last"]], d.coaches));
   } catch (e) { box.replaceChildren(el("p", e.message, "muted")); }
 }

@@ -40,10 +40,12 @@ const GCOACH={sprints:"Sprint coaches",hurdles:"Hurdles coaches",distance:"Dista
 const evSay=e=>String(e).replace(/ \(39"\)/,"").replace(/^3000m Steeplechase$/,"steeplechase").replace(/^Mile$/,"mile").toLowerCase();
 const INT=(()=>{try{return JSON.parse(localStorage.getItem("prIntent"))||{}}catch(e){return {}}})();
 const SID=(()=>{try{let v=localStorage.getItem("prSid");if(!v){v=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36));localStorage.setItem("prSid",v)}return v}catch(e){return "anon-"+Math.random().toString(36).slice(2,12)}})();
+/* A/B bucket per browser: 0 = data-driven copy (near-miss, school), 1 = plain intent copy (control) */
+const BUCKET=[...SID].reduce((a,c)=>a+c.charCodeAt(0),0)%2;
 const saveInt=()=>{try{localStorage.setItem("prIntent",JSON.stringify(INT))}catch(e){}};
-function intent(e,g,mark){if(!e)return;const grp=GRP(e);INT.e=e;INT.grp=grp;if(g)INT.g=g;if(mark)INT.m=mark;INT.c=INT.c||{};INT.c[grp]=(INT.c[grp]||0)+1;saveInt()}
+function intent(e,g,mark){if(!e)return;const grp=GRP(e);INT.e=e;INT.grp=grp;if(g)INT.g=g;if(mark)INT.m=mark;INT.c=INT.c||{};INT.c[grp]=(INT.c[grp]||0)+1;INT.t=Date.now();saveInt()}
 const topGrp=()=>{const c=INT.c||{};return Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||INT.grp};
-window.prLog=(k,x)=>log(k,x);
+window.prLog=(k,x)=>log(k,Object.assign({event:INT.e||undefined,variant:x&&x.placement==="popup"&&EV.v||undefined},x));
 /* a signed-in coach (coach portal token on this origin) is verified server-side, so coach views are tagged with their school */
 function log(kind,x){try{let ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}const b=Object.assign({sid:SID,kind,coach:ct,grade:INT.gr||undefined,path:location.pathname+location.search,mobile:innerWidth<700,utm_source:new URLSearchParams(location.search).get("utm_source")||undefined},x||{});
   if(b.event&&!b.grp)b.grp=GRP(b.event);fetch(TRACK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(()=>{})}catch(e){}}
@@ -87,6 +89,13 @@ function tier0(t,e,v){if(meets(e,v,t[0]))return "T";if(meets(e,v,t[1]))return "R
 function tier(s,g,e,v){const t=s[g][e];if(t)return tier0(t,e,v);const c=convert(e,g,v);if(!c)return null;
   for(const x of c){if(s[g][x.e])return tier0(s[g][x.e],x.e,x.v)}return null}
 const TN={T:"Target",R:"Recruit",W:"Walk-On"};
+/* schools where the mark is just short of the next level (direct standards only); gap formatted for copy */
+function nearMiss(g,e,v){if(v==null)return {n:0};const F=FIELD.has(e),tol=F?0.03:0.02,cnt={W:[],R:[],T:[]};
+  for(const s of SCH){const t=s[g]&&s[g][e];if(!t)continue;const cur=tier0(t,e,v),nx=cur===null?2:cur==="W"?1:cur==="R"?0:-1;if(nx<0||!t[nx])continue;
+    const th=parse(t[nx],e);if(th==null)continue;const d=F?th-v:v-th;if(d>0&&d<=th*tol)cnt["WRT"[nx]].push(d)}
+  const lvl=["R","T","W"].sort((a,b)=>cnt[b].length-cnt[a].length)[0],ds=cnt[lvl].sort((a,b)=>a-b);if(!ds.length)return {n:0};
+  const med=ds[Math.floor(ds.length/2)],gap=F?(()=>{const i=med*39.3701;return i>=12?`${Math.floor(i/12)}'${Math.round(i%12)}"`:`${Math.max(1,Math.round(i))} inch${Math.round(i)>1?"es":""}`})():`${med.toFixed(2)}s`;
+  return {n:ds.length,lvl,gap}}
 const better=(e,a,b)=>FIELD.has(e)?b-a:a-b;
 const S={tab:"standards",school:null,g:"m",e:"100m",mark:"",run:false,f:"",div:"",n:15,q:"",gr:INT.gr||""};
 const seg=(k,v)=>`<div class="seg" role="group" aria-label="Team"><button type="button" data-${k}="m" aria-pressed="${v==="m"}">Men</button><button type="button" data-${k}="w" aria-pressed="${v==="w"}">Women</button></div>`;
@@ -95,17 +104,18 @@ const PH={"100m":"10.85","200m":"22.10","400m":"49.50","800m":"1:58.00","1500m":
 const ph=e=>PH[e]||(FIELD.has(e)?"22'6\"":"4:21.50");
 
 /* ---------- Recruitment Evaluation slide-in ---------- */
-const EV={shown:false,dismissed:false,t:null};
+const EV={shown:false,dismissed:false,t:null,v:null};
 try{EV.dismissed=sessionStorage.getItem("prEvalDismissed")==="1"}catch(e){}
-function evalIn(title,body,delay){
+/* v = copy variant, logged with shown/clicked so the admin report compares conversion per copy, event group and grade */
+function evalIn(title,body,delay,v){
   if(EV.shown||EV.dismissed) return; clearTimeout(EV.t);
   EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||S.school!=null) return; $("evt").textContent=title; $("evp").textContent=body; $("eva").href=quizFor();
-    const el=$("eval"); el.classList.add("on"); el.setAttribute("aria-hidden","false"); EV.shown=true; log("popup_shown",{event:INT.e,placement:"popup"})},delay||0);
+    const el=$("eval"); el.classList.add("on"); el.setAttribute("aria-hidden","false"); EV.shown=true; EV.v=v||"generic"; log("popup_shown",{event:INT.e,placement:"popup",variant:EV.v})},delay||0);
 }
 function evalOut(){const el=$("eval");el.classList.remove("on");el.setAttribute("aria-hidden","true");EV.dismissed=true;try{sessionStorage.setItem("prEvalDismissed","1")}catch(e){}}
 let scrolled=0,lastY=scrollY;
 addEventListener("scroll",()=>{scrolled+=Math.abs(scrollY-lastY);lastY=scrollY;
-  if(S.tab==="results"&&S.school==null&&scrolled>1400) {const gp=GRP(evLabel(R.ev||""))||topGrp();evalIn(gp?`Want to get recruited for ${GNAME[gp]}?`:"Close to these marks?",gp?`${GCOACH[gp]} recruit from lists like this one. Get a free recruitment evaluation and see where your marks fit.`:"Coaches recruit from these lists. Get a free recruitment evaluation and see where you fit.",0)}},{passive:true});
+  if(S.tab==="results"&&S.school==null&&scrolled>1400) {const gp=GRP(evLabel(R.ev||""))||topGrp();evalIn(gp?`Want to get recruited for ${GNAME[gp]}?`:"Close to these marks?",gp?`${GCOACH[gp]} recruit from lists like this one. Get a free recruitment evaluation and see where your marks fit.`:"Coaches recruit from these lists. Get a free recruitment evaluation and see where you fit.",0,gp?"results-"+gp:"results")}},{passive:true});
 
 /* ---------- Standards (the current site's flow, rebranded) ---------- */
 const DEF={W:"The minimum mark required to earn a spot on the team.",R:"The range where coaches typically start recruiting conversations and scholarship discussions begin.",T:"The marks that typically grant a full-ride scholarship, depending on school funding."};
@@ -746,7 +756,7 @@ async function send(t){
     m.busy=0;CHAT.busy=false;render();toBottom();const ct=$("ct");if(ct)ct.focus();
   }
   {const d=detect(t);if(d.e){intent(d.e,d.g,d.mark);log("chat",{event:d.e,g:d.g||undefined,mark:d.mark,school:d.school!=null?SCH[d.school].n:undefined,division:d.div})}else if(d.school!=null)log("chat",{school:SCH[d.school].n})}
-  if(CHAT.msgs.length>=4) evalIn(INT.e?`Want help getting recruited for the ${evSay(INT.e)}?`:"Want a real person on your recruiting?",INT.e?"A real person at Preferred Recruit can take it from here. Get a free recruitment evaluation. It takes about a minute.":"Get a free recruitment evaluation from Preferred Recruit. It takes about a minute.",1800);
+  if(CHAT.msgs.length>=4) evalIn(INT.e?`Want help getting recruited for the ${evSay(INT.e)}?`:"Want a real person on your recruiting?",INT.e?"A real person at Preferred Recruit can take it from here. Get a free recruitment evaluation. It takes about a minute.":"Get a free recruitment evaluation from Preferred Recruit. It takes about a minute.",1800,INT.e?"chat-event":"chat");
 }
 document.addEventListener("click",ev=>{if(ev.target.closest("#stop"))CTL?.abort()});
 
@@ -778,7 +788,7 @@ document.addEventListener("click",ev=>{
   const b=ev.target.closest("button");if(!b)return;const d=b.dataset;
   if(d.tab){S.tab=d.tab;S.school=null;R.swap=true;render();if(b.classList.contains("logo"))scrollTo({top:0,behavior:"smooth"});return}
   if("back" in d){S.school=null;render();return}
-  if(d.school){S.school=+d.school;render();scrollTo({top:0});log("school",{school:SCH[S.school].n,division:SCH[S.school].d,state:ST_NAME[SCH[S.school].s]||SCH[S.school].s});return}
+  if(d.school){S.school=+d.school;render();scrollTo({top:0});INT.sch=SCH[S.school].n;saveInt();log("school",{school:SCH[S.school].n,division:SCH[S.school].d,state:ST_NAME[SCH[S.school].s]||SCH[S.school].s});return}
   if(d.g){S.g=d.g;render();return}
   if(d.f!==undefined){S.f=d.f;S.n=24;render();return}
   if(d.div!==undefined){S.div=d.div;S.n=24;render();return}
@@ -816,12 +826,20 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
   try{const u=`/?g=${S.g}&e=${encodeURIComponent(S.e)}&m=${encodeURIComponent(S.mark.trim())}`;if(location.pathname+location.search!==u)history.pushState({},"",u)}catch(e){}{const el=document.querySelector(".sum");if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-74,behavior:"smooth"})}
   const v=parse(S.mark,S.e), n=SCH.filter(s=>tier(s,S.g,S.e,v)).length;
   intent(S.e,S.g,S.mark.trim()); log("search",{g:S.g,event:S.e,mark:S.mark.trim(),n_fits:n});
-  /* copy follows the athlete's own event and grade: juniors and seniors get the "coaches are recruiting your class now" line */
-  const es=evSay(S.e), late=+S.gr>=11;
-  evalIn(n?`Your ${S.mark.trim()} in the ${es} fits ${n} colleges.`:`Every ${es} mark has a path.`,
-    n?(late?`If you want to get recruited for the ${es}, college coaches are recruiting your class right now. A free recruitment evaluation shows which of these ${n} schools would want you.`:`If you want to get recruited for the ${es}, a free recruitment evaluation shows which of these ${n} schools fit you and what to run next.`)
-     :`If you want to get recruited for the ${es}, a free recruitment evaluation shows which programs fit you right now.`,2500)});
+  /* copy follows the athlete's own event and grade: juniors and seniors get the "coaches are recruiting your class now" line.
+     Data-driven variants (bucket 0): "near-miss" = schools where the athlete is within 2% (time) / 3% (field) of the next level;
+     "school" = the last school they opened, when their mark fits it. Bucket 1 keeps the plain intent copy as the control. */
+  const es=evSay(S.e), late=+S.gr>=11, verb={throws:"throw",jumps:"jump",multis:"score"}[GRP(S.e)]||"run", nm=nearMiss(S.g,S.e,v), ls=(()=>{const x=INT.sch&&SCH.find(y=>y.n===INT.sch);return x&&tier(x,S.g,S.e,v)?x:null})();
+  let ttl=n?`Your ${S.mark.trim()} in the ${es} fits ${n} colleges.`:`Every ${es} mark has a path.`, body, vr="intent";
+  if(!BUCKET&&nm.n>=3){vr="nearmiss";ttl=`You're ${nm.gap} from ${TN[nm.lvl]} level at ${nm.n} schools.`;body=`If you want to get recruited for the ${es}, a free recruitment evaluation shows which coaches would want you now and what to ${verb} to move up.`}
+  else if(!BUCKET&&ls){vr="school";body=`${ls.n} is one of them. If you want ${ls.t||ls.n}'s coaches to see your ${es}, start with a free recruitment evaluation.`}
+  else body=n?(late?`If you want to get recruited for the ${es}, college coaches are recruiting your class right now. A free recruitment evaluation shows which of these ${n} schools would want you.`:`If you want to get recruited for the ${es}, a free recruitment evaluation shows which of these ${n} schools fit you and what to ${verb} next.`)
+     :`If you want to get recruited for the ${es}, a free recruitment evaluation shows which programs fit you right now.`;
+  evalIn(ttl,body,2500,vr+(late?"-11-12":"-9-10"))});
 
+  /* return visit (new session, last search 30+ min ago): remind them of their own mark once, 15 s in, unless they search again */
+  try{const first=!sessionStorage.getItem("prSeen");sessionStorage.setItem("prSeen","1");
+    if(first&&INT.e&&INT.m&&INT.t&&Date.now()-INT.t>18e5) setTimeout(()=>{if(!S.run)evalIn(`Welcome back, still working on that ${INT.m} in the ${evSay(INT.e)}?`,"See which college coaches would want you now. Get a free recruitment evaluation. It takes about a minute.",0,"return"+(+INT.gr>=11?"-11-12":"-9-10"))},15000)}catch(e){}
   /* ---- routing: /schools/<slug> opens that school; keeps the old site's URLs working ---- */
   const SLUG = SCH.map(s => (s.os && s.os[0]) || slugOf(s.n));   // old trackandfieldstandards.com URL first, so Google keeps its rankings
   const ALT = new Map(); SCH.forEach((s, i) => { ALT.set(slugOf(s.n), i); (s.os || []).forEach(x => ALT.set(x, i)); });
@@ -838,7 +856,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
   const route = slug => {
     if (slug) slug = String(slug).replace(/\.html$/, "");   /* pre-built /schools/<slug>.html pages */
     if (slug) { let i = ALT.has(slug) ? ALT.get(slug) : -1; if (i < 0) { const h = hits(slug.replace(/-track-standards$/, "").replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
-      if (i >= 0) { S.school = i; const s = SCH[i], path = "/schools/" + SLUG[i]; log("school", { school: s.n, division: s.d, state: ST_NAME[s.s] || s.s });
+      if (i >= 0) { S.school = i; const s = SCH[i], path = "/schools/" + SLUG[i]; INT.sch = s.n; saveInt(); log("school", { school: s.n, division: s.d, state: ST_NAME[s.s] || s.s });
         if (location.pathname !== path) history.replaceState({}, "", path);
         const lw = s.d === "NCAA D3" ? "walk-on and target" : s.d === "NAIA" ? "walk-on and scholarship-level" : "walk-on, recruit and scholarship-level";
         const desc = s.j ? `${s.n} (NJCAA) junior college track and field: season bests in every event, roster and TFRRS links, and how junior college recruiting works.` : `${s.n} track and field recruiting standards 2026-27 (${s.d}${s.c !== s.d ? ", " + s.c : ""}): ${lw} marks for every men's and women's event${s.o ? ", from the official team chart" : ""}. Free, updated weekly.`;
