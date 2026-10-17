@@ -544,3 +544,10 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 @media (max-width:700px){.row{grid-template-columns:1fr 1fr}.gseg{order:0;justify-content:space-between}.gseg .seg{flex:1;display:flex}.gseg .seg button{flex:1;padding:0 6px}}
 .eval .evk{margin:-4px 0 12px;font-size:13px;font-weight:650;color:#6A35E8}.eval .evk[hidden]{display:none}
 .eval b,.eval .evm strong.hk{text-wrap:balance}
+/* school-page checker (Ryan 2026-10-16) */
+.schk{margin:16px 0 4px;background:var(--pr-card);border:1px solid var(--pr-line);border-radius:18px;padding:14px 16px}
+.schk b{display:block;font-size:16px;margin-bottom:10px}
+.schk div{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;gap:8px}
+.schk .in{height:44px}.schk .go{height:44px;padding:0 20px}
+.schkr{margin:10px 2px 0;font-size:15px}.schkr.ok b{color:#12805C}.schkr.no{color:var(--pr-ink)}.schkr.bad{color:#A15C00}
+@media (max-width:560px){.schk div{grid-template-columns:1fr 1fr}.schk .go{grid-column:1/-1}}

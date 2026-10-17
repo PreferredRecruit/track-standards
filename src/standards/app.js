@@ -92,11 +92,12 @@ function tier(s,g,e,v){const t=s[g][e];if(t)return tier0(t,e,v);const c=convert(
   for(const x of c){if(s[g][x.e])return tier0(s[g][x.e],x.e,x.v)}return null}
 const TN={T:"Target",R:"Recruit",W:"Walk-On"};
 /* schools where the mark is just short of the next level (direct standards only); gap formatted for copy */
+const fmtGap=(e,d)=>FIELD.has(e)?(()=>{const i=d*39.3701;return i>=12?`${Math.floor(i/12)}'${Math.round(i%12)}"`:`${Math.max(1,Math.round(i))} inch${Math.round(i)>1?"es":""}`})():`${d.toFixed(2)}s`;
 function nearMiss(g,e,v){if(v==null)return {n:0};const F=FIELD.has(e),tol=F?0.03:0.02,cnt={W:[],R:[],T:[]};
   for(const s of SCH){const t=s[g]&&s[g][e];if(!t)continue;const cur=tier0(t,e,v),nx=cur===null?2:cur==="W"?1:cur==="R"?0:-1;if(nx<0||!t[nx])continue;
     const th=parse(t[nx],e);if(th==null)continue;const d=F?th-v:v-th;if(d>0&&d<=th*tol)cnt["WRT"[nx]].push(d)}
   const lvl=["R","T","W"].sort((a,b)=>cnt[b].length-cnt[a].length)[0],ds=cnt[lvl].sort((a,b)=>a-b);if(!ds.length)return {n:0};
-  const med=ds[Math.floor(ds.length/2)],gap=F?(()=>{const i=med*39.3701;return i>=12?`${Math.floor(i/12)}'${Math.round(i%12)}"`:`${Math.max(1,Math.round(i))} inch${Math.round(i)>1?"es":""}`})():`${med.toFixed(2)}s`;
+  const med=ds[Math.floor(ds.length/2)],gap=fmtGap(e,med);
   return {n:ds.length,lvl,gap}}
 const better=(e,a,b)=>FIELD.has(e)?b-a:a-b;
 const S={tab:"standards",school:null,g:"m",e:"100m",mark:"",run:false,f:"",div:"",n:15,q:"",gr:INT.gr||""};
@@ -164,7 +165,7 @@ try{EV.dismissed=sessionStorage.getItem("prEvalDismissed")==="1"}catch(e){}
 /* v = copy variant, logged with shown/clicked so the admin report compares conversion per copy, event group and grade */
 function evalIn(title,body,delay,v,trig,bs){
   if(EV.shown||EV.dismissed) return; clearTimeout(EV.t);
-  EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||S.school!=null) return; EV.v=v||"generic"; EV.trig=trig||"timer"; EV.title=title; EV.body=body; EV.bs=bs||null; openEval(true)},delay||0);
+  EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||(S.school!=null&&!EV.force)) return; EV.force=false; EV.v=v||"generic"; EV.trig=trig||"timer"; EV.title=title; EV.body=body; EV.bs=bs||null; openEval(true)},delay||0);
 }
 /* centre modal (Ryan 2026-10-16, e-commerce benchmarks: centre 6.84% vs bottom-corner 2.88%; multi-step +12%; click-triggered
    54%). Step 1 = one-tap "have coaches reached out?" (skipped once answered on this browser), step 2 = the tailored offer.
@@ -177,7 +178,7 @@ const evBody=()=>INT.rs&&EV.bs&&EV.bs[INT.rs]?EV.bs[INT.rs]:INT.rs&&!EV.body?sta
 function openEval(log1){const el=$("eval");$("evt").textContent=EV.title||"See where you stand with college coaches.";
   $("evp").textContent=evBody();
   $("eva").href=quizFor();
-  const hk=hookLine(),ck=S.run?clock():"";$("evk").textContent=ck;$("evk").hidden=!ck;$("evm").innerHTML=hk?`<strong class="hk">${esc(hk)}</strong>`:`<strong class="lg">PR</strong>`;
+  const hk=EV.hook||hookLine(),ck=S.run||EV.hook?clock():"";EV.hook=null;$("evk").textContent=ck;$("evk").hidden=!ck;$("evm").innerHTML=hk?`<strong class="hk">${esc(hk)}</strong>`:`<strong class="lg">PR</strong>`;
   const ask=!INT.rs;$("evq").hidden=!ask;$("evs").hidden=ask;
   el.classList.add("on");el.setAttribute("aria-hidden","false");$("evbg").hidden=false;requestAnimationFrame(()=>$("evbg").classList.add("on"));$("evpill").hidden=true;EV.shown=true;
   if(log1)log("popup_shown",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig});
@@ -275,13 +276,26 @@ function schoolLinks(s){const L=[];
   if(s.ws)L.push(`<a class="sl" href="${esc(s.ws)}" target="_blank" rel="noopener">Athletics site</a>`);
   if(s.u)L.push(`<a class="sl" href="${esc(s.u)}" target="_blank" rel="noopener">TFRRS team page</a>`);
   return L.length?`<nav class="slinks" aria-label="${esc(s.n)} links">${L.join("")}</nav>`:""}
+/* "Where do you stand at {School}?" (Ryan 2026-10-16): the athlete's own mark against this program, then a school-specific offer.
+   Visitor-initiated, so the offer may open on a school page (click-triggered offers convert best in the e-commerce data). */
+const SCK={e:null,mark:"",res:null};
+function schoolCheck(s,g){const list=evs(g).filter(e=>s[g][e]||(CONV[e]&&s[g][CONV[e].to]));if(!list.length)return "";
+  if(!list.includes(SCK.e))SCK.e=list.includes(INT.e)?INT.e:list.includes(S.e)?S.e:list[0];
+  const nm=s.t||s.n,r=SCK.res;
+  return `<form class="schk" id="schk"><b>Where do you stand at ${esc(nm)}?</b><div><label class="sr" for="schke">Event</label><select id="schke" class="in">${list.map(e=>`<option ${e===SCK.e?"selected":""}>${esc(e)}</option>`).join("")}</select><label class="sr" for="schkm">Your mark</label><input id="schkm" class="in" placeholder="Your PR, e.g. ${esc(ph(SCK.e))}" value="${esc(SCK.mark)}" autocomplete="off" inputmode="decimal"><button class="go">Check</button></div>${r?`<p class="schkr ${r.cls}">${r.html}</p>`:""}</form>`}
+function schoolResult(s,g){const e=SCK.e,v=parse(SCK.mark,e);if(v==null)return {cls:"bad",html:`Enter a mark like ${esc(ph(e))}.`};
+  const direct=s[g][e],cv=!direct&&CONV[e]?convert(e,g,v):null,std=direct||(cv&&s[g][cv[0].e]),ev2=direct?e:cv&&cv[0].e,vv=direct?v:cv&&cv[0].v;
+  if(!std)return {cls:"bad",html:"No standard listed for that event here."};
+  const t=tier0(std,ev2,vv),F=FIELD.has(ev2),nx=t===null?2:t==="W"?1:t==="R"?0:-1,nm=esc(s.t||s.n);
+  let next="";if(nx>=0&&std[nx]){const th=parse(std[nx],ev2);if(th!=null){const d=F?th-vv:vv-th;if(d>0)next=` You're ${fmtGap(ev2,d)} from ${TN["TRW"[nx]]} level.`}}
+  return {t,cls:t?"ok":"no",html:t?`Your ${esc(SCK.mark.trim())} is <b>${TN[t]}</b> level at ${nm}.${next}`:`Your ${esc(SCK.mark.trim())} isn't on ${nm}'s chart yet.${next}`};}
 function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src;
   let o=`<div class="sec" style="padding-top:0"><button class="back" data-back>‹ Back</button><h1 class="sname">${esc(s.n)} Track &amp; Field${s.j?" (NJCAA)":" Standards"}${s.o?' <span class="star big" title="Official standards, verified">★</span>':""}</h1>
   <div class="meta"><span>${s.d} · ${esc(s.c)}${s.s?" · "+esc(s.s):""}</span>${s.o?`<span class="badge off">★ Official standards · published ${esc(s.yr)}</span>`:s.j?'<span class="badge">Junior college · season results, no levels</span>':'<span class="badge">Based on 2026 conference results</span>'}</div>
   <p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)}${s.j?" junior college":""} track and field program${s.c!==s.d?` in the ${esc(s.c)}`:""}${s.s?`, based in ${esc(ST_NAME[s.s]||s.s)}`:""}. ${s.j?"Junior colleges compete nationally rather than in conferences, so this site shows its season results instead of predicted recruiting levels.":`Below are the marks it takes to be a Target recruit, a Recruit or a Walk-On for men and women in every event${s.o?", taken from the school's own published standards":""}.`}</p>
   ${schoolLinks(s)}
   <div class="coach"><div><b>Interested in ${esc(s.n)}?</b><span>Let us help you contact the coach.</span></div><a href="${QUIZ}" target="_blank" rel="noopener">Get my recruitment evaluation</a></div>
-  ${seg("g",g)}`;
+  ${seg("g",g)}${s.j?"":schoolCheck(s,g)}`;
   if(s.j){
     o+=`<div class="verify" style="margin-top:16px"><b>No recruiting levels for junior colleges</b><span>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: junior colleges compete nationally rather than in conferences, so there's no reliable way to predict a program's marks. Below are ${esc(s.n)}'s best marks this season; the full national list, by event, is in Results.</span><a href="/?tab=results&div=NJCAA">NJCAA national list ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
     setTimeout(()=>teamBest(S.school),0);
@@ -930,6 +944,16 @@ document.addEventListener("change",ev=>{const t=ev.target;
   if(t.id==="ry"){const y=t.value,s=R.season.split("-")[1],f=RIDX.find(r=>r.year===y);R.season=RIDX.some(r=>r.year===y&&r.season===s)?y+"-"+s:f.year+"-"+f.season;R.list=0;R.team=null;R.ath=null;R.swap=true;render()}
   if(t.id==="rl"){R.list=+t.value;R.team=null;R.ath=null;R.swap=true;render()}});
 document.addEventListener("submit",ev=>{ev.preventDefault();
+  if(ev.target.id==="schk"){const s=SCH[S.school];if(!s)return;SCK.e=$("schke").value;SCK.mark=$("schkm").value;SCK.res=schoolResult(s,S.g);
+    const box=ev.target.querySelector(".schkr")||ev.target.appendChild(document.createElement("p"));box.className="schkr "+SCK.res.cls;box.innerHTML=SCK.res.html;
+    if(SCK.res.cls==="bad")return;
+    intent(SCK.e,S.g,SCK.mark.trim());log("school",{school:s.n,division:s.d,event:SCK.e,mark:SCK.mark.trim(),g:S.g,detail:"check-"+(SCK.res.t?TN[SCK.res.t]:"none")});
+    const nm=s.t||s.n,vb=VERB(SCK.e),mk=SCK.mark.trim(),es=evSay(SCK.e),hk=vb==="run"?`You run a ${mk} ${es}?!`:`You ${vb} ${mk} in the ${es}?!`;
+    const t=SCK.res.t?`That's ${TN[SCK.res.t]} level at ${nm}. Do their coaches know you exist?`:`Not on ${nm}'s chart yet? That doesn't mean you're not good enough.`;
+    const vv=parse(mk,SCK.e),fitN=SCH.filter(x=>tier(x,S.g,SCK.e,vv)).length.toLocaleString(),hit=!!SCK.res.t;
+    const ask=hit?`Find out whether ${nm}'s coaches would want your ${mk}.`:`Your ${mk} still fits ${fitN} colleges. Find out which of their coaches would want you.`;
+    const bs={none:`Coaches can't recruit an athlete they've never heard of. ${ask}`,some:`A few emails is a start, but it isn't an offer. ${hit?`Find out how to turn that interest into an offer from ${nm}.`:"Find out how to turn that interest into real offers."}`,offers:`Offers give you leverage. ${hit?`Find out whether ${nm} would want your ${mk} before you sign.`:`Find out who else would want your ${mk} before you sign.`}`};
+    EV.hook=hk;setTimeout(()=>{EV.shown=false;EV.dismissed=false;EV.force=true;evalIn(t,ask,0,"school-check"+(+S.gr>=11?"-11-12":S.gr?"-9-10":""),"school-check",bs)},900);return}
   if(ev.target.id==="cf"){send($("ct").value);return}
   if(parse(S.mark,S.e)==null){$("hint").textContent=`Enter a mark like ${ph(S.e)}`;return}
   if(!S.gr){$("hint").textContent="Pick your grade to see your colleges.";const gs=document.querySelector(".gseg");if(gs){gs.classList.remove("need");void gs.offsetWidth;gs.classList.add("need");gs.querySelector("button").focus()}return}
@@ -976,6 +1000,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
       if (FIRST_ROUTE && nav && nav.type === "reload" && location.search) history.replaceState({}, "", location.pathname);
       FIRST_ROUTE = false;
       const q = new URLSearchParams(location.search);   /* shared result links: /?g=m&e=100m&m=10.95 */
+      { const gq = +q.get("gr"); if (gq >= 9 && gq <= 12 && INT.gr !== gq) { INT.gr = gq; S.gr = gq; saveInt(); log("grade", {}); } }   /* grade from the SEO-page mark checker */
       if (q.get("m") && q.get("e")) { if (!S.run || S.mark !== q.get("m") || S.e !== q.get("e")) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; } }
       else if (S.run) { S.run = false; S.mark = ""; S.f = S.div = S.conf = S.st = ""; }
       if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); } }
