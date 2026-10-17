@@ -93,7 +93,7 @@ const Index = () => {
               Need Help With Recruitment?
             </h3>
             <a 
-              href="https://app.thepreferredrecruit.com/60seconds/?utm_source=website&utm_medium=standards&utm_campaign=standardsPR" 
+              href="https://app.thepreferredrecruit.com/parentfunnel/?utm_source=website&utm_medium=standards&utm_campaign=PRstandards" 
               target="_blank" 
               rel="noopener noreferrer"
               className="relative z-10 inline-block"
@@ -121,7 +121,7 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="flex items-center justify-center gap-4 md:gap-6">
             <a 
-              href="https://app.thepreferredrecruit.com/60seconds/?utm_source=website&utm_medium=standards&utm_campaign=standardsPR" 
+              href="https://app.thepreferredrecruit.com/parentfunnel/?utm_source=website&utm_medium=standards&utm_campaign=PRstandards" 
               target="_blank" 
               rel="noopener noreferrer"
             >
