@@ -627,3 +627,17 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .simple .more li a::after{content:"";margin-left:auto;width:8px;height:8px;border-top:2px solid var(--ink-3);border-right:2px solid var(--ink-3);transform:rotate(45deg)}
 .simple .more li a:hover{background:var(--pr-soft)}
 .simple .bnote{margin-top:16px}
+/* calmer bottom (Ryan 2026-10-17) */
+.simple #tbest,.simple #svid,.simple .sabout{margin:0;padding:0;border:0}
+.simple .fold{border-top:1px solid var(--pr-line);border-bottom:0}
+.simple .fold>summary{min-height:52px;font-size:15px}
+.simple .sabout + .fold,.simple #svid:empty,.simple #tbest:empty{border-top:0}
+.simple .more{margin:34px 0 0}
+.simple .moreh{font-size:11px;margin-bottom:6px;color:var(--ink-3)}
+.simple .more ol{border:0;border-radius:0;background:none;border-top:1px solid var(--pr-line)}
+.simple .more li{border-bottom:1px solid color-mix(in srgb,var(--pr-line) 70%,transparent)}
+.simple .more li a{min-height:40px;padding:0 2px;font-size:13px;font-weight:500;color:var(--ink-3);gap:10px}
+.simple .more li a::before{width:auto;height:auto;background:none;border-radius:0;color:var(--ink-3);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;min-width:14px}
+.simple .more li a::after{width:6px;height:6px;border-width:1.5px;opacity:.6}
+.simple .more li a:hover{background:none;color:var(--ink-1)}
+.simple .bnote{font-size:11.5px;margin-top:14px}

@@ -145,7 +145,7 @@ function armOffer(){const o=offerCopy();if(!o||EV.shown||EV.dismissed)return;if(
    Desktop: the mouse heads for the tab bar. Phones: a fast scroll back up or 45 s idle on the results. Once per visit, never if an
    offer was already shown or dismissed, never in the first 20 s unless they searched. */
 const EXIT={idle:null,lastY:scrollY,lastT:Date.now()};
-function exitOffer(trig){if(EV.shown||EV.dismissed||S.school!=null)return;if(!S.run&&Date.now()-T0<20000)return;
+function exitOffer(trig){if(EV.shown||EV.dismissed)return;if(S.school!=null){const s=SCH[S.school];if(!s||s.j)return;const nm=s.t||s.n;EV.force=true;evalIn(`Want ${nm}'s coaches to see your marks?`,`See which college coaches would want you, ${nm} included. It's free and takes about a minute.`,0,"school-exit",trig,null);return}if(!S.run&&Date.now()-T0<20000)return;
   const o=S.run?offerCopy():null;
   /* no search yet: speak to the high school athlete about their own event when we know it (Ryan 2026-10-17: simpler, ICP-specific) */
   const ie=INT.e?evSay(INT.e):"";
@@ -303,8 +303,18 @@ let BRQ=false;   /* the re-render after brand data arrives skips the entrance fa
 if(/^\/schools\//.test(location.pathname))loadBrand();
 function brandOf(s){if(BR===null){loadBrand();return null}
   const b=BR[(s.os&&s.os[0])||slugOf(s.n)];return b&&b.primary?b:null}
-const schoolAbout=(s,vf="")=>`<section class="sabout"><details class="fold"><summary>About ${esc(s.n)}</summary><p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)}${s.j?" junior college":""} track and field program${s.c!==s.d?` in the ${esc(s.c)}`:""}${s.s?`, based in ${esc(ST_NAME[s.s]||s.s)}`:""}. ${s.j?"Junior colleges compete nationally rather than in conferences, so this site shows its season results instead of predicted recruiting levels.":`These are the marks it takes to be a Target recruit, a Recruit or a Walk-On for men and women in every event${s.o?", taken from the school's own published standards":""}.`}</p>${vf}${schoolLinks(s)}</details><div class="coach"><div><b>Interested in ${esc(s.n)}?</b><span>Let us help you contact the coach.</span></div><a href="${QUIZ}" target="_blank" rel="noopener">Get my recruitment evaluation</a></div></section>`;
+const schoolAbout=(s,vf="")=>`<section class="sabout"><details class="fold"><summary>About ${esc(s.n)}</summary><p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)}${s.j?" junior college":""} track and field program${s.c!==s.d?` in the ${esc(s.c)}`:""}${s.s?`, based in ${esc(ST_NAME[s.s]||s.s)}`:""}. ${s.j?"Junior colleges compete nationally rather than in conferences, so this site shows its season results instead of predicted recruiting levels.":`These are the marks it takes to be a Target recruit, a Recruit or a Walk-On for men and women in every event${s.o?", taken from the school's own published standards":""}.`}</p>${vf}${schoolLinks(s)}</details></section>`;
 const brandNote=(s,B)=>B?`<p class="bnote">School names, logos and colours belong to their institutions and are used only to identify the program. Preferred Recruit is not affiliated with or endorsed by ${esc(s.n)}.</p>`:"";
+/* school-page offer (Ryan 2026-10-17: "use a pop-up for that content", keep the page surface clean). Opens once the visitor has
+   scrolled past the standards table (held 1.2 s), once per visit, same modal + rules as everywhere else. */
+let SARM=null;
+function armSchoolOffer(i){clearInterval(SARM);const s=SCH[i];if(!s||s.j||EV.shown||EV.dismissed)return;let since=0;
+  const nm=s.t||s.n,ask=`Find out if ${nm} would want you.`;
+  const bs={none:`Coaches can't recruit an athlete they've never heard of. ${ask}`,some:`A few emails is a start, but it isn't an offer. ${ask}`,offers:`Offers give you leverage. Find out if ${nm} would want you before you sign.`};
+  SARM=setInterval(()=>{if(S.school!==i||EV.shown||EV.dismissed){clearInterval(SARM);return}
+    const t=document.querySelector(".simple .scroll"),r=t&&t.getBoundingClientRect();if(!r)return;
+    if(r.bottom<innerHeight*.6){if(!since)since=Date.now();else if(Date.now()-since>1200){clearInterval(SARM);EV.force=true;
+      evalIn(`Want ${nm}'s coaches to see your marks?`,`See which college coaches would want you, ${nm} included. It's free and takes about a minute.`,0,"school-page"+(+S.gr>=11?"-11-12":S.gr?"-9-10":""),"school-scroll",bs)}}else since=0},300)}
 function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src,B=brandOf(s);
   /* simple layout (Ryan 2026-10-16: "make it less cluttered and simple"): band (logo + name as the H1) → checker → table.
      Description, links and the evaluation card move to "About" at the bottom (still on the page for search engines).
@@ -337,6 +347,7 @@ function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src,B=brandOf(s
   }
   setTimeout(()=>teamBest(S.school),0);
   setTimeout(()=>schoolVids(S.school),0);
+  setTimeout(()=>armSchoolOffer(S.school),0);
   /* the "how these are set" / official-source box goes to the bottom (Ryan 2026-10-16: "just put it at the bottom") */
   const vm=o.match(/<div class="verify">[\s\S]*?<\/div>/),vf=vm?vm[0]:"";if(vf)o=o.replace(vf,"");
   return o+`<div id="tbest"></div><div id="svid"></div>`+schoolAbout(s,vf)+schoolExtra(s)+schoolMore(s)+brandNote(s,B)+`</div>`}
