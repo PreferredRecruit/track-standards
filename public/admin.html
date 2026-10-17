@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Coach Portal Admin</title>
+<style>:root{--ink:#0B0B0F;--mute:#4A4A52;--line:#E4E3EA;--soft:#F3F2F7;--ok:#12805C;--warn:#A15C00;--bad:#B42318}
+*{box-sizing:border-box}body{margin:0;background:#F6F5FA;color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:24px 20px 60px}h1{margin:0 0 12px;font-size:28px}h2{font-size:19px;margin:26px 0 8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0}input{font:inherit;width:100%;padding:9px 11px;border:1px solid #DCDAE5;border-radius:10px}
+button{font:inherit;font-weight:650;border:0;border-radius:999px;padding:8px 14px;background:#7A45F0;color:#fff;cursor:pointer;margin:4px 6px 4px 0}
+button.g{background:var(--ok)}button.r{background:var(--bad)}button.s{background:var(--soft);color:var(--ink)}table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:var(--soft);font-size:12px;color:var(--mute)}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:650;background:var(--soft)}.verified,.approved{background:#E5F5EE;color:var(--ok)}
+.pending{background:#FFF3E0;color:var(--warn)}.revoked,.rejected,.unpublished{background:#FDECEA;color:var(--bad)}.flag{color:var(--bad);font-weight:650}.ok{color:var(--ok)}.muted{color:var(--mute);font-size:13px}.hide{display:none}
+.row{display:flex;gap:16px;flex-wrap:wrap;align-items:baseline;justify-content:space-between}</style></head>
+<body><main>
+<h1>Coach portal admin</h1>
+<section id="login" class="card"><p>Enter your admin email. A sign-in link is sent only to approved admin addresses.</p><input id="em" type="email" placeholder="you@example.com">
+<p><button id="go">Email me a sign-in link</button></p><div id="lm" class="muted"></div></section>
+<section id="panel" class="hide">
+  <div class="row"><span class="muted">Every submission stays private until you approve it. Approving rebuilds the site.</span><span><button class="s" id="sync">Re-sync schools</button><button class="s" id="ref">Refresh</button><button class="s" id="out">Sign out</button></span></div>
+  <h2>Submissions</h2><div id="subs"></div>
+  <h2>Coach accounts</h2><div id="accts"></div>
+  <h2>Recent activity</h2><div id="aud" class="card"></div>
+</section>
+</main>
+<script>
+const API = "https://airqmzyuxyyiqjaocwmk.supabase.co/functions/v1/portal";
+const $ = id => document.getElementById(id);
+const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (cls) e.className = cls; return e; };
+const store = { get: () => { try { return localStorage.getItem("pr_admin"); } catch { return null; } }, set: v => { try { v ? localStorage.setItem("pr_admin", v) : localStorage.removeItem("pr_admin"); } catch {} } };
+async function call(route, body) {
+  const h = { "Content-Type": "application/json" }; const t = store.get(); if (t) h.Authorization = "Bearer " + t;
+  const r = await fetch(API + "/" + route, { method: "POST", headers: h, body: JSON.stringify(body || {}) });
+  const j = await r.json().catch(() => ({ error: "Network error" })); if (!r.ok) throw Object.assign(new Error(j.error || "Error"), { status: r.status }); return j;
+}
+$("go").onclick = async () => { try { await call("admin/request", { email: $("em").value }); $("lm").textContent = "If that address is an admin, a sign-in link is on its way."; } catch (e) { $("lm").textContent = e.message; } };
+$("out").onclick = () => { store.set(null); location.reload(); };
+$("ref").onclick = () => load();
+$("sync").onclick = async () => { try { const r = await call("admin/sync-schools"); alert(`Synced ${r.schools} schools (${r.crm_matched} matched to coach records).`); } catch (e) { alert(e.message); } };
+function stdTable(st) {
+  const t = el("table"); t.innerHTML = "<tr><th>Gender</th><th>Event</th><th>Target</th><th>Recruit</th><th>Walk-On</th></tr>";
+  for (const g of ["m", "w"]) for (const [ev, v] of Object.entries((st || {})[g] || {})) { const tr = el("tr"); [g === "m" ? "Men" : "Women", ev, ...v].forEach(x => tr.appendChild(el("td", x || "–"))); t.appendChild(tr); }
+  return t;
+}
+async function act(action, id, extra) {
+  const needReason = ["reject", "unpublish", "revoke_account"].includes(action);
+  const notes = needReason ? prompt("Reason (required):") : action === "approve" || action === "verify_account" ? (prompt("Optional note (shown to the coach on submissions):") || "") : "";
+  if (needReason && !notes) return;
+  if (action === "revoke_account" && !confirm("Revoke this coach? Their approved standards are unpublished too.")) return;
+  try { await call("admin/act", { action, id, notes, ...(extra || {}) }); load(); } catch (e) { alert(e.message); }
+}
+async function load() {
+  let d; try { d = await call("admin/list"); } catch (e) { if (e.status === 401) { store.set(null); $("lm").textContent = "Session expired. Sign in again."; } return; }
+  $("login").classList.add("hide"); $("panel").classList.remove("hide");
+  const subs = $("subs"); subs.replaceChildren(); if (!d.submissions.length) subs.appendChild(el("p", "No submissions yet.", "muted"));
+  for (const s of d.submissions) {
+    const c = el("div", null, "card"), head = el("div", null, "row");
+    head.appendChild(el("b", s.school_name)); head.appendChild(el("span", s.status, "pill " + s.status)); c.appendChild(head);
+    c.appendChild(el("div", `${s.email} · account ${s.account_status} · season ${s.season || "–"} · ${new Date(s.created_at).toLocaleString()}`, "muted"));
+    const ev = s.evidence || {}, reasons = ev.reasons || [];
+    const okTxt = [ev.crm_same_school ? "in our coach records for this school" : "", ev.staff_page ? "listed on the school's staff page" : ""].filter(Boolean).join(" and ");
+    c.appendChild(el("div", reasons.length ? "⚠ " + reasons.join("; ") : "✓ " + (okTxt || "verified"), reasons.length ? "flag" : "ok"));
+    if (s.notes) c.appendChild(el("p", "Coach note: " + s.notes, "muted"));
+    c.appendChild(stdTable(s.standards));
+    const b = el("div");
+    if (s.source_file) { const f = el("button", "Open attached document", "s"); f.onclick = async () => { try { const r = await call("admin/file-url", { path: s.source_file }); window.open(r.url, "_blank", "noopener"); } catch (e) { alert(e.message); } }; b.appendChild(f); }
+    const mk = (txt, cls, a) => { const x = el("button", txt, cls); x.onclick = () => act(a, s.id); b.appendChild(x); };
+    if (s.status !== "approved") mk("Approve and publish", "g", "approve");
+    if (s.status === "pending") mk("Reject", "r", "reject");
+    if (s.status === "approved") mk("Unpublish", "r", "unpublish");
+    const ed = el("button", "Edit marks", "s"); ed.onclick = () => { const v = prompt("Edit the standards (JSON):", JSON.stringify(s.standards)); if (!v) return; let parsed; try { parsed = JSON.parse(v); } catch { return alert("That isn't valid JSON."); } act("edit", s.id, { standards: parsed }); }; b.appendChild(ed);
+    if (s.admin_notes) b.appendChild(el("div", "Admin note: " + s.admin_notes, "muted"));
+    c.appendChild(b); subs.appendChild(c);
+  }
+  const at = el("table"); at.innerHTML = "<tr><th>Email</th><th>School</th><th>Status</th><th>Checks</th><th></th></tr>";
+  for (const a of d.accounts) {
+    const tr = el("tr"); tr.appendChild(el("td", a.email)); tr.appendChild(el("td", a.school_name || a.school_slug));
+    const s = el("td"); s.appendChild(el("span", a.status, "pill " + a.status)); if (a.verified_by) s.appendChild(el("div", "by " + a.verified_by, "muted")); tr.appendChild(s);
+    const ev = a.evidence || {}; tr.appendChild(el("td", (ev.reasons || []).length ? ev.reasons.join("; ") : "all checks passed", (ev.reasons || []).length ? "flag" : "ok"));
+    const bt = el("td");
+    const mk = (txt, cls, ac) => { const x = el("button", txt, cls); x.onclick = () => act(ac, a.id); bt.appendChild(x); };
+    if (a.status !== "verified") mk("Verify (override)", "g", "verify_account");
+    if (a.status !== "revoked") mk("Revoke", "r", "revoke_account"); else mk("Reopen", "s", "reopen_account");
+    tr.appendChild(bt); at.appendChild(tr);
+  }
+  $("accts").replaceChildren(d.accounts.length ? at : el("p", "No coach accounts yet.", "muted"));
+  const au = el("table"); au.innerHTML = "<tr><th>When</th><th>Who</th><th>Action</th><th>Target</th></tr>";
+  for (const x of d.audit) { const tr = el("tr"); [new Date(x.at).toLocaleString(), x.actor, x.action, x.target].forEach(v => tr.appendChild(el("td", v || ""))); au.appendChild(tr); }
+  $("aud").replaceChildren(au);
+}
+(async () => {
+  const t = new URLSearchParams(location.hash.slice(1)).get("t");
+  if (t) { history.replaceState(null, "", location.pathname); try { const r = await call("admin/verify", { token: t }); store.set(r.session); } catch (e) { $("lm").textContent = e.message; } }
+  if (store.get()) load();
+})();
+</script></body></html>

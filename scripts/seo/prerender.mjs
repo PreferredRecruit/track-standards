@@ -81,6 +81,13 @@ export function generate(root, out) {
   const DB = JSON.parse(fs.readFileSync(path.join(root, "public/data/db.json"), "utf8"));
   const RIDX = JSON.parse(fs.readFileSync(path.join(out, "data/rank_index.json"), "utf8"));   /* dist copy: includes the newest Monday data (seoPages) */
   const S = DB.schools, CT = DB.ct;
+  /* coach portal: admin-approved standards from verified staff become the school's official standards (Ryan 2026-10-16) */
+  try {
+    const CS = JSON.parse(fs.readFileSync(path.join(root, "public/data/coach-standards.json"), "utf8")), bySlug = new Map(CS.map(x => [x.slug, x]));
+    let n = 0;
+    for (const s of S) { const x = bySlug.get(schoolSlug(s)); if (!x || s.j) continue; s.om = x.standards; s.o = "1"; s.off = undefined; s.cv = String(x.approved_at || "").slice(0, 10); if (x.season) s.yr = x.season; s.src = null; n++; }
+    if (n) { fs.writeFileSync(path.join(out, "data/db.json"), JSON.stringify(DB)); console.log(`coach-verified standards merged: ${n} schools`); }
+  } catch { /* no feed yet */ }
   const NS = S.filter(x => !x.j).length, NJ = S.filter(x => x.j).length;   /* schools with levels / junior colleges (results only) */
   const JG = "/guides/junior-college-track-and-field-recruiting.html";
   for (const name of ["index.html", "llms.txt"]) { const f = path.join(out, name); if (fs.existsSync(f)) fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace(/\{\{SCHOOLS\}\}/g, NS.toLocaleString())); }

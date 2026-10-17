@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coaches: Publish Your Official Recruiting Standards | Preferred Recruit Track Standards</title>
+<meta name="description" content="College track and field coaches: sign in with your school email to publish your program's official recruiting standards. Verified standards show a staff-verified badge.">
+<link rel="canonical" href="https://trackandfieldstandards.com/coaches.html">
+<link rel="icon" href="/pr-favicon-192.png" type="image/png">
+<style>:root{--ink:#0B0B0F;--ink2:#2E2E36;--mute:#4A4A52;--line:#E4E3EA;--soft:#F3F2F7;--accent:#7A45F0;--ok:#12805C;--warn:#A15C00;--bad:#B42318}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#FDFDFE,#F1F0F6);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
+header{background:rgba(255,255,255,.85);border-bottom:1px solid var(--line)}header div{max-width:900px;margin:0 auto;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
+header a{color:var(--ink);text-decoration:none;font-weight:650;display:flex;gap:10px;align-items:center}header img{width:30px;height:30px;border-radius:9px}
+main{max-width:900px;margin:0 auto;padding:26px 20px 70px}h1{font-size:clamp(26px,4vw,38px);letter-spacing:-.03em;margin:6px 0 8px}h2{font-size:20px;margin:28px 0 10px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}label{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
+input,select,textarea{font:inherit;width:100%;padding:10px 12px;border:1px solid #DCDAE5;border-radius:12px;background:#FAFAFC}textarea{min-height:70px}
+button{font:inherit;font-weight:650;border:0;border-radius:999px;padding:11px 18px;background:linear-gradient(135deg,#A98BFF,#7A45F0 55%,#4E22C2);color:#fff;cursor:pointer}button.sec{background:var(--soft);color:var(--ink)}
+button:disabled{opacity:.5;cursor:default}.msg{margin:10px 0;font-size:14px}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}th{font-size:12px;color:var(--mute);background:var(--soft)}td input{padding:7px 9px}
+.tabs{display:flex;gap:8px;margin:8px 0}.tabs button{padding:8px 14px}.tabs button.off{background:var(--soft);color:var(--ink)}.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:650}
+.p-verified{background:#E5F5EE;color:var(--ok)}.p-pending{background:#FFF3E0;color:var(--warn)}pre{white-space:pre-wrap;background:var(--soft);border-radius:12px;padding:12px;font-size:13px}.hide{display:none}.muted{color:var(--mute);font-size:14px}ol li{margin:4px 0}</style></head>
+<body><header><div><a href="/"><img src="/icon-192.png" alt="">Preferred Recruit · Track Standards</a></div></header>
+<main>
+<h1>Coaches: publish your official recruiting standards</h1>
+<p class="muted">Recruits already use this site to see where their marks fit. Publish your program's real standards and the estimate on your school page is replaced with yours, marked as verified by your staff. It's free.</p>
+
+<section id="signin" class="card">
+  <h2 style="margin-top:0">Sign in with your school email</h2>
+  <ol class="muted"><li>Pick your school and enter your work email (for example name@school.edu).</li><li>We email you a one-time sign-in link. Personal addresses (Gmail, Yahoo, Outlook) can't be used.</li><li>Enter your standards. Every submission is reviewed before it goes live.</li></ol>
+  <label for="school">School</label><input id="school" list="schools" placeholder="Start typing your school" autocomplete="off"><datalist id="schools"></datalist>
+  <label for="email">Work email</label><input id="email" type="email" placeholder="name@school.edu" autocomplete="email">
+  <p style="margin-top:14px"><button id="send">Email me a sign-in link</button></p><div id="m1" class="msg"></div>
+</section>
+
+<section id="dash" class="hide">
+  <div class="card"><b id="who"></b> <span id="st" class="pill"></span><p id="stnote" class="muted"></p><button class="sec" id="out">Sign out</button></div>
+  <div class="card">
+    <h2 style="margin-top:0">Your standards</h2>
+    <p class="muted">Use your program's own marks (times like 48.50 or 4:05.00, field marks like 23-6 or 7.15m). Leave an event blank if you don't publish it.</p>
+    <label for="season">Season or year these apply to</label><input id="season" placeholder="2026-27">
+    <div class="tabs"><button id="tm">Men</button><button id="tw" class="off">Women</button></div>
+    <div id="rows"></div>
+    <label for="file">Attach your official standards document (optional, PDF or image, 10 MB max)</label><input id="file" type="file" accept=".pdf,.png,.jpg,.jpeg">
+    <label for="notes">Notes for our team (optional)</label><textarea id="notes" maxlength="1000"></textarea>
+    <p style="margin-top:14px"><button id="submit">Submit for review</button></p><div id="m2" class="msg"></div>
+  </div>
+  <div class="card"><h2 style="margin-top:0">Your submissions</h2><div id="subs" class="muted">None yet.</div></div>
+  <div class="card hide" id="badge"><h2 style="margin-top:0">Add the verified badge to your recruiting page</h2><p class="muted">Paste this on your program's recruiting or prospective student-athlete page so recruits can check your standards.</p><pre id="snip"></pre></div>
+</section>
+</main>
+<script>
+const API = "https://airqmzyuxyyiqjaocwmk.supabase.co/functions/v1/portal";
+const EV = { m: ["100m","200m","400m","800m","1500m","Mile","5000m","10000m","110m Hurdles","400m Hurdles","3000m Steeplechase","High Jump","Pole Vault","Long Jump","Triple Jump","Shot Put","Discus","Hammer","Javelin","Decathlon"],
+             w: ["100m","200m","400m","800m","1500m","Mile","5000m","10000m","100m Hurdles","400m Hurdles","3000m Steeplechase","High Jump","Pole Vault","Long Jump","Triple Jump","Shot Put","Discus","Hammer","Javelin","Heptathlon"] };
+const $ = id => document.getElementById(id);
+const say = (el, txt, cls) => { el.textContent = txt; el.className = "msg " + (cls || ""); };
+let SCHOOLS = [], G = "m", VALS = { m: {}, w: {} };
+async function call(route, body, auth) {
+  const h = { "Content-Type": "application/json" }; if (auth) h.Authorization = "Bearer " + auth;
+  const r = await fetch(API + "/" + route, { method: body === undefined ? "GET" : "POST", headers: h, body: body === undefined ? undefined : JSON.stringify(body) });
+  const j = await r.json().catch(() => ({ error: "Network error" })); if (!r.ok) throw Object.assign(new Error(j.error || "Error"), { status: r.status }); return j;
+}
+const store = { get: () => { try { return localStorage.getItem("pr_coach"); } catch { return null; } }, set: v => { try { v ? localStorage.setItem("pr_coach", v) : localStorage.removeItem("pr_coach"); } catch {} } };
+function drawRows() {
+  $("tm").className = G === "m" ? "" : "off"; $("tw").className = G === "w" ? "" : "off";
+  const t = document.createElement("table"); t.innerHTML = "<tr><th>Event</th><th>Target</th><th>Recruit</th><th>Walk-On</th></tr>";
+  for (const ev of EV[G]) { const tr = document.createElement("tr"), td = document.createElement("td"); td.textContent = ev; tr.appendChild(td);
+    for (let j = 0; j < 3; j++) { const c = document.createElement("td"), i = document.createElement("input"); i.value = (VALS[G][ev] || ["", "", ""])[j]; i.setAttribute("aria-label", ev + " " + ["Target", "Recruit", "Walk-On"][j]);
+      i.oninput = () => { (VALS[G][ev] ||= ["", "", ""])[j] = i.value.trim(); }; c.appendChild(i); tr.appendChild(c); }
+    t.appendChild(tr); }
+  $("rows").replaceChildren(t);
+}
+$("tm").onclick = () => { G = "m"; drawRows(); }; $("tw").onclick = () => { G = "w"; drawRows(); };
+const label = s => s.name + (s.state ? " (" + s.state + ")" : "");
+async function loadSchools() {
+  SCHOOLS = await call("public/schools").catch(() => []);
+  const dl = $("schools"); for (const s of SCHOOLS) { const o = document.createElement("option"); o.value = label(s); dl.appendChild(o); }
+  const q = new URLSearchParams(location.search).get("school"); const pre = SCHOOLS.find(s => s.slug === q); if (pre) $("school").value = label(pre);
+}
+const pick = () => SCHOOLS.find(s => label(s) === $("school").value.trim());
+$("send").onclick = async () => {
+  const s = pick(); if (!s) return say($("m1"), "Pick your school from the list.", "bad");
+  $("send").disabled = true;
+  try { await call("coach/request", { email: $("email").value, school: s.slug }); say($("m1"), "Check your inbox for a sign-in link from verify@trackandfieldstandards.com. It expires in 20 minutes.", "ok"); }
+  catch (e) { say($("m1"), e.message, "bad"); } finally { $("send").disabled = false; }
+};
+async function showDash() {
+  const tok = store.get(); if (!tok) return;
+  try {
+    const me = await call("coach/me", {}, tok);
+    $("signin").classList.add("hide"); $("dash").classList.remove("hide");
+    $("who").textContent = me.school + " · " + me.email + " "; const st = $("st"); st.textContent = me.status === "verified" ? "Verified staff" : "Pending review"; st.className = "pill p-" + me.status;
+    $("stnote").textContent = me.status === "verified" ? "Your email was confirmed as a member of this program's staff." : "We couldn't confirm this email on your school's staff records automatically. You can still submit; our team verifies you before anything is published.";
+    const subs = $("subs"); subs.replaceChildren();
+    if (me.submissions.length) { const t = document.createElement("table"); t.innerHTML = "<tr><th>Submitted</th><th>Season</th><th>Status</th><th>Note from our team</th></tr>";
+      for (const x of me.submissions) { const tr = document.createElement("tr"); for (const v of [new Date(x.created_at).toLocaleDateString(), x.season || "", x.status, x.admin_notes || ""]) { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); } t.appendChild(tr); }
+      subs.appendChild(t); } else subs.textContent = "None yet.";
+    if (me.submissions.some(x => x.status === "approved")) { $("badge").classList.remove("hide");
+      $("snip").textContent = `<a href="https://trackandfieldstandards.com/schools/${me.slug}" target="_blank" rel="noopener">Our official recruiting standards (verified by our staff) on Track Standards</a>`; }
+  } catch (e) { if (e.status === 401 || e.status === 403) { store.set(null); say($("m1"), e.message, "bad"); } }
+}
+$("out").onclick = () => { store.set(null); location.reload(); };
+$("submit").onclick = async () => {
+  const tok = store.get(); const m2 = $("m2"); $("submit").disabled = true;
+  try {
+    const standards = {}; for (const g of ["m", "w"]) for (const [ev, v] of Object.entries(VALS[g])) if (v.some(Boolean)) (standards[g] ||= {})[ev] = v;
+    let file = null; const f = $("file").files[0];
+    if (f) { if (f.size > 10 * 1024 * 1024) throw new Error("That file is over 10 MB.");
+      const ext = (f.name.split(".").pop() || "").toLowerCase(); const u = await call("coach/upload-url", { ext }, tok);
+      const r = await fetch(u.url, { method: "PUT", headers: { "Content-Type": f.type || "application/pdf" }, body: f }); if (!r.ok) throw new Error("Upload failed. Try a smaller PDF."); file = u.path; }
+    await call("coach/submit", { standards, season: $("season").value, notes: $("notes").value, file }, tok);
+    say(m2, "Submitted. Our team reviews every submission before it's published, usually within two business days.", "ok"); VALS = { m: {}, w: {} }; drawRows(); showDash();
+  } catch (e) { say(m2, e.message, "bad"); } finally { $("submit").disabled = false; }
+};
+(async () => {
+  drawRows(); await loadSchools();
+  const t = new URLSearchParams(location.hash.slice(1)).get("t");
+  if (t) { history.replaceState(null, "", location.pathname); try { const r = await call("coach/verify", { token: t }); store.set(r.session); } catch (e) { say($("m1"), e.message, "bad"); } }
+  showDash();
+})();
+</script></body></html>
