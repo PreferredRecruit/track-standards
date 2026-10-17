@@ -407,7 +407,12 @@ const evLabel=e=>e.replace(/^(\d[\d,]*) Meters$/,"$1m").replace(/^(\d+) Hurdles$
 const years=()=>[...new Set(RIDX.map(x=>x.year))].sort().reverse();
 const seasons=()=>[...new Set(RIDX.map(x=>x.year+"-"+x.season))].sort().reverse();
 const seasonLabel=k=>{const [y,s]=k.split("-");return `${y} ${s==="xc"?"Cross Country":s[0].toUpperCase()+s.slice(1)}`};
-const MULTI=()=>R.div==="ALL"||R.div==="CMP";
+/* multi-select divisions (Ryan 2026-10-17): R.sel = selected divisions; 2+ = combined list, or side-by-side columns on desktop when
+   the Compare switch is on. Phones always get the combined vertical list (no sideways scrolling). */
+const seasonDivs=()=>RIDX.filter(x=>x.year+"-"+x.season===R.season).map(x=>x.div).sort((a,b)=>Object.keys(DIVINFO).indexOf(a)-Object.keys(DIVINFO).indexOf(b));
+const syncSel=()=>{const av=seasonDivs();if(!R.sel)R.sel=[R.div];R.sel=R.sel.filter(d=>av.includes(d));if(!R.sel.length)R.sel=[av.includes(R.div)?R.div:av[0]];if(R.sel.length===1)R.div=R.sel[0]};
+const WIDE=()=>matchMedia("(min-width:761px)").matches;
+const MULTI=()=>{syncSel();return R.sel.length>1};
 const curKey=()=>{if(MULTI())return null;const x=RIDX.find(x=>x.year+"-"+x.season===R.season&&x.div===R.div)||RIDX.find(x=>x.year+"-"+x.season===R.season);if(x)R.div=x.div;return x&&x.key};
 function load(key,quiet){if(CACHE[key]||LOADING[key])return LOADING[key];
   LOADING[key]=getRank(key).then(d=>{CACHE[key]=d}).catch(()=>{CACHE[key]={err:1,lists:[]}})
@@ -430,9 +435,9 @@ function curve(rows,e){
 }
 function divTabs(){
   const divs=RIDX.filter(x=>x.year+"-"+x.season===R.season).map(x=>x.div).sort((a,b)=>Object.keys(DIVINFO).indexOf(a)-Object.keys(DIVINFO).indexOf(b));
-  /* All = one ranking across every division; Compare = the same event side by side (Ryan 2026-10-17) */
-  const tabs=[["ALL","All"],...divs.map(d=>[d,d]),["CMP","Compare"]];
-  return `<div class="divs" role="tablist" aria-label="Division"><span class="dind" id="dind"></span>${tabs.map(([d,l])=>`<button role="tab" data-rdiv="${d}" aria-selected="${d===R.div}"><b>${l}</b></button>`).join("")}</div>`;
+  syncSel();const allOn=R.sel.length===divs.length&&divs.length>1;
+  return `<div class="dsel"><button type="button" class="cmpsw" data-rcmp aria-pressed="${!!R.cmp}" title="Show selected divisions side by side"><span class="sw" aria-hidden="true"></span>Compare</button>
+  <div class="divs multi" role="group" aria-label="Divisions (select one or more)"><button type="button" data-rdiv="ALL" aria-pressed="${allOn}"><b>All</b></button>${divs.map(d=>`<button type="button" data-rdiv="${d}" aria-pressed="${R.sel.includes(d)&&!allOn}" aria-label="${d}"><b>${d.replace(/^NCAA /,"")}</b></button>`).join("")}</div></div>`;
 }
 function hookRow(){const d=R.div;
   const t=d==="D1"?"Looking at D1 marks? See if you actually qualify.":`Could you compete in ${d}? See where you fit.`;
@@ -462,22 +467,26 @@ function athView(D){
 /* ---------- All divisions + Compare (Ryan 2026-10-17: "combine divisions ... all colleges ranked ... or even compare divisions") ----------
    Uses each division's national list for the season (the same files the single-division view loads). */
 function multiResults(){
-  const ks=RIDX.filter(x=>x.year+"-"+x.season===R.season).sort((a,b)=>Object.keys(DIVINFO).indexOf(a.div)-Object.keys(DIVINFO).indexOf(b.div));
+  const ks=RIDX.filter(x=>x.year+"-"+x.season===R.season&&R.sel.includes(x.div)).sort((a,b)=>Object.keys(DIVINFO).indexOf(a.div)-Object.keys(DIVINFO).indexOf(b.div));
+  const CMPV=R.cmp&&WIDE();
   ks.forEach(x=>{if(!CACHE[x.key])load(x.key,true)});
   const ready=ks.filter(x=>CACHE[x.key]&&!CACHE[x.key].err);
-  let o=`<div class="sec"><p class="lede">${R.div==="ALL"?"Every college division in one ranking. Pick an event.":"The same event, division by division."}</p><div class="rcard">${divTabs()}`;
+  const nm=R.sel.length===seasonDivs().length?"Every division":R.sel.map(d=>d.replace(/^NCAA /,"")).join(" + ");
+  let o=`<div class="sec"><p class="lede">${CMPV?`${esc(nm)}, side by side.`:`${esc(nm)} in one ranking.`}</p><div class="rcard">${divTabs()}`;
   const ctl=`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=x==="xc"||RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}`;
   if(ready.length<ks.length)return o+ctl+`<span></span><span></span></div></div>`+skeleton()+`</div>`;
   const nat=D=>D.lists.find(l=>l.nat)||D.lists[0];
   const evNames=[...new Set(ready.flatMap(x=>Object.keys((nat(CACHE[x.key]).g||{})[R.g]||{})))];if(!evNames.includes(R.ev))R.ev=evNames[0];
   const per=ready.map(x=>{const D=CACHE[x.key],rows=((nat(D).g||{})[R.g]||{})[R.ev]||[];return {div:x.div,D,rows}}).filter(p=>p.rows.length);
   const gname=R.g==="m"?"Men's":"Women's";
-  if(R.div==="CMP"){
-    const P=[1,10,25,50];
+  if(CMPV){
+    const P=[1,10,25,50],top=R.cn||25;
     o+=ctl+`<span></span><span></span></div></div><div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
-    <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))} by division</h3><span>${esc(seasonLabel(R.season))} · national lists</span></div>
-    <div class="scroll cmpt"><table><thead><tr><th>Division</th>${P.map(k=>`<th class="num">#${k}</th>`).join("")}<th class="num">Marks</th></tr></thead><tbody>${per.map(p=>`<tr><td>${esc(DIVINFO[p.div]||p.div)}</td>${P.map(k=>`<td class="num">${p.rows[k-1]?esc(p.rows[k-1][4]):"–"}</td>`).join("")}<td class="num">${p.rows.length}</td></tr>`).join("")}</tbody></table></div>
-    <p class="note">The mark it took to rank #1, #10, #25 and #50 on each division's national list. Source: TFRRS.</p>${hookRow()}</div></div>`;
+    <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(seasonLabel(R.season))} · national lists</span></div>
+    <div class="cols" style="--n:${per.length}">${per.map(p=>`<section class="col"><header><b>${esc(DIVINFO[p.div]||p.div)}</b><span>${P.map(k=>p.rows[k-1]?`#${k} ${esc(p.rows[k-1][4])}`:"").filter(Boolean).slice(0,2).join(" · ")}</span></header>
+      <ol>${p.rows.slice(0,top).map((r,i)=>`<li><span class="rk">${i+1}</span><span class="nm"><b>${esc(r[1]||p.D.teams[r[3]])}</b><small>${esc(p.D.teams[r[3]]||"")}</small></span><span class="mk">${esc(r[4])}</span></li>`).join("")}</ol></section>`).join("")}</div>
+    ${per.some(p=>p.rows.length>top)?`<button class="morer" data-cmore>Show more</button>`:""}
+    <p class="note">Each selected division's national list, side by side. Turn Compare off to combine them into one ranking. Source: TFRRS.</p>${hookRow()}</div></div>`;
     return o;
   }
   /* ALL: merge every division's national list for the event and re-rank by mark */
@@ -494,7 +503,7 @@ function multiResults(){
   const q=R.q.trim().toLowerCase(),rows=all.filter(x=>(!q||(x.name||"").toLowerCase().includes(q)||(x.team||"").toLowerCase().includes(q))&&(!R.st||teamSt(x.team)===R.st));
   const show=R.an||100;
   o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
-  <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))}, all divisions</h3><span>${esc(seasonLabel(R.season))} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools`:`${all.length.toLocaleString()} marks from ${per.length} divisions`}</span></div>${curve(all.map(x=>[0,0,0,0,x.mark]),R.ev)}
+  <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))}, ${esc(nm.toLowerCase()==="every division"?"all divisions":nm)}</h3><span>${esc(seasonLabel(R.season))} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools`:`${all.length.toLocaleString()} marks from ${per.length} divisions`}</span></div>${curve(all.map(x=>[0,0,0,0,x.mark]),R.ev)}
   <div class="grid"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span><span>Meet</span></div>
   ${rows.slice(0,show).map(x=>{const k=all.indexOf(x)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw"><span class="gnm"><b>${esc(x.name||x.team)}</b></span><small>${esc(yr(x.yr))}${x.path?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(x.path)}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><span class="gtm" style="cursor:default">${esc(x.team)}<small class="dvt">${esc(DIVINFO[x.div]||x.div)}</small></span><span class="gmk">${esc(x.mark)}${x.wind?`<small>${esc(x.wind)}</small>`:""}</span><span class="gmt"><b>${esc(x.meet||"")}</b>${esc(x.date||"")}</span></div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
   </div>${rows.length>show?`<button class="morer" data-amore>Show more</button>`:""}${hookRow()}
@@ -997,9 +1006,10 @@ function render(){
   $("app").className=S.tab==="results"&&!onSchool?"wide":"";
   $("app").innerHTML=onSchool?school():{standards,results,ask}[S.tab]();
   if(S.tab==="standards"&&!onSchool) drop();
-  moveInd(); if(S.tab==="standards"&&!onSchool) watchMore(); if(S.tab==="results"&&!onSchool) slide(".divs","dind","div"); R.swap=false;
+  moveInd(); if(S.tab==="standards"&&!onSchool) watchMore();  R.swap=false;
 }
 addEventListener("resize",moveInd);
+matchMedia("(min-width:761px)").addEventListener("change",()=>{if(S.tab==="results"&&R.cmp&&MULTI())render()});
 document.addEventListener("click",ev=>{
   {const ci=ev.target.closest("[data-cinfo]");document.querySelectorAll(".ci.open").forEach(x=>{if(!ci||x!==ci.parentNode){x.classList.remove("open");x.querySelector("button").setAttribute("aria-expanded","false")}});if(ci){const w=ci.parentNode;w.classList.toggle("open");ci.setAttribute("aria-expanded",w.classList.contains("open"));return}}
   if(ev.target.closest("#evx")){evalOut();return}
@@ -1015,7 +1025,13 @@ document.addEventListener("click",ev=>{
   if(d.div!==undefined){S.div=d.div;S.n=24;render();return}
   if("more" in d){S.n=9999;render();return}
   if("clear" in d){S.div=S.conf=S.f=S.st="";S.n=24;render();return}
-  if(d.rdiv){if(d.rdiv!==R.div){R.div=d.rdiv;R.list=0;R.team=null;R.ath=null;R.an=100;R.swap=true;render()}return}
+  if(d.rdiv){syncSel();const av=seasonDivs();
+    if(d.rdiv==="ALL")R.sel=R.sel.length===av.length?[R.div]:av.slice();
+    else if(R.sel.length===av.length&&av.length>1)R.sel=[d.rdiv];                     /* from "All", a tap picks just that one */
+    else if(R.sel.includes(d.rdiv)){if(R.sel.length>1)R.sel=R.sel.filter(x=>x!==d.rdiv)}else R.sel=[...R.sel,d.rdiv];
+    syncSel();R.list=0;R.team=null;R.ath=null;R.an=100;R.cn=25;R.swap=true;render();return}
+  if("rcmp" in d){R.cmp=!R.cmp;R.swap=true;render();return}
+  if("cmore" in d){R.cn=(R.cn||25)+50;render();return}
   if("amore" in d){R.an=(R.an||100)+200;render();return}
   if(d.rg){R.g=d.rg;R.team=null;R.ath=null;R.swap=true;render();return}
   if(d.rev){R.ev=d.rev;R.swap=true;render();{const el=evLabel(d.rev);intent(el,R.g);log("results_event",{event:el,g:R.g,division:R.div,state:R.st?ST_NAME[R.st]:undefined})}const a=document.querySelector('.evs [aria-pressed="true"]');if(a)a.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});return}
