@@ -18,7 +18,14 @@ export const CONV = {
   "3200m": { to: "3000m", k: { m: 0.9314, w: 0.9314 }, next: { to: "5000m", k: 1.7186 }, how: "3200m × 0.9314 = 3000m, then 3000m × 1.7186 = 5000m (Riegel formula)" },
   "300m Hurdles": { to: "400m Hurdles", k: { m: 1.41, w: 1.45 }, how: "men ×1.41, women ×1.45 (same hurdle height in high school and college)" },
   '110m Hurdles (39")': { to: "110m Hurdles", add: 0.5, how: "39-inch high school time + 0.5 seconds for the 42-inch college hurdles" } };
-export const HS_EVENTS = ["100m", "200m", "400m", "800m", "1600m", "3200m", "100m Hurdles", '110m Hurdles (39")', "300m Hurdles", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus"];
+export const HS_EVENTS = ["100m", "200m", "400m", "800m", "1600m", "3200m", "100m Hurdles", '110m Hurdles (39")', "300m Hurdles", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Javelin", "Hammer"];
+/* field events read "how far do you need to throw the shot put", "how high do you need to jump in the high jump" (Ryan 2026-10-16:
+   the field pages said "run the Shot Put"); Javelin and Hammer added (keyword gap: throws cluster). URLs unchanged. */
+export const howAsk = (e, cap) => { const x = e.toLowerCase(), H = s => cap ? s.replace(/\b(\w)(\w*)/g, (w, c, r) => ["to", "the", "in"].includes(w) ? w : c.toUpperCase() + r) : s;
+  if (e === "High Jump" || e === "Pole Vault") return H(`how high do you need to ${e === "High Jump" ? "jump" : "vault"} in the `) + (cap ? e : x);
+  if (/Jump/.test(e)) return H("how far do you need to jump in the ") + (cap ? e : x);
+  if (/Shot|Discus|Javelin|Hammer/.test(e)) return H("how far do you need to throw the ") + (cap ? e : x);
+  return H("how fast do you need to run the ") + e; };
 const COLLEGE_EVENTS = ["100m", "200m", "400m", "800m", "1500m", "3000m", "5000m", "100m Hurdles", "110m Hurdles", "400m Hurdles", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus"];
 
 export function hsPages({ S, CT, write, writeRaw, page, parse, esc, slug, schoolUrl, evPath, FIELD, SITE, gName }) {
@@ -60,16 +67,16 @@ export function hsPages({ S, CT, write, writeRaw, page, parse, esc, slug, school
     const name = `${HS(g)} ${e}`, p = hsPath(g, e), cv = CONV[e];
     const span = r => fmt(e, r[0]) === fmt(e, r[2]) ? fmt(e, r[0]) : `${fmt(e, r[0])} to ${fmt(e, r[2])}`;
     const ans = rows.filter(([, cl]) => cl[2]).map(([d, cl]) => `${d} walk-on marks: ${span(cl[2])}`).join("; ") + ".";
-    write(p, page({ title: `How Fast Do You Need to Run the ${e} in College? (${HS(g)}) | Preferred Recruit`,
+    write(p, page({ title: `${howAsk(e, true).replace(/^h/, "H")} in College? (${HS(g)}) | Preferred Recruit`,
       desc: `${name} marks it takes to walk on, get recruited or be a target recruit in NCAA D1, D2, D3 and NAIA, from ${S.length.toLocaleString()} college programs.${cv ? ` High school ${e} converted to the college ${cv.to}.` : ""}`,
-      pathname: p, crumbs: [["Home", "/"], ["How fast?", "/how-fast.html"], [name, p]], h1: `How fast do you need to run the ${esc(e)} in college? (${HS(g)})`,
+      pathname: p, crumbs: [["Home", "/"], ["How fast?", "/how-fast.html"], [name, p]], h1: `${esc(howAsk(e).replace(/^h/, "H"))} in college? (${HS(g)})`,
       intro: `The ${isF(c) ? "marks" : "times"} college programs list for ${esc(gName(g).toLowerCase())} ${esc(c)}, by division. Each range is the middle half of programs (25th to 75th percentile); a dash means too few programs list that level (NCAA D3 and NAIA use Target and Walk-On).${g === "m" && IMPL[e] ? ` <b>${esc(IMPL[e])}</b>` : ""}${cv ? ` Colleges run the ${esc(cv.to)}, so these are converted back to the high school ${esc(e)}: ${esc(cv.how)}.` : ""}`,
       body: `<div class="scroll"><table><tr><th>Division</th><th class="n">Walk-On</th><th class="n">Recruit</th><th class="n">Target</th></tr>${rows.map(([d, cl]) => `<tr><td>${esc(d)}</td>${[2, 1, 0].map(j => `<td class="n">${cl[j] ? esc(span(cl[j])) : "–"}</td>`).join("")}</tr>`).join("")}</table></div>
 <p><b>Walk-On:</b> ${DEF.W} <b>Recruit:</b> ${DEF.R} <b>Target:</b> ${DEF.T}</p>
 <h2>What colleges can I ${isF(c) ? "compete" : "run"} for?</h2><p>Pick the mark closest to yours, or <a href="/">enter your exact mark</a>.</p><div class="links">${ladder.map(v => `<a href="${fitPath(g, e, v)}">${esc(nice(e, v))} ${esc(e)}</a>`).join("")}</div>
 <h2>Every school's ${esc(c)} standards</h2><div class="links">${DIVS.map(d => `<a href="${evPath(d, g, c)}">${esc(d)} ${esc(gName(g))} ${esc(c)}</a>`).join("")}</div>
 ${cv ? `<p><a href="/convert.html">High school to college conversion tables ›</a></p>` : ""}`,
-      ld: [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: [{ "@type": "Question", name: `How fast do you need to run the ${name} to compete in college?`, acceptedAnswer: { "@type": "Answer", text: ans } }] }] }));
+      ld: [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: [{ "@type": "Question", name: `${howAsk(e).replace(/^h/, "H")} to compete in college (${HS(g)})?`, acceptedAnswer: { "@type": "Answer", text: ans } }] }] }));
   }
 
   /* 2. what colleges can I run for with <mark> */
@@ -102,7 +109,7 @@ ${cv ? `<p><a href="/convert.html">High school to college conversion tables ›<
       pathname: p, crumbs: [["Home", "/"], ["Conversions", "/convert.html"], [t, p]], h1: esc(t),
       intro: `High school and college race different distances or hurdle heights, so college standards need a conversion: ${esc(CONV[e].how)}. These are standard coaching conversions, a close estimate rather than an exact race result. The standards search on this site applies them automatically.`,
       body: `<div class="scroll"><table><tr><th>High school ${esc(e)}</th>${rows[0][1].map(z => `<th class="n">College ${esc(z.e)}</th>`).join("")}</tr>${rows.map(([v, cl]) => `<tr><td>${esc(fmt(e, v))}</td>${cl.map(z => `<td class="n">${esc(fmt(z.e, z.v))}</td>`).join("")}</tr>`).join("")}</table></div>
-<p><a href="${hsPath(g, HS_EVENTS.includes(e) ? e : "1600m")}">How fast do you need to run the ${esc(HS_EVENTS.includes(e) ? e : "1600m")} in college? ›</a></p>` }));
+<p><a href="${hsPath(g, HS_EVENTS.includes(e) ? e : "1600m")}">${esc(howAsk(HS_EVENTS.includes(e) ? e : "1600m").replace(/^h/, "H"))} in college? ›</a></p>` }));
   }
 
   /* 4. guides + audience pages */
