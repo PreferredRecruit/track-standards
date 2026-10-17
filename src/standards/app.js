@@ -289,8 +289,16 @@ function schoolResult(s,g){const e=SCK.e,v=parse(SCK.mark,e);if(v==null)return {
   const t=tier0(std,ev2,vv),F=FIELD.has(ev2),nx=t===null?2:t==="W"?1:t==="R"?0:-1,nm=esc(s.t||s.n);
   let next="";if(nx>=0&&std[nx]){const th=parse(std[nx],ev2);if(th!=null){const d=F?th-vv:vv-th;if(d>0)next=` You're ${fmtGap(ev2,d)} from ${TN["TRW"[nx]]} level.`}}
   return {t,cls:t?"ok":"no",html:t?`Your ${esc(SCK.mark.trim())} is <b>${TN[t]}</b> level at ${nm}.${next}`:`Your ${esc(SCK.mark.trim())} isn't on ${nm}'s chart yet.${next}`};}
-function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src;
-  let o=`<div class="sec" style="padding-top:0"><button class="back" data-back>‹ Back</button><h1 class="sname">${esc(s.n)} Track &amp; Field${s.j?" (NJCAA)":" Standards"}${s.o?' <span class="star big" title="Official standards, verified">★</span>':""}</h1>
+/* school branding (Ryan 2026-10-16, approved: school logo + colours on its page, Preferred Recruit identity kept).
+   /brand/brand.json comes from scripts/brand/harvest.py (colours from each school's athletics site, contrast-checked: ink = text-safe
+   on white, on = text colour on the band). Schools without data keep the default look. Logos only identify the program; a takedown
+   sets hide_logo in scripts/brand/overrides.json. Our purple stays on every evaluation button. */
+let BR=null,BRL=false;
+function brandOf(s){if(BR===null){if(!BRL){BRL=true;fetch("/brand/brand.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(j=>{BR=j||{};if(S.school!=null)render()})}return null}
+  const b=BR[(s.os&&s.os[0])||slugOf(s.n)];return b&&b.primary?b:null}
+const brandNote=(s,B)=>B?`<p class="bnote">School names, logos and colours belong to their institutions and are used only to identify the program. Preferred Recruit is not affiliated with or endorsed by ${esc(s.n)}.</p>`:"";
+function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src,B=brandOf(s);
+  let o=`<div class="sec${B?" branded":""}" style="padding-top:0${B?`;--sb:${B.primary};--sbi:${B.ink||B.primary};--sbo:${B.on||"#fff"}`:""}"><button class="back" data-back>‹ Back</button>${B?`<div class="sband">${B.logo&&!B.hide_logo?`<img src="${esc(B.logo)}" alt="${esc(s.n)} logo" width="72" height="72" loading="eager">`:""}<div><small>${esc(s.d)} · ${esc(s.c)}</small><b>${esc(s.t||s.n)}</b></div></div>`:""}<h1 class="sname">${esc(s.n)} Track &amp; Field${s.j?" (NJCAA)":" Standards"}${s.o?' <span class="star big" title="Official standards, verified">★</span>':""}</h1>
   <div class="meta"><span>${s.d} · ${esc(s.c)}${s.s?" · "+esc(s.s):""}</span>${s.o?`<span class="badge off">★ Official standards · published ${esc(s.yr)}</span>`:s.j?'<span class="badge">Junior college · season results, no levels</span>':'<span class="badge">Based on 2026 conference results</span>'}</div>
   <p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)}${s.j?" junior college":""} track and field program${s.c!==s.d?` in the ${esc(s.c)}`:""}${s.s?`, based in ${esc(ST_NAME[s.s]||s.s)}`:""}. ${s.j?"Junior colleges compete nationally rather than in conferences, so this site shows its season results instead of predicted recruiting levels.":`Below are the marks it takes to be a Target recruit, a Recruit or a Walk-On for men and women in every event${s.o?", taken from the school's own published standards":""}.`}</p>
   ${schoolLinks(s)}
@@ -312,7 +320,7 @@ function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src;
   }
   setTimeout(()=>teamBest(S.school),0);
   setTimeout(()=>schoolVids(S.school),0);
-  return o+`<div id="tbest"></div><div id="svid"></div>`+schoolExtra(s)+schoolMore(s)+`</div>`}
+  return o+`<div id="tbest"></div><div id="svid"></div>`+schoolExtra(s)+schoolMore(s)+brandNote(s,B)+`</div>`}
 /* Ryan's videos about this school (YouTube + Instagram reels), /data/videos.json written at build */
 let VIDS=null;
 function schoolVids(i){if(i==null)return;const fill=()=>{const el=document.getElementById("svid");if(!el||S.school!==i)return;const v=(VIDS||{})[SCH[i].n];if(!v){el.innerHTML="";return}

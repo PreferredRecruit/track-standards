@@ -551,3 +551,14 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .schk .in{height:44px}.schk .go{height:44px;padding:0 20px}
 .schkr{margin:10px 2px 0;font-size:15px}.schkr.ok b{color:#12805C}.schkr.no{color:var(--pr-ink)}.schkr.bad{color:#A15C00}
 @media (max-width:560px){.schk div{grid-template-columns:1fr 1fr}.schk .go{grid-column:1/-1}}
+/* school branding: the school's colour frames its page; Preferred Recruit purple stays on every evaluation CTA */
+.branded .sband{display:flex;align-items:center;gap:16px;margin:10px 0 14px;padding:16px 18px;border-radius:20px;background:var(--sb);color:var(--sbo)}
+.branded .sband img{width:72px;height:72px;border-radius:16px;background:#fff;object-fit:contain;padding:6px;flex:none;box-shadow:0 6px 18px -8px rgba(0,0,0,.35)}
+.branded .sband small{display:block;font-size:13px;font-weight:600;opacity:.85}.branded .sband b{display:block;font-size:22px;letter-spacing:-.02em;line-height:1.15}
+.branded .sname{border-left:5px solid var(--sb);padding-left:12px}
+.branded .scroll thead th{background:color-mix(in srgb,var(--sb) 10%,var(--pr-card));color:var(--sbi)}
+.branded .verify a,.branded .intro a,.branded .more a{color:var(--sbi)}
+.branded .schk{border-color:color-mix(in srgb,var(--sb) 35%,var(--pr-line))}
+.bnote{margin-top:22px;font-size:12px;color:var(--pr-faint)}
+@media (max-width:560px){.branded .sband{padding:12px 14px;gap:12px}.branded .sband img{width:56px;height:56px}.branded .sband b{font-size:19px}}
+.branded .meta>span:first-child{display:none}
