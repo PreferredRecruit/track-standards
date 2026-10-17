@@ -12,13 +12,13 @@ const AGG = DIVS;
 const IMPL = { "Shot Put": "High school boys throw a 12 lb shot; college men throw 16 lb. These are college marks with the 16 lb shot, so a high school mark will read higher than the college equivalent.", "Discus": "High school boys throw a 1.6 kg discus; college men throw 2 kg. These are college marks with the 2 kg discus, so a high school mark will read higher than the college equivalent." };
 const HS = g => (g === "m" ? "Boys" : "Girls");
 const DEF = { T: "The marks that typically grant a full-ride scholarship, depending on school funding.", R: "The range where coaches typically start recruiting conversations and scholarship discussions begin. Not a guarantee.", W: "The minimum mark required to earn a spot on the team." };
-const CONV = {
+export const CONV = {
   "1600m": { to: "1500m", k: { m: 0.9314, w: 0.9314 }, how: "1600m × 0.9314 (1600m to mile ×1.0058, mile to 1500m ×0.926)" },
   "Mile": { to: "1500m", k: { m: 0.926, w: 0.926 }, how: "Mile × 0.926" },
   "3200m": { to: "3000m", k: { m: 0.9314, w: 0.9314 }, next: { to: "5000m", k: 1.7186 }, how: "3200m × 0.9314 = 3000m, then 3000m × 1.7186 = 5000m (Riegel formula)" },
   "300m Hurdles": { to: "400m Hurdles", k: { m: 1.41, w: 1.45 }, how: "men ×1.41, women ×1.45 (same hurdle height in high school and college)" },
   '110m Hurdles (39")': { to: "110m Hurdles", add: 0.5, how: "39-inch high school time + 0.5 seconds for the 42-inch college hurdles" } };
-const HS_EVENTS = ["100m", "200m", "400m", "800m", "1600m", "3200m", "100m Hurdles", '110m Hurdles (39")', "300m Hurdles", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus"];
+export const HS_EVENTS = ["100m", "200m", "400m", "800m", "1600m", "3200m", "100m Hurdles", '110m Hurdles (39")', "300m Hurdles", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus"];
 const COLLEGE_EVENTS = ["100m", "200m", "400m", "800m", "1500m", "3000m", "5000m", "100m Hurdles", "110m Hurdles", "400m Hurdles", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus"];
 
 export function hsPages({ S, CT, write, writeRaw, page, parse, esc, slug, schoolUrl, evPath, FIELD, SITE, gName }) {

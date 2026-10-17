@@ -16,6 +16,7 @@ import { hsPages } from "./hs.mjs";
 import { fitTitle, fitDesc, tailsFor, levelWords, SEASON } from "./meta.mjs";
 import { schoolPages } from "./schools.mjs";
 import { topicPages } from "./topics.mjs";
+import { dailyPages } from "./daily.mjs";
 const SITE = "https://trackandfieldstandards.com";
 const QUIZ = "https://app.thepreferredrecruit.com/parentfunnel/?utm_source=website&utm_medium=standards&utm_campaign=PRstandards";
 const EVENTS = ["100m", "200m", "400m", "800m", "1500m", "1600m", "Mile", "3000m", "3200m", "5000m", "10000m", "100m Hurdles", "110m Hurdles",
@@ -174,6 +175,9 @@ export function generate(root, out) {
     body: `<h2>Recruiting guides</h2><div class="links">${TOPICS.map(([u, t]) => `<a href="${u}">${esc(t)}</a>`).join("")}</div>
 <h2>Levels, divisions and tools</h2><div class="links"><a href="/guides/target-recruit-walk-on-explained.html">Target, Recruit and Walk-On explained</a><a href="/guides/ncaa-d1-vs-d2-vs-d3-vs-naia-track-and-field.html">D1 vs D2 vs D3 vs NAIA</a><a href="${JG}">Junior college (NJCAA) recruiting</a><a href="/for-parents.html">For parents</a><a href="/for-coaches.html">For coaches</a><a href="/how-fast.html">How fast do you need to run?</a><a href="/convert.html">Conversions</a></div>`,
     ld: [{ "@context": "https://schema.org", "@type": "ItemList", name: "College track recruiting guides", itemListElement: TOPICS.map(([u, t], i) => ({ "@type": "ListItem", position: i + 1, name: t, url: SITE + u })) }] }));
+  /* daily state x event pages (25/day on a fixed schedule, link-budgeted; Ryan 2026-10-16) */
+  const DAILY = dailyPages({ out, S: S.filter(x => !x.j), CT, write, page, parse, esc, sl, SITE, gName, statePath });
+  console.log(`daily pages: ${DAILY.pages} live (${DAILY.hubs || 0} hubs) as of ${DAILY.today || "-"}`);
   /* AEO: give AI answer engines every guide's quick answer in llms.txt (numbers regenerate with the data each build) */
   { const f = path.join(out, "llms.txt"); if (fs.existsSync(f)) fs.appendFileSync(f, `\n## Recruiting guides (quick answers)\n${TOPICS.map(([u, t, a]) => `- [${t}](${SITE}${u}): ${a}`).join("\n")}\n`); }
   /* pre-built HTML for every school page (served at /schools/<slug> by vercel.json); already in the sitemap */
@@ -234,12 +238,14 @@ ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter((
       fs.writeFileSync(shellFile, shell.replace('<div id="root"></div>', `<div id="root">${home}</div>`));
     }
   } catch (e) { console.warn("home page content skipped:", e && e.message); }
+  if (DAILY.finalize) console.log(`daily pages: ${DAILY.finalize()} inbound link blocks`);
   /* sitemap index + one sitemap per section, each URL dated by the data it shows (so Google can trust lastmod) */
   const schoolUrls = [...new Set(S.map(sl))].sort();
-  const lastmod = u => /^\/(results|champions)\//.test(u) ? resultsDate(u) : u === "/" || u.startsWith("/schools/") ? DATES.max : DATES.db;
+  const lastmod = u => DAILY.dates.get(u) || (/^\/(results|champions)\//.test(u) ? resultsDate(u) : u === "/" || u.startsWith("/schools/") ? DATES.max : DATES.db);
   const groups = { schools: schoolUrls, results: files.filter(u => /^\/(results|champions)\//.test(u)).sort(),
     standards: ["/", ...files.filter(u => /^\/(standards|conferences|states)\//.test(u) || u === "/explore.html").sort()] };
-  const used = new Set([...groups.schools, ...groups.results, ...groups.standards]);
+  groups.colleges = files.filter(u => u === "/colleges.html" || u.startsWith("/colleges/")).sort();
+  const used = new Set([...groups.schools, ...groups.results, ...groups.standards, ...groups.colleges]);
   groups.guides = files.filter(u => !used.has(u)).sort();
   const urls = Object.values(groups).flat();
   for (const [k, list] of Object.entries(groups)) fs.writeFileSync(path.join(out, `sitemap-${k}.xml`), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${list.map(u => `  <url><loc>${SITE}${u}</loc><lastmod>${lastmod(u)}</lastmod></url>`).join("\n")}\n</urlset>\n`);

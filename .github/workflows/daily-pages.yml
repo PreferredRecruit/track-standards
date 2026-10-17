@@ -1,0 +1,40 @@
+# Daily page release (Ryan 2026-10-16: "i want to add 25 everyday ... we need to do this strategically").
+# scripts/seo/daily-schedule.json fixes which 25 state x event pages publish each day; the build publishes everything due by
+# today (UTC). This workflow rebuilds the site every morning so the day's pages go live, then tells IndexNow engines (Bing,
+# which feeds ChatGPT search and Copilot) about exactly those new URLs. Google reads them from sitemap-colleges.xml (lastmod).
+# Runs only in PreferredRecruit/track-standards (the repo Vercel deploys) and reuses the VERCEL_DEPLOY_HOOK secret.
+name: Daily pages
+on:
+  schedule:
+    - cron: "0 11 * * *"   # every day 11:00 UTC (7 AM Eastern)
+  workflow_dispatch: {}
+concurrency:
+  group: daily-pages
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.repository == 'PreferredRecruit/track-standards'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Rebuild the site on Vercel
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          [ -n "$HOOK" ] || { echo "VERCEL_DEPLOY_HOOK not set"; exit 1; }
+          curl -fsS -X POST "$HOOK" > /dev/null && echo "rebuild triggered"
+      - name: Tell IndexNow engines about today's pages
+        run: |
+          sleep 480   # let the Vercel rebuild finish
+          python3 - <<'PY'
+          import json, re, urllib.request, datetime
+          host, key = "trackandfieldstandards.com", "9fca9ca5284c2ff286008601e0e776fd"
+          today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+          x = urllib.request.urlopen(f"https://{host}/sitemap-colleges.xml", timeout=30).read().decode()
+          urls = [u for u, d in re.findall(r"<loc>([^<]+)</loc><lastmod>([^<]+)</lastmod>", x) if d == today]
+          print(f"{len(urls)} pages published {today}")
+          if not urls: raise SystemExit(0)
+          body = json.dumps({"host": host, "key": key, "keyLocation": f"https://{host}/{key}.txt", "urlList": urls}).encode()
+          req = urllib.request.Request("https://api.indexnow.org/indexnow", data=body, headers={"Content-Type": "application/json; charset=utf-8"})
+          print("IndexNow:", urllib.request.urlopen(req, timeout=30).status)
+          PY
