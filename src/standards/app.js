@@ -52,7 +52,7 @@ const scrollPct=()=>{const h=document.documentElement;return Math.min(100,Math.r
 function log(kind,x){try{let ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}const b=Object.assign({sid:SID,kind,coach:ct,secs:Math.round((Date.now()-T0)/1000),scroll_pct:scrollPct(),hour:new Date().getHours(),grade:INT.gr||undefined,path:location.pathname+location.search,mobile:innerWidth<700,utm_source:new URLSearchParams(location.search).get("utm_source")||undefined},x||{});
   if(b.event&&!b.grp)b.grp=GRP(b.event);fetch(TRACK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(()=>{})}catch(e){}}
 /* the funnel link carries the intent too, so the evaluation and CRM know the event and grade (utm_term = event, pr_grade = grade) */
-function quizFor(){try{const u=new URL(QUIZ);if(INT.e)u.searchParams.set("utm_term",INT.e);if(INT.grp)u.searchParams.set("pr_group",INT.grp);if(INT.gr)u.searchParams.set("pr_grade",INT.gr);if(INT.m)u.searchParams.set("pr_mark",INT.m);if(PARENT){u.searchParams.set("pr_from","parent");u.searchParams.set("utm_medium","standards-parent")}return u.toString()}catch(e){return QUIZ}}
+function quizFor(){try{const u=new URL(QUIZ);if(INT.e)u.searchParams.set("utm_term",INT.e);if(INT.grp)u.searchParams.set("pr_group",INT.grp);if(INT.gr)u.searchParams.set("pr_grade",INT.gr);if(INT.m)u.searchParams.set("pr_mark",INT.m);if(INT.rs)u.searchParams.set("pr_status",INT.rs);return u.toString()}catch(e){return QUIZ}}
 const FIELD=new Set(["High Jump","Pole Vault","Long Jump","Triple Jump","Shot Put","Discus","Hammer","Javelin"]);
 const SHORT=new Set(["100m","200m","400m","100m Hurdles","110m Hurdles","300m Hurdles","400m Hurdles"]);
 const TF={"100m":"100 Meters","200m":"200 Meters","400m":"400 Meters","800m":"800 Meters","1500m":"1500 Meters","5000m":"5000 Meters","10000m":"10,000 Meters","100m Hurdles":"100 Hurdles","110m Hurdles":"110 Hurdles","400m Hurdles":"400 Hurdles","3000m Steeplechase":"3000 Steeplechase","High Jump":"High Jump","Pole Vault":"Pole Vault","Long Jump":"Long Jump","Triple Jump":"Triple Jump","Shot Put":"Shot Put","Discus":"Discus","Hammer":"Hammer","Javelin":"Javelin"};
@@ -109,23 +109,32 @@ const ph=e=>PH[e]||(FIELD.has(e)?"22'6\"":"4:21.50");
    Copy ladder from the athlete's own result; fires at the moment they have seen it (results list scrolled into view and held for
    1.5 s), not on a timer. Bucket 0 = data-driven copy, bucket 1 = plain intent copy (control). Parents arriving from a shared link
    get the parent version. */
-let PARENT=false;
+/* copy engine (Ryan 2026-10-16: "make it demonic copy, you run a 49.50 400m ?! ... use our copy engines to target our icps").
+   Built from creative-strategy's proven winners (incredulous call-out at the athlete's own mark, comparison, season clock,
+   reassurance) and the Empty Inbox mechanic, PA/SA athlete persona, juniors and seniors get the clock, 9th/10th get "start early".
+   human-copy rules apply: plain spoken sentences, no em dashes, official claims only, numbers only from the site's data. */
+const VERB=e=>({throws:"throw",jumps:"jump",multis:"score"})[GRP(e)]||"run";
+const hookLine=()=>{if(!S.run||!S.mark)return "";const mk=S.mark.trim(),es=evSay(S.e),vb=VERB(S.e);
+  return vb==="run"?`You run a ${mk} ${es}?!`:`You ${vb} ${mk} in the ${es}?!`};
+const clock=()=>+S.gr===12?"Senior year goes fast and rosters are filling now.":+S.gr===11?"Junior year is when coaches build their next class.":S.gr?"Starting early is how you get ahead of your class.":"";
 function offerCopy(){const v=parse(S.mark,S.e);if(v==null)return null;
   const all=SCH.filter(s=>tier(s,S.g,S.e,v)),n=all.length,T=all.filter(s=>tier(s,S.g,S.e,v)==="T").length,Rr=all.filter(s=>tier(s,S.g,S.e,v)==="R").length;
-  const es=evSay(S.e), mk=S.mark.trim(), late=+S.gr>=11, verb={throws:"throw",jumps:"jump",multis:"score"}[GRP(S.e)]||"run", sfx=PARENT?"":late?"-11-12":S.gr?"-9-10":"";
-  if(PARENT) return {n,v:"parent",t:n?`Your athlete's ${mk} in the ${es} fits ${n} colleges.`:`Every ${es} mark has a path.`,b:"Preferred Recruit helps families get in front of the coaches at schools like these. Start with a free recruitment evaluation. It takes about a minute."};
-  if(!n) return {n,v:"nofit"+sfx,t:`Every ${es} mark has a path.`,b:`If you want to get recruited for the ${es}, a free recruitment evaluation shows which programs fit you right now and what to ${verb} next.`};
+  const es=evSay(S.e), mk=S.mark.trim(), late=+S.gr>=11, vb=VERB(S.e), sfx=late?"-11-12":S.gr?"-9-10":"", N=n.toLocaleString();
+  const ev2=`Find out which coaches would want your ${mk}.`;
+  if(!n) return {n,v:"nofit"+sfx,t:"Not on the list yet? That doesn't mean you're not good enough.",b:`Find out which programs fit you right now and what to ${vb} next.`};
   const nm=nearMiss(S.g,S.e,v), ls=(()=>{const x=INT.sch&&SCH.find(y=>y.n===INT.sch);return x&&tier(x,S.g,S.e,v)?x:null})();
-  const base=`Your ${mk} in the ${es} fits ${n} colleges.`;
-  if(!BUCKET&&nm.n>=3) return {n,v:"nearmiss"+sfx,t:`You're ${nm.gap} from ${TN[nm.lvl]} level at ${nm.n} schools.`,b:`If you want to get recruited for the ${es}, a free recruitment evaluation shows which coaches would want you now and what to ${verb} to move up.`};
-  if(!BUCKET&&!T&&!Rr) return {n,v:"walkon"+sfx,t:`You can walk on at ${n} schools.`,b:`If you want to get recruited for the ${es} instead of walking on, a free recruitment evaluation shows which coaches would want you and what it takes.`};
-  if(!BUCKET&&ls) return {n,v:"school"+sfx,t:base,b:`${ls.n} is one of them. If you want ${ls.t||ls.n}'s coaches to see your ${es}, start with a free recruitment evaluation.`};
-  return {n,v:"intent"+sfx,t:base,b:late?`If you want to get recruited for the ${es}, college coaches are recruiting your class right now. A free recruitment evaluation shows which of these ${n} schools would want you.`:`If you want to get recruited for the ${es}, a free recruitment evaluation shows which of these ${n} schools fit you and what to ${verb} next.`};
+  const bs={none:`Coaches can't recruit an athlete they've never heard of. ${ev2}`,
+    some:"A few emails is a start, but it isn't an offer. Find out how to turn that interest into real offers.",
+    offers:`Offers give you leverage. Find out who else would want your ${mk} before you sign.`};
+  if(!BUCKET&&nm.n>=3) return {n,v:"nearmiss"+sfx,bs,t:`You're ${nm.gap} from ${TN[nm.lvl]} level at ${nm.n} schools.`,b:ev2};
+  if(!BUCKET&&!T&&!Rr) return {n,v:"walkon"+sfx,bs,t:`You can walk on at ${N} schools. Why settle for walking on?`,b:`With the right coaches seeing your ${mk}, some of those programs could be recruiting you instead.`};
+  if(!BUCKET&&ls) return {n,v:"school"+sfx,bs,t:`${ls.t||ls.n} is on your list. Do their coaches know you exist?`,b:`Find out whether ${ls.t||ls.n} and the other ${(n-1).toLocaleString()} programs would want your ${mk}.`};
+  return {n,v:"intent"+sfx,bs,t:`That fits ${N} college programs. So why isn't your inbox full?`,b:ev2};
 }
 let ARM=null;
 /* polls the live results list (it is re-rendered after a search, so an observer on one node goes stale) */
 function armOffer(){const o=offerCopy();if(!o||EV.shown||EV.dismissed)return;if(ARM)clearInterval(ARM.iv),clearTimeout(ARM.t);ARM={since:0};
-  const fire=trig=>{if(!ARM)return;clearInterval(ARM.iv);clearTimeout(ARM.t);ARM=null;evalIn(o.t,o.b,0,o.v,trig)};
+  const fire=trig=>{if(!ARM)return;clearInterval(ARM.iv);clearTimeout(ARM.t);ARM=null;evalIn(o.t,o.b,0,o.v,trig,o.bs)};
   if(!o.n){ARM.t=setTimeout(()=>fire("nofit"),3000);return}
   ARM.t=setTimeout(()=>fire("results-timer"),12000);   /* fallback if they never scroll to the list */
   ARM.iv=setInterval(()=>{if(!ARM)return;if(!S.run||S.school!=null){clearInterval(ARM.iv);clearTimeout(ARM.t);ARM=null;return}
@@ -137,33 +146,50 @@ function armOffer(){const o=offerCopy();if(!o||EV.shown||EV.dismissed)return;if(
 const EXIT={idle:null,lastY:scrollY,lastT:Date.now()};
 function exitOffer(trig){if(EV.shown||EV.dismissed||S.school!=null)return;if(!S.run&&Date.now()-T0<20000)return;
   const o=S.run?offerCopy():null;
-  evalIn(o&&o.n?`Before you go: your ${S.mark.trim()} in the ${evSay(S.e)} fits ${o.n} colleges.`:"Before you go, see where you stand.",
-    o&&o.n?"Want those coaches to see it? A free recruitment evaluation takes about a minute.":"Find out which college coaches would want you. Get a free recruitment evaluation. It takes about a minute.",0,"exit"+(o?"-"+o.v:""),trig)}
+  evalIn(o&&o.n?`Leaving with ${o.n.toLocaleString()} colleges on the table?`:"Leaving without knowing where you stand?",
+    o&&o.n?`Find out which of those coaches would want your ${S.mark.trim()}. A free recruitment evaluation takes about a minute.`:"Find out which college coaches would want you. A free recruitment evaluation takes about a minute.",0,"exit"+(o?"-"+o.v:""),trig,o&&o.bs)}
 document.addEventListener("mouseout",e=>{if(!e.relatedTarget&&e.clientY<=0&&innerWidth>=700)exitOffer("exit-desktop")});
 addEventListener("scroll",()=>{const now=Date.now(),dy=scrollY-EXIT.lastY,dt=Math.max(now-EXIT.lastT,1);EXIT.lastY=scrollY;EXIT.lastT=now;
   if(innerWidth<700&&S.run&&scrollY>400&&dy/dt*1000<-2500)exitOffer("exit-scrollup")},{passive:true});
 const resetIdle=()=>{clearTimeout(EXIT.idle);if(S.run)EXIT.idle=setTimeout(()=>exitOffer("exit-idle"),45000)};
 ["scroll","pointerdown","keydown","touchstart"].forEach(t=>addEventListener(t,resetIdle,{passive:true}));
-/* ---------- helpful? -> send to a parent (parents are the buyers) ---------- */
-const PARENT_URL=()=>`https://trackandfieldstandards.com/?g=${S.g}&e=${encodeURIComponent(S.e)}&m=${encodeURIComponent(S.mark.trim())}&for=parent&utm_source=share&utm_medium=parent&utm_campaign=PRstandards`;
-async function sendParent(btn){const url=PARENT_URL(),n=LASTSUM?LASTSUM.n:0,text=`Here are the ${n.toLocaleString()} colleges my ${S.mark.trim()} ${S.e} fits on Track Standards:`;
-  try{if(navigator.share){await navigator.share({title:"My college matches",text,url});log("share",{detail:"parent-native",event:S.e});btn.textContent="Sent";return}}catch(e){if(e&&e.name==="AbortError")return}
-  try{await navigator.clipboard.writeText(text+" "+url);btn.textContent="Link copied. Paste it in a text to your parent.";log("share",{detail:"parent-copy",event:S.e})}catch(e){btn.textContent=url}}
-document.addEventListener("click",ev=>{const b=ev.target.closest("[data-hlp],[data-fb],[data-parent]");if(!b)return;const box=$("hlp");
-  if(b.dataset.hlp==="up"){log("feedback",{detail:"helpful",event:S.e});box.innerHTML=`<span>Show your parent where you stand.</span><button type="button" class="hbtn pri" data-parent>Send these results to your parent</button>`;return}
+/* ---------- were these results helpful? (yes = thanks, no = fixed reasons that feed the content list) ---------- */
+document.addEventListener("click",ev=>{const b=ev.target.closest("[data-hlp],[data-fb]");if(!b)return;const box=$("hlp");
+  if(b.dataset.hlp==="up"){log("feedback",{detail:"helpful",event:S.e});box.innerHTML="<span>Thanks. Good luck this season.</span>";return}
   if(b.dataset.hlp==="down"){log("feedback",{detail:"not-helpful",event:S.e});box.innerHTML=`<span>What was missing?</span>${[["wrong-mark","My event or mark looks off"],["missing-school","A school I want isn't here"],["division-info","I wanted more D2, D3 or NAIA info"],["other","Something else"]].map(([k,l])=>`<button type="button" class="hbtn" data-fb="${k}">${l}</button>`).join("")}`;return}
-  if(b.dataset.fb){log("feedback",{detail:b.dataset.fb,event:S.e});box.innerHTML="<span>Thanks. That helps us fix it.</span>";return}
-  if("parent" in b.dataset)sendParent(b)});
+  if(b.dataset.fb){log("feedback",{detail:b.dataset.fb,event:S.e});box.innerHTML="<span>Thanks. That helps us fix it.</span>"}});
 /* ---------- Recruitment Evaluation slide-in ---------- */
 const EV={shown:false,dismissed:false,t:null,v:null,trig:null};
 try{EV.dismissed=sessionStorage.getItem("prEvalDismissed")==="1"}catch(e){}
 /* v = copy variant, logged with shown/clicked so the admin report compares conversion per copy, event group and grade */
-function evalIn(title,body,delay,v,trig){
+function evalIn(title,body,delay,v,trig,bs){
   if(EV.shown||EV.dismissed) return; clearTimeout(EV.t);
-  EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||S.school!=null) return; $("evt").textContent=title; $("evp").textContent=body; $("eva").href=quizFor();
-    const el=$("eval"); el.classList.add("on"); el.setAttribute("aria-hidden","false"); EV.shown=true; EV.v=v||"generic"; EV.trig=trig||"timer"; log("popup_shown",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig})},delay||0);
+  EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||S.school!=null) return; EV.v=v||"generic"; EV.trig=trig||"timer"; EV.title=title; EV.body=body; EV.bs=bs||null; openEval(true)},delay||0);
 }
-function evalOut(){const el=$("eval");el.classList.remove("on");el.setAttribute("aria-hidden","true");EV.dismissed=true;try{sessionStorage.setItem("prEvalDismissed","1")}catch(e){}}
+/* centre modal (Ryan 2026-10-16, e-commerce benchmarks: centre 6.84% vs bottom-corner 2.88%; multi-step +12%; click-triggered
+   54%). Step 1 = one-tap "have coaches reached out?" (skipped once answered on this browser), step 2 = the tailored offer.
+   Closing leaves a small pill that reopens it (click-triggered). Shown only after an action (search result seen, exit, pill),
+   never on arrival, so it is not an intrusive interstitial for Google. */
+const STATUS={none:"Not yet",some:"A few have",offers:"Yes, I have offers"};
+const statusLine=k=>({none:"Coaches can't recruit you if they don't know your marks. Let's change that.",some:"Interest is a start. Let's turn it into real offers.",offers:"Offers give you options. Let's find out who else would want you."})[k]||"";
+/* step 2 copy: once the athlete has answered, their answer + one short line replaces the long body */
+const evBody=()=>INT.rs&&EV.bs&&EV.bs[INT.rs]?EV.bs[INT.rs]:INT.rs&&!EV.body?statusLine(INT.rs)+" A free recruitment evaluation shows which coaches would want you.":(EV.body||"Get a free recruitment evaluation from Preferred Recruit. It takes about a minute.");
+function openEval(log1){const el=$("eval");$("evt").textContent=EV.title||"See where you stand with college coaches.";
+  $("evp").textContent=evBody();
+  $("eva").href=quizFor();
+  const hk=hookLine(),ck=S.run?clock():"";$("evk").textContent=ck;$("evk").hidden=!ck;$("evm").innerHTML=hk?`<strong class="hk">${esc(hk)}</strong>`:`<strong class="lg">PR</strong>`;
+  const ask=!INT.rs;$("evq").hidden=!ask;$("evs").hidden=ask;
+  el.classList.add("on");el.setAttribute("aria-hidden","false");$("evbg").hidden=false;requestAnimationFrame(()=>$("evbg").classList.add("on"));$("evpill").hidden=true;EV.shown=true;
+  if(log1)log("popup_shown",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig});
+  setTimeout(()=>{const f=ask?el.querySelector("[data-evq]"):$("eva");f&&f.focus({preventScroll:true})},350)}
+function evalOut(){const el=$("eval");el.classList.remove("on");el.setAttribute("aria-hidden","true");$("evbg").classList.remove("on");setTimeout(()=>{if(!$("eval").classList.contains("on"))$("evbg").hidden=true},300);
+  EV.dismissed=true;try{sessionStorage.setItem("prEvalDismissed","1")}catch(e){}
+  if(S.school==null)$("evpill").hidden=false}
+document.addEventListener("click",ev=>{
+  const q=ev.target.closest("[data-evq]");if(q){INT.rs=q.dataset.evq;saveInt();log("feedback",{detail:"status-"+q.dataset.evq,event:INT.e});
+    $("evp").textContent=evBody();$("eva").href=quizFor();$("evq").hidden=true;$("evs").hidden=false;$("eva").focus({preventScroll:true});return}
+  if(ev.target.id==="evbg"){evalOut();return}
+  if(ev.target.closest("#evpill")){EV.v=(EV.v||"generic").replace(/^pill-/,"");EV.v="pill-"+EV.v;EV.trig="pill-click";openEval(true)}});
 let scrolled=0,lastY=scrollY;
 addEventListener("scroll",()=>{scrolled+=Math.abs(scrollY-lastY);lastY=scrollY;
   if(S.tab==="results"&&S.school==null&&scrolled>1400) {const gp=GRP(evLabel(R.ev||""))||topGrp();evalIn(gp?`Want to get recruited for ${GNAME[gp]}?`:"Close to these marks?",gp?`${GCOACH[gp]} recruit from lists like this one. Get a free recruitment evaluation and see where your marks fit.`:"Coaches recruit from these lists. Get a free recruitment evaluation and see where you fit.",0,gp?"results-"+gp:"results")}},{passive:true});
@@ -189,7 +215,7 @@ function standards(){
   <form id="mf" class="panel"><div class="row">${seg("g",S.g)}
     <div class="evw"><label class="sr" for="ev">Event</label><select class="in" id="ev">${list.map(e=>`<option value="${esc(e)}" ${e===S.e?"selected":""}>${esc(e)}${CONV[e]?" · converted":""}</option>`).join("")}</select>${CONV[S.e]?cinfo(S.e):""}</div>
     <label class="sr" for="mk">Personal best</label><input class="in" id="mk" placeholder="PR, e.g. ${esc(ph(S.e))}" value="${esc(S.mark)}" autocomplete="off" inputmode="decimal">
-    <label class="sr" for="gr">Grade</label><select class="in gr${S.gr?"":" ph"}" id="gr"><option value="" ${S.gr?"":"selected"} disabled>Grade</option>${[9,10,11,12].map(n=>`<option value="${n}" ${+S.gr===n?"selected":""}>${n}th grade</option>`).join("")}</select>
+    <div class="gseg" role="group" aria-label="Your grade"><span class="gl">Grade</span><div class="seg">${[9,10,11,12].map(n=>`<button type="button" data-grade="${n}" aria-pressed="${+S.gr===n}">${n}th</button>`).join("")}</div></div>
     <button class="go">Search colleges</button></div><div class="hint" id="hint"></div></form>`;
   /* order (Ryan 2026-10-13): search by stats · or · search one school · what the levels mean · results */
   o+=`<div class="orsep" role="separator"><span>or</span></div><div class="one"><h4>Search for one school</h4><p>${NSTD.toLocaleString()} colleges across NCAA D1, D2, D3 and NAIA, plus every NJCAA junior college.</p><div class="search">${MAG}<label class="sr" for="q">Search colleges</label><input class="in" id="q" placeholder="Try USC, Oregon or Ole Miss" autocomplete="off" value="${esc(S.q)}"><div id="drop"></div></div></div>`;
@@ -201,7 +227,7 @@ function standards(){
     const dd=(id,label,cur,list,fmt=x=>x)=>`<label class="dd${cur?" on":""}"><span class="sr">${label}</span><select id="${id}"><option value="">${label}</option>${list.map(x=>`<option value="${esc(x)}" ${x===cur?"selected":""}>${esc(fmt(x))}</option>`).join("")}</select></label>`;
     const cl=convLine(S.e,S.g,v), c=k=>all.filter(x=>x.t===k).length;LASTSUM={mark:S.mark,e:S.e,g:S.g,n:all.length,T:c("T"),R:c("R"),W:c("W")};
     o+=`<div class="mhead"><p class="sum">${esc(S.mark)} in the ${S.g==="m"?"men's":"women's"} ${esc(S.e)} fits <b>${all.length}</b> colleges</p>
-      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p>${cl?`<p class="cvl"><b>College equivalent</b> ${cl}${cinfo(S.e)}</p>`:""}${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}${PARENT?"":`<div class="hlp" id="hlp"><span>Were these results helpful?</span><button type="button" class="hbtn" data-hlp="up">Yes</button><button type="button" class="hbtn" data-hlp="down">No</button></div>`}</div>
+      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p>${cl?`<p class="cvl"><b>College equivalent</b> ${cl}${cinfo(S.e)}</p>`:""}${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}${`<div class="hlp" id="hlp"><span>Were these results helpful?</span><button type="button" class="hbtn" data-hlp="up">Yes</button><button type="button" class="hbtn" data-hlp="down">No</button></div>`}</div>
     <section class="mtab" aria-label="Your college matches">
       <div class="mbar"><h3>Your college matches</h3><div class="dds">
         ${dd("fd","All divisions",S.div,DIVS.filter(d=>opts("d",x=>x.s.d).includes(d)))}
@@ -826,6 +852,7 @@ function slide(sel,indId,key){const a=document.querySelector(sel+' [aria-selecte
 function render(){
   const onSchool=S.school!=null;
   $("hero").hidden=onSchool;
+  {const pl=$("evpill");if(pl)pl.hidden=onSchool||!EV.dismissed||EV.shown&&$("eval").classList.contains("on");}
   document.querySelectorAll(".switch button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));
   $("app").className=S.tab==="results"&&!onSchool?"wide":"";
   $("app").innerHTML=onSchool?school():{standards,results,ask}[S.tab]();
@@ -842,6 +869,7 @@ document.addEventListener("click",ev=>{
     render();if(home)scrollTo({top:0,behavior:"smooth"});return}
   if("back" in d){S.school=null;render();return}
   if(d.school){S.school=+d.school;render();scrollTo({top:0});INT.sch=SCH[S.school].n;saveInt();log("school",{school:SCH[S.school].n,division:SCH[S.school].d,state:ST_NAME[SCH[S.school].s]||SCH[S.school].s});return}
+  if(d.grade){S.gr=INT.gr=+d.grade;saveInt();document.querySelectorAll("[data-grade]").forEach(x=>x.setAttribute("aria-pressed",x===b));const gs=b.closest(".gseg");gs&&gs.classList.remove("need");log("grade",{});const h=$("hint");if(h&&/grade/.test(h.textContent))h.textContent="";return}
   if(d.g){S.g=d.g;render();return}
   if(d.f!==undefined){S.f=d.f;S.n=24;render();return}
   if(d.div!==undefined){S.div=d.div;S.n=24;render();return}
@@ -873,7 +901,7 @@ document.addEventListener("change",ev=>{const t=ev.target;
 document.addEventListener("submit",ev=>{ev.preventDefault();
   if(ev.target.id==="cf"){send($("ct").value);return}
   if(parse(S.mark,S.e)==null){$("hint").textContent=`Enter a mark like ${ph(S.e)}`;return}
-  if(!S.gr){$("hint").textContent="Pick your grade (9th to 12th) to see your colleges.";const gs=$("gr");if(gs)gs.focus();return}
+  if(!S.gr){$("hint").textContent="Pick your grade to see your colleges.";const gs=document.querySelector(".gseg");if(gs){gs.classList.remove("need");void gs.offsetWidth;gs.classList.add("need");gs.querySelector("button").focus()}return}
   S.run=true;S.f="";S.div="";S.conf="";S.st="";S.n=24;render();
   /* each search gets its own URL: shareable, back button returns to the form, and analytics counts it as a page view (Ryan 2026-10-15: bounce rate) */
   try{const u=`/?g=${S.g}&e=${encodeURIComponent(S.e)}&m=${encodeURIComponent(S.mark.trim())}`;if(location.pathname+location.search!==u)history.pushState({},"",u)}catch(e){}{const el=document.querySelector(".sum");if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-74,behavior:"smooth"})}
@@ -883,7 +911,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
 
   /* return visit (new session, last search 30+ min ago): remind them of their own mark once, 15 s in, unless they search again */
   try{const first=!sessionStorage.getItem("prSeen");sessionStorage.setItem("prSeen","1");
-    if(first&&INT.e&&INT.m&&INT.t&&Date.now()-INT.t>18e5) setTimeout(()=>{if(!S.run)evalIn(`Welcome back, still working on that ${INT.m} in the ${evSay(INT.e)}?`,"See which college coaches would want you now. Get a free recruitment evaluation. It takes about a minute.",0,"return"+(+INT.gr>=11?"-11-12":"-9-10"))},15000)}catch(e){}
+    if(first&&INT.e&&INT.m&&INT.t&&Date.now()-INT.t>18e5) setTimeout(()=>{if(!S.run)evalIn(`Welcome back. Do college coaches know about your ${INT.m} in the ${evSay(INT.e)} yet?`,"If they don't, they can't recruit you. A free recruitment evaluation shows which coaches would want you now. It takes about a minute.",0,"return"+(+INT.gr>=11?"-11-12":"-9-10"))},15000)}catch(e){}
   /* ---- routing: /schools/<slug> opens that school; keeps the old site's URLs working ---- */
   const SLUG = SCH.map(s => (s.os && s.os[0]) || slugOf(s.n));   // old trackandfieldstandards.com URL first, so Google keeps its rankings
   const ALT = new Map(); SCH.forEach((s, i) => { ALT.set(slugOf(s.n), i); (s.os || []).forEach(x => ALT.set(x, i)); });
@@ -917,7 +945,6 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
       if (FIRST_ROUTE && nav && nav.type === "reload" && location.search) history.replaceState({}, "", location.pathname);
       FIRST_ROUTE = false;
       const q = new URLSearchParams(location.search);   /* shared result links: /?g=m&e=100m&m=10.95 */
-      if (q.get("for") === "parent" && !PARENT) { PARENT = true; if (q.get("e")) intent(q.get("e"), q.get("g") === "w" ? "w" : "m", q.get("m")); log("parent_visit", { event: q.get("e"), mark: q.get("m") }); }
       if (q.get("m") && q.get("e")) { if (!S.run || S.mark !== q.get("m") || S.e !== q.get("e")) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; } }
       else if (S.run) { S.run = false; S.mark = ""; S.f = S.div = S.conf = S.st = ""; }
       if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); } }

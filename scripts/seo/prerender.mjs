@@ -88,7 +88,7 @@ ${CHK_CSS}.sbar{position:fixed;left:12px;right:12px;bottom:12px;z-index:50;max-w
 <div class="cta"><b>Looking to run in college?</b> Preferred Recruit gets athletes' marks in front of college coaches. <a href="${QUIZ}">Get your free recruitment evaluation ›</a></div></main>
 <footer><div><a href="/explore.html">Explore every school, conference and result</a> · <a href="/privacy.html">Privacy</a><span>Standards updated ${DATES.db} · Results updated ${DATES.data} · © ${new Date().getFullYear()} Preferred Recruit</span></div></footer>
 <div class="sbar" id="sbar" hidden role="complementary" aria-label="Free recruitment evaluation"><p><b>Want college coaches to see these marks?</b> <span>Get a free recruitment evaluation from Preferred Recruit.</span></p><a href="${QUIZ}" target="_blank" rel="noopener">Get my evaluation</a><button type="button" aria-label="Close" id="sbx">×</button></div>
-<script>/* SEO-page bottom bar (Ryan 2026-10-17): shows after 50% scroll or 25 s, once per visit, never on arrival; shares the app pop-up's dismiss flag.
+<script>/* SEO-page bottom bar (Ryan 2026-10-17): shows after 50% scroll or 12 s (5 s from the 2nd page), once per visit, never on arrival; shares the app pop-up's dismiss flag.
    Search intent (Ryan 2026-10-16): the copy names the athlete's event (this page's event, else the last one they looked at on the site,
    from localStorage prIntent), the funnel link carries event + grade, and the page view goes to the anonymous insights log. */
 (function(){var T="https://airqmzyuxyyiqjaocwmk.supabase.co/functions/v1/track",I={},sid,T0=Date.now(),TRIG="";
@@ -105,7 +105,10 @@ var K="prEvalDismissed";try{if(sessionStorage.getItem(K)==="1"||sessionStorage.g
 function show(t){if(!b.hidden)return;TRIG=t||"timer";b.hidden=false;try{sessionStorage.setItem("prBarShown","1")}catch(e){}removeEventListener("scroll",sc);prLog("popup_shown",{placement:"seo-bar",event:I.e||undefined,variant:say?"bar-event":"bar-generic",trig:TRIG})}
 window.prBarTrig=function(){return TRIG};
 function sc(){var h=document.documentElement;if((scrollY+innerHeight)/h.scrollHeight>.5)show("scroll-50")}
-addEventListener("scroll",sc,{passive:true});setTimeout(function(){show("timer-25s")},25000);
+addEventListener("scroll",sc,{passive:true});
+/* timing from e-commerce benchmarks (Wisepops, 1B displays): 11 to 15 s converts best, 21 to 30 s worst; 2nd pageview converts best */
+var pv=1;try{pv=(+sessionStorage.getItem("prPV")||0)+1;sessionStorage.setItem("prPV",pv)}catch(e){}
+setTimeout(function(){show(pv>=2?"pageview-2":"timer-12s")},pv>=2?5000:12000);
 /* leaving? show the bar early: desktop mouse to the tab bar, phone fast scroll back up (after 8 s on the page) */
 document.addEventListener("mouseout",function(e){if(!e.relatedTarget&&e.clientY<=0&&Date.now()-T0>8000)show("exit-desktop")});
 var ly=scrollY,lt=Date.now();addEventListener("scroll",function(){var n=Date.now(),dy=scrollY-ly,dt=Math.max(n-lt,1);ly=scrollY;lt=n;if(innerWidth<700&&scrollY>400&&Date.now()-T0>8000&&dy/dt*1000<-2500)show("exit-scrollup")},{passive:true});

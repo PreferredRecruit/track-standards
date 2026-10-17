@@ -512,3 +512,35 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .hlp{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;font-size:14px;color:var(--pr-mute)}
 .hlp .hbtn{border:1px solid var(--pr-line);background:#fff;color:var(--pr-ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
 .hlp .hbtn:hover{background:var(--pr-soft)}.hlp .hbtn.pri{background:var(--pr-black,#0B0B0F);color:#fff;border-color:transparent;font-weight:650}
+/* centre modal (Ryan 2026-10-16, e-commerce benchmark data: centre > bottom corner, multi-step, click-to-reopen pill) */
+.evbg{position:fixed;inset:0;z-index:60;background:rgba(11,11,15,.42);opacity:0;transition:opacity .3s}.evbg.on{opacity:1}.evbg[hidden]{display:none}
+.eval{position:fixed;left:50%;top:50%;right:auto;bottom:auto;z-index:61;width:min(420px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto;
+  transform:translate(-50%,-46%) scale(.96);opacity:0;pointer-events:none;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .25s}
+.eval.on{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
+.eval .top{height:112px;display:flex;align-items:center;justify-content:center}
+.eval .evm{position:relative;z-index:1;color:#fff;text-align:center;line-height:1}
+.eval .evm small{display:block;font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;opacity:1;color:rgba(255,255,255,.92);margin-bottom:6px}
+.eval .evm strong{display:block;font-size:44px;font-weight:750;letter-spacing:-.03em}.eval .evm strong.lg{font-size:30px;width:58px;height:58px;line-height:58px;border-radius:17px;background:rgba(255,255,255,.18)}
+.eval .evq b{margin-bottom:12px}
+.eval .evo{display:grid;gap:8px}
+.eval .evo button{height:46px;border-radius:14px;border:1px solid var(--pr-line);background:var(--pr-card);color:var(--pr-ink);font:inherit;font-size:15px;font-weight:600;cursor:pointer;text-align:left;padding:0 16px}
+.eval .evo button:hover,.eval .evo button:focus-visible{border-color:var(--pr-violet,#7A45F0);background:var(--pr-soft)}
+.evpill{position:fixed;right:16px;bottom:16px;z-index:45;border:0;border-radius:999px;background:var(--pr-black,#0B0B0F);color:#fff;font:inherit;font-size:14px;font-weight:650;padding:11px 16px;box-shadow:0 14px 34px -14px rgba(20,16,60,.55);cursor:pointer}
+.evpill[hidden]{display:none}
+@media (max-width:700px){
+  .eval{left:50%;right:auto;bottom:auto;top:50%;width:calc(100vw - 32px);transform:translate(-50%,-46%) scale(.96)}
+  .eval.on{transform:translate(-50%,-50%) scale(1)}
+  .eval .top{display:flex;height:92px}.eval .x{background:rgba(255,255,255,.2);color:#fff}.eval .evm strong{font-size:36px}
+  .evpill{right:12px;bottom:12px;font-size:13px;padding:10px 14px}}
+.eval .top{height:auto;min-height:104px;padding:22px 52px 20px}.eval .evm strong.hk{font-size:28px;line-height:1.12;letter-spacing:-.025em}
+@media (max-width:700px){.eval .top{min-height:88px;padding:18px 48px 16px}.eval .evm strong.hk{font-size:24px}}
+/* grade picker = one-tap segmented buttons (Ryan 2026-10-16: the dropdown was "all messed up visually and functionally") */
+.row{grid-template-columns:auto minmax(0,1.1fr) minmax(0,1fr) auto}
+.gseg{grid-column:1/-1;order:5;display:flex;align-items:center;gap:12px}
+.gseg .gl{font-size:14px;font-weight:600;color:var(--pr-mute)}
+.gseg .seg button{padding:0 18px}
+.gseg.need .seg{box-shadow:0 0 0 2px var(--pr-violet,#7A45F0);animation:gshake .4s}
+@keyframes gshake{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@media (max-width:700px){.row{grid-template-columns:1fr 1fr}.gseg{order:0;justify-content:space-between}.gseg .seg{flex:1;display:flex}.gseg .seg button{flex:1;padding:0 6px}}
+.eval .evk{margin:-4px 0 12px;font-size:13px;font-weight:650;color:#6A35E8}.eval .evk[hidden]{display:none}
+.eval b,.eval .evm strong.hk{text-wrap:balance}
