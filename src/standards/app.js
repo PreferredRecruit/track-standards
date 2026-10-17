@@ -265,8 +265,10 @@ function schoolExtra(s){const lvl="Walk-On",i=SCH.indexOf(s);
   q.push([`What conference is ${s.n} track and field in?`,`${s.n} competes in ${s.c!==s.d?`the ${s.c} (${s.d})`:s.j?"the NJCAA (junior colleges compete nationally)":`the ${s.d}`}${s.s?` and is based in ${ST_NAME[s.s]||s.s}`:""}.`]);
   const conf=SCH.map((x,k)=>[x,k]).filter(([x,k])=>k!==i&&x.d===s.d&&x.c===s.c).sort((a,b)=>a[0].n.localeCompare(b[0].n)).slice(0,12);
   const st=s.s?SCH.map((x,k)=>[x,k]).filter(([x,k])=>k!==i&&x.s===s.s&&!(x.d===s.d&&x.c===s.c)).sort((a,b)=>a[0].n.localeCompare(b[0].n)).slice(0,12):[];
-  const list=(t,L)=>L.length?`<h3 class="tbh">${t}</h3><div class="rel">${L.map(([x,k])=>`<button type="button" data-school="${k}">${esc(x.n)}<small>${esc(x.d)}</small></button>`).join("")}</div>`:"";
-  return `<section class="faq"><h3 class="tbh">Common questions</h3>${q.map(([a,b])=>`<details><summary>${esc(a)}</summary><p>${esc(b)}</p></details>`).join("")}</section>`+list(`More ${esc(s.c)} programs`,conf)+list(`More college programs in ${esc(ST_NAME[s.s]||s.s||"")}`,st)}
+  /* folds (Ryan 2026-10-16: "less cluttered but still have all of the back links"): every link and answer stays in the page
+     (search engines read collapsed <details>), each section is one tap-to-open row */
+  const list=(t,L)=>L.length?`<details class="fold"><summary>${t}<small>${L.length}</small></summary><div class="rel">${L.map(([x,k])=>`<button type="button" data-school="${k}">${esc(x.n)}<small>${esc(x.d)}</small></button>`).join("")}</div></details>`:"";
+  return `<details class="fold faq"><summary>Common questions<small>${q.length}</small></summary>${q.map(([a,b])=>`<details><summary>${esc(a)}</summary><p>${esc(b)}</p></details>`).join("")}</details>`+list(`More ${esc(s.c)} programs`,conf)+list(`More college programs in ${esc(ST_NAME[s.s]||s.s||"")}`,st)}
 function schoolMore(s){const L=[`<a href="${confUrl(s)}">All ${esc(s.c)} schools</a>`];if(s.s)L.push(`<a href="${stateUrl(s.s)}">Colleges in ${esc(ST_NAME[s.s]||s.s)}</a>`);
   L.push(s.j?`<a href="/guides/junior-college-track-and-field-recruiting.html">Junior college recruiting guide</a>`:`<a href="/standards/${slugx(s.d)}-mens-400m.html">${esc(s.d)} standards by event</a>`,`<a href="/explore.html">Explore every conference and state</a>`);return `<nav class="more" aria-label="More">${L.join("")}</nav>`}
 function schoolLinks(s){const L=[];
@@ -294,33 +296,48 @@ function schoolResult(s,g){const e=SCK.e,v=parse(SCK.mark,e);if(v==null)return {
    on white, on = text colour on the band). Schools without data keep the default look. Logos only identify the program; a takedown
    sets hide_logo in scripts/brand/overrides.json. Our purple stays on every evaluation button. */
 let BR=null,BRL=false;
-function brandOf(s){if(BR===null){if(!BRL){BRL=true;fetch("/brand/brand.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(j=>{BR=j||{};if(S.school!=null)render()})}return null}
+function loadBrand(){if(BRL)return;BRL=true;fetch("/brand/brand.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(j=>{BR=j||{};if(S.school!=null){BRQ=true;render()}})}
+let BRQ=false;   /* the re-render after brand data arrives skips the entrance fade (no double fade) */
+if(/^\/schools\//.test(location.pathname))loadBrand();
+function brandOf(s){if(BR===null){loadBrand();return null}
   const b=BR[(s.os&&s.os[0])||slugOf(s.n)];return b&&b.primary?b:null}
+const schoolAbout=(s,vf="")=>`<section class="sabout"><details class="fold"><summary>About ${esc(s.n)}</summary><p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)}${s.j?" junior college":""} track and field program${s.c!==s.d?` in the ${esc(s.c)}`:""}${s.s?`, based in ${esc(ST_NAME[s.s]||s.s)}`:""}. ${s.j?"Junior colleges compete nationally rather than in conferences, so this site shows its season results instead of predicted recruiting levels.":`These are the marks it takes to be a Target recruit, a Recruit or a Walk-On for men and women in every event${s.o?", taken from the school's own published standards":""}.`}</p>${vf}${schoolLinks(s)}</details><div class="coach"><div><b>Interested in ${esc(s.n)}?</b><span>Let us help you contact the coach.</span></div><a href="${QUIZ}" target="_blank" rel="noopener">Get my recruitment evaluation</a></div></section>`;
 const brandNote=(s,B)=>B?`<p class="bnote">School names, logos and colours belong to their institutions and are used only to identify the program. Preferred Recruit is not affiliated with or endorsed by ${esc(s.n)}.</p>`:"";
 function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src,B=brandOf(s);
-  let o=`<div class="sec${B?" branded":""}" style="padding-top:0${B?`;--sb:${B.primary};--sbi:${B.ink||B.primary};--sbo:${B.on||"#fff"}`:""}"><button class="back" data-back>‹ Back</button>${B?`<div class="sband">${B.logo&&!B.hide_logo?`<img src="${esc(B.logo)}" alt="${esc(s.n)} logo" width="72" height="72" loading="eager">`:""}<div><small>${esc(s.d)} · ${esc(s.c)}</small><b>${esc(s.t||s.n)}</b></div></div>`:""}<h1 class="sname">${esc(s.n)} Track &amp; Field${s.j?" (NJCAA)":" Standards"}${s.o?' <span class="star big" title="Official standards, verified">★</span>':""}</h1>
-  <div class="meta"><span>${s.d} · ${esc(s.c)}${s.s?" · "+esc(s.s):""}</span>${s.o?`<span class="badge off">★ Official standards · published ${esc(s.yr)}</span>`:s.j?'<span class="badge">Junior college · season results, no levels</span>':'<span class="badge">Based on 2026 conference results</span>'}</div>
-  <p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)}${s.j?" junior college":""} track and field program${s.c!==s.d?` in the ${esc(s.c)}`:""}${s.s?`, based in ${esc(ST_NAME[s.s]||s.s)}`:""}. ${s.j?"Junior colleges compete nationally rather than in conferences, so this site shows its season results instead of predicted recruiting levels.":`Below are the marks it takes to be a Target recruit, a Recruit or a Walk-On for men and women in every event${s.o?", taken from the school's own published standards":""}.`}</p>
-  ${schoolLinks(s)}
-  <div class="coach"><div><b>Interested in ${esc(s.n)}?</b><span>Let us help you contact the coach.</span></div><a href="${QUIZ}" target="_blank" rel="noopener">Get my recruitment evaluation</a></div>
-  ${seg("g",g)}${s.j?"":schoolCheck(s,g)}`;
+  /* simple layout (Ryan 2026-10-16: "make it less cluttered and simple"): band (logo + name as the H1) → checker → table.
+     Description, links and the evaluation card move to "About" at the bottom (still on the page for search engines).
+     Schools without brand data get the same band in neutral ink with their initials. */
+  /* contrast guard (Ryan 2026-10-16: "color contrast so we can see it for every school"): band text must reach WCAG 4.5:1 on the
+     school colour; if it doesn't, the band uses the school's darker text-safe shade (ink) with white text */
+  const lum=h=>{const c=String(h||"").replace("#","");if(c.length!==6)return 0;const f=x=>{x=parseInt(x,16)/255;return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4)};return .2126*f(c.slice(0,2))+.7152*f(c.slice(2,4))+.0722*f(c.slice(4,6))};
+  const cr=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
+  let bb=B&&B.primary,bo=B&&(B.on||"#ffffff");if(B&&cr(bb,bo)<4.5){bb=B.ink||bb;bo=cr(bb,"#ffffff")>=cr(bb,"#0B0B0F")?"#ffffff":"#0B0B0F"}
+  const bv=B?`--sb:${bb};--sbi:${B.ink||B.primary};--sbo:${bo}`:"--sb:#1B1A25;--sbi:#4E33DB;--sbo:#fff";
+  const ini=(s.t||s.n).replace(/\(.*?\)/g,"").split(/[^A-Za-z&]+/).filter(w=>w&&!/^(of|the|at|and|in|for|university|college)$/i.test(w)).map(w=>w[0]).join("").slice(0,3).toUpperCase()||"PR";
+  const mark=B&&B.logo&&!B.hide_logo?`<img src="${esc(B.logo)}" alt="${esc(s.n)} logo" width="72" height="72" loading="eager">`:`<span class="sini" aria-hidden="true">${esc(ini)}</span>`;
+  const still=BRQ;BRQ=false;
+  let o=`<div class="sec branded simple${still?" still":""}" style="padding-top:0;${bv}"><button class="back" data-back>‹ Back</button>
+  <div class="sband">${mark}<div><small>${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(s.s):""}</small><h1 class="sname">${esc(s.n)} Track &amp; Field${s.j?" (NJCAA)":" Standards"}</h1>${s.o?`<span class="offpill">★ Official standards${s.yr?` · ${esc(s.yr)}`:""}</span>`:""}</div></div>
+  ${seg("g",g)}`;   /* school checker removed (Ryan 2026-10-16: "is that even necessary, the kids can clearly see") */
   if(s.j){
     o+=`<div class="verify" style="margin-top:16px"><b>No recruiting levels for junior colleges</b><span>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: junior colleges compete nationally rather than in conferences, so there's no reliable way to predict a program's marks. Below are ${esc(s.n)}'s best marks this season; the full national list, by event, is in Results.</span><a href="/?tab=results&div=NJCAA">NJCAA national list ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
     setTimeout(()=>teamBest(S.school),0);
     return o+`<div id="tbest"></div>`+schoolExtra(s)+schoolMore(s)+`</div>`}
   const off=s.o&&(s.off||{})[g];
   if(off){
-    o+=`<div class="scroll" style="margin-top:16px"><table><thead><tr><th>Event</th>${off.tiers.map(t=>`<th class="num">${esc(t)}</th>`).join("")}</tr></thead><tbody>${off.rows.map(r=>`<tr><td>${esc(r[0])}</td>${off.tiers.map((_,i)=>`<td class="num">${esc(r[i+1]||"–")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    o+=`<div class="scroll" style="margin-top:16px"><table><thead><tr><th>Event</th>${off.tiers.map(t=>`<th class="num" title="${esc(t)}">${esc(String(t).replace(/^(men's|women's|men|women)\s+/i,"").replace(/\s+standards?$/i,"")||t)}</th>`).join("")}</tr></thead><tbody>${off.rows.map(r=>`<tr><td>${esc(r[0])}</td>${off.tiers.map((_,i)=>`<td class="num">${esc(r[i+1]||"–")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
     <div class="verify"><b>★ Official standards</b><span>Published by ${esc(s.n)} (${esc(s.yr)}) and checked mark for mark by Preferred Recruit.</span><a href="${esc(s.src)}" target="_blank" rel="noopener">View the official source ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
   } else {
     const ev=EVENTS.filter(e=>s[g][e]);
-    o+=`<div class="scroll" style="margin-top:16px"><table><thead><tr><th>Event</th><th class="num">Target</th><th class="num">Recruit</th><th class="num">Walk-On ${levelsInfo()}</th></tr></thead><tbody>
+    o+=`<div class="scroll" style="margin-top:16px"><table><thead><tr><th>Event</th><th class="num">Target</th><th class="num">Recruit</th><th class="num">Walk‑On ${levelsInfo()}</th></tr></thead><tbody>
     ${ev.map(e=>`<tr><td>${e}</td><td class="num">${disp(s,g,e,0)}</td><td class="num">${disp(s,g,e,1)}</td><td class="num">${disp(s,g,e,2)}</td></tr>`).join("")||'<tr><td>No marks listed for this team yet.</td></tr>'}</tbody></table></div>
     <div class="verify"><b>How these are set</b><span>${ruleText(s)} ${esc(s.n)} doesn't publish an official chart we could verify.${EVENTS.some(e=>["m","w"].some(g=>((((CT[s.ck]||{})[g]||{})[e])||[]).some(v=>v&&v[2])))?" Levels marked est: the conference has too few athletes in that event to set a level, so it uses the median of the same level across its division.":""} High school 1600m, 3200m, 300m hurdle and 39" hurdle marks are converted to these college events automatically.</span>${src?`<a href="${esc(src)}" target="_blank" rel="noopener">See the ${esc(s.c)} list on TFRRS ›</a>`:""}${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
   }
   setTimeout(()=>teamBest(S.school),0);
   setTimeout(()=>schoolVids(S.school),0);
-  return o+`<div id="tbest"></div><div id="svid"></div>`+schoolExtra(s)+schoolMore(s)+brandNote(s,B)+`</div>`}
+  /* the "how these are set" / official-source box goes to the bottom (Ryan 2026-10-16: "just put it at the bottom") */
+  const vm=o.match(/<div class="verify">[\s\S]*?<\/div>/),vf=vm?vm[0]:"";if(vf)o=o.replace(vf,"");
+  return o+`<div id="tbest"></div><div id="svid"></div>`+schoolAbout(s,vf)+schoolExtra(s)+schoolMore(s)+brandNote(s,B)+`</div>`}
 /* Ryan's videos about this school (YouTube + Instagram reels), /data/videos.json written at build */
 let VIDS=null;
 function schoolVids(i){if(i==null)return;const fill=()=>{const el=document.getElementById("svid");if(!el||S.school!==i)return;const v=(VIDS||{})[SCH[i].n];if(!v){el.innerHTML="";return}
@@ -329,7 +346,9 @@ function schoolVids(i){if(i==null)return;const fill=()=>{const el=document.getEl
 /* season bests (Ryan 2026-10-14 "optimize everything"): /data/teams/<slug>.json is written at build from the latest outdoor TFRRS lists */
 const TB={};
 function teamBest(i){const slug=window.__prSlug?window.__prSlug(i):null;if(!slug||i==null)return;
+  const fold=el=>{const h=el.querySelector(".tbh");if(!h)return;const det=document.createElement("details"),sm=document.createElement("summary");det.className="fold";sm.innerHTML=h.innerHTML;h.remove();det.appendChild(sm);while(el.firstChild)det.appendChild(el.firstChild);el.appendChild(det)};
   const fill=d=>{const el=document.getElementById("tbest");if(!el||S.school!==i)return;const L=d?d[S.g]||[]:[];if(!L.length){el.innerHTML="";return}
+    setTimeout(()=>fold(el),0);
     el.innerHTML=`<h3 class="tbh">${esc(d.y)} season bests<small>${S.g==="m"?"Men":"Women"} · TFRRS outdoor</small></h3><p class="tbp">${esc(SCH[i].n)}'s best mark in each event this season${d.conf?`, with its rank on the ${esc(d.conf)} list`:""}.</p>
     <div class="scroll"><table class="tbt"><thead><tr><th>Event</th><th class="num">Mark</th><th class="num">Rank</th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.e)}<small>${r.ap?`<a href="https://tf.tfrrs.org/athletes/${esc(r.ap)}" target="_blank" rel="noopener nofollow">${esc(r.a)}</a>`:esc(r.a)}</small></td><td class="num">${esc(r.mk)}${parseFloat(r.w)>2?"<small>wind-aided</small>":""}</td><td class="num">${[d.conf&&r.cp?`#${r.cp} ${esc(d.conf)}`:"",r.np?`#${r.np} national`:""].filter(Boolean).join("<br>")||"–"}</td></tr>`).join("")}</tbody></table></div>`};
   if(slug in TB)return fill(TB[slug]);

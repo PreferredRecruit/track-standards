@@ -562,3 +562,56 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .bnote{margin-top:22px;font-size:12px;color:var(--pr-faint)}
 @media (max-width:560px){.branded .sband{padding:12px 14px;gap:12px}.branded .sband img{width:56px;height:56px}.branded .sband b{font-size:19px}}
 .branded .meta>span:first-child{display:none}
+/* simple school page */
+.simple .sband{margin:8px 0 14px;padding:18px}
+.simple .sband .sname{border:0;padding:0;margin:2px 0 0;font-size:24px;line-height:1.12;letter-spacing:-.025em;color:var(--sbo)}
+.simple .sband .star{color:#F5C451}
+.simple .sini{width:72px;height:72px;border-radius:16px;background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center;font-weight:800;font-size:22px;line-height:1;letter-spacing:.02em;flex:none}
+.simple .schk{margin-top:12px}
+.sabout{margin-top:34px;padding-top:22px;border-top:1px solid var(--pr-line)}
+.sabout h2{font-size:20px;letter-spacing:-.02em;margin:0 0 8px}
+.sabout .intro{margin:0 0 12px}
+@media (max-width:560px){.simple .sband .sname{font-size:21px}.simple .sini{width:56px;height:56px;font-size:18px}}
+/* tap-to-open sections on school pages */
+.simple .fold{border-top:1px solid var(--pr-line);margin:0}
+.simple .fold:last-of-type{border-bottom:1px solid var(--pr-line)}
+.simple .fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;min-height:56px;font-weight:650;font-size:16px;letter-spacing:-.01em}
+.simple .fold>summary::-webkit-details-marker{display:none}
+.simple .fold>summary small{font-weight:600;font-size:12px;color:var(--pr-mute);background:var(--pr-soft);border-radius:999px;padding:2px 8px}
+.simple .fold>summary::after{content:"";margin-left:auto;width:9px;height:9px;border-right:2px solid var(--pr-mute);border-bottom:2px solid var(--pr-mute);transform:rotate(45deg);transition:transform .2s}
+.simple .fold[open]>summary::after{transform:rotate(-135deg)}
+.simple .fold>summary:focus-visible{outline:2px solid #7A45F0;outline-offset:2px;border-radius:8px}
+.simple .fold[open]{padding-bottom:14px}
+.simple #tbest,.simple .sabout{margin:0}.simple .sabout{border:0;padding:0;margin-top:22px}
+.simple .sabout .coach{margin-top:18px}
+.simple .tbh{display:none}
+.simple .offpill{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;letter-spacing:.01em;background:rgba(255,255,255,.18);color:var(--sbo);border-radius:999px;padding:4px 10px}
+/* type + contrast pass (Ryan 2026-10-16: "make the text design more clean and easier to read") */
+.simple{--ink-1:#0B0B0F;--ink-2:#3A3946;--ink-3:#5E5D6B;-webkit-font-smoothing:antialiased}
+.simple .sband small{opacity:1;color:var(--sbo);font-size:13px;font-weight:600;letter-spacing:.01em}
+.simple .sband .sname{font-weight:750;text-wrap:balance}
+.simple .offpill{background:color-mix(in srgb,var(--sbo) 16%,transparent);border:1px solid color-mix(in srgb,var(--sbo) 28%,transparent)}
+.simple .seg{margin:4px 0 14px}
+.simple .scroll{border:1px solid var(--pr-line);border-radius:18px;background:var(--pr-card);margin-top:4px}
+.simple .scroll table{font-size:15.5px;border-collapse:separate;border-spacing:0;width:100%}
+.simple .scroll thead th{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:13px 14px;color:var(--sbi);background:color-mix(in srgb,var(--sb) 7%,var(--pr-card));border-bottom:1px solid var(--pr-line)}
+.simple .scroll tbody td{padding:14px 14px;border-bottom:1px solid color-mix(in srgb,var(--pr-line) 75%,transparent);color:var(--ink-2);vertical-align:middle}
+.simple .scroll tbody tr:last-child td{border-bottom:0}
+.simple .scroll tbody td:first-child{font-weight:600;color:var(--ink-1)}
+.simple .scroll tbody td.num{font-variant-numeric:tabular-nums;font-weight:650;color:var(--ink-1);letter-spacing:-.005em}
+.simple .scroll tbody td small{color:var(--ink-3);font-weight:500;font-size:12px}
+.simple .fold>summary{color:var(--ink-1)}
+.simple .sabout .intro,.simple .fold p{font-size:16px;line-height:1.6;color:var(--ink-2)}
+@media (max-width:560px){.simple .scroll thead th,.simple .scroll tbody td{padding-left:12px;padding-right:12px}.simple .scroll table{font-size:15px}}
+@media (max-width:560px){
+  .simple .scroll table{table-layout:fixed;font-size:14.5px}
+  .simple .scroll thead th:first-child,.simple .scroll tbody td:first-child{width:30%}
+  .simple .scroll thead th{font-size:10.5px;letter-spacing:.05em;padding:12px 8px}
+  .simple .scroll tbody td{padding:13px 8px}
+  .simple .scroll thead th:first-child,.simple .scroll tbody td:first-child{padding-left:14px}
+  .simple .scroll thead th:last-child,.simple .scroll tbody td:last-child{padding-right:14px}
+  .simple .scroll thead th .ci{display:none}}
+.simple .scroll thead th{white-space:normal;line-height:1.3;vertical-align:bottom;overflow-wrap:anywhere;hyphens:auto}
+.sec.still{animation:none}
+.simple .scroll thead th{overflow-wrap:break-word;hyphens:manual}@media (max-width:560px){.simple .scroll thead th{letter-spacing:.03em}}
+@media (max-width:560px){.simple .scroll thead th:first-child,.simple .scroll tbody td:first-child{width:25%}.simple .scroll thead th{font-size:10px}}
