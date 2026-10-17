@@ -508,3 +508,7 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .rctl{grid-template-columns:auto auto auto minmax(0,1.1fr) minmax(0,.9fr) minmax(0,1fr)}
 @media (max-width:760px){.rctl{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.rctl #rl,.rctl #rs{grid-column:auto}}
 @media (max-width:700px){.row{grid-template-columns:1fr 1fr}.row .gr{grid-column:1/-1}}
+/* helpful? -> send to a parent (Ryan 2026-10-16) */
+.hlp{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;font-size:14px;color:var(--pr-mute)}
+.hlp .hbtn{border:1px solid var(--pr-line);background:#fff;color:var(--pr-ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.hlp .hbtn:hover{background:var(--pr-soft)}.hlp .hbtn.pri{background:var(--pr-black,#0B0B0F);color:#fff;border-color:transparent;font-weight:650}

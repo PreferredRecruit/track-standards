@@ -45,12 +45,14 @@ const BUCKET=[...SID].reduce((a,c)=>a+c.charCodeAt(0),0)%2;
 const saveInt=()=>{try{localStorage.setItem("prIntent",JSON.stringify(INT))}catch(e){}};
 function intent(e,g,mark){if(!e)return;const grp=GRP(e);INT.e=e;INT.grp=grp;if(g)INT.g=g;if(mark)INT.m=mark;INT.c=INT.c||{};INT.c[grp]=(INT.c[grp]||0)+1;INT.t=Date.now();saveInt()}
 const topGrp=()=>{const c=INT.c||{};return Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||INT.grp};
-window.prLog=(k,x)=>log(k,Object.assign({event:INT.e||undefined,variant:x&&x.placement==="popup"&&EV.v||undefined},x));
+window.prLog=(k,x)=>log(k,Object.assign({event:INT.e||undefined,variant:x&&x.placement==="popup"&&EV.v||undefined,trig:x&&x.placement==="popup"&&EV.trig||undefined},x));
 /* a signed-in coach (coach portal token on this origin) is verified server-side, so coach views are tagged with their school */
-function log(kind,x){try{let ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}const b=Object.assign({sid:SID,kind,coach:ct,grade:INT.gr||undefined,path:location.pathname+location.search,mobile:innerWidth<700,utm_source:new URLSearchParams(location.search).get("utm_source")||undefined},x||{});
+const T0=Date.now();
+const scrollPct=()=>{const h=document.documentElement;return Math.min(100,Math.round((scrollY+innerHeight)/Math.max(h.scrollHeight,1)*100))};
+function log(kind,x){try{let ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}const b=Object.assign({sid:SID,kind,coach:ct,secs:Math.round((Date.now()-T0)/1000),scroll_pct:scrollPct(),hour:new Date().getHours(),grade:INT.gr||undefined,path:location.pathname+location.search,mobile:innerWidth<700,utm_source:new URLSearchParams(location.search).get("utm_source")||undefined},x||{});
   if(b.event&&!b.grp)b.grp=GRP(b.event);fetch(TRACK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(()=>{})}catch(e){}}
 /* the funnel link carries the intent too, so the evaluation and CRM know the event and grade (utm_term = event, pr_grade = grade) */
-function quizFor(){try{const u=new URL(QUIZ);if(INT.e)u.searchParams.set("utm_term",INT.e);if(INT.grp)u.searchParams.set("pr_group",INT.grp);if(INT.gr)u.searchParams.set("pr_grade",INT.gr);if(INT.m)u.searchParams.set("pr_mark",INT.m);return u.toString()}catch(e){return QUIZ}}
+function quizFor(){try{const u=new URL(QUIZ);if(INT.e)u.searchParams.set("utm_term",INT.e);if(INT.grp)u.searchParams.set("pr_group",INT.grp);if(INT.gr)u.searchParams.set("pr_grade",INT.gr);if(INT.m)u.searchParams.set("pr_mark",INT.m);if(PARENT){u.searchParams.set("pr_from","parent");u.searchParams.set("utm_medium","standards-parent")}return u.toString()}catch(e){return QUIZ}}
 const FIELD=new Set(["High Jump","Pole Vault","Long Jump","Triple Jump","Shot Put","Discus","Hammer","Javelin"]);
 const SHORT=new Set(["100m","200m","400m","100m Hurdles","110m Hurdles","300m Hurdles","400m Hurdles"]);
 const TF={"100m":"100 Meters","200m":"200 Meters","400m":"400 Meters","800m":"800 Meters","1500m":"1500 Meters","5000m":"5000 Meters","10000m":"10,000 Meters","100m Hurdles":"100 Hurdles","110m Hurdles":"110 Hurdles","400m Hurdles":"400 Hurdles","3000m Steeplechase":"3000 Steeplechase","High Jump":"High Jump","Pole Vault":"Pole Vault","Long Jump":"Long Jump","Triple Jump":"Triple Jump","Shot Put":"Shot Put","Discus":"Discus","Hammer":"Hammer","Javelin":"Javelin"};
@@ -103,14 +105,63 @@ const evs=g=>EVENTS.filter(e=>CONV[e]||SCH.some(s=>s[g][e])).filter(e=>!(g==="m"
 const PH={"100m":"10.85","200m":"22.10","400m":"49.50","800m":"1:58.00","1500m":"4:05.00","1600m":"4:21.50","Mile":"4:23.00","3000m":"8:50.00","3200m":"9:20.00","5000m":"15:30.00","10000m":"32:00.00","100m Hurdles":"14.20","110m Hurdles":"14.80",'110m Hurdles (39")':"14.80","300m Hurdles":"38.50","400m Hurdles":"54.20","3000m Steeplechase":"9:45.00","High Jump":"6'6\"","Pole Vault":"14'6\"","Long Jump":"22'6\"","Triple Jump":"46'0\"","Shot Put":"52'0\"","Discus":"150'0\"","Hammer":"160'0\"","Javelin":"180'0\""};
 const ph=e=>PH[e]||(FIELD.has(e)?"22'6\"":"4:21.50");
 
+/* ---------- the results offer (Ryan 2026-10-16) ----------
+   Copy ladder from the athlete's own result; fires at the moment they have seen it (results list scrolled into view and held for
+   1.5 s), not on a timer. Bucket 0 = data-driven copy, bucket 1 = plain intent copy (control). Parents arriving from a shared link
+   get the parent version. */
+let PARENT=false;
+function offerCopy(){const v=parse(S.mark,S.e);if(v==null)return null;
+  const all=SCH.filter(s=>tier(s,S.g,S.e,v)),n=all.length,T=all.filter(s=>tier(s,S.g,S.e,v)==="T").length,Rr=all.filter(s=>tier(s,S.g,S.e,v)==="R").length;
+  const es=evSay(S.e), mk=S.mark.trim(), late=+S.gr>=11, verb={throws:"throw",jumps:"jump",multis:"score"}[GRP(S.e)]||"run", sfx=PARENT?"":late?"-11-12":S.gr?"-9-10":"";
+  if(PARENT) return {n,v:"parent",t:n?`Your athlete's ${mk} in the ${es} fits ${n} colleges.`:`Every ${es} mark has a path.`,b:"Preferred Recruit helps families get in front of the coaches at schools like these. Start with a free recruitment evaluation. It takes about a minute."};
+  if(!n) return {n,v:"nofit"+sfx,t:`Every ${es} mark has a path.`,b:`If you want to get recruited for the ${es}, a free recruitment evaluation shows which programs fit you right now and what to ${verb} next.`};
+  const nm=nearMiss(S.g,S.e,v), ls=(()=>{const x=INT.sch&&SCH.find(y=>y.n===INT.sch);return x&&tier(x,S.g,S.e,v)?x:null})();
+  const base=`Your ${mk} in the ${es} fits ${n} colleges.`;
+  if(!BUCKET&&nm.n>=3) return {n,v:"nearmiss"+sfx,t:`You're ${nm.gap} from ${TN[nm.lvl]} level at ${nm.n} schools.`,b:`If you want to get recruited for the ${es}, a free recruitment evaluation shows which coaches would want you now and what to ${verb} to move up.`};
+  if(!BUCKET&&!T&&!Rr) return {n,v:"walkon"+sfx,t:`You can walk on at ${n} schools.`,b:`If you want to get recruited for the ${es} instead of walking on, a free recruitment evaluation shows which coaches would want you and what it takes.`};
+  if(!BUCKET&&ls) return {n,v:"school"+sfx,t:base,b:`${ls.n} is one of them. If you want ${ls.t||ls.n}'s coaches to see your ${es}, start with a free recruitment evaluation.`};
+  return {n,v:"intent"+sfx,t:base,b:late?`If you want to get recruited for the ${es}, college coaches are recruiting your class right now. A free recruitment evaluation shows which of these ${n} schools would want you.`:`If you want to get recruited for the ${es}, a free recruitment evaluation shows which of these ${n} schools fit you and what to ${verb} next.`};
+}
+let ARM=null;
+/* polls the live results list (it is re-rendered after a search, so an observer on one node goes stale) */
+function armOffer(){const o=offerCopy();if(!o||EV.shown||EV.dismissed)return;if(ARM)clearInterval(ARM.iv),clearTimeout(ARM.t);ARM={since:0};
+  const fire=trig=>{if(!ARM)return;clearInterval(ARM.iv);clearTimeout(ARM.t);ARM=null;evalIn(o.t,o.b,0,o.v,trig)};
+  if(!o.n){ARM.t=setTimeout(()=>fire("nofit"),3000);return}
+  ARM.t=setTimeout(()=>fire("results-timer"),12000);   /* fallback if they never scroll to the list */
+  ARM.iv=setInterval(()=>{if(!ARM)return;if(!S.run||S.school!=null){clearInterval(ARM.iv);clearTimeout(ARM.t);ARM=null;return}
+    const el=document.querySelector(".mtab"),r=el&&el.getBoundingClientRect(),inView=r&&r.top<innerHeight*0.55&&r.bottom>innerHeight*0.2;
+    if(inView){if(!ARM.since)ARM.since=Date.now();else if(Date.now()-ARM.since>=1500)fire("results-seen")}else ARM.since=0},250)}
+/* ---------- leaving? one last offer (Duolingo-style churn catch) ----------
+   Desktop: the mouse heads for the tab bar. Phones: a fast scroll back up or 45 s idle on the results. Once per visit, never if an
+   offer was already shown or dismissed, never in the first 20 s unless they searched. */
+const EXIT={idle:null,lastY:scrollY,lastT:Date.now()};
+function exitOffer(trig){if(EV.shown||EV.dismissed||S.school!=null)return;if(!S.run&&Date.now()-T0<20000)return;
+  const o=S.run?offerCopy():null;
+  evalIn(o&&o.n?`Before you go: your ${S.mark.trim()} in the ${evSay(S.e)} fits ${o.n} colleges.`:"Before you go, see where you stand.",
+    o&&o.n?"Want those coaches to see it? A free recruitment evaluation takes about a minute.":"Find out which college coaches would want you. Get a free recruitment evaluation. It takes about a minute.",0,"exit"+(o?"-"+o.v:""),trig)}
+document.addEventListener("mouseout",e=>{if(!e.relatedTarget&&e.clientY<=0&&innerWidth>=700)exitOffer("exit-desktop")});
+addEventListener("scroll",()=>{const now=Date.now(),dy=scrollY-EXIT.lastY,dt=Math.max(now-EXIT.lastT,1);EXIT.lastY=scrollY;EXIT.lastT=now;
+  if(innerWidth<700&&S.run&&scrollY>400&&dy/dt*1000<-2500)exitOffer("exit-scrollup")},{passive:true});
+const resetIdle=()=>{clearTimeout(EXIT.idle);if(S.run)EXIT.idle=setTimeout(()=>exitOffer("exit-idle"),45000)};
+["scroll","pointerdown","keydown","touchstart"].forEach(t=>addEventListener(t,resetIdle,{passive:true}));
+/* ---------- helpful? -> send to a parent (parents are the buyers) ---------- */
+const PARENT_URL=()=>`https://trackandfieldstandards.com/?g=${S.g}&e=${encodeURIComponent(S.e)}&m=${encodeURIComponent(S.mark.trim())}&for=parent&utm_source=share&utm_medium=parent&utm_campaign=PRstandards`;
+async function sendParent(btn){const url=PARENT_URL(),n=LASTSUM?LASTSUM.n:0,text=`Here are the ${n.toLocaleString()} colleges my ${S.mark.trim()} ${S.e} fits on Track Standards:`;
+  try{if(navigator.share){await navigator.share({title:"My college matches",text,url});log("share",{detail:"parent-native",event:S.e});btn.textContent="Sent";return}}catch(e){if(e&&e.name==="AbortError")return}
+  try{await navigator.clipboard.writeText(text+" "+url);btn.textContent="Link copied. Paste it in a text to your parent.";log("share",{detail:"parent-copy",event:S.e})}catch(e){btn.textContent=url}}
+document.addEventListener("click",ev=>{const b=ev.target.closest("[data-hlp],[data-fb],[data-parent]");if(!b)return;const box=$("hlp");
+  if(b.dataset.hlp==="up"){log("feedback",{detail:"helpful",event:S.e});box.innerHTML=`<span>Show your parent where you stand.</span><button type="button" class="hbtn pri" data-parent>Send these results to your parent</button>`;return}
+  if(b.dataset.hlp==="down"){log("feedback",{detail:"not-helpful",event:S.e});box.innerHTML=`<span>What was missing?</span>${[["wrong-mark","My event or mark looks off"],["missing-school","A school I want isn't here"],["division-info","I wanted more D2, D3 or NAIA info"],["other","Something else"]].map(([k,l])=>`<button type="button" class="hbtn" data-fb="${k}">${l}</button>`).join("")}`;return}
+  if(b.dataset.fb){log("feedback",{detail:b.dataset.fb,event:S.e});box.innerHTML="<span>Thanks. That helps us fix it.</span>";return}
+  if("parent" in b.dataset)sendParent(b)});
 /* ---------- Recruitment Evaluation slide-in ---------- */
-const EV={shown:false,dismissed:false,t:null,v:null};
+const EV={shown:false,dismissed:false,t:null,v:null,trig:null};
 try{EV.dismissed=sessionStorage.getItem("prEvalDismissed")==="1"}catch(e){}
 /* v = copy variant, logged with shown/clicked so the admin report compares conversion per copy, event group and grade */
-function evalIn(title,body,delay,v){
+function evalIn(title,body,delay,v,trig){
   if(EV.shown||EV.dismissed) return; clearTimeout(EV.t);
   EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||S.school!=null) return; $("evt").textContent=title; $("evp").textContent=body; $("eva").href=quizFor();
-    const el=$("eval"); el.classList.add("on"); el.setAttribute("aria-hidden","false"); EV.shown=true; EV.v=v||"generic"; log("popup_shown",{event:INT.e,placement:"popup",variant:EV.v})},delay||0);
+    const el=$("eval"); el.classList.add("on"); el.setAttribute("aria-hidden","false"); EV.shown=true; EV.v=v||"generic"; EV.trig=trig||"timer"; log("popup_shown",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig})},delay||0);
 }
 function evalOut(){const el=$("eval");el.classList.remove("on");el.setAttribute("aria-hidden","true");EV.dismissed=true;try{sessionStorage.setItem("prEvalDismissed","1")}catch(e){}}
 let scrolled=0,lastY=scrollY;
@@ -150,7 +201,7 @@ function standards(){
     const dd=(id,label,cur,list,fmt=x=>x)=>`<label class="dd${cur?" on":""}"><span class="sr">${label}</span><select id="${id}"><option value="">${label}</option>${list.map(x=>`<option value="${esc(x)}" ${x===cur?"selected":""}>${esc(fmt(x))}</option>`).join("")}</select></label>`;
     const cl=convLine(S.e,S.g,v), c=k=>all.filter(x=>x.t===k).length;LASTSUM={mark:S.mark,e:S.e,g:S.g,n:all.length,T:c("T"),R:c("R"),W:c("W")};
     o+=`<div class="mhead"><p class="sum">${esc(S.mark)} in the ${S.g==="m"?"men's":"women's"} ${esc(S.e)} fits <b>${all.length}</b> colleges</p>
-      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p>${cl?`<p class="cvl"><b>College equivalent</b> ${cl}${cinfo(S.e)}</p>`:""}${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}</div>
+      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p>${cl?`<p class="cvl"><b>College equivalent</b> ${cl}${cinfo(S.e)}</p>`:""}${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}${PARENT?"":`<div class="hlp" id="hlp"><span>Were these results helpful?</span><button type="button" class="hbtn" data-hlp="up">Yes</button><button type="button" class="hbtn" data-hlp="down">No</button></div>`}</div>
     <section class="mtab" aria-label="Your college matches">
       <div class="mbar"><h3>Your college matches</h3><div class="dds">
         ${dd("fd","All divisions",S.div,DIVS.filter(d=>opts("d",x=>x.s.d).includes(d)))}
@@ -828,16 +879,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
   try{const u=`/?g=${S.g}&e=${encodeURIComponent(S.e)}&m=${encodeURIComponent(S.mark.trim())}`;if(location.pathname+location.search!==u)history.pushState({},"",u)}catch(e){}{const el=document.querySelector(".sum");if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-74,behavior:"smooth"})}
   const v=parse(S.mark,S.e), n=SCH.filter(s=>tier(s,S.g,S.e,v)).length;
   intent(S.e,S.g,S.mark.trim()); log("search",{g:S.g,event:S.e,mark:S.mark.trim(),n_fits:n});
-  /* copy follows the athlete's own event and grade: juniors and seniors get the "coaches are recruiting your class now" line.
-     Data-driven variants (bucket 0): "near-miss" = schools where the athlete is within 2% (time) / 3% (field) of the next level;
-     "school" = the last school they opened, when their mark fits it. Bucket 1 keeps the plain intent copy as the control. */
-  const es=evSay(S.e), late=+S.gr>=11, verb={throws:"throw",jumps:"jump",multis:"score"}[GRP(S.e)]||"run", nm=nearMiss(S.g,S.e,v), ls=(()=>{const x=INT.sch&&SCH.find(y=>y.n===INT.sch);return x&&tier(x,S.g,S.e,v)?x:null})();
-  let ttl=n?`Your ${S.mark.trim()} in the ${es} fits ${n} colleges.`:`Every ${es} mark has a path.`, body, vr="intent";
-  if(!BUCKET&&nm.n>=3){vr="nearmiss";ttl=`You're ${nm.gap} from ${TN[nm.lvl]} level at ${nm.n} schools.`;body=`If you want to get recruited for the ${es}, a free recruitment evaluation shows which coaches would want you now and what to ${verb} to move up.`}
-  else if(!BUCKET&&ls){vr="school";body=`${ls.n} is one of them. If you want ${ls.t||ls.n}'s coaches to see your ${es}, start with a free recruitment evaluation.`}
-  else body=n?(late?`If you want to get recruited for the ${es}, college coaches are recruiting your class right now. A free recruitment evaluation shows which of these ${n} schools would want you.`:`If you want to get recruited for the ${es}, a free recruitment evaluation shows which of these ${n} schools fit you and what to ${verb} next.`)
-     :`If you want to get recruited for the ${es}, a free recruitment evaluation shows which programs fit you right now.`;
-  evalIn(ttl,body,2500,vr+(late?"-11-12":"-9-10"))});
+  armOffer();});
 
   /* return visit (new session, last search 30+ min ago): remind them of their own mark once, 15 s in, unless they search again */
   try{const first=!sessionStorage.getItem("prSeen");sessionStorage.setItem("prSeen","1");
@@ -875,11 +917,12 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
       if (FIRST_ROUTE && nav && nav.type === "reload" && location.search) history.replaceState({}, "", location.pathname);
       FIRST_ROUTE = false;
       const q = new URLSearchParams(location.search);   /* shared result links: /?g=m&e=100m&m=10.95 */
+      if (q.get("for") === "parent" && !PARENT) { PARENT = true; if (q.get("e")) intent(q.get("e"), q.get("g") === "w" ? "w" : "m", q.get("m")); log("parent_visit", { event: q.get("e"), mark: q.get("m") }); }
       if (q.get("m") && q.get("e")) { if (!S.run || S.mark !== q.get("m") || S.e !== q.get("e")) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; } }
       else if (S.run) { S.run = false; S.mark = ""; S.f = S.div = S.conf = S.st = ""; }
       if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); } }
     S.school = null; setMeta("College Track & Field Recruiting Standards & Rankings 2026-27", `Recruiting standards for ${NSTD.toLocaleString()} college track and field programs: walk-on, recruit and scholarship times for NCAA D1, D2, D3 and NAIA, plus results since 2016.`, "/",
-      {"@context": "https://schema.org", "@type": "WebSite", name: "Preferred Recruit Track & Field Standards", url: "https://trackandfieldstandards.com/"}); render();
+      {"@context": "https://schema.org", "@type": "WebSite", name: "Preferred Recruit Track & Field Standards", url: "https://trackandfieldstandards.com/"}); render(); if (S.run) armOffer();
   };
   window.__prStandardsRoute = route;
   window.__prSlug = i => SLUG[i];

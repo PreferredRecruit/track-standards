@@ -68,7 +68,7 @@ document.addEventListener("click",function(e){var a=e.target.closest&&e.target.c
 var p=a.closest(".pill,header nav")?"header":a.closest(".inl")?"hero":a.closest("#eval,.eval")?"popup":a.closest(".coach")?"school-page":a.closest(".hook")?"results":a.closest(".chat,.ask,.msgs,.msg,.ans")?"chat":a.closest(".sbar")?"seo-bar":a.closest(".cta")?"seo-page":"other";
 var path=location.pathname,kind=path==="/"?"home":path.indexOf("/schools/")===0?"school":path.split("/")[1].replace(".html","")||"home";
 try{var u=new URL(a.href);u.searchParams.set("utm_content",p);a.href=u.toString()}catch(x){}
-window.va("event",{name:"Evaluation click",data:{placement:p,page:kind,path:path.slice(0,120)}});if(window.prLog)window.prLog("popup_click",{placement:p,variant:p==="seo-bar"?(document.querySelector("#sbar b").textContent.indexOf("If you want")===0?"bar-event":"bar-generic"):undefined,event:(function(){try{return JSON.parse(localStorage.getItem("prIntent")).e}catch(e){}})()})},true);</script><script defer src="/_vercel/speed-insights/script.js"></script><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+window.va("event",{name:"Evaluation click",data:{placement:p,page:kind,path:path.slice(0,120)}});if(window.prLog)window.prLog("popup_click",{placement:p,trig:p==="seo-bar"&&window.prBarTrig?window.prBarTrig():undefined,variant:p==="seo-bar"?(document.querySelector("#sbar b").textContent.indexOf("If you want")===0?"bar-event":"bar-generic"):undefined,event:(function(){try{return JSON.parse(localStorage.getItem("prIntent")).e}catch(e){}})()})},true);</script><script defer src="/_vercel/speed-insights/script.js"></script><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <script type="application/ld+json">${JSON.stringify(bc)}</script><script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@type": "WebPage", name: title, url, dateModified: /^\/(results|champions)\//.test(pathname) ? resultsDate(pathname) : DATES.db })}</script>${(ld || []).map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join("")}
 <style>:root{--ink:#0B0B0F;--ink2:#2E2E36;--mute:#4A4A52;--line:#E4E3EA;--soft:#F3F2F7;--accent:#7A45F0}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#FDFDFE,#F1F0F6);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
@@ -91,10 +91,10 @@ ${CHK_CSS}.sbar{position:fixed;left:12px;right:12px;bottom:12px;z-index:50;max-w
 <script>/* SEO-page bottom bar (Ryan 2026-10-17): shows after 50% scroll or 25 s, once per visit, never on arrival; shares the app pop-up's dismiss flag.
    Search intent (Ryan 2026-10-16): the copy names the athlete's event (this page's event, else the last one they looked at on the site,
    from localStorage prIntent), the funnel link carries event + grade, and the page view goes to the anonymous insights log. */
-(function(){var T="https://airqmzyuxyyiqjaocwmk.supabase.co/functions/v1/track",I={},sid;
+(function(){var T="https://airqmzyuxyyiqjaocwmk.supabase.co/functions/v1/track",I={},sid,T0=Date.now(),TRIG="";
 try{I=JSON.parse(localStorage.getItem("prIntent"))||{};sid=localStorage.getItem("prSid");if(!sid){sid=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36));localStorage.setItem("prSid",sid)}}catch(e){sid="anon-"+Math.random().toString(36).slice(2,12)}
 function grp(e){e=String(e||"");return /hurdle/i.test(e)?"hurdles":/thlon/i.test(e)?"multis":/jump|vault/i.test(e)?"jumps":/shot|discus|hammer|javelin|weight|throw/i.test(e)?"throws":/relay/i.test(e)?(/800|1600|mile|medley/i.test(e)?"distance":"sprints"):/^(55|60|100|200|400)(m|$)/i.test(e)?"sprints":"distance"}
-window.prLog=function(k,x){try{var ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}var b={sid:sid,kind:k,coach:ct,grade:I.gr||undefined,path:location.pathname,mobile:innerWidth<700};for(var q in x||{})b[q]=x[q];if(b.event&&!b.grp)b.grp=grp(b.event);fetch(T,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(function(){})}catch(e){}};
+window.prLog=function(k,x){try{var ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}var hh=document.documentElement,b={sid:sid,kind:k,coach:ct,secs:Math.round((Date.now()-T0)/1000),scroll_pct:Math.min(100,Math.round((scrollY+innerHeight)/Math.max(hh.scrollHeight,1)*100)),hour:new Date().getHours(),grade:I.gr||undefined,path:location.pathname,mobile:innerWidth<700};for(var q in x||{})b[q]=x[q];if(b.event&&!b.grp)b.grp=grp(b.event);fetch(T,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(function(){})}catch(e){}};
 var m=location.pathname.match(/(?:^|[\/-])(boys|girls|mens|womens)-([a-z0-9-]+?)(?:-track-standards)?(?:\.html)?$/),ev=null,g=null;
 if(m){ev=m[2].replace(/-39$/,"").replace(/-/g," ");g=/^(boys|mens)$/.test(m[1])?"m":"w";I.e=ev;I.grp=grp(ev);I.g=g;I.c=I.c||{};I.c[I.grp]=(I.c[I.grp]||0)+1;try{localStorage.setItem("prIntent",JSON.stringify(I))}catch(e){}}
 prLog("seo_page",{event:ev||undefined,g:g||undefined});
@@ -102,9 +102,13 @@ var b=document.getElementById("sbar"),say=I.e?String(I.e).toLowerCase():"";
 if(say){b.querySelector("b").textContent="If you want to get recruited for the "+say+",";b.querySelector("span").textContent=" let college coaches see your marks. Get a free recruitment evaluation from Preferred Recruit.";}
 try{var u=new URL(b.querySelector("a").href);if(I.e)u.searchParams.set("utm_term",I.e);if(I.grp)u.searchParams.set("pr_group",I.grp);if(I.gr)u.searchParams.set("pr_grade",I.gr);b.querySelector("a").href=u.toString()}catch(e){}
 var K="prEvalDismissed";try{if(sessionStorage.getItem(K)==="1"||sessionStorage.getItem("prBarShown")==="1")return}catch(e){}
-function show(){if(!b.hidden)return;b.hidden=false;try{sessionStorage.setItem("prBarShown","1")}catch(e){}removeEventListener("scroll",sc);prLog("popup_shown",{placement:"seo-bar",event:I.e||undefined,variant:say?"bar-event":"bar-generic"})}
-function sc(){var h=document.documentElement;if((scrollY+innerHeight)/h.scrollHeight>.5)show()}
-addEventListener("scroll",sc,{passive:true});setTimeout(show,25000);
+function show(t){if(!b.hidden)return;TRIG=t||"timer";b.hidden=false;try{sessionStorage.setItem("prBarShown","1")}catch(e){}removeEventListener("scroll",sc);prLog("popup_shown",{placement:"seo-bar",event:I.e||undefined,variant:say?"bar-event":"bar-generic",trig:TRIG})}
+window.prBarTrig=function(){return TRIG};
+function sc(){var h=document.documentElement;if((scrollY+innerHeight)/h.scrollHeight>.5)show("scroll-50")}
+addEventListener("scroll",sc,{passive:true});setTimeout(function(){show("timer-25s")},25000);
+/* leaving? show the bar early: desktop mouse to the tab bar, phone fast scroll back up (after 8 s on the page) */
+document.addEventListener("mouseout",function(e){if(!e.relatedTarget&&e.clientY<=0&&Date.now()-T0>8000)show("exit-desktop")});
+var ly=scrollY,lt=Date.now();addEventListener("scroll",function(){var n=Date.now(),dy=scrollY-ly,dt=Math.max(n-lt,1);ly=scrollY;lt=n;if(innerWidth<700&&scrollY>400&&Date.now()-T0>8000&&dy/dt*1000<-2500)show("exit-scrollup")},{passive:true});
 document.getElementById("sbx").onclick=function(){b.hidden=true;try{sessionStorage.setItem(K,"1")}catch(e){}}})();</script></body></html>`;
 }
 
