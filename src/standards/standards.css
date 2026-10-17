@@ -685,3 +685,34 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .back{transition:opacity .15s}.back:hover{opacity:.7}
 @media (max-width:560px){.simple .sband .sname{font-size:21px}.simple .sband{padding:16px;gap:14px;border-radius:20px}}
 @media (prefers-reduced-motion:reduce){.eval,.eval.on,.evbg,.simple .fold::details-content{transition:none!important}}
+/* ===== pop-up v4: white Apple-style sheet (Ryan 2026-10-17) ===== */
+.eval{width:min(440px,calc(100vw - 32px));border-radius:24px;background:#fff;overflow:visible;
+  box-shadow:0 30px 80px -24px rgba(16,12,40,.38),0 0 0 .5px rgba(16,12,40,.08)}
+.eval .top{display:none}
+.eval .bd{padding:34px 30px 24px}
+.eval .x{position:absolute;right:16px;top:16px;width:30px;height:30px;border-radius:50%;border:0;background:#F2F2F7;color:#6E6E73;font-size:17px;line-height:1;display:grid;place-items:center;cursor:pointer;z-index:2;transition:background .15s}
+.eval .x:hover{background:#E5E5EA}
+.eval .eye{margin:0 0 8px;padding-right:34px;font-size:13px;font-weight:600;letter-spacing:.01em;color:#6E6E73}
+.eval .evh{margin:0 0 10px;padding-right:20px;font-size:27px;font-weight:700;line-height:1.14;letter-spacing:-.026em;color:#1D1D1F;text-wrap:balance}
+.eval #evp{margin:0 0 20px;font-size:16.5px;line-height:1.47;letter-spacing:-.01em;color:#6E6E73}
+.eval .evq{margin-top:18px}
+.eval .evql{margin:0 0 10px;font-size:15px;font-weight:600;color:#1D1D1F}
+.eval .evo{border:1px solid #E5E5EA;border-radius:14px}
+.eval .evo button{height:48px;font-size:16px;font-weight:500;color:#1D1D1F;border-bottom:1px solid #EFEFF4}
+.eval .evo button:focus{outline:none}.eval .evo button:focus-visible{background:#F5F5F7;box-shadow:inset 3px 0 0 #5B3FE4}
+.eval .evk{margin:-8px 0 18px;font-size:14px;font-weight:500;color:#5B3FE4}
+.eval a#eva{height:52px;border-radius:14px;background:#5B3FE4;color:#fff;font-size:17px;font-weight:600;letter-spacing:-.01em;box-shadow:none}
+.eval a#eva:hover{background:#4E33DB;transform:none;box-shadow:none}
+.eval a#eva:active{transform:scale(.985)}
+.eval .evlater{display:block;width:100%;margin:6px 0 0;height:40px;border:0;background:none;color:#6E6E73;font:inherit;font-size:15px;font-weight:500;cursor:pointer;border-radius:12px;transition:color .15s}
+.eval .evlater:hover{color:#1D1D1F}
+.eval small{margin-top:4px;font-size:12px;color:#86868B}
+.eval:focus{outline:none}
+/* phones: iOS-style bottom sheet */
+@media (max-width:600px){
+  .eval{left:0;right:0;top:auto;bottom:0;width:100%;max-height:88vh;border-radius:24px 24px 0 0;transform:translateY(105%);
+    padding-bottom:env(safe-area-inset-bottom)}
+  .eval.on{transform:translateY(0)}
+  .eval::before{content:"";position:absolute;left:50%;top:8px;width:38px;height:5px;margin-left:-19px;border-radius:3px;background:#D1D1D6}
+  .eval .bd{padding:30px 22px 18px}
+  .eval .evh{font-size:24px}}

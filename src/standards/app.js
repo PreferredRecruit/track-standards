@@ -117,20 +117,24 @@ const ph=e=>PH[e]||(FIELD.has(e)?"22'6\"":"4:21.50");
 const VERB=e=>({throws:"throw",jumps:"jump",multis:"score"})[GRP(e)]||"run";
 const hookLine=()=>{if(!S.run||!S.mark)return "";const mk=S.mark.trim(),es=evSay(S.e),vb=VERB(S.e);
   return vb==="run"?`You run a ${mk} ${es}?!`:`You ${vb} ${mk} in the ${es}?!`};
-const clock=()=>+S.gr===12?"Senior year goes fast and rosters are filling now.":+S.gr===11?"Junior year is when coaches build their next class.":S.gr?"Starting early is how you get ahead of your class.":"";
+/* copy v4 (Ryan 2026-10-17: Apple-level, "Standards" narrative, Cortex + sales-letter lines, short and authoritative).
+   Angle: PA/SA high school athlete (11th/12th first), benefit = visibility, proof = the site's own standards data.
+   Approved lines from the athlete sales letter: "Talent gets you the offer. Visibility gets you in the room.", "You are not the
+   problem.", the junior/senior window. human-copy rules; official claims only; numbers only from the site's data. */
+const clock=()=>+S.gr===12?"Senior year moves fast. Coaches are finishing their classes now.":+S.gr===11?"Junior year is the most important year of your recruiting timeline.":S.gr?"Starting early is how you compete for the best spots.":"";
+const EVAL="A free evaluation shows";
 function offerCopy(){const v=parse(S.mark,S.e);if(v==null)return null;
   const all=SCH.filter(s=>tier(s,S.g,S.e,v)),n=all.length,T=all.filter(s=>tier(s,S.g,S.e,v)==="T").length,Rr=all.filter(s=>tier(s,S.g,S.e,v)==="R").length;
-  const es=evSay(S.e), mk=S.mark.trim(), late=+S.gr>=11, vb=VERB(S.e), sfx=late?"-11-12":S.gr?"-9-10":"", N=n.toLocaleString();
-  const ev2=`Find out which coaches would want your ${mk}.`;
-  if(!n) return {n,v:"nofit"+sfx,t:"Not on the list yet? That doesn't mean you're not good enough.",b:`Find out which programs fit you right now and what to ${vb} next.`};
+  const mk=S.mark.trim(), late=+S.gr>=11, sfx=late?"-11-12":S.gr?"-9-10":"", N=n.toLocaleString();
+  if(!n) return {n,v:"nofit"+sfx,t:"Not on the chart yet? You are not the problem.",b:`Coaches recruit the athletes they know about. ${EVAL} which programs fit you today.`};
   const nm=nearMiss(S.g,S.e,v), ls=(()=>{const x=INT.sch&&SCH.find(y=>y.n===INT.sch);return x&&tier(x,S.g,S.e,v)?x:null})();
-  const bs={none:`Coaches can't recruit an athlete they've never heard of. ${ev2}`,
-    some:"A few emails is a start, but it isn't an offer. Find out how to turn that interest into real offers.",
-    offers:`Offers give you leverage. Find out who else would want your ${mk} before you sign.`};
-  if(!BUCKET&&nm.n>=3) return {n,v:"nearmiss"+sfx,bs,t:`You're ${nm.gap} from ${TN[nm.lvl]} level at ${nm.n} schools.`,b:ev2};
-  if(!BUCKET&&!T&&!Rr) return {n,v:"walkon"+sfx,bs,t:`You can walk on at ${N} schools. Why settle for walking on?`,b:`With the right coaches seeing your ${mk}, some of those programs could be recruiting you instead.`};
-  if(!BUCKET&&ls) return {n,v:"school"+sfx,bs,t:`${ls.t||ls.n} is on your list. Do their coaches know you exist?`,b:`Find out whether ${ls.t||ls.n} and the other ${(n-1).toLocaleString()} programs would want your ${mk}.`};
-  return {n,v:"intent"+sfx,bs,t:`That fits ${N} college programs. So why isn't your inbox full?`,b:ev2};
+  const bs={none:`Coaches recruit the athletes they know about. ${EVAL} which of these programs would want you.`,
+    some:`Interest is a good start. ${EVAL} how to turn it into offers.`,
+    offers:`Offers mean options. ${EVAL} who else would want you before you sign.`};
+  if(!BUCKET&&nm.n>=3) return {n,v:"nearmiss"+sfx,bs,t:`You're ${nm.gap} from Recruit level at ${nm.n} programs.`.replace("Recruit level",`${TN[nm.lvl]} level`),b:`${EVAL} which coaches would want you now and where to focus next.`};
+  if(!BUCKET&&!T&&!Rr) return {n,v:"walkon"+sfx,bs,t:`You meet the walk-on standard at ${N} programs.`,b:`${EVAL} which coaches could recruit you instead.`};
+  if(!BUCKET&&ls) return {n,v:"school"+sfx,bs,t:`Your ${mk} meets ${ls.t||ls.n}'s standard.`,b:`${ls.t||ls.n}'s coaches recruit the athletes they know about. ${EVAL} if they'd want you.`};
+  return {n,v:"intent"+sfx,bs,t:`Your ${mk} meets the standard at ${N} programs.`,b:bs.none};
 }
 let ARM=null;
 /* polls the live results list (it is re-rendered after a search, so an observer on one node goes stale) */
@@ -145,12 +149,12 @@ function armOffer(){const o=offerCopy();if(!o||EV.shown||EV.dismissed)return;if(
    Desktop: the mouse heads for the tab bar. Phones: a fast scroll back up or 45 s idle on the results. Once per visit, never if an
    offer was already shown or dismissed, never in the first 20 s unless they searched. */
 const EXIT={idle:null,lastY:scrollY,lastT:Date.now()};
-function exitOffer(trig){if(EV.shown||EV.dismissed)return;if(S.school!=null){const s=SCH[S.school];if(!s||s.j)return;const nm=s.t||s.n;EV.force=true;evalIn(`Want ${nm}'s coaches to see your marks?`,`See which college coaches would want you, ${nm} included. It's free and takes about a minute.`,0,"school-exit",trig,null);return}if(!S.run&&Date.now()-T0<20000)return;
+function exitOffer(trig){if(EV.shown||EV.dismissed)return;if(S.school!=null){const s=SCH[S.school];if(!s||s.j)return;const nm=s.t||s.n;EV.force=true;evalIn(`Does ${nm} know your name?`,`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,0,"school-exit",trig,null);return}if(!S.run&&Date.now()-T0<20000)return;
   const o=S.run?offerCopy():null;
   /* no search yet: speak to the high school athlete about their own event when we know it (Ryan 2026-10-17: simpler, ICP-specific) */
   const ie=INT.e?evSay(INT.e):"";
-  evalIn(o&&o.n?`Leaving with ${o.n.toLocaleString()} colleges on the table?`:ie?`Do college coaches know your ${ie} times?`:"Do college coaches know your times?",
-    o&&o.n?`Find out which of those coaches would want your ${S.mark.trim()}. A free recruitment evaluation takes about a minute.`:"See which college track programs would recruit you. It's free and takes about a minute.",0,"exit"+(o?"-"+o.v:""),trig,o&&o.bs)}
+  evalIn(o&&o.n?`${o.n.toLocaleString()} programs fit your ${S.mark.trim()}.`:"Talent gets you the offer. Visibility gets you in the room.",
+    o&&o.n?`Before you go: ${EVAL.toLowerCase()} which of them would want you. It takes about a minute.`:`${EVAL} which college programs would want you${ie?` for the ${ie}`:""}. It takes about a minute.`,0,"exit"+(o?"-"+o.v:""),trig,o&&o.bs)}
 document.addEventListener("mouseout",e=>{if(!e.relatedTarget&&e.clientY<=0&&innerWidth>=700)exitOffer("exit-desktop")});
 addEventListener("scroll",()=>{const now=Date.now(),dy=scrollY-EXIT.lastY,dt=Math.max(now-EXIT.lastT,1);EXIT.lastY=scrollY;EXIT.lastT=now;
   if(innerWidth<700&&S.run&&scrollY>400&&dy/dt*1000<-2500)exitOffer("exit-scrollup")},{passive:true});
@@ -174,28 +178,32 @@ function evalIn(title,body,delay,v,trig,bs){
    Closing leaves a small pill that reopens it (click-triggered). Shown only after an action (search result seen, exit, pill),
    never on arrival, so it is not an intrusive interstitial for Google. */
 const STATUS={none:"Not yet",some:"A few have",offers:"Yes, I have offers"};
-const statusLine=k=>({none:"Coaches can't recruit you if they don't know your marks. Let's change that.",some:"Interest is a start. Let's turn it into real offers.",offers:"Offers give you options. Let's find out who else would want you."})[k]||"";
+const statusLine=k=>({none:"Coaches recruit the athletes they know about.",some:"Interest is a good start.",offers:"Offers mean options."})[k]||"";
 /* step 2 copy: once the athlete has answered, their answer + one short line replaces the long body */
-const evBody=()=>INT.rs&&EV.bs&&EV.bs[INT.rs]?EV.bs[INT.rs]:INT.rs&&!EV.body?statusLine(INT.rs)+" A free recruitment evaluation shows which coaches would want you.":(EV.body||"Get a free recruitment evaluation from Preferred Recruit. It takes about a minute.");
-function openEval(log1){const el=$("eval");$("evt").textContent=EV.title||"See where you stand with college coaches.";
-  $("evp").textContent=evBody();
-  $("eva").href=quizFor();
-  const hk=EV.hook||hookLine(),ck=S.run||EV.hook?clock():"";EV.hook=null;$("evk").textContent=ck;$("evk").hidden=!ck;const head=hk||EV.title||"Do college coaches know your times?";$("evm").innerHTML=`<strong class="hk">${esc(head)}</strong>`;$("evt").hidden=!hk;{const qb=$("evq").querySelector("b");if(qb)qb.textContent=/coach/i.test(head)?"Have any reached out to you yet?":"Have college coaches reached out to you yet?"}
+const evBody=()=>INT.rs&&EV.bs&&EV.bs[INT.rs]?EV.bs[INT.rs]:(EV.body||`${EVAL} which college programs would want you. It takes about a minute.`);
+function eyebrow(){if(S.school!=null){const s=SCH[S.school];return s?`${s.t||s.n} · ${s.d}`:""}
+  if(S.run&&S.mark)return `${S.g==="w"?"Girls":"Boys"} ${S.e} · ${S.mark.trim()}${S.gr?` · ${S.gr}th grade`:""}`;
+  return "Free recruitment evaluation"}
+function openEval(log1){const el=$("eval");
+  $("eve").textContent=eyebrow();$("evm").textContent=EV.title||"Talent gets you the offer. Visibility gets you in the room.";
+  $("evp").textContent=evBody();$("eva").href=quizFor();
+  const ck=S.run||S.school!=null?clock():"";$("evk").textContent=ck;$("evk").hidden=!ck;
   const ask=!INT.rs;$("evq").hidden=!ask;$("evs").hidden=ask;
   el.classList.add("on");el.setAttribute("aria-hidden","false");$("evbg").hidden=false;requestAnimationFrame(()=>$("evbg").classList.add("on"));$("evpill").hidden=true;EV.shown=true;
   if(log1)log("popup_shown",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig});
-  setTimeout(()=>{const f=ask?el.querySelector("[data-evq]"):$("eva");f&&f.focus({preventScroll:true})},350)}
+  setTimeout(()=>{try{el.focus({preventScroll:true})}catch(e){}},350)}
 function evalOut(){const el=$("eval");el.classList.remove("on");el.setAttribute("aria-hidden","true");$("evbg").classList.remove("on");setTimeout(()=>{if(!$("eval").classList.contains("on"))$("evbg").hidden=true},300);
   EV.dismissed=true;try{sessionStorage.setItem("prEvalDismissed","1")}catch(e){}
   if(S.school==null)$("evpill").hidden=false}
 document.addEventListener("click",ev=>{
   const q=ev.target.closest("[data-evq]");if(q){INT.rs=q.dataset.evq;saveInt();log("feedback",{detail:"status-"+q.dataset.evq,event:INT.e});
-    $("evp").textContent=evBody();$("eva").href=quizFor();$("evq").hidden=true;$("evs").hidden=false;$("eva").focus({preventScroll:true});return}
+    $("evp").textContent=evBody();$("eva").href=quizFor();$("evq").hidden=true;$("evs").hidden=false;return}
+  if(ev.target.closest("#evlater")){evalOut();return}
   if(ev.target.id==="evbg"){evalOut();return}
   if(ev.target.closest("#evpill")){EV.v=(EV.v||"generic").replace(/^pill-/,"");EV.v="pill-"+EV.v;EV.trig="pill-click";openEval(true)}});
 let scrolled=0,lastY=scrollY;
 addEventListener("scroll",()=>{scrolled+=Math.abs(scrollY-lastY);lastY=scrollY;
-  if(S.tab==="results"&&S.school==null&&scrolled>1400) {const gp=GRP(evLabel(R.ev||""))||topGrp();evalIn(gp?`Want to get recruited for ${GNAME[gp]}?`:"Close to these marks?",gp?`${GCOACH[gp]} recruit from lists like this one. Get a free recruitment evaluation and see where your marks fit.`:"Coaches recruit from these lists. Get a free recruitment evaluation and see where you fit.",0,gp?"results-"+gp:"results")}},{passive:true});
+  if(S.tab==="results"&&S.school==null&&scrolled>1400) {const gp=GRP(evLabel(R.ev||""))||topGrp();evalIn("Coaches recruit from lists like this one.",`${EVAL} where your marks fit and which programs would want you.`,0,gp?"results-"+gp:"results")}},{passive:true});
 
 /* ---------- Standards (the current site's flow, rebranded) ---------- */
 const DEF={W:"The minimum mark required to earn a spot on the team.",R:"The range where coaches typically start recruiting conversations and scholarship discussions begin.",T:"The marks that typically grant a full-ride scholarship, depending on school funding."};
@@ -309,12 +317,12 @@ const brandNote=(s,B)=>B?`<p class="bnote">School names, logos and colours belon
    scrolled past the standards table (held 1.2 s), once per visit, same modal + rules as everywhere else. */
 let SARM=null;
 function armSchoolOffer(i){clearInterval(SARM);const s=SCH[i];if(!s||s.j||EV.shown||EV.dismissed)return;let since=0;
-  const nm=s.t||s.n,ask=`Find out if ${nm} would want you.`;
-  const bs={none:`Coaches can't recruit an athlete they've never heard of. ${ask}`,some:`A few emails is a start, but it isn't an offer. ${ask}`,offers:`Offers give you leverage. Find out if ${nm} would want you before you sign.`};
+  const nm=s.t||s.n;
+  const bs={none:`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,some:`Interest is a good start. ${EVAL} how to turn it into an offer from ${nm}.`,offers:`Offers mean options. ${EVAL} if ${nm} would want you before you sign.`};
   SARM=setInterval(()=>{if(S.school!==i||EV.shown||EV.dismissed){clearInterval(SARM);return}
     const t=document.querySelector(".simple .scroll"),r=t&&t.getBoundingClientRect();if(!r)return;
     if(r.bottom<innerHeight*.6){if(!since)since=Date.now();else if(Date.now()-since>1200){clearInterval(SARM);EV.force=true;
-      evalIn(`Want ${nm}'s coaches to see your marks?`,`See which college coaches would want you, ${nm} included. It's free and takes about a minute.`,0,"school-page"+(+S.gr>=11?"-11-12":S.gr?"-9-10":""),"school-scroll",bs)}}else since=0},300)}
+      evalIn(`Does ${nm} know your name?`,`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,0,"school-page"+(+S.gr>=11?"-11-12":S.gr?"-9-10":""),"school-scroll",bs)}}else since=0},300)}
 function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src,B=brandOf(s);
   /* simple layout (Ryan 2026-10-16: "make it less cluttered and simple"): band (logo + name as the H1) → checker → table.
      Description, links and the evaluation card move to "About" at the bottom (still on the page for search engines).
@@ -919,7 +927,7 @@ async function send(t){
     m.busy=0;CHAT.busy=false;render();toBottom();const ct=$("ct");if(ct)ct.focus();
   }
   {const d=detect(t);if(d.e){intent(d.e,d.g,d.mark);log("chat",{event:d.e,g:d.g||undefined,mark:d.mark,school:d.school!=null?SCH[d.school].n:undefined,division:d.div})}else if(d.school!=null)log("chat",{school:SCH[d.school].n})}
-  if(CHAT.msgs.length>=4) evalIn(INT.e?`Want help getting recruited for the ${evSay(INT.e)}?`:"Want a real person on your recruiting?",INT.e?"A real person at Preferred Recruit can take it from here. Get a free recruitment evaluation. It takes about a minute.":"Get a free recruitment evaluation from Preferred Recruit. It takes about a minute.",1800,INT.e?"chat-event":"chat");
+  if(CHAT.msgs.length>=4) evalIn("Want a real person on your recruiting?",`${EVAL} which college programs would want you${INT.e?` for the ${evSay(INT.e)}`:""}. It takes about a minute.`,1800,INT.e?"chat-event":"chat");
 }
 document.addEventListener("click",ev=>{if(ev.target.closest("#stop"))CTL?.abort()});
 
@@ -1007,7 +1015,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
 
   /* return visit (new session, last search 30+ min ago): remind them of their own mark once, 15 s in, unless they search again */
   try{const first=!sessionStorage.getItem("prSeen");sessionStorage.setItem("prSeen","1");
-    if(first&&INT.e&&INT.m&&INT.t&&Date.now()-INT.t>18e5) setTimeout(()=>{if(!S.run)evalIn(`Welcome back. Do coaches know your ${INT.m} ${evSay(INT.e)} yet?`,"If they don't, they can't recruit you. See which college coaches would want you. It's free and takes about a minute.",0,"return"+(+INT.gr>=11?"-11-12":"-9-10"))},15000)}catch(e){}
+    if(first&&INT.e&&INT.m&&INT.t&&Date.now()-INT.t>18e5) setTimeout(()=>{if(!S.run)evalIn(`Do coaches know about your ${INT.m} ${evSay(INT.e)} yet?`,`If they don't, they can't recruit you. ${EVAL} who would.`,0,"return"+(+INT.gr>=11?"-11-12":"-9-10"))},15000)}catch(e){}
   /* ---- routing: /schools/<slug> opens that school; keeps the old site's URLs working ---- */
   const SLUG = SCH.map(s => (s.os && s.os[0]) || slugOf(s.n));   // old trackandfieldstandards.com URL first, so Google keeps its rankings
   const ALT = new Map(); SCH.forEach((s, i) => { ALT.set(slugOf(s.n), i); (s.os || []).forEach(x => ALT.set(x, i)); });
