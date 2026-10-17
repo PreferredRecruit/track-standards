@@ -31,6 +31,11 @@
   ],
   "redirects": [
     {
+      "source": "/coaches.html",
+      "destination": "/",
+      "permanent": false
+    },
+    {
       "source": "/guides/ncaa-d1-vs-d2-vs-d3-vs-naia-vs-njcaa-track-and-field.html",
       "destination": "/guides/ncaa-d1-vs-d2-vs-d3-vs-naia-track-and-field.html",
       "permanent": true

@@ -122,7 +122,7 @@ ${vidHtml((VID.schools || {})[s.n])}
 ${(() => { const q = faq(s, B); return `<h2>Common questions</h2>${q.map(([qq, aa]) => `<h3>${esc(qq)}</h3><p>${esc(aa)}</p>`).join("")}`; })()}
 ${(() => { const [c, st] = related(s); return (c.length ? `<h2>More ${esc(s.c)} programs</h2><ul style="columns:3 200px">${c.map(x => `<li><a href="/schools/${schoolSlug(x)}">${esc(x.n)}</a></li>`).join("")}</ul>` : "") + (st.length ? `<h2>More college programs in ${esc(STATE[s.s] || s.s)}</h2><ul style="columns:3 200px">${st.map(x => `<li><a href="/schools/${schoolSlug(x)}">${esc(x.n)}</a> <small>${esc(x.d)}</small></li>`).join("")}</ul>` : ""); })()}
 ${links.length ? `<h2>Links</h2><ul>${links.map(([, u, t]) => `<li><a href="${esc(u)}" rel="noopener">${t}</a></li>`).join("")}</ul>` : ""}
-${J ? "" : `<p style="font-size:14px">${s.cv ? `Coach at ${esc(s.n)}? <a href="/coaches.html?school=${esc(schoolSlug(s))}">Update your standards ›</a>` : `Coach at ${esc(s.n)}? <a href="/coaches.html?school=${esc(schoolSlug(s))}">Publish your official recruiting standards ›</a>`}</p>`}
+${/* coach portal links removed (Ryan 2026-10-16: "take out the coach log in"); backend kept, see social/standards/site/portal */""}
 <p style="font-size:13px;color:#4A4A52">${J ? "" : `Standards updated ${DATES.db}`}${B ? `${J ? "" : " · "}Season bests updated ${DATES.data}` : ""}</p>
 <p><a href="${confUrl(s)}">All ${esc(s.c)} ${J ? "junior college programs" : "standards"}</a>${s.s ? ` · <a href="${statePath(s.s)}">College track in ${esc(STATE[s.s] || s.s)}</a>` : ""} · <a href="/how-fast.html">How fast do you need to run in college?</a> · <a href="${QUIZ}">Free recruitment evaluation</a></p>
 </main>`;
