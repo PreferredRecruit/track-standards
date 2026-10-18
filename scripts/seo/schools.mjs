@@ -80,6 +80,7 @@ export function schoolPages({ root, out, S, DATES = {}, SITE, QUIZ, esc, schoolS
     const st = s.s ? (byState.get(s.s) || []).filter(x => x !== s && !conf.includes(x)).sort((a, b) => a.n.localeCompare(b.n)).slice(0, 12) : [];
     return [conf, st];
   };
+  const T_COUNT = new Map(); for (const x of S) if (x.t) T_COUNT.set(x.t, (T_COUNT.get(x.t) || 0) + 1);
   for (const s of S) {
     const slug = schoolSlug(s), p = `/schools/${slug}`, url = SITE + p, J = !!s.j;
     const B = bests(s);
@@ -87,7 +88,11 @@ export function schoolPages({ root, out, S, DATES = {}, SITE, QUIZ, esc, schoolS
     const pick = (g, e) => { const t = std(s, g, e); return t ? t[2] : null; };
     const ex = [["m", "100m"], ["w", "400m"], ["m", "1500m"]].map(([g, e]) => [g, e, pick(g, e)]).filter(x => x[2]).slice(0, 2);
     const short = s.n.length <= 32 ? s.n : (s.t || s.n);
-    const title = fitTitle(J ? `${short} Track & Field (NJCAA): ${B ? B.y + " " : ""}Results & Roster` : `${short} Track & Field Recruiting Standards ${SEASON}`);
+    /* searches say "ohio state track and field recruiting standards": keep "Track & Field" + year by using the common team name
+       (Ohio State, Michigan, USC) when the full name doesn't fit; never TFRRS abbreviations like "Miami (Fla.)" or "Colorado St." */
+    const T = `Track & Field Recruiting Standards ${SEASON}`, common = s.t && !/[().]/.test(s.t) && s.t !== s.n && T_COUNT.get(s.t) === 1 ? s.t : null;
+    const title = fitTitle(J ? `${short} Track & Field (NJCAA): ${B ? B.y + " " : ""}Results & Roster`
+      : `${s.n} ${T}`.length <= 60 ? `${s.n} ${T}` : common && `${common} ${T}`.length <= 60 ? `${common} ${T}` : `${short} ${T}`);
     const lw = levelWords(s.d), ofc = s.o ? ", from the official team chart" : "", conf = s.c !== s.d ? ", " + s.c : "";
     const exTxt = ex.length ? " " + ex.map(([g, e, v]) => `${g === "m" ? "Men's" : "Women's"} ${e} walk-on: ${v}.`).join(" ") : "";
     const weekly = B ? [" Season bests updated weekly.", " Free, no sign-up.", " Free."] : [" Free, no sign-up.", " Free to use.", " Free."];

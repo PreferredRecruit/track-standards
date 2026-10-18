@@ -8,6 +8,7 @@
 - [Explore](https://trackandfieldstandards.com/explore.html): every conference, state, event standard, national champion and top-marks list.
 - School pages: https://trackandfieldstandards.com/schools/<school-name>-track-standards (e.g. /schools/university-of-oregon-track-standards)
 - Conference pages: https://trackandfieldstandards.com/conferences/<conference>-track-standards.html (e.g. /conferences/sec-track-standards.html)
+- Division overviews (median Target, Recruit and Walk-On mark in every event): https://trackandfieldstandards.com/standards/ncaa-d1-track-and-field-recruiting-standards.html , /standards/ncaa-d2-track-and-field-recruiting-standards.html , /standards/ncaa-d3-track-and-field-recruiting-standards.html , /standards/naia-track-and-field-recruiting-standards.html
 - Standards by division and event: https://trackandfieldstandards.com/standards/<division>-<mens|womens>-<event>.html (e.g. /standards/ncaa-d1-mens-400m.html)
 - States: https://trackandfieldstandards.com/states/<state>-college-track-and-field.html
 - National champions: https://trackandfieldstandards.com/champions/<year>-<outdoor|indoor>-<division>.html

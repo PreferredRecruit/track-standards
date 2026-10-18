@@ -1101,7 +1101,9 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
         const lw = s.d === "NCAA D3" ? "walk-on and target" : s.d === "NAIA" ? "walk-on and scholarship-level" : "walk-on, recruit and scholarship-level";
         const desc = s.j ? `${s.n} (NJCAA) junior college track and field: season bests in every event, roster and TFRRS links, and how junior college recruiting works.` : `${s.n} track and field recruiting standards 2026-27 (${s.d}${s.c !== s.d ? ", " + s.c : ""}): ${lw} marks for every men's and women's event${s.o ? ", from the official team chart" : ""}. Free, updated weekly.`;
         const descPrev = s.j ? `${s.n} is an NJCAA junior college track and field program. Season bests, roster and TFRRS links; junior colleges get results here, not predicted recruiting standards.` : `${s.n} track and field recruiting standards: Target, Recruit and Walk-On marks for men and women (${s.d}, ${s.c})${s.o ? ", from the school's official published standards" : ""}.`;
-        const short = s.n.length <= 32 ? s.n : (s.t || s.n), T0 = s.j ? `${short} Track & Field (NJCAA): Results & Roster` : `${short} Track & Field Recruiting Standards 2026-27`;
+        const short = s.n.length <= 32 ? s.n : (s.t || s.n), TT = "Track & Field Recruiting Standards 2026-27",
+          common = s.t && !/[().]/.test(s.t) && s.t !== s.n && SCH.filter(x => x.t === s.t).length === 1 ? s.t : null, /* same rule as the pre-built page title */
+          T0 = s.j ? `${short} Track & Field (NJCAA): Results & Roster` : `${s.n} ${TT}`.length <= 60 ? `${s.n} ${TT}` : common && `${common} ${TT}`.length <= 60 ? `${common} ${TT}` : `${short} ${TT}`;
         setMeta((T0 + " | Preferred Recruit").length <= 62 ? T0 + " | Preferred Recruit" : T0, desc, path, {"@context": "https://schema.org", "@type": "SportsOrganization", name: s.n + " Track & Field", sport: "Track and Field",
           url: "https://trackandfieldstandards.com" + path, description: desc, memberOf: {"@type": "SportsOrganization", name: s.c}, ...(s.s ? {address: {"@type": "PostalAddress", addressRegion: s.s}} : {}),
           sameAs: [s.ws, s.rs, s.src, s.u].filter(Boolean)});
