@@ -14,7 +14,8 @@
      into daily pages: only (a) its state page, one "By event" block that grows to at most 29 links, and (b) one hub per
        event (/colleges/<boys|girls>-<event>.html) listing the states. Each how-fast page gains ONE link (to its hub) and
        /explore.html gains ONE link (to /colleges.html). No homepage, footer, guide or sitewide link dumps.
-   Quality floor: a page exists only when 3+ programs in that state list that event. */
+   Quality floor: a page exists only when 5+ programs in that state list that event (raised from 3 on 2026-10-18 when every page
+   was released at once: Ryan "only if it helps not hurts"; 3-4 program pages were the only thin ones). */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,7 +23,7 @@ import { CONV, HS_EVENTS } from "./hs.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SCHED = path.join(HERE, "daily-schedule.json");
-const PER_DAY = 25, LAUNCH = "2026-10-17", MIN_PROGRAMS = 3, MAX_RELATED = 8;
+const PER_DAY = 25, LAUNCH = "2026-10-17", MIN_PROGRAMS = 5, MAX_RELATED = 8;
 const WEIGHT = { "100m": 1, "200m": .8, "400m": .9, "800m": .85, "1600m": 1, "3200m": .8, "100m Hurdles": .6, '110m Hurdles (39")': .6, "300m Hurdles": .6,
   "High Jump": .55, "Pole Vault": .45, "Long Jump": .7, "Triple Jump": .5, "Shot Put": .6, "Discus": .5 };
 const STATE = { AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado", CT: "Connecticut", DE: "Delaware", DC: "Washington DC", FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", PR: "Puerto Rico", BC: "British Columbia" };
