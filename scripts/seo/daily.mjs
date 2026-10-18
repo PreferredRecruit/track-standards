@@ -3,6 +3,7 @@
    listing every program in that state with its real Target / Recruit / Walk-On for that event (high school units, converted
    like the rest of the site). Each page carries data no other page has, so this is not thin or duplicate content.
 
+   Ryan 2026-10-18 ("its taking forever"): every scheduled page released on 2026-10-18; new combinations still append at 25/day.
    Release: scripts/seo/daily-schedule.json fixes every page's publish date (25 per day, highest search demand first). Dates
    never move once assigned; `node scripts/seo/daily.mjs --plan` only appends new combinations at the end. Each build publishes
    the pages due by today (UTC, or PUBLISH_DATE=YYYY-MM-DD), and the daily workflow rebuilds the site + pings IndexNow.
