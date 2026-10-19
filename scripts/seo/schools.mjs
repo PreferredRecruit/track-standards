@@ -10,6 +10,7 @@ import zlib from "node:zlib";
 import { fitTitle, fitDesc, pickDesc, levelWords, SEASON } from "./meta.mjs";
 const JG = "/guides/junior-college-track-and-field-recruiting.html";
 
+const divHub = d => `/standards/${String(d).toLowerCase().replace(/[^a-z0-9]+/g, "-")}-track-and-field-recruiting-standards.html`;   /* same path as prerender divPath */
 const DK = { "NCAA D1": "d1", "NCAA D2": "d2", "NCAA D3": "d3", NAIA: "naia", NJCAA: "njcaa" };   /* NJCAA: season bests only */
 
 export function schoolPages({ root, out, S, DATES = {}, SITE, QUIZ, esc, schoolSlug, std, EVENTS, STATE, evLabel, confUrl, statePath, evPath, gName }) {
@@ -107,7 +108,7 @@ export function schoolPages({ root, out, S, DATES = {}, SITE, QUIZ, esc, schoolS
       memberOf: { "@type": "SportsOrganization", name: s.c }, ...(s.s ? { address: { "@type": "PostalAddress", addressRegion: s.s } } : {}), sameAs: [s.ws, s.rs, s.src, s.u].filter(Boolean) },
       { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq(s, B).map(([qq, aa]) => ({ "@type": "Question", name: qq, acceptedAnswer: { "@type": "Answer", text: aa } })) },
       { "@context": "https://schema.org", "@type": "WebPage", name: title, url, dateModified: DATES.max || DATES.db }, ...vidLd((VID.schools || {})[s.n], s),
-      { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [["Home", "/"], [s.c, confUrl(s)], [s.n, p]].map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) }];
+      { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [["Home", "/"], ...(J ? [] : [[s.d, divHub(s.d)]]), [s.c, confUrl(s)], [s.n, p]].map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) }];
     const side = g => {
       const off = s.o && (s.off || {})[g];
       if (off) return tbl(["Event", ...off.tiers.map(esc)], off.rows.map(r => [esc(r[0]), ...off.tiers.map((_, i) => esc(r[i + 1] || "–"))]));
@@ -118,7 +119,7 @@ export function schoolPages({ root, out, S, DATES = {}, SITE, QUIZ, esc, schoolS
       B[g].map(r => [esc(r.e), esc(r.mk) + (parseFloat(r.w) > 2 ? "w" : ""), esc(r.a), ...(B.conf ? [r.cp ? "#" + r.cp : "–"] : []), r.np ? "#" + r.np : "–"])) : "";
     const links = [[s.src && s.o, s.src, "Official standards source"], [s.rs, s.rs, "Roster"], [s.cu, s.cu, "Coaching staff"], [s.ws, s.ws, "Athletics website"], [s.u, s.u, "Team on TFRRS"]].filter(x => x[0]);
     const body = `<main style="max-width:960px;margin:0 auto;padding:28px 20px 60px;font:16px/1.55 -apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;color:#0B0B0F">
-<nav style="font-size:13px"><a href="/">Track Standards</a> › <a href="${confUrl(s)}">${esc(s.c)}</a>${s.s ? ` › <a href="${statePath(s.s)}">${esc(STATE[s.s] || s.s)}</a>` : ""}</nav>
+<nav style="font-size:13px"><a href="/">Track Standards</a> › ${J ? "" : `<a href="${divHub(s.d)}">${esc(s.d)}</a> › `}<a href="${confUrl(s)}">${esc(s.c)}</a>${s.s ? ` › <a href="${statePath(s.s)}">${esc(STATE[s.s] || s.s)}</a>` : ""}</nav>
 <h1>${esc(s.n)} Track &amp; Field${J ? " (NJCAA)" : " Standards"}${s.o ? " ★" : ""}</h1>${s.cv ? `<p style="display:inline-block;background:#E5F5EE;color:#12805C;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:650">✓ Verified by the ${esc(s.n)} coaching staff (${esc(s.cv)})</p>` : ""}
 <p>${esc(s.n)} is ${/^[AEIOUN]/.test(s.d) ? "an" : "a"} ${esc(s.d)}${J ? " junior college" : ""} track and field program${s.c !== s.d ? ` in the ${esc(s.c)}` : ""}${s.s ? `, based in ${esc(STATE[s.s] || s.s)}` : ""}. ${J ? `Junior colleges compete nationally rather than in conferences, so this site shows ${esc(s.n)}'s season results instead of predicted recruiting levels.` : `Below are the marks it takes to be a Target recruit, a Recruit or a Walk-On for men and women in every event${s.o ? ", from the school's own published standards" : ", set from its 2026 conference results"}.`}</p>
 ${J ? `<h2>No recruiting levels for junior colleges</h2><p>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: there's no reliable way to predict a junior college's marks. ${B ? `Below are ${esc(s.n)}'s best marks this season. ` : ""}The full NJCAA national list, by event, is in <a href="/?tab=results&div=NJCAA">Results</a>, and the <a href="${JG}">junior college recruiting guide</a> explains how NJCAA track works.</p>` : `<h2>Men's standards</h2>${side("m")}<h2>Women's standards</h2>${side("w")}`}
