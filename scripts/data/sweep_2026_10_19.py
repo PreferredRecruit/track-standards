@@ -53,6 +53,11 @@ def main(write):
     if f:
         f["n"] = "Fashion Institute of Technology"; f["os"] = ["fashion-institute-of-technology-track-standards", "fashion-institute-of-technolog-track-standards"]
         log.append("Fashion Institute of Technology: name was cut off ('Technolog')")
+    # 2d. standards posted as web pages (URL dated 2024 = when the page was created) re-read live on 2026-10-19: every value still
+    #     matches, so they are the programs' current published standards, not 2024 charts
+    for n in ["Longwood University", "Pepperdine University", "Princeton University", "Villanova University"]:
+        x = by[n]
+        if str(x.get("yr")) == "2024": x["yr"] = 2026; log.append(f"{n}: standards page checked live 2026-10-19, unchanged -> current (2026)")
     # 3. (Ryan 2026-10-19 "green to go") schools still on legacy levels (WCC, Sunshine State, CCS, CCC: no conference results) get
     #    their division's typical level (median across the division's conferences, estimates excluded) in the events they list.
     import statistics
