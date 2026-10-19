@@ -470,7 +470,7 @@ const MULTI=()=>{syncSel();return R.sel.length>1};
 const curKey=()=>{if(MULTI())return null;const x=RIDX.find(x=>x.year+"-"+x.season===R.season&&x.div===R.div)||RIDX.find(x=>x.year+"-"+x.season===R.season);if(x)R.div=x.div;return x&&x.key};
 function load(key,quiet){if(CACHE[key]||LOADING[key])return LOADING[key];
   LOADING[key]=getRank(key).then(d=>{CACHE[key]=cleanRank(d)}).catch(()=>{CACHE[key]={err:1,lists:[]}})
-    .then(()=>{if((key===curKey()||MULTI()&&key.startsWith(R.season+"-"))&&S.tab==="results"&&S.school==null){R.swap=true;render()} if(!quiet) prefetch()});
+    .then(()=>{if((key===curKey()||(MULTI()||CC.on)&&key.startsWith(R.season+"-"))&&S.tab==="results"&&S.school==null){R.swap=true;render()} if(!quiet) prefetch()});
   return LOADING[key]}
 function prefetch(){const go=()=>RIDX.filter(x=>x.year+"-"+x.season===R.season&&!CACHE[x.key]).forEach(x=>load(x.key,true));(window.requestIdleCallback?requestIdleCallback(go,{timeout:2000}):setTimeout(go,600))}
 const yr=y=>({"FR-1":"Freshman","SO-2":"Sophomore","JR-3":"Junior","SR-4":"Senior"}[y]||y||"");
@@ -488,6 +488,78 @@ function curve(rows,e){
   <path d="${d} L${W} ${H} L0 ${H} Z" fill="url(#cg)"/><path d="${d}" fill="none" stroke="#7A45F0" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
   ${tick.map(i=>`<circle cx="${pts[i][0]}" cy="${pts[i][1]}" r="4" fill="#fff" stroke="#7A45F0" stroke-width="2.5" vector-effect="non-scaling-stroke"/>`).join("")}</svg></div>`;
 }
+/* ---------- Compare anything (Ryan 2026-10-19: "should not be limited to D1/D2/D3 ... Men vs Women, Conference vs Conference,
+   School vs School ... compare different events on the same view"). A comparison is 2-4 columns (2 on phones); each column is
+   division + list (national or a conference) + men/women + event, optionally one school. A school with "All events" shows its best
+   mark in every event. Different events or genders are read side by side through "% of #1" (the list leader = 100%), drawn as one
+   overlay chart. The whole comparison lives in the address (?tab=results&cmp=...) so it can be shared. */
+const CC={on:false,cols:[]};
+const CCOL=["#7A45F0","#E8590C","#0B7285","#C2255C"];
+const ccMax=()=>WIDE()?4:2;
+const rlab=e=>String(e).replace(/^(\d[\d,]*) Meters$/,"$1m").replace(/,/g,"").replace(/^(\d+) Hurdles$/,"$1m Hurdles").replace(/^(\d+) Steeplechase$/,"$1m Steeplechase");
+const rhigh=e=>/thlon|jump|vault|put|discus|hammer|javelin|throw/i.test(e);
+const rval=(e,m)=>parseMark(m,rlab(e));
+const pctOf=(e,v,v1)=>v==null||!v1?null:rhigh(e)?v/v1*100:v1/v*100;
+const ccKey=div=>{const x=RIDX.find(x=>x.year+"-"+x.season===R.season&&x.div===div);return x&&x.key};
+const ccData=c=>{const k=ccKey(c.div);if(!k)return {err:1};if(!CACHE[k]){load(k,true);return null}return CACHE[k].err?{err:1}:CACHE[k]};
+const ccListOf=(D,l)=>l==="nat"?(D.lists.find(x=>x.nat)||D.lists[0]):(D.lists.find(x=>x.label===l)||D.lists.find(x=>x.nat)||D.lists[0]);
+const ccName=c=>`${c.t?c.t+" · ":""}${c.l==="nat"?(DIVINFO[c.div]||c.div):c.l} · ${c.g==="m"?"Men's":"Women's"} ${c.e==="*"?"all events":evLabel(c.e)}`;
+function ccSync(){try{const u=new URL(location.href);if(CC.on&&CC.cols.length){u.searchParams.set("tab","results");u.searchParams.set("cmp",CC.cols.map(c=>[c.div,c.l,c.g,c.e,c.t||""].map(x=>String(x).replace(/[|~]/g," ")).join("|")).join("~"))}else u.searchParams.delete("cmp");history.replaceState(history.state,"",u.pathname+u.search)}catch(e){}}
+function ccFromUrl(v){const cols=String(v||"").split("~").map(s=>{const [div,l,g,e,t]=s.split("|").map(x=>x||"");return div&&g&&e?{div,l:l||"nat",g:g==="w"?"w":"m",e,t}:null}).filter(Boolean).slice(0,4);if(cols.length){CC.on=true;CC.cols=cols}}
+/* presets start from what the visitor is looking at (division, gender, event) */
+function ccPreset(p){syncSel();const div=R.div,g=R.g,D=CACHE[ccKey(div)];const L=D&&!D.err?ccListOf(D,"nat"):null;
+  const evs=L?Object.keys(L.g[g]||{}):[],e=R.ev&&evs.includes(R.ev)?R.ev:(evs[0]||"100 Meters");
+  const next={"100 Meters":"200 Meters","200 Meters":"400 Meters","400 Meters":"800 Meters","800 Meters":"1500 Meters","1500 Meters":"5000 Meters","5000 Meters":"10,000 Meters","110 Hurdles":"400 Hurdles","100 Hurdles":"400 Hurdles","Long Jump":"Triple Jump","Shot Put":"Discus","High Jump":"Long Jump"};
+  if(p==="mw")CC.cols=[{div,l:"nat",g:"m",e,t:""},{div,l:"nat",g:"w",e,t:""}];
+  else if(p==="ev")CC.cols=[{div,l:"nat",g,e,t:""},{div,l:"nat",g,e:next[e]&&evs.includes(next[e])?next[e]:evs.find(x=>x!==e)||e,t:""}];
+  else if(p==="conf"){const NC=/region|qualif|ecac|ic4a|neicaaa|outdoor list|indoor list|division|championship/i,ok=D&&!D.err?D.lists.filter(x=>!x.nat&&!x.champ&&(x.g[g]||{})[e]&&!NC.test(x.label)):[];
+    const pick=["SEC","Big Ten"].map(n=>ok.find(x=>x.label===n)).filter(Boolean);
+    const cf=pick.length===2?pick:ok.sort((a,b)=>(b.g[g][e]||[]).length-(a.g[g][e]||[]).length).slice(0,2);
+    CC.cols=cf.length===2?cf.map(x=>({div,l:x.label,g,e,t:""})):[{div,l:"nat",g,e,t:""}]}
+  else if(p==="school"){const rows=L?((L.g[g]||{})[e]||[]):[],ts=[...new Set(rows.map(r=>D.teams[r[3]]))].slice(0,2);CC.cols=ts.map(t=>({div,l:"nat",g,e:"*",t}))}
+  else if(p==="div"){const ds=(R.sel.length>1?R.sel:seasonDivs().slice(0,3)).slice(0,ccMax());CC.cols=ds.map(d=>({div:d,l:"nat",g,e,t:""}))}
+  CC.cols=CC.cols.slice(0,ccMax());CC.on=true;ccSync()}
+function ccColumn(c,i){
+  const D=ccData(c),head=sel=>`<header class="cch" style="--cc:${CCOL[i]}">${sel}</header>`;
+  if(!D)return `<section class="col cc">${head(`<b>${esc(ccName(c))}</b>`)}${skeleton()}</section>`;
+  if(D.err)return `<section class="col cc">${head(`<b>${esc(ccName(c))}</b>`)}<p class="ccmsg">Not available for this season.</p></section>`;
+  const L=ccListOf(D,c.l),E=L.g[c.g]||{},evs=Object.keys(E);if(c.e!=="*"&&!evs.includes(c.e))c.e=evs[0]||c.e;
+  const divs=seasonDivs(),NC=/region|qualif|ecac|ic4a|neicaaa|outdoor list|indoor list|division/i,lists=[...D.lists.filter(x=>x.nat),...D.lists.filter(x=>!x.nat&&!x.champ&&!NC.test(x.label)).sort((a,b)=>a.label.localeCompare(b.label)),...D.lists.filter(x=>!x.nat&&!x.champ&&NC.test(x.label))];
+  const ctl=`<div class="ccs"><select data-cc="div" data-i="${i}" aria-label="Division">${divs.map(d=>`<option ${d===c.div?"selected":""}>${esc(d)}</option>`).join("")}</select>
+    <select data-cc="l" data-i="${i}" aria-label="List">${lists.map(x=>{const v=x.nat?"nat":x.label;return `<option value="${esc(v)}" ${(c.l==="nat"?x===L:x.label===c.l)?"selected":""}>${esc(x.nat?"National list":x.label)}</option>`}).join("")}</select>
+    <select data-cc="g" data-i="${i}" aria-label="Men or women"><option value="m" ${c.g==="m"?"selected":""}>Men</option><option value="w" ${c.g==="w"?"selected":""}>Women</option></select>
+    <select data-cc="e" data-i="${i}" aria-label="Event">${c.t?`<option value="*" ${c.e==="*"?"selected":""}>All events</option>`:""}${evs.map(e=>`<option value="${esc(e)}" ${e===c.e?"selected":""}>${esc(evLabel(e))}</option>`).join("")}</select>
+    <input data-cc="t" data-i="${i}" list="cct${i}" placeholder="Any school" value="${esc(c.t||"")}" aria-label="School"><datalist id="cct${i}">${D.teams.filter(t=>!/\([A-Z]\)$/.test(t)).sort().map(t=>`<option value="${esc(t)}">`).join("")}</datalist>
+    ${CC.cols.length>1?`<button type="button" class="ccx" data-ccdel="${i}" aria-label="Remove column">×</button>`:""}</div>`;
+  const ti=c.t?D.teams.indexOf(c.t):-1;
+  if(c.t&&ti<0)return `<section class="col cc">${head(`<b>${esc(ccName(c))}</b>${ctl}`)}<p class="ccmsg">${esc(c.t)} has no marks on this list.</p></section>`;
+  if(c.e==="*"){   /* one school, best mark in every event */
+    const rows=evs.map(e=>[e,(E[e]||[]).find(r=>r[3]===ti),(E[e]||[]).filter(r=>r[3]===ti).length]).filter(x=>x[1]);
+    return `<section class="col cc">${head(`<b>${esc(ccName(c))}</b><span>${rows.length} events · ${rows.reduce((a,x)=>a+x[2],0)} marks on the list</span>${ctl}`)}
+      <ol>${rows.map(([e,r,n])=>`<li><span class="rk">#${esc(r[0])}</span><span class="nm"><b>${esc(evLabel(e))}</b><small>${esc(r[1]||c.t)}${n>1?` · ${n} on the list`:""}</small></span><span class="mk">${esc(r[4])}</span></li>`).join("")||'<li><span></span><span class="nm">No marks on this list.</span><span></span></li>'}</ol></section>`}
+  const all=E[c.e]||[],rows=ti>=0?all.filter(r=>r[3]===ti):all,v1=rval(c.e,(all[0]||[])[4]);
+  const P=[1,10,25,50].filter(k=>all[k-1]);
+  return `<section class="col cc">${head(`<b>${esc(ccName(c))}</b><span>${all.length.toLocaleString()} marks${ti>=0?` · ${rows.length} from ${esc(c.t)}`:""}</span>${ctl}`)}
+    <div class="ccst">${P.map(k=>`<div><small>#${k}</small><b>${esc(all[k-1][4])}</b></div>`).join("")}</div>
+    <ol>${rows.slice(0,25).map(r=>{const p=pctOf(c.e,rval(c.e,r[4]),v1);return `<li><span class="rk">${esc(r[0])}</span><span class="nm"><b>${esc(r[1]||D.teams[r[3]])}</b><small>${esc(D.teams[r[3]])}</small></span><span class="mk">${esc(r[4])}${p!=null?`<small>${p.toFixed(1)}%</small>`:""}</span></li>`}).join("")}</ol></section>`}
+/* every list column's drop-off from #1 to #100, as % of its own leader, on one chart */
+function ccChart(){
+  const S2=CC.cols.map((c,i)=>{if(c.e==="*")return null;const D=ccData(c);if(!D||D.err)return null;const all=(ccListOf(D,c.l).g[c.g]||{})[c.e]||[],v1=rval(c.e,(all[0]||[])[4]);
+    const ti=c.t?D.teams.indexOf(c.t):-1,pts=all.slice(0,100).map((r,k)=>[k,pctOf(c.e,rval(c.e,r[4]),v1),r[3]]).filter(p=>p[1]!=null);return pts.length>2?{i,c,pts,ti}:null}).filter(Boolean);
+  if(!S2.length)return "";
+  const W=640,H=180,pad=24,N=Math.max(...S2.map(s=>s.pts.length)),lo=Math.max(50,Math.floor(Math.min(...S2.flatMap(s=>s.pts.map(p=>p[1])))-1)),x=k=>pad+k/Math.max(1,N-1)*(W-pad*2),y=p=>pad/2+(100-p)/(100-lo)*(H-pad);
+  return `<div class="ccchart"><div class="cl"><span>How each list drops off from its #1 (100%) to #${N}</span></div><svg viewBox="0 0 ${W} ${H}" aria-hidden="true">
+    ${[100,Math.round((100+lo)/2),lo].map(p=>`<line x1="${pad}" x2="${W-pad}" y1="${y(p)}" y2="${y(p)}" stroke="var(--pr-line)"/><text x="2" y="${y(p)+4}" font-size="11" fill="var(--pr-mute)">${p}%</text>`).join("")}
+    ${S2.map(s=>`<path d="${s.pts.map((p,j)=>(j?"L":"M")+x(p[0]).toFixed(1)+" "+y(p[1]).toFixed(1)).join(" ")}" fill="none" stroke="${CCOL[s.i]}" stroke-width="2.5" vector-effect="non-scaling-stroke"/>${s.ti>=0?s.pts.filter(p=>p[2]===s.ti).map(p=>`<circle cx="${x(p[0])}" cy="${y(p[1])}" r="4" fill="${CCOL[s.i]}"/>`).join(""):""}`).join("")}</svg>
+    <div class="cclg">${S2.map(s=>`<span><i style="background:${CCOL[s.i]}"></i>${esc(ccName(s.c))}</span>`).join("")}</div></div>`}
+function compareView(){
+  const ctl=`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x)).map(x=>`<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}">${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`).join("")}</div></div>`;
+  const pre=[["mw","Men vs Women"],["ev","Event vs Event"],["conf","Conference vs Conference"],["school","School vs School"],["div","Division vs Division"]];
+  return `<div class="sec"><p class="lede">Compare any lists side by side: divisions, conferences, schools, men and women, or two events.</p><div class="rcard">
+    <div class="dsel"><button type="button" class="cmpsw" data-rcmp aria-pressed="true"><span class="sw" aria-hidden="true"></span>Compare</button><div class="ccp" role="group" aria-label="Quick comparisons">${pre.map(([k,t])=>`<button type="button" data-ccp="${k}">${t}</button>`).join("")}</div></div>${ctl}</div>
+    <div class="rbody${R.swap?" swap":""}"><div class="cols cc" style="--n:${CC.cols.length}">${CC.cols.map(ccColumn).join("")}</div>
+    ${CC.cols.length<ccMax()?`<p style="margin:12px 2px"><button class="lnk" data-ccadd>+ Add a column</button></p>`:""}${ccChart()}
+    <p class="note">Source: TFRRS performance lists. "% of #1" puts different events, genders and lists on one scale: the list leader is 100%.</p></div></div>`}
 function divTabs(){
   const divs=RIDX.filter(x=>x.year+"-"+x.season===R.season).map(x=>x.div).sort((a,b)=>Object.keys(DIVINFO).indexOf(a)-Object.keys(DIVINFO).indexOf(b));
   syncSel();const allOn=R.sel.length===divs.length&&divs.length>1;
@@ -566,6 +638,7 @@ function multiResults(){
   return o;
 }
 function results(){
+  if(CC.on)return compareView();
   if(MULTI())return multiResults();
   const key=curKey(), D=key&&CACHE[key]; if(key&&!D) load(key);
   let o=`<div class="sec"><p class="lede">The top marks in college track this season. Pick a level, then an event.</p><div class="rcard">${divTabs()}`;
@@ -578,6 +651,7 @@ function results(){
   const L=D.lists[R.list], E=L.g[R.g]||{}, evNames=Object.keys(E); if(!evNames.includes(R.ev)) R.ev=evNames[0];
   o+=ctl(L);
   const listName=L.nat?`${DIVINFO[R.div]||R.div}`:L.label, gname=R.g==="m"?"Men's":"Women's";
+  if(R.pend){const ti=D.teams.indexOf(R.pend);R.pend=null;if(ti>=0)R.team=ti}
   if(R.ath) return o+athView(D);
   if(R.team!=null){
     const tn=D.teams[R.team], rows=[];evNames.forEach(e=>(E[e]||[]).forEach(r=>{if(r[3]===R.team)rows.push([e,r])}));
@@ -587,11 +661,15 @@ function results(){
     ${rows.map(([e,r])=>`<div class="gr"><span class="rkb">${esc(r[0])}</span>${r[1]?`<button class="gnm gath" data-ae="${esc(e)}" data-ai="${E[e].indexOf(r)}">`:'<span class="gnm">'}<b>${esc(r[1]||tn)}</b><small>${esc(yr(r[2]))}</small>${r[1]?"</button>":"</span>"}<span class="gtm" style="cursor:default">${esc(evLabel(e))}</span><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:""}</span><span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span></div>`).join("")}</div>${hookRow()}</div></div>`;
   }
   const all=E[R.ev]||[], q=R.q.trim().toLowerCase(), rows=all.filter(r=>(!q||r[1].toLowerCase().includes(q)||D.teams[r[3]].toLowerCase().includes(q))&&(!R.st||teamSt(D.teams[r[3]])===R.st));
+  const tsug=q.length>=3?(()=>{const here=D.teams.map((t,i)=>[t,i]).filter(([t])=>t.toLowerCase().includes(q)&&!/\([A-Z]\)$/.test(t)).slice(0,5);
+    const else_=SCH.filter(s=>s.d!==R.div&&DIVINFO[s.d]&&(s.n.toLowerCase().includes(q)||(s.t||"").toLowerCase().includes(q))).slice(0,3);
+    if(!here.length&&!else_.length)return "";
+    return `<div class="tsug"><small>Schools</small>${here.map(([t,i])=>`<span><button type="button" class="lnk" data-team="${i}">${esc(t)}</button><button type="button" class="ccadd" data-ccteam="${esc(R.div)}|${esc(t)}">Compare</button></span>`).join("")}${else_.map(s=>`<span><button type="button" class="lnk" data-rteam="${esc(s.d)}|${esc(s.t||s.n)}">${esc(s.t||s.n)} <em>${esc(s.d.replace("NCAA ",""))}</em></button></span>`).join("")}</div>`})():"";
   const st=(i,lab,cls="")=>{const r=all[i];return r?`<div class="st ${cls}"><small>${lab}</small><b>${esc(r[4])}</b><span>${esc(r[1]||D.teams[r[3]])}${r[1]?" · "+esc(D.teams[r[3]]):""}</span></div>`:""};
   const last=all.length-1;
   o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
   <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(listName)} · ${esc(seasonLabel(R.season))} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools (national rank shown)`:`${all.length} marks`}</span></div>
-  <div class="stats">${st(0,"#1 · "+(L.nat?R.div:L.label),"lead")}${(R.season.endsWith("xc")?[]:RULES[R.div]||[]).map((k,j)=>k&&all[k-1]?st(k-1,`${ord(k)} · ${["Target","Recruit","Walk-On"][j]} line`):"").join("")}</div>${curve(all,R.ev)}
+  ${tsug}<div class="stats">${st(0,"#1 · "+(L.nat?R.div:L.label),"lead")}${(R.season.endsWith("xc")?[]:RULES[R.div]||[]).map((k,j)=>k&&all[k-1]?st(k-1,`${ord(k)} · ${["Target","Recruit","Walk-On"][j]} line`):"").join("")}</div>${curve(all,R.ev)}
   <div class="grid"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span><span>Meet</span></div>
   ${rows.slice(0,R.n).map((r,i)=>{const k=all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span><span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span></div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
   </div>${hookRow()}
@@ -1086,7 +1164,12 @@ document.addEventListener("click",ev=>{
     else if(R.sel.length===av.length&&av.length>1)R.sel=[d.rdiv];                     /* from "All", a tap picks just that one */
     else if(R.sel.includes(d.rdiv)){if(R.sel.length>1)R.sel=R.sel.filter(x=>x!==d.rdiv)}else R.sel=[...R.sel,d.rdiv];
     syncSel();R.list=0;R.team=null;R.ath=null;R.an=100;R.cn=25;R.swap=true;render();return}
-  if("rcmp" in d){R.cmp=!R.cmp;R.swap=true;render();return}
+  if("rcmp" in d){if(CC.on){CC.on=false;ccSync()}else ccPreset(R.sel&&R.sel.length>1?"div":"mw");R.swap=true;render();return}
+  if(d.ccp){ccPreset(d.ccp);R.swap=true;render();return}
+  if("ccadd" in d){const c=CC.cols[CC.cols.length-1]||{div:R.div,l:"nat",g:R.g,e:R.ev||"100 Meters",t:""};CC.cols.push({...c,g:c.g==="m"?"w":"m"});CC.cols=CC.cols.slice(0,ccMax());ccSync();render();return}
+  if(d.ccdel!==undefined){CC.cols.splice(+d.ccdel,1);ccSync();render();return}
+  if(d.ccteam){const [dv,t]=d.ccteam.split("|");CC.on=true;CC.cols=[{div:dv,l:"nat",g:R.g,e:"*",t}];ccSync();R.swap=true;render();return}
+  if(d.rteam){const [dv,t]=d.rteam.split("|");R.sel=[dv];R.div=dv;R.pend=t;R.q="";R.ath=null;R.list=0;R.swap=true;render();return}
   if("cmore" in d){R.cn=(R.cn||25)+50;render();return}
   if("amore" in d){R.an=(R.an||100)+200;render();return}
   if(d.rg){R.g=d.rg;R.team=null;R.ath=null;R.swap=true;render();return}
@@ -1105,6 +1188,9 @@ document.addEventListener("input",ev=>{const t=ev.target;
   if(t.id==="ct"){CHAT.draft=t.value;t.style.height="auto";t.style.height=Math.min(t.scrollHeight,160)+"px";$("send").disabled=!t.value.trim()||CHAT.busy}});
 document.addEventListener("keydown",ev=>{if(ev.target.id==="ct"&&ev.key==="Enter"&&!ev.shiftKey){ev.preventDefault();send(ev.target.value)}if(ev.key==="Escape"&&EV.shown&&!EV.dismissed)evalOut()});
 document.addEventListener("change",ev=>{const t=ev.target;
+  if(t.dataset&&t.dataset.cc){const c=CC.cols[+t.dataset.i];if(c){const k=t.dataset.cc,v=t.value.trim();
+    if(k==="div"){c.div=v;c.l="nat";c.t=""}else if(k==="l")c.l=v;else if(k==="g")c.g=v;else if(k==="e")c.e=v;else if(k==="t"){c.t=v;if(!v&&c.e==="*")c.e=R.ev||"100 Meters"}
+    ccSync();R.swap=false;render()}return}
   if(t.id==="ev"){S.e=t.value;S.mark="";S.run=false;render()}
   if(t.id==="gr"){S.gr=INT.gr=+t.value;saveInt();t.classList.remove("ph");log("grade",{});const h=$("hint");if(h&&/grade/.test(h.textContent))h.textContent=""}
   if(t.id==="rs"){R.st=t.value;R.swap=true;render();if(R.st)log("results_state",{state:ST_NAME[R.st]||R.st,division:R.div,event:evLabel(R.ev||""),g:R.g})}
@@ -1173,7 +1259,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
       { const gq = +q.get("gr"); if (gq >= 9 && gq <= 12 && INT.gr !== gq) { INT.gr = gq; S.gr = gq; saveInt(); log("grade", {}); } }   /* grade from the SEO-page mark checker */
       if (q.get("m") && q.get("e")) { if (!S.run || S.mark !== q.get("m") || S.e !== q.get("e")) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; } }
       else if (S.run) { S.run = false; S.mark = ""; S.f = S.div = S.conf = S.st = ""; }
-      if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); } }
+      if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); if (q.get("cmp")) ccFromUrl(q.get("cmp")); } }
     S.school = null; setMeta("College Track & Field Recruiting Standards & Rankings 2026-27", `Recruiting standards for ${NSTD.toLocaleString()} college track and field programs: walk-on, recruit and scholarship times for NCAA D1, D2, D3 and NAIA, plus results since 2016.`, "/",
       {"@context": "https://schema.org", "@type": "WebSite", name: "Preferred Recruit Track & Field Standards", url: "https://trackandfieldstandards.com/"}); render(); if (S.run) armOffer();
   };

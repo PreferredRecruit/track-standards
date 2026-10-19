@@ -742,7 +742,21 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .col .rk{color:var(--pr-mute);font-variant-numeric:tabular-nums;font-size:12.5px}
 .col .nm b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.col .nm small{display:block;color:var(--pr-mute);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .col .mk{font-weight:650;font-variant-numeric:tabular-nums}
-@media (max-width:760px){.cmpsw{display:none}.dsel{display:block}}
+@media (max-width:760px){.dsel{display:block}.dsel .cmpsw{margin-bottom:10px}}
 
 /* high school / college events switch on school pages + the athlete's college equivalent inside the i (2026-10-19) */
 .evtg{margin-top:16px}.cpop .cvx2{display:block;margin:6px 0;font-weight:600}.cpop .cvx2 .cvx{display:block;font-weight:500}
+
+/* compare anything (2026-10-19) */
+.ccp{display:flex;flex-wrap:wrap;gap:6px}.ccp button{border:1px solid var(--pr-line);background:var(--pr-card);border-radius:999px;padding:7px 12px;font:inherit;font-size:13px;font-weight:600;color:var(--pr-ink);cursor:pointer}
+.ccp button:hover{border-color:#7A45F0;color:#5B3FE4}
+.cols.cc .col header.cch{border-top:4px solid var(--cc)}.cch>b{font-size:14px;line-height:1.3}
+.ccs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;position:relative}.ccs select,.ccs input{font:inherit;font-size:12.5px;padding:6px 8px;border:1px solid var(--pr-line);border-radius:10px;background:var(--pr-card);color:var(--pr-ink);min-width:0;flex:1 1 90px}
+.ccx{border:0;background:transparent;font-size:18px;line-height:1;cursor:pointer;color:var(--pr-mute);padding:0 4px}
+.ccst{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:10px 14px;border-bottom:1px solid var(--pr-line)}.ccst small{display:block;font-size:11px;color:var(--pr-mute)}.ccst b{font-size:13.5px;font-variant-numeric:tabular-nums}
+.col .mk small{display:block;font-size:11px;font-weight:500;color:var(--pr-mute);text-align:right}.ccmsg{padding:14px;color:var(--pr-mute);font-size:14px}
+.ccchart{margin-top:14px;background:var(--pr-card);border:1px solid var(--pr-line);border-radius:16px;padding:12px 14px}.ccchart svg{width:100%;height:auto;display:block}
+.cclg{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;margin-top:6px}.cclg i{display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.tsug{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 2px 0;font-size:14px}.tsug small{color:var(--pr-mute);font-weight:600}.tsug span{display:inline-flex;gap:6px;align-items:center;background:var(--pr-soft);border-radius:999px;padding:4px 6px 4px 12px}
+.tsug em{font-style:normal;color:var(--pr-mute);font-size:12px}.tsug .ccadd{border:0;background:#7A45F0;color:#fff;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+@media (max-width:760px){.cols.cc{grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:8px}.cols.cc .col li{grid-template-columns:22px minmax(0,1fr) auto;padding:8px 10px;font-size:13px}.ccst{grid-template-columns:repeat(2,1fr)}}
