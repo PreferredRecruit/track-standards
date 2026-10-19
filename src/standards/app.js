@@ -13,6 +13,7 @@ async function getRank(key){
   if (typeof DecompressionStream !== "undefined") return await new Response(r.body.pipeThrough(new DecompressionStream("gzip"))).json();
   throw new Error("browser too old to unpack results");
 }
+import * as ACC from "./account.js";
 const slugOf = n => n.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim() + "-track-standards";
 export async function mount(opts = {}) {
   if (window.__prStandardsMounted) { window.__prStandardsRoute && window.__prStandardsRoute(opts.slug); return; }
@@ -53,6 +54,9 @@ function log(kind,x){try{let ct;try{ct=localStorage.getItem("pr_coach")||undefin
   if(b.event&&!b.grp)b.grp=GRP(b.event);fetch(TRACK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(()=>{})}catch(e){}}
 /* the funnel link carries the intent too, so the evaluation and CRM know the event and grade (utm_term = event, pr_grade = grade) */
 function quizFor(){try{const u=new URL(QUIZ);if(INT.e)u.searchParams.set("utm_term",INT.e);if(INT.grp)u.searchParams.set("pr_group",INT.grp);if(INT.gr)u.searchParams.set("pr_grade",INT.gr);if(INT.m)u.searchParams.set("pr_mark",INT.m);if(INT.rs)u.searchParams.set("pr_status",INT.rs);return u.toString()}catch(e){return QUIZ}}
+/* account limits (Ryan 2026-10-19): logged out = top 10 per results list, first 15 colleges, 5 AI questions */
+const RCAP=n=>ACC.member()?n:Math.min(n,ACC.LIMITS.results);
+const rwall=(len,shown)=>!ACC.member()&&len>shown?ACC.wall("results"):"";
 const FIELD=new Set(["High Jump","Pole Vault","Long Jump","Triple Jump","Shot Put","Discus","Hammer","Javelin"]);
 const SHORT=new Set(["100m","200m","400m","100m Hurdles","110m Hurdles","300m Hurdles","400m Hurdles"]);
 const TF={"100m":"100 Meters","200m":"200 Meters","400m":"400 Meters","800m":"800 Meters","1500m":"1500 Meters","5000m":"5000 Meters","10000m":"10,000 Meters","100m Hurdles":"100 Hurdles","110m Hurdles":"110 Hurdles","400m Hurdles":"400 Hurdles","3000m Steeplechase":"3000 Steeplechase","High Jump":"High Jump","Pole Vault":"Pole Vault","Long Jump":"Long Jump","Triple Jump":"Triple Jump","Shot Put":"Shot Put","Discus":"Discus","Hammer":"Hammer","Javelin":"Javelin"};
@@ -221,7 +225,7 @@ const EV={shown:false,dismissed:false,t:null,v:null,trig:null};
 try{EV.dismissed=sessionStorage.getItem("prEvalDismissed")==="1"}catch(e){}
 /* v = copy variant, logged with shown/clicked so the admin report compares conversion per copy, event group and grade */
 function evalIn(title,body,delay,v,trig,bs){
-  if(EV.shown||EV.dismissed) return; clearTimeout(EV.t);
+  if(EV.shown||EV.dismissed||ACC.tier()==="C"||ACC.isOpen()) return; clearTimeout(EV.t);
   EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||(S.school!=null&&!EV.force)) return; EV.force=false; EV.v=v||"generic"; EV.trig=trig||"timer"; EV.title=title; EV.body=body; EV.bs=bs||null; openEval(true)},delay||0);
 }
 /* centre modal (Ryan 2026-10-16, e-commerce benchmarks: centre 6.84% vs bottom-corner 2.88%; multi-step +12%; click-triggered
@@ -299,7 +303,7 @@ function standards(){
         ${dd("fs","All states",S.st,opts("s",x=>x.s.s).sort())}
         ${S.div||S.conf||S.f||S.st?'<button class="clr" data-clear>Clear</button>':""}</div></div>
       <div class="mrow mh" aria-hidden="true"><span>School</span><span>Division</span><span>Conference</span><span class="mk">Mark to hit</span><span>Your level ${levelsInfo()}</span></div>
-      ${sh.length?`<div id="sgrid">${cards(sh,0,S.n)}</div>${sh.length>S.n?'<div class="sent" id="sent" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span></div>':""}`:'<p class="empty">No colleges match these filters.</p>'}
+      ${sh.length?(()=>{const cap=ACC.member()?S.n:Math.min(S.n,ACC.LIMITS.standards);return `<div id="sgrid">${cards(sh,0,cap)}</div>${!ACC.member()&&sh.length>cap?ACC.wall("standards",sh.length):sh.length>cap?'<div class="sent" id="sent" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span></div>':""}`})():'<p class="empty">No colleges match these filters.</p>'}
       <p class="vnote"><span class="star">★</span> Official standards, published by the school and verified by Preferred Recruit. Most other colleges are set from their 2026 conference results; a few without either are marked as estimates.</p>
     </section>`;
   }
@@ -543,7 +547,7 @@ function ccColumn(c,i){
   const P=[1,10,25,50].filter(k=>all[k-1]);
   return `<section class="col cc">${head(`<b>${esc(ccName(c))}</b><span>${all.length.toLocaleString()} marks${ti>=0?` · ${rows.length} from ${esc(c.t)}`:""}</span>${ctl}`)}
     <div class="ccst">${P.map(k=>`<div><small>#${k}</small><b>${esc(all[k-1][4])}</b></div>`).join("")}</div>
-    <ol>${rows.slice(0,25).map(r=>{const p=pctOf(c.e,rval(c.e,r[4]),v1);return `<li><span class="rk">${esc(r[0])}</span><span class="nm"><b>${esc(r[1]||D.teams[r[3]])}</b><small>${esc(D.teams[r[3]])}</small></span><span class="mk">${esc(r[4])}${p!=null?`<small>${p.toFixed(1)}%</small>`:""}</span></li>`}).join("")}</ol></section>`}
+    <ol>${rows.slice(0,RCAP(25)).map(r=>{const p=pctOf(c.e,rval(c.e,r[4]),v1);return `<li><span class="rk">${esc(r[0])}</span><span class="nm"><b>${esc(r[1]||D.teams[r[3]])}</b><small>${esc(D.teams[r[3]])}</small></span><span class="mk">${esc(r[4])}${p!=null?`<small>${p.toFixed(1)}%</small>`:""}</span></li>`}).join("")}</ol></section>`}
 /* every list column's drop-off from #1 to #100, as % of its own leader, on one chart */
 function ccChart(){
   const S2=CC.cols.map((c,i)=>{if(c.e==="*")return null;const D=ccData(c);if(!D||D.err)return null;const all=(ccListOf(D,c.l).g[c.g]||{})[c.e]||[],v1=rval(c.e,(all[0]||[])[4]);
@@ -613,8 +617,8 @@ function multiResults(){
     o+=ctl+`<span></span><span></span></div></div><div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
     <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(seasonLabel(R.season))} · national lists</span></div>
     <div class="cols" style="--n:${per.length}">${per.map(p=>`<section class="col"><header><b>${esc(DIVINFO[p.div]||p.div)}</b><span>${P.map(k=>p.rows[k-1]?`#${k} ${esc(p.rows[k-1][4])}`:"").filter(Boolean).slice(0,2).join(" · ")}</span></header>
-      <ol>${p.rows.slice(0,top).map((r,i)=>`<li><span class="rk">${i+1}</span><span class="nm"><b>${esc(r[1]||p.D.teams[r[3]])}</b><small>${esc(p.D.teams[r[3]]||"")}</small></span><span class="mk">${esc(r[4])}</span></li>`).join("")}</ol></section>`).join("")}</div>
-    ${per.some(p=>p.rows.length>top)?`<button class="morer" data-cmore>Show more</button>`:""}
+      <ol>${p.rows.slice(0,RCAP(top)).map((r,i)=>`<li><span class="rk">${i+1}</span><span class="nm"><b>${esc(r[1]||p.D.teams[r[3]])}</b><small>${esc(p.D.teams[r[3]]||"")}</small></span><span class="mk">${esc(r[4])}</span></li>`).join("")}</ol></section>`).join("")}</div>
+    ${ACC.member()?(per.some(p=>p.rows.length>top)?`<button class="morer" data-cmore>Show more</button>`:""):rwall(Math.max(...per.map(p=>p.rows.length)),RCAP(top))}
     <p class="note">Each selected division's national list, side by side. Turn Compare off to combine them into one ranking. Source: TFRRS.</p>${hookRow()}</div></div>`;
     return o;
   }
@@ -634,8 +638,8 @@ function multiResults(){
   o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
   <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))}, ${esc(nm.toLowerCase()==="every division"?"all divisions":nm)}</h3><span>${esc(seasonLabel(R.season))} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools`:`${all.length.toLocaleString()} marks from ${per.length} divisions`}</span></div>${curve(all.map(x=>[0,0,0,0,x.mark]),R.ev)}
   <div class="grid"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span><span>Meet</span></div>
-  ${rows.slice(0,show).map(x=>{const k=all.indexOf(x)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw"><span class="gnm"><b>${esc(x.name||x.team)}</b></span><small>${esc(yr(x.yr))}${x.path?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(x.path)}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><span class="gtm" style="cursor:default">${esc(x.team)}<small class="dvt">${esc(DIVINFO[x.div]||x.div)}</small></span><span class="gmk">${esc(x.mark)}${x.wind?`<small>${esc(x.wind)}</small>`:""}</span><span class="gmt"><b>${esc(x.meet||"")}</b>${esc(x.date||"")}</span></div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
-  </div>${rows.length>show?`<button class="morer" data-amore>Show more</button>`:""}${hookRow()}
+  ${rows.slice(0,RCAP(show)).map(x=>{const k=all.indexOf(x)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw"><span class="gnm"><b>${esc(x.name||x.team)}</b></span><small>${esc(yr(x.yr))}${x.path?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(x.path)}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><span class="gtm" style="cursor:default">${esc(x.team)}<small class="dvt">${esc(DIVINFO[x.div]||x.div)}</small></span><span class="gmk">${esc(x.mark)}${x.wind?`<small>${esc(x.wind)}</small>`:""}</span><span class="gmt"><b>${esc(x.meet||"")}</b>${esc(x.date||"")}</span></div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
+  </div>${ACC.member()?(rows.length>show?`<button class="morer" data-amore>Show more</button>`:""):rwall(rows.length,RCAP(show))}${hookRow()}
   <p class="note">Every division's national and conference lists merged, one best mark per athlete, re-ranked by mark. Source: TFRRS performance lists.</p></div></div>`;
   return o;
 }
@@ -660,7 +664,7 @@ function results(){
     return o+`<div class="rbody${R.swap?" swap":""}"><p style="margin:14px 2px 0"><button class="lnk" data-team="-1">‹ All teams</button></p>
     <div class="rhead"><h3>${esc(tn)}</h3><span>${rows.length} top marks · ${esc(listName)} · ${gname}</span></div>
     <div class="grid"><div class="gh"><span>Rank</span><span>Athlete</span><span>Event</span><span style="text-align:right">Mark</span><span>Meet</span></div>
-    ${rows.map(([e,r])=>`<div class="gr"><span class="rkb">${esc(r[0])}</span>${r[1]?`<button class="gnm gath" data-ae="${esc(e)}" data-ai="${E[e].indexOf(r)}">`:'<span class="gnm">'}<b>${esc(r[1]||tn)}</b><small>${esc(yr(r[2]))}</small>${r[1]?"</button>":"</span>"}<span class="gtm" style="cursor:default">${esc(evLabel(e))}</span><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:""}</span><span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span></div>`).join("")}</div>${hookRow()}</div></div>`;
+    ${rows.slice(0,RCAP(rows.length)).map(([e,r])=>`<div class="gr"><span class="rkb">${esc(r[0])}</span>${r[1]?`<button class="gnm gath" data-ae="${esc(e)}" data-ai="${E[e].indexOf(r)}">`:'<span class="gnm">'}<b>${esc(r[1]||tn)}</b><small>${esc(yr(r[2]))}</small>${r[1]?"</button>":"</span>"}<span class="gtm" style="cursor:default">${esc(evLabel(e))}</span><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:""}</span><span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span></div>`).join("")}</div>${rwall(rows.length,RCAP(rows.length))}${hookRow()}</div></div>`;
   }
   const all=E[R.ev]||[], q=R.q.trim().toLowerCase(), rows=all.filter(r=>(!q||r[1].toLowerCase().includes(q)||D.teams[r[3]].toLowerCase().includes(q))&&(!R.st||teamSt(D.teams[r[3]])===R.st));
   const tsug=q.length>=3?(()=>{const here=D.teams.map((t,i)=>[t,i]).filter(([t])=>t.toLowerCase().includes(q)&&!/\([A-Z]\)$/.test(t)).slice(0,5);
@@ -673,8 +677,8 @@ function results(){
   <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(listName)} · ${esc(seasonLabel(R.season))} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools (national rank shown)`:`${all.length} marks`}</span></div>
   ${tsug}<div class="stats">${st(0,"#1 · "+(L.nat?R.div:L.label),"lead")}${(R.season.endsWith("xc")?[]:RULES[R.div]||[]).map((k,j)=>k&&all[k-1]?st(k-1,`${ord(k)} · ${["Target","Recruit","Walk-On"][j]} line`):"").join("")}</div>${curve(all,R.ev)}
   <div class="grid"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span><span>Meet</span></div>
-  ${rows.slice(0,R.n).map((r,i)=>{const k=all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span><span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span></div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
-  </div>${hookRow()}
+  ${rows.slice(0,RCAP(R.n)).map((r,i)=>{const k=all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span><span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span></div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
+  </div>${rwall(rows.length,RCAP(R.n))}${hookRow()}
   <p class="note">Source: TFRRS performance lists. Tap a team to see all of its top marks.</p></div></div>`;
   return o;
 }
@@ -1097,7 +1101,9 @@ function ask(){
     `<div class="msg bot"><div class="av">PR</div><div class="body">${m.html||'<span class="dots"><i></i><i></i><i></i></span>'}${m.f&&m.f.length?`<div class="fups">${m.f.map(x=>`<button data-ask="${esc(x)}">${esc(x)}</button>`).join("")}</div>`:""}</div></div>`).join("")}</div>${composer}</div>`;
 }
 async function send(t){
-  t=t.trim(); if(!t||CHAT.busy) return; CHAT.busy=true; CHAT.draft="";
+  t=t.trim(); if(!t||CHAT.busy) return;
+  if(ACC.aiLeft()<=0){CHAT.draft="";CHAT.msgs.forEach(m=>m.f=null);CHAT.msgs.push({me:1,t},{html:ACC.wall("ai")});log("chat",{detail:"ai-limit"});render();toBottom();return}
+  ACC.aiUse(); CHAT.busy=true; CHAT.draft="";
   CHAT.msgs.forEach(m=>m.f=null);
   if(!LIVE){CHAT.msgs.push({me:1,t},{html:null}); render(); toBottom();
     const [a]=await Promise.all([answer(t),new Promise(r=>setTimeout(r,650))]);
@@ -1159,7 +1165,7 @@ document.addEventListener("click",ev=>{
   if(d.g){S.g=d.g;render();return}
   if(d.f!==undefined){S.f=d.f;S.n=24;render();return}
   if(d.div!==undefined){S.div=d.div;S.n=24;render();return}
-  if("more" in d){S.n=9999;render();return}
+  if("more" in d){if(ACC.member())S.n=9999;render();return}
   if("clear" in d){S.div=S.conf=S.f=S.st="";S.n=24;render();return}
   if(d.rdiv){syncSel();const av=seasonDivs();
     if(d.rdiv==="ALL")R.sel=R.sel.length===av.length?[R.div]:av.slice();
@@ -1271,4 +1277,5 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     if (ev.target.closest("[data-back]") || ev.target.closest("[data-tab]")) { if (location.pathname !== "/") history.pushState({}, "", "/"); } }, true);
   addEventListener("popstate", () => { const m = location.pathname.match(/^\/schools\/([^/]+)/); route(m ? m[1] : null); });
   route(opts.slug);
+  ACC.init({onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,intent:INT,sid:SID,log,onChange:()=>render()}).then(()=>render());
 }
