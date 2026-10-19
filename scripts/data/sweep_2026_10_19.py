@@ -45,6 +45,9 @@ def main(write):
     setc(L, "m", "3000m Steeplechase", ["", "", "9:45"], "chart: '2KS: 6:30; 3KS: 9:45', the 3000m steeple mark is 9:45")
     setc(L, "w", "3000m Steeplechase", None, "chart gives only a 2000m steeple mark (7:30)")
     for g in "mw": setc(L, g, "10000m", None, "chart gives a cross country 5K time, not a 10,000m mark")
+    # 2b. chart year labels checked against the documents (2024-dated charts re-checked 2026-10-19: none replaced by a newer chart)
+    c = by["The Catholic University of America"]
+    if str(c.get("yr")) != "2025": c["yr"] = 2025; log.append("The Catholic University of America: chart year 2024 -> 2025 (document is titled 'Recruiting Standards 2025')")
     # 3. (Ryan 2026-10-19 "green to go") schools still on legacy levels (WCC, Sunshine State, CCS, CCC: no conference results) get
     #    their division's typical level (median across the division's conferences, estimates excluded) in the events they list.
     import statistics
