@@ -743,3 +743,6 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .col .nm b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.col .nm small{display:block;color:var(--pr-mute);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .col .mk{font-weight:650;font-variant-numeric:tabular-nums}
 @media (max-width:760px){.cmpsw{display:none}.dsel{display:block}}
+
+/* high school / college events switch on school pages + the athlete's college equivalent inside the i (2026-10-19) */
+.evtg{margin-top:16px}.cpop .cvx2{display:block;margin:6px 0;font-weight:600}.cpop .cvx2 .cvx{display:block;font-weight:500}

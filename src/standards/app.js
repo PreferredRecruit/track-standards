@@ -104,15 +104,39 @@ function convert(e,g,v){const c=CONV[e];if(!c||v==null)return null;
   const out=[{e:c.to,lab:c.lab,lo:r[0],v:r[1],hi:r[2]}];if(c.next)out.push({e:c.next.to,lo:r[0]*c.next.k,v:r[1]*c.next.k,hi:r[2]*c.next.k});return out}
 function convLine(e,g,v){const c=convert(e,g,v);if(!c)return "";
   return c.map(x=>`<span class="cvx"><b>${fmtT(x.v)}</b> ${esc(x.lab||x.e)} <small>range ${fmtT(x.lo)} to ${fmtT(x.hi)}</small></span>`).join("")}
+/* "12-year-old simple" (Ryan 2026-10-19): athletes see marks in the events they run. A college 1500m standard is shown as its
+   1600m equivalent (the inverse of CONV), 3000m/5000m as 3200m, 400m hurdles as 300m hurdles, 42" hurdles as 39". The math
+   and the college number stay behind the small i. Official charts are always shown as the school published them. */
+const HSE=g=>["100m","200m","400m","800m","1600m","3200m",g==="m"?'110m Hurdles (39")':"100m Hurdles","300m Hurdles","High Jump","Pole Vault","Long Jump","Triple Jump","Shot Put","Discus","Javelin"];
+const hsName=(e,g)=>e==='110m Hurdles (39")'?"110m Hurdles":e==="110m Hurdles"&&g!=="w"?"110m Hurdles (college 42\")":e;
+function toHS(e,g,ev,v){const c=CONV[e];if(!c||v==null)return null;const k=c.k&&(Array.isArray(c.k)?c.k:c.k[g]);
+  if(c.to===ev)return c.add?v-c.add[1]:v/k[1];if(c.next&&c.next.to===ev)return v/c.next.k/k[1];return null}
+const fmtHS=x=>x==null?"":x>=60?(()=>{const m=Math.floor(x/60),s=Math.round((x-m*60)*10)/10;return s>=60?(m+1)+":00.0":m+":"+(s<10?"0":"")+s.toFixed(1)})():x.toFixed(2);
+/* a school's levels in a high school event: its own number when it lists that event, else the college event converted back */
+function hsLevels(s,g,e){if(s[g][e]&&implC(s,g,e))return {t:s[g][e].map(x=>hsThrow(s,g,e,x)),from:IMPL[e].col+" "+e.toLowerCase(),orig:s[g][e]};if(s[g][e])return {t:s[g][e],from:null};const c=CONV[e];if(!c)return {t:null,from:null};
+  for(const ev of [c.to,c.next&&c.next.to].filter(Boolean))if(s[g][ev])return {t:s[g][ev].map(x=>{const v=parse(x,ev);return v==null?"":fmtHS(toHS(e,g,ev,v))}),from:ev,orig:s[g][ev]};
+  return {t:null,from:null}}
+/* boys' throws (Ryan 2026-10-19: "we do need throwing conversions if its based on college instruments"). High school boys throw
+   the 12lb shot and 1.6kg discus, college men the 16lb and 2kg. Levels set from college results (conference lists, division
+   estimates) are compared after taking the implement difference off the high school mark: shot 10 ft (8 to 12; Throws America
+   about 2.5 ft per pound, coaches quote about 8 ft), discus 25 ft (15 to 32; first-year college throwers 10 to 20 ft shorter,
+   coaching rule 5 m per 250 g = 26 ft, Throws America 32 ft). Official school charts are written for high school recruits and
+   are compared directly. Girls use the same implements in high school and college, so nothing changes for them. */
+const IMPL={"Shot Put":{add:[-3.66,-3.05,-2.44],hs:"12lb",col:"16lb",how:"High school boys throw the 12lb shot and college men the 16lb, so we take about 10 ft (8 to 12 ft) off your mark before comparing it with marks set from college results."},
+  "Discus":{add:[-9.75,-7.62,-4.57],hs:"1.6kg",col:"2kg",how:"High school boys throw the 1.6kg discus and college men the 2kg, so we take about 25 ft (15 to 32 ft) off your mark before comparing it with marks set from college results."}};
+const implC=(s,g,e)=>g==="m"&&!!IMPL[e]&&!((s.om||{})[g]||{})[e];
+const toCol=(s,g,e,v)=>v!=null&&implC(s,g,e)?v+IMPL[e].add[1]:v;
+const fmtFt=m=>{const i=Math.round(m/0.0254*4)/4,ft=Math.floor(i/12),inch=+(i-ft*12).toFixed(2);return `${ft}' ${inch}" ${m.toFixed(2)}m`};
+const hsThrow=(s,g,e,x)=>{const v=parse(x,e);return v==null?"":fmtFt(v-IMPL[e].add[1])};
 function tier0(t,e,v){if(meets(e,v,t[0]))return "T";if(meets(e,v,t[1]))return "R";if(t[2]&&meets(e,v,t[2]))return "W";return null}
-function tier(s,g,e,v){const t=s[g][e];if(t)return tier0(t,e,v);const c=convert(e,g,v);if(!c)return null;
+function tier(s,g,e,v){const t=s[g][e];if(t)return tier0(t,e,toCol(s,g,e,v));const c=convert(e,g,v);if(!c)return null;
   for(const x of c){if(s[g][x.e])return tier0(s[g][x.e],x.e,x.v)}return null}
 const TN={T:"Target",R:"Recruit",W:"Walk-On"};
 /* schools where the mark is just short of the next level (direct standards only); gap formatted for copy */
 const fmtGap=(e,d)=>FIELD.has(e)?(()=>{const i=d*39.3701;return i>=12?`${Math.floor(i/12)}'${Math.round(i%12)}"`:`${Math.max(1,Math.round(i))} inch${Math.round(i)>1?"es":""}`})():`${d.toFixed(2)}s`;
 function nearMiss(g,e,v){if(v==null)return {n:0};const F=FIELD.has(e),tol=F?0.03:0.02,cnt={W:[],R:[],T:[]};
-  for(const s of SCH){const t=s[g]&&s[g][e];if(!t)continue;const cur=tier0(t,e,v),nx=cur===null?2:cur==="W"?1:cur==="R"?0:-1;if(nx<0||!t[nx])continue;
-    const th=parse(t[nx],e);if(th==null)continue;const d=F?th-v:v-th;if(d>0&&d<=th*tol)cnt["WRT"[nx]].push(d)}
+  for(const s of SCH){const t=s[g]&&s[g][e];if(!t)continue;const vs=toCol(s,g,e,v),cur=tier0(t,e,vs),nx=cur===null?2:cur==="W"?1:cur==="R"?0:-1;if(nx<0||!t[nx])continue;
+    const th=parse(t[nx],e);if(th==null)continue;const d=F?th-vs:vs-th;if(d>0&&d<=th*tol)cnt["WRT"[nx]].push(d)}
   const lvl=["R","T","W"].sort((a,b)=>cnt[b].length-cnt[a].length)[0],ds=cnt[lvl].sort((a,b)=>a-b);if(!ds.length)return {n:0};
   const med=ds[Math.floor(ds.length/2)],gap=fmtGap(e,med);
   return {n:ds.length,lvl,gap}}
@@ -231,17 +255,18 @@ let CUR=[],IO=null;
 function stdFor(s){const g=S.g;if(s[g][S.e])return [S.e,s[g][S.e]];const c=convert(S.e,g,parse(S.mark,S.e))||[];for(const x of c)if(s[g][x.e])return [x.e,s[g][x.e]];return [S.e,null]}
 function cards(list,from,to){let o="";for(let k=from;k<Math.min(to,list.length);k++){const x=list[k],[ev,t]=stdFor(x.s),j={T:0,R:1,W:2}[x.t];
   o+=`<button class="mrow" data-school="${x.i}"><span class="mn"><b>${esc(x.s.n)}${star(x.s)}</b><small>${esc(x.s.d)} · ${esc(x.s.c)}</small></span><span class="mdv"><i>${esc(x.s.d.replace("NCAA ",""))}</i></span><span class="mc">${esc(x.s.c)}</span>
-    <span class="mk">${t&&t[j]?`${esc(t[j])}${ev!==S.e?`<small>${esc(ev)}</small>`:""}`:"–"}</span><span><span class="pill2 ${x.t}">${TN[x.t]}</span></span></button>`}
+    <span class="mk">${t&&t[j]?(ev===S.e&&implC(x.s,S.g,ev)?`<span title="College ${IMPL[ev].col} standard: ${esc(t[j])}">${esc(hsThrow(x.s,S.g,ev,t[j]))}</span>`:ev!==S.e&&toHS(S.e,S.g,ev,parse(t[j],ev))!=null?`<span title="College ${esc(ev)} standard: ${esc(t[j])}">${fmtHS(toHS(S.e,S.g,ev,parse(t[j],ev)))}</span>`:esc(t[j])):"–"}</span><span><span class="pill2 ${x.t}">${TN[x.t]}</span></span></button>`}
   return o}
 function watchMore(){if(IO){IO.disconnect();IO=null}const s=$("sent");if(!s||!("IntersectionObserver" in window))return;
   IO=new IntersectionObserver(es=>{if(!es.some(e=>e.isIntersecting))return;const from=S.n;S.n+=24;$("sgrid").insertAdjacentHTML("beforeend",cards(CUR,from,S.n));
     if(S.n>=CUR.length){IO.disconnect();IO=null;s.remove()}},{rootMargin:"600px 0px"});IO.observe(s)}
-const cinfo=e=>`<span class="ci"><button type="button" class="cib" data-cinfo aria-expanded="false" aria-label="How we convert the ${esc(e)}">i</button><span class="cpop" role="tooltip"><b>${esc(e)} → ${esc(CONV[e].next?CONV[e].to+" / "+CONV[e].next.to:CONV[e].to)}</b>${esc(CONV[e].how)}<small>College standards use college events, so we convert this high school mark first. Schools that publish their own ${esc(e)} standard are compared on their own number.</small></span></span>`;
+const iinfo=e=>`<span class="ci"><button type="button" class="cib" data-cinfo aria-expanded="false" aria-label="How we compare the ${esc(e)}">i</button><span class="cpop" role="tooltip"><b>${esc(IMPL[e].hs)} → ${esc(IMPL[e].col)}</b>${esc(IMPL[e].how)}<small>Every mark shown is in high school terms. Schools that publish their own standards are compared on their own number.</small></span></span>`;
+const cinfo=(e,cl)=>`<span class="ci"><button type="button" class="cib" data-cinfo aria-expanded="false" aria-label="How we convert the ${esc(e)}">i</button><span class="cpop" role="tooltip"><b>${esc(e)} → ${esc(CONV[e].next?CONV[e].to+" / "+CONV[e].next.to:CONV[e].to)}</b>${esc(CONV[e].how)}${cl?`<span class="cvx2">Your mark in college terms: ${cl}</span>`:""}<small>College teams race different events, so we convert behind the scenes and show every standard as its ${esc(hsName(e,S.g))} equivalent. Schools that publish their own ${esc(hsName(e,S.g))} standard are shown with their own number.</small></span></span>`;
 function standards(){
   const list=evs(S.g); if(!list.includes(S.e)) S.e=list[0];
   let o=`<div class="sec"><p class="lede">Select your gender, event, and enter your time to find the colleges that match you.</p>
   <form id="mf" class="panel"><div class="row">${seg("g",S.g)}
-    <div class="evw"><label class="sr" for="ev">Event</label><select class="in" id="ev">${list.map(e=>`<option value="${esc(e)}" ${e===S.e?"selected":""}>${esc(e)}${CONV[e]?" · converted":""}</option>`).join("")}</select>${CONV[S.e]?cinfo(S.e):""}</div>
+    <div class="evw"><label class="sr" for="ev">Event</label><select class="in" id="ev">${(()=>{const hs=HSE(S.g).filter(e=>list.includes(e)),more=list.filter(e=>!hs.includes(e)),op=e=>`<option value="${esc(e)}" ${e===S.e?"selected":""}>${esc(hsName(e,S.g))}</option>`;return hs.map(op).join("")+(more.length?`<optgroup label="More events">${more.map(op).join("")}</optgroup>`:"")})()}</select>${CONV[S.e]?cinfo(S.e):S.g==="m"&&IMPL[S.e]?iinfo(S.e):""}</div>
     <label class="sr" for="mk">Personal best</label><input class="in" id="mk" placeholder="PR, e.g. ${esc(ph(S.e))}" value="${esc(S.mark)}" autocomplete="off" inputmode="decimal">
     <div class="gseg" role="group" aria-label="Your grade"><span class="gl">Grade</span><div class="seg">${[9,10,11,12].map(n=>`<button type="button" data-grade="${n}" aria-pressed="${+S.gr===n}">${n}th</button>`).join("")}</div></div>
     <button class="go">Search colleges</button></div><div class="hint" id="hint"></div></form>`;
@@ -254,8 +279,8 @@ function standards(){
     const opts=(skip,key)=>[...new Set(all.filter(x=>ok(x,skip)).map(key))].filter(Boolean);
     const dd=(id,label,cur,list,fmt=x=>x)=>`<label class="dd${cur?" on":""}"><span class="sr">${label}</span><select id="${id}"><option value="">${label}</option>${list.map(x=>`<option value="${esc(x)}" ${x===cur?"selected":""}>${esc(fmt(x))}</option>`).join("")}</select></label>`;
     const cl=convLine(S.e,S.g,v), c=k=>all.filter(x=>x.t===k).length;LASTSUM={mark:S.mark,e:S.e,g:S.g,n:all.length,T:c("T"),R:c("R"),W:c("W")};
-    o+=`<div class="mhead"><p class="sum">${esc(S.mark)} in the ${S.g==="m"?"men's":"women's"} ${esc(S.e)} fits <b>${all.length}</b> colleges</p>
-      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p>${cl?`<p class="cvl"><b>College equivalent</b> ${cl}${cinfo(S.e)}</p>`:""}${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}${`<div class="hlp" id="hlp"><span>Were these results helpful?</span><button type="button" class="hbtn" data-hlp="up">Yes</button><button type="button" class="hbtn" data-hlp="down">No</button></div>`}</div>
+    o+=`<div class="mhead"><p class="sum">${esc(S.mark)} in the ${S.g==="m"?"men's":"women's"} ${esc(hsName(S.e,S.g))} fits <b>${all.length}</b> colleges${CONV[S.e]?cinfo(S.e,cl):S.g==="m"&&IMPL[S.e]?iinfo(S.e):""}</p>
+      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p>${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}${`<div class="hlp" id="hlp"><span>Were these results helpful?</span><button type="button" class="hbtn" data-hlp="up">Yes</button><button type="button" class="hbtn" data-hlp="down">No</button></div>`}</div>
     <section class="mtab" aria-label="Your college matches">
       <div class="mbar"><h3>Your college matches</h3><div class="dds">
         ${dd("fd","All divisions",S.div,DIVS.filter(d=>opts("d",x=>x.s.d).includes(d)))}
@@ -275,7 +300,7 @@ function hits(q){q=q.trim().toLowerCase().replace(/\s+/g," ");if(q.length<2)retu
     return [b?b+(s.o?3:0)+(s.d==="NCAA D1"?2:s.d==="NCAA D2"?1:0):0,i]}).filter(x=>x[0]).sort((a,b)=>b[0]-a[0]||SCH[a[1]].n.localeCompare(SCH[b[1]].n)).slice(0,8).map(x=>[SCH[x[1]],x[1]])}
 const star=s=>s.o?'<span class="star" title="Official standards, verified">★</span>':"";
 function drop(){const el=$("drop");if(!el)return;const h=hits(S.q.trim().toLowerCase());el.innerHTML=h.length?`<div class="drop">${h.map(([s,i])=>`<button data-school="${i}"><em>${esc(s.n)}${star(s)}</em><span>${s.d} · ${esc(s.c)}</span></button>`).join("")}</div>`:(S.q.trim().length>1?'<div class="drop"><p class="none">No college matches that. Try the full name or a short name like USC.</p></div>':"")}
-const disp=(s,g,e,i)=>{const o=(s.om||{})[g]||{};if(o[e])return esc(o[e][i]||"–");const c=(((CT[s.ck]||{})[g]||{})[e]||[])[i];return c?(c[1]?`${esc(c[1])} <small>${esc(c[0])}</small>`:esc(c[0]))+(c[2]?'<sup class="dest" title="Too few athletes in this conference event to set it, so this is the division median">est</sup>':""):"–"};
+const disp=(s,g,e,i)=>{const o=(s.om||{})[g]||{};if(o[e])return esc(o[e][i]||"–");if(s.em)return esc(((s[g][e]||[])[i])||"–");const c=(((CT[s.ck]||{})[g]||{})[e]||[])[i];return c?(c[1]?`${esc(c[1])} <small>${esc(c[0])}</small>`:esc(c[0]))+(c[2]?'<sup class="dest" title="Too few athletes in this conference event to set it, so this is the division median">est</sup>':""):"–"};
 function ruleText(s){if(s.est)return `These are Preferred Recruit estimates for ${esc(s.n)}. Its conference has no 2026 results list on TFRRS, so they can't be set from conference marks yet.`;const [t,r,w]=RULES[s.d]||[];const c=esc(s.c);
   if(!r) return `${s.d==="NCAA D3"?"NCAA D3 programs don't give athletic scholarships, so every athlete is effectively a walk-on. ":""}Target is a top-${t} mark in the ${c} this season. Walk-On is the ${ord(w)}-best mark (or the last one listed).`;
   return `Target is the ${ord(t)}-best mark in the ${c} this season, Recruit the ${ord(r)}, Walk-On the ${ord(w)}.`}
@@ -287,7 +312,7 @@ const stateUrl=st=>`/states/${slugx(ST_NAME[st]||st)}-college-track-and-field.ht
 const FAQ_EV=["100m","200m","400m","800m","1500m","5000m","110m Hurdles","100m Hurdles","Long Jump","High Jump","Shot Put"];
 function schoolExtra(s){const lvl="Walk-On",i=SCH.indexOf(s);
   const mk=g=>FAQ_EV.map(e=>{const t=s[g][e];return t&&t[2]?`${e} ${t[2]}`:null}).filter(Boolean).slice(0,6),m=mk("m"),w=mk("w");
-  const q=[[`What are the ${s.n} track and field recruiting standards?`,s.j?`${s.n} is an NJCAA junior college program${s.s?` in ${ST_NAME[s.s]||s.s}`:""}. This site doesn't set Target, Recruit or Walk-On levels for junior colleges, because NJCAA competition is national rather than conference-based and a program's marks can't be predicted reliably. Its season bests are above, and the full NJCAA national list is in Results.`:`${s.n} is ${/^[AEIOUN]/.test(s.d)?"an":"a"} ${s.d} program${s.c!==s.d?` in the ${s.c}`:""}. ${s.o?`Its standards come from the school's own published chart${s.yr?` (${s.yr})`:""}.`:s.est?"Its levels are estimates: the school doesn't publish standards and its conference has no outdoor championship results to set them from.":"Its Target, Recruit and Walk-On levels are set from 2026 conference results."} The full table for men and women is above.`]];
+  const q=[[`What are the ${s.n} track and field recruiting standards?`,s.j?`${s.n} is an NJCAA junior college program${s.s?` in ${ST_NAME[s.s]||s.s}`:""}. This site doesn't set Target, Recruit or Walk-On levels for junior colleges, because NJCAA competition is national rather than conference-based and a program's marks can't be predicted reliably. Its season bests are above, and the full NJCAA national list is in Results.`:`${s.n} is ${/^[AEIOUN]/.test(s.d)?"an":"a"} ${s.d} program${s.c!==s.d?` in the ${s.c}`:""}. ${s.o?`Its standards come from the school's own published chart${s.yr?` (${s.yr})`:""}.`:s.est?"Its levels are estimates: the typical marks across its division, because the school doesn't publish standards and its conference has no championship results to set them from.":"Its Target, Recruit and Walk-On levels are set from 2026 conference results."} The full table for men and women is above.`]];
   if(!s.j&&(m.length||w.length))q.push([`What times do you need to walk on at ${s.n}?`,[m.length?`Men's ${lvl}: ${m.join(", ")}.`:"",w.length?`Women's ${lvl}: ${w.join(", ")}.`:""].filter(Boolean).join(" ")]);
   q.push([`What conference is ${s.n} track and field in?`,`${s.n} competes in ${s.c!==s.d?`the ${s.c} (${s.d})`:s.j?"the NJCAA (junior colleges compete nationally)":`the ${s.d}`}${s.s?` and is based in ${ST_NAME[s.s]||s.s}`:""}.`]);
   const conf=SCH.map((x,k)=>[x,k]).filter(([x,k])=>k!==i&&x.d===s.d&&x.c===s.c).sort((a,b)=>a[0].n.localeCompare(b[0].n)).slice(0,12);
@@ -311,12 +336,12 @@ const SCK={e:null,mark:"",res:null};
 function schoolCheck(s,g){const list=evs(g).filter(e=>s[g][e]||(CONV[e]&&s[g][CONV[e].to]));if(!list.length)return "";
   if(!list.includes(SCK.e))SCK.e=list.includes(INT.e)?INT.e:list.includes(S.e)?S.e:list[0];
   const nm=s.t||s.n,r=SCK.res;
-  return `<form class="schk" id="schk"><b>Where do you stand at ${esc(nm)}?</b><div><label class="sr" for="schke">Event</label><select id="schke" class="in">${list.map(e=>`<option ${e===SCK.e?"selected":""}>${esc(e)}</option>`).join("")}</select><label class="sr" for="schkm">Your mark</label><input id="schkm" class="in" placeholder="Your PR, e.g. ${esc(ph(SCK.e))}" value="${esc(SCK.mark)}" autocomplete="off" inputmode="decimal"><button class="go">Check</button></div>${r?`<p class="schkr ${r.cls}">${r.html}</p>`:""}</form>`}
+  return `<form class="schk" id="schk"><b>Where do you stand at ${esc(nm)}?</b><div><label class="sr" for="schke">Event</label><select id="schke" class="in">${list.map(e=>`<option value="${esc(e)}" ${e===SCK.e?"selected":""}>${esc(hsName(e,g))}</option>`).join("")}</select><label class="sr" for="schkm">Your mark</label><input id="schkm" class="in" placeholder="Your PR, e.g. ${esc(ph(SCK.e))}" value="${esc(SCK.mark)}" autocomplete="off" inputmode="decimal"><button class="go">Check</button></div>${r?`<p class="schkr ${r.cls}">${r.html}</p>`:""}</form>`}
 function schoolResult(s,g){const e=SCK.e,v=parse(SCK.mark,e);if(v==null)return {cls:"bad",html:`Enter a mark like ${esc(ph(e))}.`};
-  const direct=s[g][e],cv=!direct&&CONV[e]?convert(e,g,v):null,std=direct||(cv&&s[g][cv[0].e]),ev2=direct?e:cv&&cv[0].e,vv=direct?v:cv&&cv[0].v;
+  const direct=s[g][e],cv=!direct&&CONV[e]?convert(e,g,v):null,std=direct||(cv&&s[g][cv[0].e]),ev2=direct?e:cv&&cv[0].e,vv=direct?toCol(s,g,e,v):cv&&cv[0].v;
   if(!std)return {cls:"bad",html:"No standard listed for that event here."};
   const t=tier0(std,ev2,vv),F=FIELD.has(ev2),nx=t===null?2:t==="W"?1:t==="R"?0:-1,nm=esc(s.t||s.n);
-  let next="";if(nx>=0&&std[nx]){const th=parse(std[nx],ev2);if(th!=null){const d=F?th-vv:vv-th;if(d>0)next=` You're ${fmtGap(ev2,d)} from ${TN["TRW"[nx]]} level.`}}
+  let next="";if(nx>=0&&std[nx]){const th=parse(std[nx],ev2);if(th!=null){const d=F?th-vv:vv-th;if(d>0){const dh=ev2!==e&&!F?Math.abs(toHS(e,g,ev2,th)-v):d;next=` You're ${fmtGap(ev2,dh)} from ${TN["TRW"[nx]]} level.`}}}
   return {t,cls:t?"ok":"no",html:t?`Your ${esc(SCK.mark.trim())} is <b>${TN[t]}</b> level at ${nm}.${next}`:`Your ${esc(SCK.mark.trim())} isn't on ${nm}'s chart yet.${next}`};}
 /* school branding (Ryan 2026-10-16, approved: school logo + colours on its page, Preferred Recruit identity kept).
    /brand/brand.json comes from scripts/brand/harvest.py (colours from each school's athletics site, contrast-checked: ink = text-safe
@@ -366,9 +391,11 @@ function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src,B=brandOf(s
     <div class="verify"><b>★ Official standards</b><span>Published by ${esc(s.n)} (${esc(s.yr)}) and checked mark for mark by Preferred Recruit.</span><a href="${esc(s.src)}" target="_blank" rel="noopener">View the official source ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
   } else {
     const ev=EVENTS.filter(e=>s[g][e]);
-    o+=`<div class="scroll" style="margin-top:16px"><table><thead><tr><th>Event</th><th class="num">Target</th><th class="num">Recruit</th><th class="num">Walk‑On ${levelsInfo()}</th></tr></thead><tbody>
-    ${ev.map(e=>`<tr><td>${e}</td><td class="num">${disp(s,g,e,0)}</td><td class="num">${disp(s,g,e,1)}</td><td class="num">${disp(s,g,e,2)}</td></tr>`).join("")||'<tr><td>No marks listed for this team yet.</td></tr>'}</tbody></table></div>
-    <div class="verify"><b>How these are set</b><span>${ruleText(s)} ${esc(s.n)} doesn't publish an official chart we could verify.${EVENTS.some(e=>["m","w"].some(g=>((((CT[s.ck]||{})[g]||{})[e])||[]).some(v=>v&&v[2])))?" Levels marked est: the conference has too few athletes in that event to set a level, so it uses the median of the same level across its division.":""} High school 1600m, 3200m, 300m hurdle and 39" hurdle marks are converted to these college events automatically.</span>${src?`<a href="${esc(src)}" target="_blank" rel="noopener">See the ${esc(s.c)} list on TFRRS ›</a>`:""}${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
+    /* high school events by default (1600m from the 1500m, 3200m from the 3000m/5000m, 300mH from the 400mH, 39" hurdles from 42"), college events one tap away */
+    const hsr=HSE(g).map(e=>[e,hsLevels(s,g,e)]).filter(([e,x])=>x.t),tg=`<div class="seg evtg" role="group" aria-label="Events"><button type="button" data-cev="0" aria-pressed="${!S.cev}">High school events</button><button type="button" data-cev="1" aria-pressed="${!!S.cev}">College events</button></div>`;
+    o+=`${hsr.length?tg:""}<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Event</th><th class="num">Target</th><th class="num">Recruit</th><th class="num">Walk‑On ${levelsInfo()}</th></tr></thead><tbody>
+    ${(S.cev||!hsr.length?ev.map(e=>`<tr><td>${e}</td><td class="num">${disp(s,g,e,0)}</td><td class="num">${disp(s,g,e,1)}</td><td class="num">${disp(s,g,e,2)}</td></tr>`):hsr.map(([e,x])=>x.from?`<tr title="Converted from the college ${esc(x.from)}: ${x.orig.map(v=>esc(v||"–")).join(" / ")}"><td>${esc(hsName(e,g))}</td>${[0,1,2].map(i=>`<td class="num">${esc(x.t[i]||"–")}</td>`).join("")}</tr>`:`<tr><td>${esc(hsName(e,g))}</td><td class="num">${disp(s,g,e,0)}</td><td class="num">${disp(s,g,e,1)}</td><td class="num">${disp(s,g,e,2)}</td></tr>`)).join("")||'<tr><td>No marks listed for this team yet.</td></tr>'}</tbody></table></div>
+    <div class="verify"><b>How these are set</b><span>${ruleText(s)} ${esc(s.n)} doesn't publish an official chart we could verify.${EVENTS.some(e=>["m","w"].some(g=>((((CT[s.ck]||{})[g]||{})[e])||[]).some(v=>v&&v[2])))?" Levels marked est: the conference has too few athletes in that event to set a level, so it uses the median of the same level across its division.":""} High school events show the matching college standard in high school terms (for example the 1600m from the college 1500m); tap College events for the original marks.</span>${src?`<a href="${esc(src)}" target="_blank" rel="noopener">See the ${esc(s.c)} list on TFRRS ›</a>`:""}${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
   }
   setTimeout(()=>teamBest(S.school),0);
   setTimeout(()=>schoolVids(S.school),0);
@@ -1037,6 +1064,7 @@ document.addEventListener("click",ev=>{
   if("back" in d){S.school=null;render();return}
   if(d.school){S.school=+d.school;render();scrollTo({top:0});INT.sch=SCH[S.school].n;saveInt();log("school",{school:SCH[S.school].n,division:SCH[S.school].d,state:ST_NAME[SCH[S.school].s]||SCH[S.school].s});return}
   if(d.grade){S.gr=INT.gr=+d.grade;saveInt();document.querySelectorAll("[data-grade]").forEach(x=>x.setAttribute("aria-pressed",x===b));const gs=b.closest(".gseg");gs&&gs.classList.remove("need");log("grade",{});const h=$("hint");if(h&&/grade/.test(h.textContent))h.textContent="";return}
+  if(d.cev!==undefined){S.cev=d.cev==="1";render();return}
   if(d.g){S.g=d.g;render();return}
   if(d.f!==undefined){S.f=d.f;S.n=24;render();return}
   if(d.div!==undefined){S.div=d.div;S.n=24;render();return}

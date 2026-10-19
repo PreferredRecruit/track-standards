@@ -4,9 +4,10 @@ Run once on public/data/db.json (idempotent): python3 scripts/data/sweep_2026_10
 
 1. Legacy levels (em) from the old site, no source, some clearly generated (CCC schools 0.3 s apart) or shifted (Seattle U
    women's "5000m" 11:25): schools in a conference that has 2026 conference results now use those results like every other
-   school in that conference. The rest keep their legacy levels, labelled as estimates on the site.
+   school in that conference. The rest use their division's typical levels (step 3), labelled as estimates on the site.
 2. Official charts: only cells the school's own chart proves wrong or that sit in the wrong event are changed."""
 import json, sys, pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
 P = pathlib.Path(__file__).resolve().parents[2] / "public/data/db.json"
 
 def main(write):
@@ -44,6 +45,32 @@ def main(write):
     setc(L, "m", "3000m Steeplechase", ["", "", "9:45"], "chart: '2KS: 6:30; 3KS: 9:45', the 3000m steeple mark is 9:45")
     setc(L, "w", "3000m Steeplechase", None, "chart gives only a 2000m steeple mark (7:30)")
     for g in "mw": setc(L, g, "10000m", None, "chart gives a cross country 5K time, not a 10,000m mark")
+    # 3. (Ryan 2026-10-19 "green to go") schools still on legacy levels (WCC, Sunshine State, CCS, CCC: no conference results) get
+    #    their division's typical level (median across the division's conferences, estimates excluded) in the events they list.
+    import statistics
+    from fix_levels import val as fval, fmt as ffmt, FIELD as FF
+    pool = {}
+    for k, v in ct.items():
+        dv = k.split("|")[0]
+        for g in "mw":
+            for e, row in (v.get(g) or {}).items():
+                for j, c in enumerate(row or []):
+                    if c and not (len(c) > 2 and c[2]):
+                        x = fval(c[0], e)
+                        if x: pool.setdefault((dv, g, e, j), []).append(x)
+    med = {k: statistics.median(v) for k, v in pool.items() if len(v) >= 5}
+    rules = d.get("rules", {})
+    for s in d["schools"]:
+        if not s.get("em") or s.get("emdiv"): continue
+        for g, evs in s["em"].items():
+            for e in list(evs):
+                row = []
+                for j in range(3):
+                    if (rules.get(s["d"]) or [1, 1, 1])[j] is None: row.append(""); continue
+                    m = med.get((s["d"], g, e, j)); row.append(ffmt(m, e)[0] if m else "")
+                if any(row): evs[e] = row
+                else: del evs[e]
+        s["emdiv"] = 1; log.append(f"{s['n']}: legacy levels -> {s['d']} typical levels")
     print("\n".join(log)); print(f"\n{len(log)} changes")
     if write: json.dump(d, open(P, "w"), separators=(",", ":"), ensure_ascii=False); print("written", P)
 

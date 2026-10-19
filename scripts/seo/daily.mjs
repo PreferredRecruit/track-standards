@@ -19,7 +19,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { CONV, HS_EVENTS } from "./hs.mjs";
+import { CONV, HS_EVENTS, IMPL_OFF, implC } from "./hs.mjs";
 import { parseMark } from "./markparse.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -45,7 +45,7 @@ function levelsFor(S, CT, st, g, e, parse) {
     let ev = e, t = raw(s, g, e);
     if (!t && c) { ev = [c.to, c.next && c.next.to].filter(Boolean).find(x => raw(s, g, x)); t = ev ? raw(s, g, ev) : null; }
     if (!t) continue;
-    const back = x => ev === e ? x : c.add ? x - c.add : ev === c.to ? x / c.k[g] : x / c.next.k / c.k[g];
+    const back = x => ev === e ? (implC(s, g, e) ? x - IMPL_OFF[e] : x) : c.add ? x - c.add : ev === c.to ? x / c.k[g] : x / c.next.k / c.k[g];
     const v = [0, 1, 2].map(j => { const x = parse(t[j], ev); return x == null ? null : back(x); });
     if (v.every(x => x == null)) continue;
     out.push({ s, v, conv: ev !== e ? ev : null });

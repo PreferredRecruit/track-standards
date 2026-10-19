@@ -10,7 +10,12 @@ import { PARSE_SRC } from "./markparse.mjs";
 const DIVS = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA"];
 const AGG = DIVS;
 /* boys throw lighter implements in high school (12 lb shot, 1.6 kg discus) than college men (16 lb, 2 kg); no reliable conversion */
-const IMPL = { "Shot Put": "High school boys throw a 12 lb shot; college men throw 16 lb. These are college marks with the 16 lb shot, so a high school mark will read higher than the college equivalent.", "Discus": "High school boys throw a 1.6 kg discus; college men throw 2 kg. These are college marks with the 2 kg discus, so a high school mark will read higher than the college equivalent." };
+/* boys' throws (Ryan 2026-10-19): same rule as the app (src/standards/app.js IMPL). Levels set from college results (16 lb shot,
+   2 kg discus) are put in high school terms by adding the implement difference back; schools' own charts are written for high
+   school recruits and are used as published. Shot 10 ft (3.05 m), discus 25 ft (7.62 m). */
+export const IMPL_OFF = { "Shot Put": -3.05, "Discus": -7.62 };
+export const implC = (s, g, e) => g === "m" && IMPL_OFF[e] != null && !((s.om || {})[g] || {})[e];
+const IMPL = { "Shot Put": "High school boys throw a 12 lb shot and college men 16 lb. Marks set from college results are shown in high school terms (about 10 ft added); schools' own charts are shown as published.", "Discus": "High school boys throw a 1.6 kg discus and college men 2 kg. Marks set from college results are shown in high school terms (about 25 ft added); schools' own charts are shown as published." };
 const HS = g => (g === "m" ? "Boys" : "Girls");
 const DEF = { T: "The marks that typically grant a full-ride scholarship, depending on school funding.", R: "The range where coaches typically start recruiting conversations and scholarship discussions begin. Not a guarantee.", W: "The minimum mark required to earn a spot on the team." };
 export const CONV = {
@@ -41,11 +46,11 @@ export function hsPages({ S, CT, write, writeRaw, page, parse, esc, slug, school
   const meets = (e, v, m) => { const sv = parse(m, e); if (sv == null) return false; return isF(e) ? v >= sv - 1e-9 : v <= sv + 1e-9; };
   function tierOf(s, g, e, v) {
     const cand = raw(s, g, e) ? [{ e, v }] : toCollege(e, g, v).filter(x => raw(s, g, x.e));
-    if (!cand.length) return null; const x = cand[0], t = raw(s, g, x.e);
+    if (!cand.length) return null; const x = { ...cand[0] }, t = raw(s, g, x.e); if (x.e === e && implC(s, g, e)) x.v += IMPL_OFF[e];
     return meets(x.e, x.v, t[0]) ? "Target" : meets(x.e, x.v, t[1]) ? "Recruit" : t[2] && meets(x.e, x.v, t[2]) ? "Walk-On" : null;
   }
   const qs = vals => { vals = vals.filter(v => v != null).sort((a, b) => a - b); return vals.length < 12 ? null : [.25, .5, .75].map(q => vals[Math.floor(vals.length * q)]); };
-  const levelVals = (d, g, e, j) => S.filter(s => s.d === d).map(s => { const t = raw(s, g, e); return t ? parse(t[j], e) : null; });
+  const levelVals = (d, g, e, j) => S.filter(s => s.d === d).map(s => { const t = raw(s, g, e), v = t ? parse(t[j], e) : null; return v != null && implC(s, g, e) ? v - IMPL_OFF[e] : v; });
   const G = g => (g === "m" ? "mens" : "womens");
   const hsPath = (g, e) => `/how-fast/${G(g)}-${slug(e)}.html`;
   const fitPath = (g, e, v) => `/colleges-for/${G(g)}-${slug(e)}-${slug(nice(e, v))}.html`;
@@ -157,7 +162,7 @@ ${cv ? `<p><a href="/convert.html">High school to college conversion tables ›<
     for (const s of S) {
       let ev = e, t = raw(s, g, e);
       if (!t) { const x = toCollege(e, g, 1).find(z => raw(s, g, z.e)); if (!x) continue; ev = x.e; t = raw(s, g, ev); }
-      const back = x => ev === e ? x : ev === CONV[e].to ? fromCollege(e, g, x) : fromCollege(e, g, x / CONV[e].next.k);
+      const back = x => ev === e ? (implC(s, g, e) ? x - IMPL_OFF[e] : x) : ev === CONV[e].to ? fromCollege(e, g, x) : fromCollege(e, g, x / CONV[e].next.k);
       const v = t.map(m => { const x = parse(m, ev); return x == null ? null : +back(x).toFixed(isF(ev) ? 3 : 2); });
       if (v.every(x => x == null)) continue;
       const k = JSON.stringify([DIVS.indexOf(s.d), ...v]); cnt.set(k, (cnt.get(k) || 0) + 1);
