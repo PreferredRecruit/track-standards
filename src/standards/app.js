@@ -84,6 +84,16 @@ function parseMark(str,e){
   if(c===2){a=+p[0]*3600+ +p[1]*60+ +p[2];b=+p[0]*60+ +(p[1]+"."+p[2].replace(".",""));if(R&&!inR(a,R)&&inR(b,R))return b;return a}
   return null};
   var first=null;for(var i=0;i<alts.length;i++){var v2=one(alts[i]);if(v2==null)continue;if(first==null)first=v2;if(!R||inR(v2,R))return v2}return first}
+/* results clean-up: same function as scripts/seo/markparse.mjs CLEAN_SRC (keep in sync) */
+function cleanRank(D){if(!D||!D.lists)return D;
+  var LIM={"55m":9,"60m":10,"100m":16,"200m":34,"300m":60,"400m":80,"500m":110,"600m":130,"800m":220,"1000m":290,"1500m":480,"Mile":520,"3000m":1080,"5000m":1800,"10000m":3900,
+    "55m Hurdles":12,"60m Hurdles":13,"100m Hurdles":22,"110m Hurdles":24,"400m Hurdles":100,"3000m Steeplechase":1200,
+    "High Jump":1.0,"Pole Vault":1.5,"Long Jump":3,"Triple Jump":7,"Shot Put":5,"Discus":12,"Hammer":12,"Javelin":12,"Weight Throw":5};
+  var lab=function(e){return String(e).replace(/^(\d[\d,]*) Meters$/,"$1m").replace(/,/g,"").replace(/^(\d+) Hurdles$/,"$1m Hurdles").replace(/^(\d+) Steeplechase$/,"$1m Steeplechase")};
+  D.lists.forEach(function(l){Object.keys(l.g||{}).forEach(function(g){var G=l.g[g];Object.keys(G).forEach(function(ev){var rows=G[ev];if(!rows||rows.length<3)return;
+    var e=lab(ev),up=/thlon|jump|vault|put|discus|hammer|javelin|throw/i.test(ev),v=rows.map(function(r){return parseMark(r[4],e)}),lim=LIM[e];
+    var s=v.filter(function(x){return x!=null}).sort(function(a,b){return a-b});if(s.length<3)return;var med=s[Math.floor(s.length/2)];
+    G[ev]=rows.filter(function(r,i){var x=v[i];if(x==null)return true;if(lim!=null&&(up?x<lim:x>lim))return false;return !(up?x<med*0.5:x>med*1.5)})})})});return D}
 const parse=parseMark;
 const ord=n=>n+(n%100>=11&&n%100<=13?"th":{1:"st",2:"nd",3:"rd"}[n%10]||"th");
 const meets=(e,v,std)=>{const s=parse(std,e);if(s==null||v==null)return false;return FIELD.has(e)?v>=s-1e-9:v<=s+1e-9};
@@ -459,7 +469,7 @@ const WIDE=()=>matchMedia("(min-width:761px)").matches;
 const MULTI=()=>{syncSel();return R.sel.length>1};
 const curKey=()=>{if(MULTI())return null;const x=RIDX.find(x=>x.year+"-"+x.season===R.season&&x.div===R.div)||RIDX.find(x=>x.year+"-"+x.season===R.season);if(x)R.div=x.div;return x&&x.key};
 function load(key,quiet){if(CACHE[key]||LOADING[key])return LOADING[key];
-  LOADING[key]=getRank(key).then(d=>{CACHE[key]=d}).catch(()=>{CACHE[key]={err:1,lists:[]}})
+  LOADING[key]=getRank(key).then(d=>{CACHE[key]=cleanRank(d)}).catch(()=>{CACHE[key]={err:1,lists:[]}})
     .then(()=>{if((key===curKey()||MULTI()&&key.startsWith(R.season+"-"))&&S.tab==="results"&&S.school==null){R.swap=true;render()} if(!quiet) prefetch()});
   return LOADING[key]}
 function prefetch(){const go=()=>RIDX.filter(x=>x.year+"-"+x.season===R.season&&!CACHE[x.key]).forEach(x=>load(x.key,true));(window.requestIdleCallback?requestIdleCallback(go,{timeout:2000}):setTimeout(go,600))}
@@ -472,7 +482,8 @@ function curve(rows,e){
   const y=x=>{const t=(x-lo)/((mx-lo)||1);return pad+(hi?1-t:t)*(H-pad*2)};
   const pts=v.map((x,i)=>[i/(v.length-1)*W,y(x)]), d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
   const tick=[0,Math.min(9,v.length-1),v.length-1];
-  return `<div class="curve"><div class="cl"><span>How the marks drop off from #1 to #${v.length}</span><span>${esc(rows[0][4])} → ${esc(rows[v.length-1][4])}</span></div>
+  const ok=rows.filter(r=>{const m=mval(r[4]);return m!=null&&isFinite(m)}),L=ok[ok.length-1];
+  return `<div class="curve"><div class="cl"><span>How marks drop off across ${v.length.toLocaleString()} athletes</span><span>#1 <b>${esc(ok[0][4])}</b> · #${v.length.toLocaleString()} <b>${esc(L[4])}</b></span></div>
   <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7A45F0" stop-opacity=".28"/><stop offset="1" stop-color="#7A45F0" stop-opacity="0"/></linearGradient></defs>
   <path d="${d} L${W} ${H} L0 ${H} Z" fill="url(#cg)"/><path d="${d}" fill="none" stroke="#7A45F0" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
   ${tick.map(i=>`<circle cx="${pts[i][0]}" cy="${pts[i][1]}" r="4" fill="#fff" stroke="#7A45F0" stroke-width="2.5" vector-effect="non-scaling-stroke"/>`).join("")}</svg></div>`;

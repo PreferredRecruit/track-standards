@@ -13,7 +13,7 @@ import path from "node:path";
 import zlib from "node:zlib";
 
 import { hsPages } from "./hs.mjs";
-import { parseMark } from "./markparse.mjs";
+import { parseMark, cleanRank } from "./markparse.mjs";
 import { fitTitle, fitDesc, tailsFor, levelWords, SEASON } from "./meta.mjs";
 import { schoolPages } from "./schools.mjs";
 import { topicPages } from "./topics.mjs";
@@ -134,7 +134,7 @@ export function generate(root, out) {
     const DKk = { "NCAA D1": "d1", "NCAA D2": "d2", "NCAA D3": "d3", NAIA: "naia" }, cnt = new Map();
     for (const y of yrs) for (const [d, k] of Object.entries(DKk)) {
       const f = path.join(out, "data/rank", `${y}-outdoor-${k}.dat`); if (!fs.existsSync(f)) continue;
-      const D = JSON.parse(zlib.gunzipSync(fs.readFileSync(f)));
+      const D = cleanRank(JSON.parse(zlib.gunzipSync(fs.readFileSync(f))));
       for (const l of D.lists) for (const g of ["m", "w"]) for (const rows of Object.values(l.g[g] || {})) for (const r of rows) {
         const key = d + "|" + D.teams[r[3]]; if (!cnt.has(key)) cnt.set(key, { m: 0, w: 0 }); cnt.get(key)[g]++; }
     }
@@ -248,7 +248,7 @@ export function generate(root, out) {
   const champPages = [], resultPages = [];
   for (const x of RIDX) {
     if (!RDIVS.includes(x.div)) continue;
-    let D; try { D = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(out, "data/rank", x.key + ".dat"))).toString()); } catch { continue; }
+    let D; try { D = cleanRank(JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(out, "data/rank", x.key + ".dat"))).toString())); } catch { continue; }
     const XC = x.season === "xc", seasonName = XC ? "Cross Country" : x.season[0].toUpperCase() + x.season.slice(1);
     const nat = D.lists.find(l => l.nat), champ = XC ? nat : D.lists.find(l => l.champ);   /* XC: the national meet is both */
     if (champ) {
@@ -279,7 +279,7 @@ export function generate(root, out) {
      conference, competition), so the page shows what it took to rank #1/#10/#25/#50/#100 on the newest NJCAA national list (TFRRS). */
   try {
     const nk = RIDX.filter(x => x.div === "NJCAA" && x.season === "outdoor").sort((a, b) => b.year.localeCompare(a.year))[0];
-    const nd = nk && JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(out, "data/rank", nk.key + ".dat"))).toString());
+    const nd = nk && cleanRank(JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(out, "data/rank", nk.key + ".dat"))).toString()));
     const NL = nd && (nd.lists.find(l => /all schools/i.test(l.label || "")) || nd.lists.find(l => l.nat));
     if (NL) {
       const P = [1, 10, 25, 50, 100], clean = m => String(m || "").replace(/[@#*]/g, "").trim();

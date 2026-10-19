@@ -30,3 +30,18 @@ export const PARSE_SRC = String.raw`function parseMark(str,e){
   return null};
   var first=null;for(var i=0;i<alts.length;i++){var v2=one(alts[i]);if(v2==null)continue;if(first==null)first=v2;if(!R||inR(v2,R))return v2}return first}`;
 export const parseMark = new Function(PARSE_SRC + "; return parseMark;")();
+
+/* Results clean-up (Ryan 2026-10-19: men's 100m "1 to 3,762 ... 972 to 2219"). TFRRS lists carry a few impossible entries: a 22.19
+   in an NJCAA 100m list (a 200m time typed as a 100m) and 26.49 in a championship final (an athlete who pulled up). They are dropped
+   when the lists load: a mark outside the event's possible range, or far off the list's own median (1.5x slower; half the distance
+   or points). TFRRS places on single lists are kept; combined rankings renumber. Same function in the app and the results pages. */
+export const CLEAN_SRC = String.raw`function cleanRank(D){if(!D||!D.lists)return D;
+  var LIM={"55m":9,"60m":10,"100m":16,"200m":34,"300m":60,"400m":80,"500m":110,"600m":130,"800m":220,"1000m":290,"1500m":480,"Mile":520,"3000m":1080,"5000m":1800,"10000m":3900,
+    "55m Hurdles":12,"60m Hurdles":13,"100m Hurdles":22,"110m Hurdles":24,"400m Hurdles":100,"3000m Steeplechase":1200,
+    "High Jump":1.0,"Pole Vault":1.5,"Long Jump":3,"Triple Jump":7,"Shot Put":5,"Discus":12,"Hammer":12,"Javelin":12,"Weight Throw":5};
+  var lab=function(e){return String(e).replace(/^(\d[\d,]*) Meters$/,"$1m").replace(/,/g,"").replace(/^(\d+) Hurdles$/,"$1m Hurdles").replace(/^(\d+) Steeplechase$/,"$1m Steeplechase")};
+  D.lists.forEach(function(l){Object.keys(l.g||{}).forEach(function(g){var G=l.g[g];Object.keys(G).forEach(function(ev){var rows=G[ev];if(!rows||rows.length<3)return;
+    var e=lab(ev),up=/thlon|jump|vault|put|discus|hammer|javelin|throw/i.test(ev),v=rows.map(function(r){return parseMark(r[4],e)}),lim=LIM[e];
+    var s=v.filter(function(x){return x!=null}).sort(function(a,b){return a-b});if(s.length<3)return;var med=s[Math.floor(s.length/2)];
+    G[ev]=rows.filter(function(r,i){var x=v[i];if(x==null)return true;if(lim!=null&&(up?x<lim:x>lim))return false;return !(up?x<med*0.5:x>med*1.5)})})})});return D}`;
+export const cleanRank = new Function(PARSE_SRC + ";" + CLEAN_SRC + "; return cleanRank;")();
