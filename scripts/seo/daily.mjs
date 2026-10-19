@@ -38,7 +38,7 @@ export const hubPath = (g, e) => `/colleges/${HSG(g)}-${slug(e)}.html`;
 
 /* every program in a state with its levels for one high school event, in high school units (same rules as the embed widget) */
 function levelsFor(S, CT, st, g, e, parse) {
-  const raw = (s, gg, ev) => { const o = (s.om || {})[gg] || {}; if (o[ev]) return o[ev]; if (s.em) return (s.em[gg] || {})[ev] || null; const c = ((CT[s.ck] || {})[gg] || {})[ev]; return c ? c.map(v => (v ? v[0] : "")) : null; };
+  const raw = (s, gg, ev) => { if ((s.ng || []).includes(gg)) return null; const o = (s.om || {})[gg] || {}; if (o[ev]) return o[ev]; if (s.em) return (s.em[gg] || {})[ev] || null; const c = ((CT[s.ck] || {})[gg] || {})[ev]; return c ? c.map(v => (v ? v[0] : "")) : null; };
   const c = CONV[e], out = [];
   for (const s of S) {
     if (s.s !== st || s.j) continue;

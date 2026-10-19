@@ -107,6 +107,33 @@ def main(write):
                 if nv is None: continue
                 old = row[j][0]; row[j] = fmt(nv, e) + ["div"]
                 fixes.append((k, gg, e, ["Target", "Recruit", "Walk-On"][j], old, row[j][0], "men's mark behind women's"))
+    # 6. (2026-10-19, Ryan "no small errors on any schools parts") a level below a realistic college floor means the conference
+    #    had too few athletes for that place (e.g. men's high jump Walk-On 1.40m, women's 400mH Walk-On 1:30, men's shot 5.67m):
+    #    rebuilt from the conference's level above + the division's typical gap, flagged as an estimate like step 3.
+    FLOOR = {"m": {"100m": 13.0, "200m": 27.0, "400m": 62.0, "800m": 150, "1500m": 300, "Mile": 325, "3000m": 660, "5000m": 1200, "10000m": 2580,
+                   "110m Hurdles": 20.0, "400m Hurdles": 72.0, "3000m Steeplechase": 840, "High Jump": 1.55, "Pole Vault": 2.6, "Long Jump": 5.2,
+                   "Triple Jump": 10.8, "Shot Put": 9.0, "Discus": 26.0, "Hammer": 26.0, "Javelin": 32.0},
+             "w": {"100m": 15.0, "200m": 31.0, "400m": 75.0, "800m": 180, "1500m": 380, "Mile": 410, "3000m": 840, "5000m": 1440, "10000m": 3060,
+                   "100m Hurdles": 20.0, "400m Hurdles": 88.0, "3000m Steeplechase": 1020, "High Jump": 1.30, "Pole Vault": 2.1, "Long Jump": 4.2,
+                   "Triple Jump": 8.8, "Shot Put": 7.0, "Discus": 20.0, "Hammer": 20.0, "Javelin": 20.0}}
+    for k, v in ct.items():
+        div = k.split("|")[0]
+        for g in "mw":
+            for e, row in (v.get(g) or {}).items():
+                fl = FLOOR[g].get(e); F = e in FIELD
+                if fl is None or not row: continue
+                for j in range(len(row)):
+                    if not row[j]: continue
+                    x = val(row[j][0], e)
+                    if x is None or (x >= fl if F else x <= fl): continue
+                    ref = max([a for a in range(j) if row[a] and val(row[a][0], e)], default=None)
+                    gp = gap.get((div, F, ref, j)) if ref is not None else None
+                    nv = step(val(row[ref][0], e), gp, F) if gp is not None else med.get((div, g, e, j))
+                    if nv is None or not (nv >= fl if F else nv <= fl): nv = med.get((div, g, e, j))
+                    if nv is None or not (nv >= fl if F else nv <= fl): nv = fl   # still below: the floor itself
+                    if ref is not None: pv = val(row[ref][0], e); nv = min(nv, pv) if F else max(nv, pv)   # never better than the level above
+                    old = row[j][0]; row[j] = fmt(nv, e) + ["div"]
+                    fixes.append((k, g, e, ["Target", "Recruit", "Walk-On"][j], old, row[j][0], "below college floor"))
     for f in fixes: print(" | ".join(map(str, f)))
     print(f"\n{len(fixes)} values fixed across {len({(f[0], f[1], f[2]) for f in fixes})} conference events")
     if write: json.dump(d, open(P, "w"), separators=(",", ":"), ensure_ascii=False); print("written", P)

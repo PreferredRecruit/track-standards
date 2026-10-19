@@ -124,6 +124,30 @@ export function generate(root, out) {
     for (const s of S) { const x = bySlug.get(schoolSlug(s)); if (!x || s.j) continue; s.om = x.standards; s.o = "1"; s.off = undefined; s.cv = String(x.approved_at || "").slice(0, 10); if (x.season) s.yr = x.season; s.src = null; n++; }
     if (n) { fs.writeFileSync(path.join(out, "data/db.json"), JSON.stringify(DB)); console.log(`coach-verified standards merged: ${n} schools`); }
   } catch { /* no feed yet */ }
+  /* teams that don't exist (Ryan 2026-10-19 "no small errors on any schools parts"): conference levels gave every school men's and
+     women's standards, so women-only programs (Northwestern, Temple, Wellesley...) showed men's standards. A gender is hidden when
+     the school has no official chart for it, none of its athletes appear in that gender's lists in the last two outdoor seasons,
+     the other gender has 4+ marks there, and its roster link doesn't name that team. Recomputed every build from the results. */
+  try {
+    const idx = JSON.parse(fs.readFileSync(path.join(out, "data/rank_index.json"), "utf8"));
+    const yrs = [...new Set(idx.filter(x => x.season === "outdoor").map(x => x.year))].sort().slice(-2);
+    const DKk = { "NCAA D1": "d1", "NCAA D2": "d2", "NCAA D3": "d3", NAIA: "naia" }, cnt = new Map();
+    for (const y of yrs) for (const [d, k] of Object.entries(DKk)) {
+      const f = path.join(out, "data/rank", `${y}-outdoor-${k}.dat`); if (!fs.existsSync(f)) continue;
+      const D = JSON.parse(zlib.gunzipSync(fs.readFileSync(f)));
+      for (const l of D.lists) for (const g of ["m", "w"]) for (const rows of Object.values(l.g[g] || {})) for (const r of rows) {
+        const key = d + "|" + D.teams[r[3]]; if (!cnt.has(key)) cnt.set(key, { m: 0, w: 0 }); cnt.get(key)[g]++; }
+    }
+    let hidden = 0;
+    for (const s of S) {
+      delete s.ng; if (s.j || !s.t) continue; const c = cnt.get(s.d + "|" + s.t); if (!c) continue;
+      for (const [g, o] of [["m", "w"], ["w", "m"]]) {
+        const team = g === "m" ? /(^|[^o])mens-track/i : /womens-track/i;
+        if (!c[g] && c[o] >= 4 && !((s.om || {})[g]) && !team.test(s.rs || "")) { s.ng = [g]; hidden++; }
+      }
+    }
+    fs.writeFileSync(path.join(out, "data/db.json"), JSON.stringify(DB)); console.log(`teams without a men's or women's program: ${hidden}`);
+  } catch (e) { console.warn("team check skipped:", e && e.message); }
   const NS = S.filter(x => !x.j).length, NJ = S.filter(x => x.j).length;   /* schools with levels / junior colleges (results only) */
   const JG = "/guides/junior-college-track-and-field-recruiting.html";
   for (const name of ["index.html", "llms.txt"]) { const f = path.join(out, name); if (fs.existsSync(f)) fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace(/\{\{SCHOOLS\}\}/g, NS.toLocaleString())); }
@@ -131,8 +155,8 @@ export function generate(root, out) {
   DATES.db = DB.built || new Date().toISOString().slice(0, 10);
   try { DATES.data = JSON.parse(fs.readFileSync(path.join(out, "data/updated.json"), "utf8")).updated.slice(0, 10); } catch { DATES.data = DATES.db; }
   DATES.max = DATES.data > DATES.db ? DATES.data : DATES.db;
-  const std = (s, g, e) => { const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? (v[1] ? `${v[1]} (${v[0]})` : v[0]) + (v[2] ? " est." : "") : "")) : null; };
-  const raw = (s, g, e) => { const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? v[0] : "")) : null; };
+  const std = (s, g, e) => { if ((s.ng || []).includes(g)) return null; const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? (v[1] ? `${v[1]} (${v[0]})` : v[0]) + (v[2] ? " est." : "") : "")) : null; };
+  const raw = (s, g, e) => { if ((s.ng || []).includes(g)) return null; const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? v[0] : "")) : null; };
   const sl = (s) => `/schools/${schoolSlug(s)}`;
   const files = []; const write = (p, html) => { const f = path.join(out, p); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, html); files.push(p); };
   const groupLinks = (items) => `<div class="links">${items.map(([u, t]) => `<a href="${u}">${esc(t)}</a>`).join("")}</div>`;

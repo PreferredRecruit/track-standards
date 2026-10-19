@@ -22,7 +22,7 @@ export async function mount(opts = {}) {
   for (const x of LIVEIDX) { LIVE_KEYS.add(x.key); if (!RIDX.some(y => y.key === x.key)) RIDX.push(x); }
 
 const EVENTS=["100m", "200m", "400m", "800m", "1500m", "1600m", "Mile", "3000m", "3200m", "5000m", "10000m", "100m Hurdles", "110m Hurdles", "110m Hurdles (39\")", "300m Hurdles", "400m Hurdles", "3000m Steeplechase", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Hammer", "Javelin"], CT=DB.ct, RULES=DB.rules;
-const SCH=DB.schools.map(x=>{const side=g=>{if(x.em)return (x.em[g]||{});const o=(x.om||{})[g]||{},c=(CT[x.ck]||{})[g]||{},r={};EVENTS.forEach(e=>{if(o[e])r[e]=o[e];else if(c[e])r[e]=c[e].map(v=>v?v[0]:"")});return r};return Object.assign(x,{m:side("m"),w:side("w")})});
+const SCH=DB.schools.map(x=>{const side=g=>{if((x.ng||[]).includes(g))return {};if(x.em)return (x.em[g]||{});const o=(x.om||{})[g]||{},c=(CT[x.ck]||{})[g]||{},r={};EVENTS.forEach(e=>{if(o[e])r[e]=o[e];else if(c[e])r[e]=c[e].map(v=>v?v[0]:"")});return r};return Object.assign(x,{m:side("m"),w:side("w")})});
 const ACR=SCH.map(s=>s.n.toLowerCase().replace(/\(.*?\)/g," ").split(/[^a-z&]+/).filter(w=>w&&!["of","the","at","and","in","for"].includes(w)).map(w=>w[0]).join(""));
 const TOK=SCH.map(s=>[...new Set((s.n+" "+s.t+" "+(s.a||[]).join(" ")).toLowerCase().split(/[^a-z0-9&]+/).filter(Boolean))]);
 const DIVS=["NCAA D1","NCAA D2","NCAA D3","NAIA"];
@@ -353,7 +353,7 @@ let BRQ=false;   /* the re-render after brand data arrives skips the entrance fa
 if(/^\/schools\//.test(location.pathname))loadBrand();
 function brandOf(s){if(BR===null){loadBrand();return null}
   const b=BR[(s.os&&s.os[0])||slugOf(s.n)];return b&&b.primary?b:null}
-const schoolAbout=(s,vf="")=>`<section class="sabout"><details class="fold"><summary>About ${esc(s.n)}</summary><p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)}${s.j?" junior college":""} track and field program${s.c!==s.d?` in the ${esc(s.c)}`:""}${s.s?`, based in ${esc(ST_NAME[s.s]||s.s)}`:""}. ${s.j?"Junior colleges compete nationally rather than in conferences, so this site shows its season results instead of predicted recruiting levels.":`These are the marks it takes to be a Target recruit, a Recruit or a Walk-On for men and women in every event${s.o?", taken from the school's own published standards":""}.`}</p>${vf}${schoolLinks(s)}</details></section>`;
+const schoolAbout=(s,vf="")=>`<section class="sabout"><details class="fold"><summary>About ${esc(s.n)}</summary><p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)}${s.j?" junior college":""} track and field program${s.c!==s.d?` in the ${esc(s.c)}`:""}${s.s?`, based in ${esc(ST_NAME[s.s]||s.s)}`:""}. ${s.j?"Junior colleges compete nationally rather than in conferences, so this site shows its season results instead of predicted recruiting levels.":`These are the marks it takes to be a Target recruit, a Recruit or a Walk-On for ${(s.ng||[])[0]?((s.ng[0]==="m")?"women":"men"):"men and women"} in every event${s.o?", taken from the school's own published standards":""}.`}</p>${vf}${schoolLinks(s)}</details></section>`;
 const brandNote=(s,B)=>B?`<p class="bnote">School names, logos and colours belong to their institutions and are used only to identify the program. Preferred Recruit is not affiliated with or endorsed by ${esc(s.n)}.</p>`:"";
 /* school-page offer (Ryan 2026-10-17: "use a pop-up for that content", keep the page surface clean). Opens once the visitor has
    scrolled past the standards table (held 1.2 s), once per visit, same modal + rules as everywhere else. */
@@ -365,7 +365,7 @@ function armSchoolOffer(i){clearInterval(SARM);const s=SCH[i];if(!s||s.j||EV.sho
     const t=document.querySelector(".simple .scroll"),r=t&&t.getBoundingClientRect();if(!r)return;
     if(r.bottom<innerHeight*.6){if(!since)since=Date.now();else if(Date.now()-since>1200){clearInterval(SARM);EV.force=true;
       evalIn(`Does ${nm} know your name?`,`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,0,"school-page"+(+S.gr>=11?"-11-12":S.gr?"-9-10":""),"school-scroll",bs)}}else since=0},300)}
-function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src,B=brandOf(s);
+function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m"?"w":"m";const g=S.g,src=(CT[s.ck]||{}).src,B=brandOf(s);
   /* simple layout (Ryan 2026-10-16: "make it less cluttered and simple"): band (logo + name as the H1) → checker → table.
      Description, links and the evaluation card move to "About" at the bottom (still on the page for search engines).
      Schools without brand data get the same band in neutral ink with their initials. */
@@ -380,7 +380,7 @@ function school(){const s=SCH[S.school],g=S.g,src=(CT[s.ck]||{}).src,B=brandOf(s
   const still=BRQ;BRQ=false;
   let o=`<div class="sec branded simple${still?" still":""}" style="padding-top:0;${bv}"><button class="back" data-back>‹ Back</button>
   <div class="sband">${mark}<div><small>${/\(/.test(s.n)?esc(s.n.replace(/^.*?\((.*?)\).*$/,"$1"))+" · ":""}${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(s.s):""}</small><h1 class="sname">${esc(s.n.replace(/\s*\(.*?\)\s*/g," ").trim())} Track &amp; Field${s.j?" (NJCAA)":" Standards"}</h1>${s.o?`<span class="offpill">★ Official standards${s.yr?` · ${esc(s.yr)}`:""}</span>`:""}</div></div>
-  ${seg("g",g)}`;   /* school checker removed (Ryan 2026-10-16: "is that even necessary, the kids can clearly see") */
+  ${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} track &amp; field only</p>`:seg("g",g)}`;   /* school checker removed (Ryan 2026-10-16: "is that even necessary, the kids can clearly see") */
   if(s.j){
     o+=`<div class="verify" style="margin-top:16px"><b>No recruiting levels for junior colleges</b><span>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: junior colleges compete nationally rather than in conferences, so there's no reliable way to predict a program's marks. Below are ${esc(s.n)}'s best marks this season; the full national list, by event, is in Results.</span><a href="/?tab=results&div=NJCAA">NJCAA national list ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
     setTimeout(()=>teamBest(S.school),0);
@@ -1144,8 +1144,8 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
       if (i >= 0) { S.school = i; const s = SCH[i], path = "/schools/" + SLUG[i]; INT.sch = s.n; saveInt(); log("school", { school: s.n, division: s.d, state: ST_NAME[s.s] || s.s });
         if (location.pathname !== path) history.replaceState({}, "", path);
         const lw = s.d === "NCAA D3" ? "walk-on and target" : s.d === "NAIA" ? "walk-on and scholarship-level" : "walk-on, recruit and scholarship-level";
-        const desc = s.j ? `${s.n} (NJCAA) junior college track and field: season bests in every event, roster and TFRRS links, and how junior college recruiting works.` : `${s.n} track and field recruiting standards 2026-27 (${s.d}${s.c !== s.d ? ", " + s.c : ""}): ${lw} marks for every men's and women's event${s.o ? ", from the official team chart" : ""}. Free, updated weekly.`;
-        const descPrev = s.j ? `${s.n} is an NJCAA junior college track and field program. Season bests, roster and TFRRS links; junior colleges get results here, not predicted recruiting standards.` : `${s.n} track and field recruiting standards: Target, Recruit and Walk-On marks for men and women (${s.d}, ${s.c})${s.o ? ", from the school's official published standards" : ""}.`;
+        const desc = s.j ? `${s.n} (NJCAA) junior college track and field: season bests in every event, roster and TFRRS links, and how junior college recruiting works.` : `${s.n} track and field recruiting standards 2026-27 (${s.d}${s.c !== s.d ? ", " + s.c : ""}): ${lw} marks for every ${(s.ng||[])[0]?((s.ng[0]==="m")?"women's":"men's"):"men's and women's"} event${s.o ? ", from the official team chart" : ""}. Free, updated weekly.`;
+        const descPrev = s.j ? `${s.n} is an NJCAA junior college track and field program. Season bests, roster and TFRRS links; junior colleges get results here, not predicted recruiting standards.` : `${s.n} track and field recruiting standards: Target, Recruit and Walk-On marks for ${(s.ng||[])[0]?((s.ng[0]==="m")?"women":"men"):"men and women"} (${s.d}, ${s.c})${s.o ? ", from the school's official published standards" : ""}.`;
         const short = s.n.length <= 32 ? s.n : (s.t || s.n), TT = "Track & Field Recruiting Standards 2026-27",
           common = s.t && !/[().]/.test(s.t) && s.t !== s.n && SCH.filter(x => x.t === s.t).length === 1 ? s.t : null, /* same rule as the pre-built page title */
           T0 = s.j ? `${short} Track & Field (NJCAA): Results & Roster` : `${s.n} ${TT}`.length <= 60 ? `${s.n} ${TT}` : common && `${common} ${TT}`.length <= 60 ? `${common} ${TT}` : `${short} ${TT}`;

@@ -764,6 +764,16 @@
       "source": "/colleges-for/womens-javelin-90-0.html",
       "destination": "/colleges-for/womens-javelin-86-0.html",
       "permanent": true
+    },
+    {
+      "source": "/schools/fashion-institute-of-technolog-track-standards",
+      "destination": "/schools/fashion-institute-of-technology-track-standards",
+      "permanent": true
+    },
+    {
+      "source": "/schools/fashion-institute-of-technolog-track-standards.html",
+      "destination": "/schools/fashion-institute-of-technology-track-standards",
+      "permanent": true
     }
   ]
 }

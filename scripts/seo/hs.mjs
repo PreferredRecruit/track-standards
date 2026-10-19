@@ -35,7 +35,7 @@ export const howAsk = (e, cap) => { const x = e.toLowerCase(), H = s => cap ? s.
 const COLLEGE_EVENTS = ["100m", "200m", "400m", "800m", "1500m", "3000m", "5000m", "100m Hurdles", "110m Hurdles", "400m Hurdles", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus"];
 
 export function hsPages({ S, CT, write, writeRaw, page, parse, esc, slug, schoolUrl, evPath, FIELD, SITE, gName }) {
-  const raw = (s, g, e) => { const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? v[0] : "")) : null; };
+  const raw = (s, g, e) => { if ((s.ng || []).includes(g)) return null; const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? v[0] : "")) : null; };
   const isF = e => FIELD.has(e);
   const ftin = x => { let i = Math.round((x / 0.0254) * 4) / 4, f = Math.floor(i / 12); i = i - f * 12; return `${f}'${String(i).replace(/\.0+$/, "")}"`; };
   const fmt = (e, x) => isF(e) ? `${ftin(x)} (${x.toFixed(2)}m)` : x >= 60 ? `${Math.floor(x / 60)}:${(x % 60).toFixed(2).padStart(5, "0")}` : x.toFixed(2);

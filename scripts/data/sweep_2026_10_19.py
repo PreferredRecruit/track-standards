@@ -48,6 +48,11 @@ def main(write):
     # 2b. chart year labels checked against the documents (2024-dated charts re-checked 2026-10-19: none replaced by a newer chart)
     c = by["The Catholic University of America"]
     if str(c.get("yr")) != "2025": c["yr"] = 2025; log.append("The Catholic University of America: chart year 2024 -> 2025 (document is titled 'Recruiting Standards 2025')")
+    # 2c. display name cut off at 30 characters (TFRRS team name kept in "t" so its results still match; old URL kept as an alternate)
+    f = by.get("Fashion Institute of Technolog")
+    if f:
+        f["n"] = "Fashion Institute of Technology"; f["os"] = ["fashion-institute-of-technology-track-standards", "fashion-institute-of-technolog-track-standards"]
+        log.append("Fashion Institute of Technology: name was cut off ('Technolog')")
     # 3. (Ryan 2026-10-19 "green to go") schools still on legacy levels (WCC, Sunshine State, CCS, CCC: no conference results) get
     #    their division's typical level (median across the division's conferences, estimates excluded) in the events they list.
     import statistics
