@@ -760,3 +760,4 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .tsug{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 2px 0;font-size:14px}.tsug small{color:var(--pr-mute);font-weight:600}.tsug span{display:inline-flex;gap:6px;align-items:center;background:var(--pr-soft);border-radius:999px;padding:4px 6px 4px 12px}
 .tsug em{font-style:normal;color:var(--pr-mute);font-size:12px}.tsug .ccadd{border:0;background:#7A45F0;color:#fff;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
 @media (max-width:760px){.cols.cc{grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:8px}.cols.cc .col li{grid-template-columns:22px minmax(0,1fr) auto;padding:8px 10px;font-size:13px}.ccst{grid-template-columns:repeat(2,1fr)}}
+.oldnote{margin:8px 2px 0;font-size:13px;color:var(--pr-mute)}
