@@ -13,6 +13,7 @@ import path from "node:path";
 import zlib from "node:zlib";
 
 import { hsPages } from "./hs.mjs";
+import { parseMark } from "./markparse.mjs";
 import { fitTitle, fitDesc, tailsFor, levelWords, SEASON } from "./meta.mjs";
 import { schoolPages } from "./schools.mjs";
 import { topicPages } from "./topics.mjs";
@@ -33,11 +34,7 @@ const schoolSlug = s => (s.os && s.os[0]) || (String(s.n).toLowerCase().replace(
 const gName = g => (g === "m" ? "Men's" : "Women's");
 const evLabel = e => e.replace(/^(\d[\d,]*) Meters$/, "$1m").replace(/^(\d+) Hurdles$/, "$1m Hurdles").replace(/^(\d+) Steeplechase$/, "$1m Steeplechase").replace(/^4 x (\d+) Relay$/, "4x$1 Relay");
 const secs = m => { const t = String(m || "").replace(/[^0-9:.]/g, ""); if (!t || (t.match(/\./g) || []).length > 1) return null; const p = t.split(":").map(Number); if (p.some(isNaN)) return null; return p.length === 2 ? p[0] * 60 + p[1] : p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p[0]; };
-function parse(str, e) {
-  if (str == null) return null; const s = String(str).trim().toLowerCase().replace(/[’′]/g, "'").replace(/[”″]/g, '"').replace(/\s+/g, ""); if (!s) return null;
-  if (FIELD.has(e)) { let m = s.match(/^(\d+(?:\.\d+)?)m$/); if (m) return +m[1]; m = s.match(/^(\d+)['\-](\d+(?:\.\d+)?)?(?:"|in)?$/); if (m) return ((+m[1]) * 12 + (+(m[2] || 0))) * 0.0254; m = s.match(/^(\d+(?:\.\d+)?)$/); if (m) { const v = +m[1]; return v < 30 ? v : null; } return null; }
-  return secs(s);
-}
+const parse = parseMark;   /* scripts/seo/markparse.mjs: one reader for the whole site */
 
 const DATES = { db: "", data: "", max: "" };
 /* past seasons never change: they keep the date the archive was built; only the current season moves with the Monday data */

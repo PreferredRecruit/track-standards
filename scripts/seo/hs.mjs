@@ -6,6 +6,7 @@
      /convert/<conversion>.html                       HS -> college conversion tables
      /guides/*.html, /for-parents.html, /for-coaches.html, hubs /how-fast.html /convert.html /guides.html
      /embed.html + /embed-data.json                   free standards widget for high school / club team sites (backlinks) */
+import { PARSE_SRC } from "./markparse.mjs";
 const DIVS = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA"];
 const AGG = DIVS;
 /* boys throw lighter implements in high school (12 lb shot, 1.6 kg discus) than college men (16 lb, 2 kg); no reliable conversion */
@@ -182,9 +183,8 @@ const OPTS={m:${JSON.stringify(opts("m"))},w:${JSON.stringify(opts("w"))}},CONV=
 const $=id=>document.getElementById(id);let D=null;fetch("/embed-data.json").then(r=>r.json()).then(j=>D=j);
 function fill(){const g=$("g").value;$("e").innerHTML=OPTS[g].map(e=>"<option>"+e.replace(/"/g,"&quot;")+"</option>").join("");}
 $("g").onchange=fill;fill();
-function parse(s,e){s=String(s).trim().toLowerCase().replace(/[’′]/g,"'").replace(/[”″]/g,'"').replace(/\\s+/g,"");if(!s)return null;
- if(FIELD.has(e)){let m=s.match(/^(\\d+(?:\\.\\d+)?)m$/);if(m)return +m[1];m=s.match(/^(\\d+)['\\-](\\d+(?:\\.\\d+)?)?(?:"|in)?$/);if(m)return((+m[1])*12+(+(m[2]||0)))*0.0254;m=s.match(/^(\\d+(?:\\.\\d+)?)$/);if(m){const v=+m[1];return v<30?v:null}return null}
- s=s.replace(/[^0-9:.]/g,"");if(!s)return null;const p=s.split(":").map(Number);if(p.some(isNaN))return null;return p.length===2?p[0]*60+p[1]:p[0];}
+${PARSE_SRC}
+var parse=parseMark;
 function check(){const g=$("g").value,e=$("e").value,v=parse($("v").value,e),o=$("out");
  if(v==null){o.innerHTML='<span class="err">Enter a mark like 11.20, 4:35, 9:58 or 20-6.</span>';return}
  if(!D){o.textContent="Loading…";setTimeout(check,300);return}

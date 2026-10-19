@@ -59,15 +59,32 @@ const TF={"100m":"100 Meters","200m":"200 Meters","400m":"400 Meters","800m":"80
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const $=id=>document.getElementById(id);
 const MAG='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
-function parse(str,e){
-  if(str==null) return null; const s=String(str).trim().toLowerCase().replace(/[’′]/g,"'").replace(/[”″]/g,'"').replace(/\s+/g,"");
-  if(!s) return null;
-  if(FIELD.has(e)){let m=s.match(/^(\d+(?:\.\d+)?)m$/); if(m) return +m[1];
-    m=s.match(/^(\d+)['\-](\d+(?:\.\d+)?)?(?:"|in)?$/); if(m) return((+m[1])*12+(+(m[2]||0)))*0.0254;
-    m=s.match(/^(\d+(?:\.\d+)?)$/); if(m){const v=+m[1];return v<30?v:null} return null}
-  const t=s.replace(/[^0-9:.]/g,""); if(!t) return null; const p=t.split(":").map(Number); if(p.some(isNaN)) return null;
-  return p.length===2?p[0]*60+p[1]:p.length===1?p[0]:null;
-}
+/* mark reader: same function as scripts/seo/markparse.mjs (keep in sync) */
+function parseMark(str,e){
+  if(str==null)return null;var s=String(str).toLowerCase().replace(/[’′‘]/g,"'").replace(/[”″“]/g,'"').replace(/\*/g,"").replace(/''/g,'"').replace(/\[/g,"(").replace(/\]/g,")").replace(/\bmet(?:er|re)s?\b/g,"m").trim();if(!s)return null;
+  var FR={"High Jump":[1,2.5],"Pole Vault":[1.5,6.3],"Long Jump":[3,9],"Triple Jump":[7,18.5],"Shot Put":[5,23.5],"Discus":[12,72],"Hammer":[12,82],"Javelin":[12,76],"Weight Throw":[8,26]};
+  var TR={"100m":[9.5,16],"200m":[19,35],"400m":[43,90],"800m":[100,200],"1500m":[205,420],"1600m":[225,450],"Mile":[225,450],"3000m":[450,900],"3200m":[480,960],"5000m":[760,1500],"10000m":[1600,3200],"100m Hurdles":[12,22],"110m Hurdles":[12.8,24],"300m Hurdles":[34,60],"400m Hurdles":[46,95],"3000m Steeplechase":[490,1000]};
+  var inR=function(v,r){return v!=null&&isFinite(v)&&(!r||(v>=r[0]&&v<=r[1]))};
+  if(FR[e]){var r=FR[e],m;
+    var mr=/(\d+(?:\.\d*)?)\s*m(?![a-z])/g;while((m=mr.exec(s)))if(inR(+m[1],r))return +m[1];
+    m=s.match(/\((\d+\.\d+)\)/);if(m&&inR(+m[1],r))return +m[1];m=s.match(/^(\d+\.\d\d)\s*\(/);if(m&&inR(+m[1],r))return +m[1];
+    var f=s.replace(/^(\d+)"(\d)/,"$1'$2").split(/[\/(;]|\bor\b/)[0].replace(/\s+/g,"").replace(/(\d)ft-?(\d)/,"$1-$2").replace(/(\d)in$/,"$1").replace(/(\d)ft$/,"$1'");
+    m=f.match(/^(\d+)(?:'|-|ft)-?(\d+(?:\.\d+)?)?(?:"|in|')?$/);
+    if(m){var ft=+m[1],inch=m[2]?+m[2]:0;if(inch>=12&&/^\d\d$/.test(m[2]))inch=inch/10;if(inch<12)return(ft*12+inch)*0.0254;return null}
+    m=f.match(/^(\d+(?:\.\d+)?)(?:'|ft|")?$/);
+    if(m){var n=+m[1],asM=n,asFt=n*0.3048;if(/'|ft/.test(f))return inR(asFt,r)?asFt:null;if(/"/.test(f))return inR(n*0.0254,r)?n*0.0254:inR(asFt,r)?asFt:null;if(inR(asM,r))return asM;if(inR(asFt,r))return asFt;return n<30?n:null}
+    return null}
+  var R=TR[e],alts=s.replace(/\([^)]*\)/g," ").split(/[\/|;]|\bor\b/).map(function(x){return x.replace(/^[^:]*[a-z][^:]*:|^\s*\d{3,5}\s*:\s/,"").replace(/\b\d+k\b|\b[a-z]+\b/g," ")});
+  var one=function(seg){var t=seg.replace(/[^0-9:.]/g,"");if(!t)return null;
+  var c=(t.match(/:/g)||[]).length,d=(t.match(/\./g)||[]).length,p,a,b;
+  if(c===0&&d===2){p=t.split(".");return +p[0]*60+ +(p[1]+"."+p[2])}
+  if(c===0){var v=+t;if(isNaN(v))return null;if(R&&!inR(v,R)&&d===1){p=t.split(".");var mm=+p[0]*60+ +p[1];if(p[1].length===2&&inR(mm,R))return mm}return v}
+  p=t.split(":");if(p.some(function(x){return x===""||isNaN(+x)}))return null;
+  if(c===1)return +p[0]*60+ +p[1];
+  if(c===2){a=+p[0]*3600+ +p[1]*60+ +p[2];b=+p[0]*60+ +(p[1]+"."+p[2].replace(".",""));if(R&&!inR(a,R)&&inR(b,R))return b;return a}
+  return null};
+  var first=null;for(var i=0;i<alts.length;i++){var v2=one(alts[i]);if(v2==null)continue;if(first==null)first=v2;if(!R||inR(v2,R))return v2}return first}
+const parse=parseMark;
 const ord=n=>n+(n%100>=11&&n%100<=13?"th":{1:"st",2:"nd",3:"rd"}[n%10]||"th");
 const meets=(e,v,std)=>{const s=parse(std,e);if(s==null||v==null)return false;return FIELD.has(e)?v>=s-1e-9:v<=s+1e-9};
 /* High school -> college conversions. One table, used everywhere (finder, school pages, AI).
@@ -248,7 +265,7 @@ function standards(){
         ${S.div||S.conf||S.f||S.st?'<button class="clr" data-clear>Clear</button>':""}</div></div>
       <div class="mrow mh" aria-hidden="true"><span>School</span><span>Division</span><span>Conference</span><span class="mk">Mark to hit</span><span>Your level ${levelsInfo()}</span></div>
       ${sh.length?`<div id="sgrid">${cards(sh,0,S.n)}</div>${sh.length>S.n?'<div class="sent" id="sent" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span></div>':""}`:'<p class="empty">No colleges match these filters.</p>'}
-      <p class="vnote"><span class="star">★</span> Official standards, published by the school and verified by Preferred Recruit. Every other college is set from its 2026 conference results.</p>
+      <p class="vnote"><span class="star">★</span> Official standards, published by the school and verified by Preferred Recruit. Most other colleges are set from their 2026 conference results; a few without either are marked as estimates.</p>
     </section>`;
   }
   return o+`</div>`;
@@ -270,7 +287,7 @@ const stateUrl=st=>`/states/${slugx(ST_NAME[st]||st)}-college-track-and-field.ht
 const FAQ_EV=["100m","200m","400m","800m","1500m","5000m","110m Hurdles","100m Hurdles","Long Jump","High Jump","Shot Put"];
 function schoolExtra(s){const lvl="Walk-On",i=SCH.indexOf(s);
   const mk=g=>FAQ_EV.map(e=>{const t=s[g][e];return t&&t[2]?`${e} ${t[2]}`:null}).filter(Boolean).slice(0,6),m=mk("m"),w=mk("w");
-  const q=[[`What are the ${s.n} track and field recruiting standards?`,s.j?`${s.n} is an NJCAA junior college program${s.s?` in ${ST_NAME[s.s]||s.s}`:""}. This site doesn't set Target, Recruit or Walk-On levels for junior colleges, because NJCAA competition is national rather than conference-based and a program's marks can't be predicted reliably. Its season bests are above, and the full NJCAA national list is in Results.`:`${s.n} is ${/^[AEIOUN]/.test(s.d)?"an":"a"} ${s.d} program${s.c!==s.d?` in the ${s.c}`:""}. ${s.o?`Its standards come from the school's own published chart${s.yr?` (${s.yr})`:""}.`:"Its Target, Recruit and Walk-On levels are set from 2026 conference results."} The full table for men and women is above.`]];
+  const q=[[`What are the ${s.n} track and field recruiting standards?`,s.j?`${s.n} is an NJCAA junior college program${s.s?` in ${ST_NAME[s.s]||s.s}`:""}. This site doesn't set Target, Recruit or Walk-On levels for junior colleges, because NJCAA competition is national rather than conference-based and a program's marks can't be predicted reliably. Its season bests are above, and the full NJCAA national list is in Results.`:`${s.n} is ${/^[AEIOUN]/.test(s.d)?"an":"a"} ${s.d} program${s.c!==s.d?` in the ${s.c}`:""}. ${s.o?`Its standards come from the school's own published chart${s.yr?` (${s.yr})`:""}.`:s.est?"Its levels are estimates: the school doesn't publish standards and its conference has no outdoor championship results to set them from.":"Its Target, Recruit and Walk-On levels are set from 2026 conference results."} The full table for men and women is above.`]];
   if(!s.j&&(m.length||w.length))q.push([`What times do you need to walk on at ${s.n}?`,[m.length?`Men's ${lvl}: ${m.join(", ")}.`:"",w.length?`Women's ${lvl}: ${w.join(", ")}.`:""].filter(Boolean).join(" ")]);
   q.push([`What conference is ${s.n} track and field in?`,`${s.n} competes in ${s.c!==s.d?`the ${s.c} (${s.d})`:s.j?"the NJCAA (junior colleges compete nationally)":`the ${s.d}`}${s.s?` and is based in ${ST_NAME[s.s]||s.s}`:""}.`]);
   const conf=SCH.map((x,k)=>[x,k]).filter(([x,k])=>k!==i&&x.d===s.d&&x.c===s.c).sort((a,b)=>a[0].n.localeCompare(b[0].n)).slice(0,12);
@@ -589,7 +606,7 @@ async function answerV1(raw){
     if(d.e){const rows=ss.map(s=>{const t=s[g][d.e]||[];return [s.n+(s.o?" ★":""),t[0]||"–",t[1]||"–",t[2]||"–"]});
       const lab=["Target","Recruit","Walk-On"],val=(s,j)=>{const t=s[g][d.e];return t?parse(t[j],d.e):null};
       const spec={title:`${gl(g)[0].toUpperCase()+gl(g).slice(1)} ${d.e} standards`,type:"bar",labels:ss.map(s=>s.n.replace(/ \(.*\)/,"")),series:lab.map((l,j)=>({name:l,values:ss.map(s=>val(s,j))})).filter(x=>x.values.some(v=>v!=null)),value_format:FIELD.has(d.e)?"meters":"time",lower_is_better:!FIELD.has(d.e)};
-      return {html:chartSvg(spec)+tbl(["School","Target","Recruit","Walk-On"],rows)+`<p>★ = official standards published by the school. Others are set from 2026 conference results.</p>`+quizLine,f:[`${ss[0].n} vs ${ss[1].n} ${d.e==="100m"?"400m":"100m"}`]};}
+      return {html:chartSvg(spec)+tbl(["School","Target","Recruit","Walk-On"],rows)+`<p>★ = official standards published by the school. Others are set from 2026 conference results or marked as estimates.</p>`+quizLine,f:[`${ss[0].n} vs ${ss[1].n} ${d.e==="100m"?"400m":"100m"}`]};}
     const evs2=EVENTS.filter(e=>ss.some(s=>s[g][e])).slice(0,12);
     return {html:`<p>${gl(g)} Recruit marks side by side (Walk-On where a school has no Recruit level):</p>`+tbl(["Event",...ss.map(s=>s.n.replace(/ \(.*\)/,"")+(s.o?" ★":""))],evs2.map(e=>[e,...ss.map(s=>{const t=s[g][e];return t?(t[1]||t[2]||t[0]||"–"):"–"})]))+`<p>Name an event (like "${ss[0].n} vs ${ss[1].n} 400m") for a chart.</p>`,f:[`${ss[0].n} vs ${ss[1].n} 100m`,`${ss[0].n} vs ${ss[1].n} 1500m`]};
   }
@@ -642,7 +659,7 @@ async function answerV1(raw){
   }
   if(d.school!=null){
     const s=SCH[d.school], st=s[g];
-    if(d.e&&st[d.e]) {const t=st[d.e];return {html:`<p><b>${esc(s.n)}</b> ${gl(g)} ${esc(d.e)}${s.o?" (official standards)":" (based on 2026 conference results)"}:</p>`+tbl(["Level","Mark"],[["Target",t[0]||"–"],["Recruit",t[1]||"–"],["Walk-On",t[2]||"–"]])+quizLine}}
+    if(d.e&&st[d.e]) {const t=st[d.e];return {html:`<p><b>${esc(s.n)}</b> ${gl(g)} ${esc(d.e)}${s.o?" (official standards)":s.est?" (estimate)":" (based on 2026 conference results)"}:</p>`+tbl(["Level","Mark"],[["Target",t[0]||"–"],["Recruit",t[1]||"–"],["Walk-On",t[2]||"–"]])+quizLine}}
     const ev=EVENTS.filter(e=>st[e]); if(!ev.length) return {html:`<p>${esc(s.n)} doesn't list ${gl(g)} standards yet.</p>`};
     return {html:`<p><b>${esc(s.n)}</b> · ${s.d} · ${esc(s.c)} · ${gl(g)} standards${s.o?" (official)":" (based on conference results)"}:</p>`+tbl(["Event","Target","Recruit","Walk-On"],ev.map(e=>[e,st[e][0]||"–",st[e][1]||"–",st[e][2]||"–"]))+quizLine,
       f:[`Show ${s.n} ${g==="m"?"women's":"men's"} standards`]};

@@ -5,7 +5,7 @@ cells are out of order (Recruit better than Target). Fixes keep the conference's
   - out of order (Target must be best, then Recruit, then Walk-On): the conference's own marks are re-sorted
   - absurd vs the division (LIM1): rebuilt from a sane neighbouring level + the division's typical gap (median as last resort)
   - Walk-On far behind its own previous level (LIM2): previous level + the division's typical gap
-Official school charts (om) are never touched. Usage: python3 scripts/data/fix_levels.py [--write]   (dry run by default)"""
+Official school charts (om) are never touched. 2026-10-19 sweep added step 5 (men behind women); a division-floor rule was tried and dropped: weak conferences' real marks are correct for them. Usage: python3 scripts/data/fix_levels.py [--write]   (dry run by default)"""
 import json, sys, statistics, pathlib
 P = pathlib.Path(__file__).resolve().parents[2] / "public/data/db.json"
 FIELD = {"High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Hammer", "Javelin", "Weight Throw",
@@ -83,6 +83,30 @@ def main(write):
         for j, r in why.items():
             old = t[j][0]; t[j] = fmt(new[j], e) + ["div"]
             fixes.append((k, g, e, ["Target", "Recruit", "Walk-On"][j], old, t[j][0], r))
+    # 5. (2026-10-19 sweep) men's level worse than the same conference's women's level in running, jumps or vault (throws use
+    #    lighter women's implements, so they are skipped): the side further below its division norm is rebuilt like step 3.
+    NOGEN = {"Shot Put", "Discus", "Hammer", "Javelin", "Weight Throw", "100m Hurdles", "110m Hurdles"}
+    for k, v in ct.items():
+        M, W = v.get("m") or {}, v.get("w") or {}; div = k.split("|")[0]
+        for e in set(M) & set(W):
+            if e in NOGEN or "thlon" in e: continue
+            F = e in FIELD
+            for j in range(min(len(M[e] or []), len(W[e] or []))):
+                mc, wc = M[e][j], W[e][j]
+                mv, wv = (val(mc[0], e) if mc else None), (val(wc[0], e) if wc else None)
+                if not mv or not wv or better(mv, wv, e): continue
+                def off(x, gg):
+                    md = med.get((div, gg, e, j)); return ((md - x) / md if F else (x - md) / md) if md else 0
+                gg, row = ("m", M[e]) if off(mv, "m") >= off(wv, "w") else ("w", W[e])
+                ref = max([a for a in range(j) if row[a] and val(row[a][0], e)], default=None)
+                gp = gap.get((div, F, ref, j)) if ref is not None else None
+                if gp is not None: nv = step(val(row[ref][0], e), gp, F)
+                else:   # no level above: the conference's own other-gender mark scaled by the division's men/women ratio
+                    mm, wm = med.get((div, "m", e, j)), med.get((div, "w", e, j))
+                    nv = (wv * mm / wm if gg == "m" else mv * wm / mm) if mm and wm else None
+                if nv is None: continue
+                old = row[j][0]; row[j] = fmt(nv, e) + ["div"]
+                fixes.append((k, gg, e, ["Target", "Recruit", "Walk-On"][j], old, row[j][0], "men's mark behind women's"))
     for f in fixes: print(" | ".join(map(str, f)))
     print(f"\n{len(fixes)} values fixed across {len({(f[0], f[1], f[2]) for f in fixes})} conference events")
     if write: json.dump(d, open(P, "w"), separators=(",", ":"), ensure_ascii=False); print("written", P)

@@ -20,6 +20,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { CONV, HS_EVENTS } from "./hs.mjs";
+import { parseMark } from "./markparse.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SCHED = path.join(HERE, "daily-schedule.json");
@@ -35,12 +36,6 @@ const addDays = (d, k) => { const t = new Date(d + "T00:00:00Z"); t.setUTCDate(t
 export const dailyPath = (st, g, e) => `/colleges/${slug(STATE[st] || st)}/${HSG(g)}-${slug(e)}.html`;
 export const hubPath = (g, e) => `/colleges/${HSG(g)}-${slug(e)}.html`;
 
-function parseMark(str, e) {
-  if (str == null) return null; const s = String(str).trim().toLowerCase().replace(/[’′]/g, "'").replace(/[”″]/g, '"').replace(/\s+/g, ""); if (!s) return null;
-  if (FIELD.has(e)) { let m = s.match(/^(\d+(?:\.\d+)?)m$/); if (m) return +m[1]; m = s.match(/^(\d+)['\-](\d+(?:\.\d+)?)?(?:"|in)?$/); if (m) return ((+m[1]) * 12 + (+(m[2] || 0))) * 0.0254; m = s.match(/^(\d+(?:\.\d+)?)$/); if (m) { const v = +m[1]; return v < 30 ? v : null; } return null; }
-  const t = s.replace(/[^0-9:.]/g, ""); if (!t || (t.match(/\./g) || []).length > 1) return null; const p = t.split(":").map(Number); if (p.some(isNaN)) return null;
-  return p.length === 2 ? p[0] * 60 + p[1] : p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p[0];
-}
 /* every program in a state with its levels for one high school event, in high school units (same rules as the embed widget) */
 function levelsFor(S, CT, st, g, e, parse) {
   const raw = (s, gg, ev) => { const o = (s.om || {})[gg] || {}; if (o[ev]) return o[ev]; if (s.em) return (s.em[gg] || {})[ev] || null; const c = ((CT[s.ck] || {})[gg] || {})[ev]; return c ? c.map(v => (v ? v[0] : "")) : null; };
