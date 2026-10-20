@@ -229,7 +229,11 @@ const TIERB={gpa:"Your grades already help you with coaches. A free evaluation s
 function evalIn(title,body,delay,v,trig,bs){
   if(EV.shown||EV.dismissed||ACC.tier()==="C"||ACC.isOpen()) return; clearTimeout(EV.t);
   /* Tier B (GPA 2.3 to 2.99, or 3.0+ without a PR-standard mark yet): same headline, softer body (draft for Ryan's approval) */
-  {const P=ACC.member()&&ACC.profile(),who=P&&(P.role==="parent"?null:P.first_name);if(who&&/^Your /.test(title))title=`${who}, your ${title.slice(5)}`}
+  {const P=ACC.member()&&ACC.profile(),kid=pickKid();
+   if(kid){const n=kid.first_name;title=title.replace(/^Your /,`${n}'s `).replace(/\byour\b/,`${n}'s`).replace(/^You're /,`${n} is `).replace(/^You /,`${n} `);
+     const sw=t=>t&&t.replace(/would want you\b/g,`would want ${n}`).replace(/fit you\b/g,`fit ${n}`).replace(/\byour marks\b/g,`${n}'s marks`).replace(/recruit you\b/g,`recruit ${n}`);
+     body=sw(body);if(bs)bs=Object.fromEntries(Object.entries(bs).map(([k,v])=>[k,sw(v)]))}
+   else if(P&&P.role!=="parent"&&P.first_name&&/^Your /.test(title))title=`${P.first_name}, your ${title.slice(5)}`}
   if(ACC.tier()==="B"){const r=(ACC.profile()||{}).tier_reason||"";body=/^GPA 3\.0/.test(r)?TIERB.gpa:TIERB.grow;bs=null;v=(v||"generic")+"-b"}
   EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||(S.school!=null&&!EV.force)) return; EV.force=false; EV.v=v||"generic"; EV.trig=trig||"timer"; EV.title=title; EV.body=body; EV.bs=bs||null; openEval(true)},delay||0);
 }
@@ -241,8 +245,11 @@ const STATUS={none:"Not yet",some:"A few have",offers:"Yes, I have offers"};
 const statusLine=k=>({none:"Coaches recruit the athletes they know about.",some:"Interest is a good start.",offers:"Offers mean options."})[k]||"";
 /* step 2 copy: once the athlete has answered, their answer + one short line replaces the long body */
 const evBody=()=>INT.rs&&EV.bs&&EV.bs[INT.rs]?EV.bs[INT.rs]:(EV.body||`${EVAL} which college programs would want you. It takes about a minute.`);
+/* parents: the pop-up speaks about the kid whose event they're looking at, else their best-tier kid (Ryan: "your kids") */
+const pickKid=()=>{const P=ACC.member()&&ACC.profile();if(!P||P.role!=="parent")return null;const ks=ACC.kids();if(!ks.length)return null;
+  return ks.find(k=>k.gender===S.g&&k.marks.some(m=>m.e===S.e))||ks.find(k=>k.marks.some(m=>m.e===INT.e))||[...ks].sort((a,b)=>a.tier.localeCompare(b.tier))[0]};
 function eyebrow(){if(S.school!=null){const s=SCH[S.school];return s?`${s.t||s.n} · ${s.d}`:""}
-  const P=ACC.member()&&ACC.profile(),who=P&&(P.role==="parent"?P.athlete_first_name:P.first_name),cls=P&&P.grad_year?`Class of ${P.grad_year}`:"";
+  const P=ACC.member()&&ACC.profile(),kid=pickKid(),who=kid?kid.first_name:P&&P.role!=="parent"?P.first_name:null,yr=kid?kid.grad_year:P&&P.grad_year,cls=yr?`Class of ${yr}`:"";
   if(S.run&&S.mark)return who?`${who} · ${cls?cls+" · ":""}${S.e} ${S.mark.trim()}`:`${S.g==="w"?"Girls":"Boys"} ${S.e} · ${S.mark.trim()}${S.gr?` · ${S.gr}th grade`:""}`;
   if(who)return `${who}${cls?" · "+cls:""}${INT.e&&INT.m?` · ${INT.e} ${INT.m}`:""}`;
   return "Free recruitment evaluation"}
@@ -251,6 +258,7 @@ function openEval(log1){const el=$("eval");
   $("evp").textContent=evBody();$("eva").href=quizFor();
   const ck=S.run||S.school!=null?clock():"";$("evk").textContent=ck;$("evk").hidden=!ck;
   const ask=!INT.rs;$("evq").hidden=!ask;$("evs").hidden=ask;
+  {const kid=pickKid(),ql=document.querySelector("#evq .evql"),o3=document.querySelector('[data-evq="offers"]');if(ql)ql.textContent=kid?`Have college coaches contacted ${kid.first_name} yet?`:"Have college coaches contacted you yet?";if(o3)o3.textContent=kid?"Offers already":"I have offers"}
   el.classList.add("on");el.setAttribute("aria-hidden","false");$("evbg").hidden=false;requestAnimationFrame(()=>$("evbg").classList.add("on"));$("evpill").hidden=true;EV.shown=true;
   if(log1)log("popup_shown",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig});
   setTimeout(()=>{try{el.focus({preventScroll:true})}catch(e){}},350)}
@@ -1285,7 +1293,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
   addEventListener("popstate", () => { const m = location.pathname.match(/^\/schools\/([^/]+)/); route(m ? m[1] : null); });
   route(opts.slug);
   const fromProfile=()=>{const P=ACC.member()&&ACC.profile();if(!P)return;
-    if(/^\d+$/.test(P.grade||"")){INT.gr=+P.grade;S.gr=+P.grade}
+    const kid=pickKid(),gr=kid?kid.grade:P.grade;if(/^\d+$/.test(gr||"")){INT.gr=+gr;S.gr=+gr}
     const rs={getting_started:"none",talking:"some",real_interest:"some",offers:"offers"}[P.recruiting_stage];if(rs)INT.rs=rs;
     if(P.gender&&!INT.g)INT.g=P.gender;saveInt()};
   ACC.init({onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,nstd:NSTD,fits:(e,g,v)=>SCH.filter(s=>tier(s,g,e,v)).length,fmt:(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v),stats:(e,g,v)=>{const L=[];SCH.forEach((s,i)=>{const t=tier(s,g,e,v);if(t)L.push({s,i,t})});const c=k=>L.filter(x=>x.t===k).length;

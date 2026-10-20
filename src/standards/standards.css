@@ -950,3 +950,36 @@ html.onbon,html.onbon body{overflow:hidden}
 .prtile:last-child b{font-size:19px;line-height:1.55}
 @media (max-width:760px){.prid{padding-top:0}.pract{padding-top:0}}
 .prtile:last-child b{white-space:normal;overflow:visible}
+
+/* ---------- v3: parent's athletes, custom banners ---------- */
+.prband.bt-violet{background:radial-gradient(120% 140% at 0% 0%,#B196FF 0%,#7A45F0 45%,#3B1A9E 100%)}
+.prband.bt-track{background:linear-gradient(180deg,#C4492E 0%,#A8361F 100%)}
+.prband.bt-track::after{background:repeating-linear-gradient(0deg,transparent 0 22px,rgba(255,255,255,.55) 22px 24px)}
+.prband.bt-night{background:radial-gradient(60% 120% at 80% -10%,rgba(255,255,255,.55),transparent 60%),radial-gradient(50% 110% at 15% -20%,rgba(160,190,255,.45),transparent 60%),linear-gradient(180deg,#0B1530,#16244A)}
+.prband.bt-night::after{background:none}
+.prband.bt-gold{background:linear-gradient(120deg,#F6D365 0%,#E2A623 45%,#9A6A12 100%)}
+.prband.bt-teal{background:linear-gradient(120deg,#5DCAA5 0%,#1D9E75 50%,#0F5446 100%)}
+.prband.bt-ink{background:linear-gradient(120deg,#2A2A31 0%,#0B0B0F 100%)}
+.prband.img{background-size:cover;background-position:center}.prband.img::after{background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.25))}
+.prband{position:relative}
+.prbbtn{position:absolute;right:14px;top:14px;z-index:2;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:999px;border:0;background:rgba(0,0,0,.35);color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.prbbtn:hover{background:rgba(0,0,0,.5)}
+.prbpick{position:absolute;right:14px;top:56px;z-index:3;width:270px;padding:16px;border-radius:18px;background:var(--pr-card);color:var(--pr-ink);box-shadow:0 20px 50px -18px rgba(16,12,40,.45);display:grid;gap:12px}
+.prbpick>b{font-size:14px}.prbpick small{font-size:12px;color:var(--pr-faint)}
+.prsw{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.prsw button{position:relative;height:34px;border-radius:10px;border:2px solid transparent;cursor:pointer;overflow:hidden}
+.prsw button.on{border-color:var(--pr-ink);box-shadow:0 0 0 2px var(--pr-card) inset}
+.prsw .bt-violet{background:linear-gradient(135deg,#B196FF,#3B1A9E)}.prsw .bt-track{background:repeating-linear-gradient(0deg,#B93F26 0 7px,#fff 7px 8px)}.prsw .bt-night{background:linear-gradient(180deg,#30406E,#0B1530)}
+.prsw .bt-gold{background:linear-gradient(135deg,#F6D365,#9A6A12)}.prsw .bt-teal{background:linear-gradient(135deg,#5DCAA5,#0F5446)}.prsw .bt-ink{background:#121216}
+.prup{display:flex;align-items:center;justify-content:center;gap:8px;height:40px;border-radius:12px;border:1.5px dashed var(--pr-line);font-size:13.5px;font-weight:600;color:var(--pr-ink2);cursor:pointer}
+.prup:hover{border-color:var(--pr-accent);color:var(--pr-accent)}
+.prkids{margin-bottom:18px}
+.prkh{display:flex;align-items:baseline;justify-content:space-between;margin:4px 4px 12px}.prkh h2{margin:0;font-size:20px;letter-spacing:-.02em}.prkh span{font-size:13px;color:var(--pr-faint)}
+.prkl{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.prkid{display:flex;align-items:center;gap:10px;flex:none;min-width:200px;padding:10px 14px 10px 10px;border-radius:18px;border:1.5px solid var(--pr-line);background:var(--pr-card);color:var(--pr-ink);font:inherit;text-align:left;cursor:pointer}
+.prkid.on{border-color:var(--pr-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--pr-accent) 14%,transparent)}
+.prkid b{display:block;font-size:14.5px}.prkid small{display:block;font-size:12px;color:var(--pr-faint)}
+.prkid.add{border-style:dashed}.prkid.add .pcav{background:var(--pr-soft);color:var(--pr-accent);font-size:22px;font-weight:500}
+.pcav.sm{width:40px;height:40px;border-radius:13px;font-size:14px;flex:none}
+.prrm{margin:18px 4px 0}.prrm .aclnk{color:#A32D2D;font-size:13.5px}
+@media (max-width:760px){.prbbtn span{display:none}.prbbtn{width:34px;padding:0;justify-content:center}.prbpick{left:12px;right:12px;width:auto}.prkid{min-width:170px}}
