@@ -1061,3 +1061,15 @@ html.onbon,html.onbon body{overflow:hidden}
 .cmbsw[aria-pressed="true"] .sw{background:#5B3FE4}.cmbsw[aria-pressed="true"] .sw::after{transform:translateX(12px)}
 @media (max-width:760px){.dsel .cmbsw{margin-top:10px}}
 .cmhd{justify-content:flex-start;gap:12px;align-items:center;margin:6px 2px 6px}.cmoff{font-size:13px;color:var(--pr-faint)}
+
+/* conference list view (2026-10-20) */
+.rctl{grid-template-columns:auto auto auto minmax(0,.9fr) minmax(0,1.1fr)}
+.rconf{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;padding:12px 4px 0}
+.rconf .cmp{flex:0 1 340px}.rconf select{font-weight:600}
+.rcbtn{height:46px;padding:0 18px;border-radius:13px;border:1.5px solid var(--pr-line);background:var(--pr-card);font:inherit;font-size:15px;font-weight:600;color:var(--pr-ink);cursor:pointer}
+.rcbtn.rcgo{background:var(--pr-violet);border-color:var(--pr-violet);color:#fff}
+.grid.raw .gh,.grid.raw .gr{grid-template-columns:56px minmax(0,1.6fr) minmax(0,1.2fr) 120px}
+.cmctx{margin:0 2px 6px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pr-faint)}
+@media (max-width:760px){.rctl{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.rconf .cmp{flex:1 1 100%}.rcbtn{flex:1 1 auto}
+  .grid.raw .gr{grid-template-columns:40px minmax(0,1fr) auto}}
+@media (max-width:700px){.cmt{table-layout:fixed}.cmt th,.cmt td{overflow-wrap:anywhere;padding:10px 4px}.cmt tbody th{white-space:normal;width:58px;font-size:12.5px}.cmt thead th:first-child{width:58px}.cmt thead th{font-size:12px}.cmt td small{font-size:11px}.cmt .cmg{font-size:12.5px}}
