@@ -227,7 +227,7 @@ try{EV.dismissed=sessionStorage.getItem("prEvalDismissed")==="1"}catch(e){}
 const TIERB={gpa:"Your grades already help you with coaches. A free evaluation shows which programs fit your marks now and how close you are to being recruited.",
   grow:"Coaches look at your grades and your marks together. A free evaluation shows which programs fit you today and what to work on next."};
 function evalIn(title,body,delay,v,trig,bs){
-  if(EV.shown||EV.dismissed||ACC.tier()==="C"||ACC.isOpen()) return; clearTimeout(EV.t);
+  if(EV.shown||EV.dismissed||ACC.tier()==="C"||ACC.isOpen()||document.documentElement.classList.contains("onbon")||(ACC.signedIn()&&!ACC.member())) return; clearTimeout(EV.t);
   /* Tier B (GPA 2.3 to 2.99, or 3.0+ without a PR-standard mark yet): same headline, softer body (draft for Ryan's approval) */
   {const P=ACC.member()&&ACC.profile(),kid=pickKid();
    if(kid){const n=kid.first_name;title=title.replace(/^Your /,`${n}'s `).replace(/\byour\b/,`${n}'s`).replace(/^You're /,`${n} is `).replace(/^You /,`${n} `);
@@ -253,7 +253,7 @@ function eyebrow(){if(S.school!=null){const s=SCH[S.school];return s?`${s.t||s.n
   if(S.run&&S.mark)return who?`${who} · ${cls?cls+" · ":""}${S.e} ${S.mark.trim()}`:`${S.g==="w"?"Girls":"Boys"} ${S.e} · ${S.mark.trim()}${S.gr?` · ${S.gr}th grade`:""}`;
   if(who)return `${who}${cls?" · "+cls:""}${INT.e&&INT.m?` · ${INT.e} ${INT.m}`:""}`;
   return "Free recruitment evaluation"}
-function openEval(log1){const el=$("eval");
+function openEval(log1){const el=$("eval");if(document.documentElement.classList.contains("onbon"))return;
   $("eve").textContent=eyebrow();$("evm").textContent=EV.title||"Talent gets you the offer. Visibility gets you in the room.";
   $("evp").textContent=evBody();$("eva").href=quizFor();
   const ck=S.run||S.school!=null?clock():"";$("evk").textContent=ck;$("evk").hidden=!ck;

@@ -195,6 +195,7 @@ async function submit(id) {
       close(); changed(); if (ONB.isPage()) ONB.show(); else if (!member()) ONB.go("/onboarding");
     } catch (e) {
       BUSY = false;
+      if (VIEW === "signup" && /sending confirmation|smtp/i.test(e.message)) return fail("Our email service was busy for a second. Tap Create account to try again.");
       if (/confirm/i.test(e.message)) { FORM._email = email; VIEW = "check"; MSG = "Confirm your email first. Use the link we sent, or send it again below."; return draw(); }
       fail(/confirm/i.test(e.message) ? "Confirm your email first. Check your inbox for the link." : /invalid login/i.test(e.message) ? "That email and password don't match." : /already registered|exists/i.test(e.message) ? "That email already has an account. Sign in instead." : /pwned|weak|leaked/i.test(e.message + (e.code || "")) ? "That password has shown up in a data breach. Choose a different one." : e.message);
     }
