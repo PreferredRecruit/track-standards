@@ -991,3 +991,9 @@ html.onbon,html.onbon body{overflow:hidden}
 .acc a.acmail{display:flex;height:52px;border-radius:14px;background:var(--pr-violet);color:#fff;font-size:17px;font-weight:600;margin-top:4px}
 .acc .acrow{display:flex;justify-content:space-between;gap:12px;margin-top:16px}.acc .acrow .aclnk[disabled]{color:var(--pr-faint);cursor:default}
 .prlite{padding:20px 28px 26px;border-top:1px solid var(--pr-line)}.prlite>p:first-child{margin:0 0 16px;font-size:15.5px;color:var(--pr-mute)}.prlite .onbcta .acbtn{width:auto;padding:0 24px}
+.acc .acor{display:flex;align-items:center;gap:12px;margin:16px 0 12px;color:var(--pr-faint);font-size:13px}.acc .acor::before,.acc .acor::after{content:"";flex:1;height:1px;background:var(--pr-line)}
+.acc .acbtn.acghost{background:var(--pr-card);color:var(--pr-ink);border:1.5px solid var(--pr-line)}.acc .acbtn.acghost:hover{border-color:var(--pr-accent)}
+.acc .achint.acc2{margin:8px 0 0;text-align:center}
+.acpw{position:relative;display:block}.acpw .in{padding-right:70px}
+.acshow{position:absolute;right:6px;top:50%;transform:translateY(-50%);height:34px;padding:0 12px;border:0;border-radius:10px;background:transparent;color:var(--pr-accent);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.acshow:hover{background:var(--pr-soft)}

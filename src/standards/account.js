@@ -79,27 +79,44 @@ export const isOpen = () => { const el = document.getElementById("acc"); return 
 function open(v, why) { shell(); CFG.onOpen && CFG.onOpen(); VIEW = v; MSG = ""; if (why) WHY = why; draw(); const el = document.getElementById("acc"); el.classList.add("on"); el.setAttribute("aria-hidden", "false"); const bg = document.getElementById("accbg"); bg.hidden = false; requestAnimationFrame(() => bg.classList.add("on")); CFG.log && CFG.log("account", { detail: "open-" + v, placement: WHY || undefined }); setTimeout(() => { const f = el.querySelector("input,select"); f && f.focus(); }, 60); }
 function close() { const el = document.getElementById("acc"); if (!el) return; el.classList.remove("on"); el.setAttribute("aria-hidden", "true"); const bg = document.getElementById("accbg"); bg.classList.remove("on"); setTimeout(() => (bg.hidden = true), 300); }
 
+/* password field with a Show / Hide toggle (Ryan 2026-10-20: "it should not be difficult for these kids to sign up") */
+const pw = (id, label, ac) => `<label class="acf" for="${id}"><span>${label}</span><span class="acpw"><input class="in" id="${id}" type="password" autocomplete="${ac}" minlength="6" required><button type="button" class="acshow" data-show="${id}" aria-label="Show password">Show</button></span></label>`;
 const field = (id, label, input) => `<label class="acf" for="${id}"><span>${label}</span>${input}</label>`;
 const seg = (name, opts, cur) => `<div class="acseg" role="group">${opts.map(([v, l]) => `<button type="button" data-seg="${name}" data-v="${v}" aria-pressed="${cur === v}">${esc(l)}</button>`).join("")}</div>`;
 const FORM = {};   // Finish Account draft
 
 function draw() {
   const b = document.getElementById("accb"); if (!b) return;
+  /* keep what they typed (and Show/Hide) when the sheet redraws for an error message */
+  const keep = {}, shown = !!b.querySelector('.acpw input[type="text"]'), foc = document.activeElement && document.activeElement.id;
+  b.querySelectorAll("input").forEach(i => { if (i.id) keep[i.id] = i.value; });
+  setTimeout(() => { for (const id in keep) { const i = document.getElementById(id); if (i && !i.value) i.value = keep[id]; }
+    if (shown) { b.querySelectorAll(".acpw input").forEach(i => i.type = "text"); b.querySelectorAll(".acshow").forEach(x => { x.textContent = "Hide"; x.setAttribute("aria-label", "Hide password"); }); }
+    const f = foc && document.getElementById(foc); if (f && b.contains(f)) f.focus(); }, 0);
   const err = MSG ? `<p class="acerr" role="alert">${esc(MSG)}</p>` : "";
   if (VIEW === "signup" || VIEW === "signin") {
     const up = VIEW === "signup";
     b.innerHTML = `<p class="eye">Free account</p><h2 class="evh" id="acch">${up ? "Create your free account" : "Welcome back"}</h2>
       <p class="acsub">${up ? "See every college your mark fits, the full results lists and unlimited Recruiting AI." : "Sign in to see your full lists."}</p>
       <form id="accf" class="acform" novalidate>${field("ace", "Email", `<input class="in" id="ace" type="email" autocomplete="email" required>`)}
-      ${field("acp", "Password", `<input class="in" id="acp" type="password" autocomplete="${up ? "new-password" : "current-password"}" minlength="8" required>`)}
-      ${up ? `<p class="achint">At least 8 characters.</p>` : ""}${err}
+      ${pw("acp", "Password", up ? "new-password" : "current-password")}
+      ${up ? pw("acp2", "Confirm password", "new-password") + `<p class="achint">At least 6 characters.</p>` : ""}${err}
       <button class="acbtn" ${BUSY ? "disabled" : ""}>${BUSY ? "One moment…" : up ? "Create account" : "Sign in"}</button></form>
+      ${up ? "" : `<div class="acor"><span>or</span></div><button type="button" class="acbtn acghost" data-acc="link">Email me a sign-in link</button><p class="achint acc2">No password needed. We'll email you a link that signs you straight in.</p>`}
       <p class="acalt">${up ? `Already have an account? <button type="button" class="aclnk" data-acc="signin">Sign in</button>` : `New here? <button type="button" class="aclnk" data-acc="signup">Create a free account</button> · <button type="button" class="aclnk" data-acc="forgot">Forgot password?</button>`}</p>
       <small class="acfine">By creating an account you agree to our <a href="/privacy.html" target="_blank" rel="noopener">privacy policy</a>. We never sell your data.</small>`;
   } else if (VIEW === "forgot") {
     b.innerHTML = `<p class="eye">Reset password</p><h2 class="evh" id="acch">Forgot your password?</h2><p class="acsub">We'll email you a link to set a new one.</p>
-      <form id="accr" class="acform" novalidate>${field("acre", "Email", `<input class="in" id="acre" type="email" autocomplete="email" required>`)}${err}<button class="acbtn" ${BUSY ? "disabled" : ""}>Send reset link</button></form>
+      <form id="accr" class="acform" novalidate>${field("acre", "Email", `<input class="in" id="acre" type="email" autocomplete="email" value="${esc(FORM._email || "")}" required>`)}${err}<button class="acbtn" ${BUSY ? "disabled" : ""}>Send reset link</button></form>
+      <div class="acor"><span>or</span></div><button type="button" class="acbtn acghost" data-acc="link">Email me a sign-in link instead</button>
       <p class="acalt"><button type="button" class="aclnk" data-acc="signin">Back to sign in</button></p>`;
+  } else if (VIEW === "sent") {
+    const em = FORM._email || "", dom = (em.split("@")[1] || "").toLowerCase(), reset = FORM._sent === "reset";
+    const inbox = /gmail|googlemail/.test(dom) ? ["Open Gmail", "https://mail.google.com/mail/u/0/#search/from%3Atrackandfieldstandards.com"] : /outlook|hotmail|live|msn/.test(dom) ? ["Open Outlook", "https://outlook.live.com/mail/0/"] : /yahoo/.test(dom) ? ["Open Yahoo Mail", "https://mail.yahoo.com/"] : /icloud|me\.com|mac\.com/.test(dom) ? ["Open iCloud Mail", "https://www.icloud.com/mail"] : null;
+    b.innerHTML = `<p class="eye">${reset ? "Reset password" : "Sign-in link"}</p><h2 class="evh" id="acch">Check your email</h2><p class="acsub">If <b>${esc(em)}</b> has an account, we just sent ${reset ? "a link to choose a new password. Tap <b>Reset my password</b> in that email." : "a sign-in link. Tap <b>Sign me in</b> in that email and you're in, no password needed."}</p>
+      ${inbox ? `<a class="acbtn acmail" href="${inbox[1]}" target="_blank" rel="noopener">${inbox[0]}</a>` : ""}
+      <p class="achint">It comes from Track &amp; Field Standards. Not there after a minute? Check spam or promotions.</p>${MSG ? `<p class="acerr" role="alert">${esc(MSG)}</p>` : ""}
+      <div class="acrow"><button type="button" class="aclnk" data-acc="${reset ? "again-reset" : "link"}" ${RESENT > Date.now() ? "disabled" : ""}>${RESENT > Date.now() ? "Email sent again" : "Send it again"}</button><button type="button" class="aclnk" data-acc="signin">Back to sign in</button></div>`;
   } else if (VIEW === "check") {
     const em = FORM._email || "", dom = (em.split("@")[1] || "").toLowerCase();
     const inbox = /gmail|googlemail/.test(dom) ? ["Open Gmail", "https://mail.google.com/mail/u/0/#search/from%3Atrackandfieldstandards.com"] : /outlook|hotmail|live|msn/.test(dom) ? ["Open Outlook", "https://outlook.live.com/mail/0/"] : /yahoo/.test(dom) ? ["Open Yahoo Mail", "https://mail.yahoo.com/"] : /icloud|me\.com|mac\.com/.test(dom) ? ["Open iCloud Mail", "https://www.icloud.com/mail"] : null;
@@ -108,7 +125,7 @@ function draw() {
       <p class="achint">It comes from Track &amp; Field Standards. Not there after a minute? Check spam or promotions.</p>${MSG ? `<p class="acerr" role="alert">${esc(MSG)}</p>` : ""}
       <div class="acrow"><button type="button" class="aclnk" data-acc="resend" ${RESENT > Date.now() ? "disabled" : ""}>${RESENT > Date.now() ? "Email sent again" : "Send it again"}</button><button type="button" class="aclnk" data-acc="signup">Wrong email? Start over</button></div>`;
   } else if (VIEW === "reset") {
-    b.innerHTML = `<p class="eye">Reset password</p><h2 class="evh" id="acch">Choose a new password</h2><form id="accn" class="acform" novalidate>${field("acnp", "New password", `<input class="in" id="acnp" type="password" autocomplete="new-password" minlength="8" required>`)}${err}<button class="acbtn" ${BUSY ? "disabled" : ""}>Save password</button></form>`;
+    b.innerHTML = `<p class="eye">Reset password</p><h2 class="evh" id="acch">Choose a new password</h2><form id="accn" class="acform" novalidate>${pw("acnp", "New password", "new-password")}${pw("acnp2", "Confirm new password", "new-password")}<p class="achint">At least 6 characters.</p>${err}<button class="acbtn" ${BUSY ? "disabled" : ""}>Save password</button></form>`;
   } else if (VIEW === "finish") drawFinish(b, err);
   else if (VIEW === "menu") {
     const p = PRO || {};
@@ -181,7 +198,8 @@ async function submit(id) {
   if (id === "accf") {
     const email = val("ace").trim(), pw = val("acp");
     if (!/^\S+@\S+\.\S+$/.test(email)) return fail("Enter a valid email.");
-    if (pw.length < 8) return fail("Use at least 8 characters for your password.");
+    if (pw.length < 6) return fail("Use at least 6 characters for your password.");
+    if (VIEW === "signup" && pw !== val("acp2")) return fail("The two passwords don't match. Type them again.");
     BUSY = true; MSG = ""; draw();
     try {
       if (VIEW === "signup") {
@@ -197,16 +215,16 @@ async function submit(id) {
       BUSY = false;
       if (VIEW === "signup" && /sending confirmation|smtp/i.test(e.message)) return fail("Our email service was busy for a second. Tap Create account to try again.");
       if (/confirm/i.test(e.message)) { FORM._email = email; VIEW = "check"; MSG = "Confirm your email first. Use the link we sent, or send it again below."; return draw(); }
-      fail(/confirm/i.test(e.message) ? "Confirm your email first. Check your inbox for the link." : /invalid login/i.test(e.message) ? "That email and password don't match." : /already registered|exists/i.test(e.message) ? "That email already has an account. Sign in instead." : /pwned|weak|leaked/i.test(e.message + (e.code || "")) ? "That password has shown up in a data breach. Choose a different one." : e.message);
+      fail(/confirm/i.test(e.message) ? "Confirm your email first. Check your inbox for the link." : /invalid login/i.test(e.message) ? "That email and password don't match. Forgot it? Use Email me a sign-in link below, or reset your password." : /already registered|exists/i.test(e.message) ? "That email already has an account. Sign in instead." : /weak|short/i.test(e.message + (e.code || "")) ? "Use at least 6 characters for your password." : e.message);
     }
   } else if (id === "accr") {
     const email = val("acre").trim(); if (!/^\S+@\S+\.\S+$/.test(email)) return fail("Enter a valid email.");
     BUSY = true; draw();
-    try { await api("/auth/v1/recover?redirect_to=" + encodeURIComponent(location.origin + location.pathname), { method: "POST", body: { email }, auth: false }); } catch (e) {}
-    BUSY = false; MSG = ""; FORM._email = email; VIEW = "check"; draw();
-    document.querySelector("#accb .acsub").innerHTML = `If <b>${esc(email)}</b> has an account, a reset link is on its way.`;
+    try { await api("/auth/v1/recover?redirect_to=" + encodeURIComponent(location.origin + "/account"), { method: "POST", body: { email }, auth: false }); } catch (e) {}
+    BUSY = false; MSG = ""; FORM._email = email; FORM._sent = "reset"; RESENT = Date.now() + 60000; VIEW = "sent"; draw(); setTimeout(draw, 60500);
   } else if (id === "accn") {
-    const pw = val("acnp"); if (pw.length < 8) return fail("Use at least 8 characters.");
+    const pw = val("acnp"); if (pw.length < 6) return fail("Use at least 6 characters.");
+    if (pw !== val("acnp2")) return fail("The two passwords don't match. Type them again.");
     BUSY = true; draw();
     try { await api("/auth/v1/user", { method: "PUT", body: { password: pw } }); BUSY = false; close(); changed(); } catch (e) { fail(e.message); }
   }
@@ -229,11 +247,20 @@ export const core = { URL: URL_, KEY, ST, api, fresh, loadProfile, changed, sign
 export async function init(cfg) {
   CFG = cfg || {}; SES = store.get(SK); shell(); headBtn();
   document.addEventListener("click", e => {
+    const sh = e.target.closest("[data-show]");
+    if (sh) { e.preventDefault(); const show = sh.textContent === "Show"; sh.closest(".acf").parentElement.querySelectorAll(".acpw input").forEach(i => i.type = show ? "text" : "password"); document.querySelectorAll("#accb .acshow").forEach(x => { x.textContent = show ? "Hide" : "Show"; x.setAttribute("aria-label", show ? "Hide password" : "Show password"); }); return; }
     const t = e.target.closest("[data-acc],[data-seg],a[href*='parentfunnel']"); if (!t) return;
     if (t.matches("a[href*='parentfunnel']")) { optIn(); return; }
     if (t.dataset.seg) { readFinish(); FORM[t.dataset.seg] = t.dataset.v; MSG = ""; draw(); return; }
     const a = t.dataset.acc; e.preventDefault();
     if (a === "close") return close();
+    if (a === "link" || a === "again-reset") {
+      const inp = document.getElementById("ace") || document.getElementById("acre"), em = ((inp && inp.value) || FORM._email || "").trim();
+      if (!/^\S+@\S+\.\S+$/.test(em)) { MSG = "Enter your email first."; return draw(); }
+      FORM._email = em; FORM._sent = a === "link" ? "link" : "reset"; MSG = ""; RESENT = Date.now() + 60000; VIEW = "sent"; draw(); setTimeout(draw, 60500);
+      const path = a === "link" ? "/auth/v1/otp?redirect_to=" + encodeURIComponent(location.origin + "/account") : "/auth/v1/recover?redirect_to=" + encodeURIComponent(location.origin + "/account");
+      api(path, { method: "POST", body: a === "link" ? { email: em, create_user: false } : { email: em }, auth: false }).catch(err => { if (/seconds|rate/i.test(err.message)) { MSG = "Please wait a minute before sending again."; RESENT = 0; draw(); } });
+      CFG.log && CFG.log("account", { detail: a === "link" ? "magic-link" : "reset" }); return; }
     if (a === "resend") { const em = FORM._email; if (!em) return; MSG = ""; RESENT = Date.now() + 60000; draw();
       api("/auth/v1/resend?redirect_to=" + encodeURIComponent(location.origin + "/onboarding"), { method: "POST", body: { type: "signup", email: em }, auth: false }).catch(err => { MSG = /seconds|rate/i.test(err.message) ? "Please wait a minute before sending again." : err.message; RESENT = 0; draw(); });
       CFG.log && CFG.log("account", { detail: "resend" }); setTimeout(draw, 60500); return; }
