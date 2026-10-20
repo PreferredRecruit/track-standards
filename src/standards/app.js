@@ -491,7 +491,7 @@ const MULTI=()=>{syncSel();return R.sel.length>1};
 const curKey=()=>{if(MULTI())return null;const x=RIDX.find(x=>x.year+"-"+x.season===R.season&&x.div===R.div)||RIDX.find(x=>x.year+"-"+x.season===R.season);if(x)R.div=x.div;return x&&x.key};
 function load(key,quiet){if(CACHE[key]||LOADING[key])return LOADING[key];
   LOADING[key]=getRank(key).then(d=>{CACHE[key]=cleanRank(d)}).catch(()=>{CACHE[key]={err:1,lists:[]}})
-    .then(()=>{if((key===curKey()||(MULTI()||CC.on)&&key.startsWith(R.season+"-"))&&S.tab==="results"&&S.school==null){R.swap=true;render()} if(!quiet) prefetch()});
+    .then(()=>{if((key===curKey()||MULTI()&&key.startsWith(R.season+"-")||CC.on&&CC.cols.some(c=>ccKey(c.div,ccSea(c))===key))&&S.tab==="results"&&S.school==null){R.swap=true;render()} if(!quiet) prefetch()});
   return LOADING[key]}
 function prefetch(){const go=()=>RIDX.filter(x=>x.year+"-"+x.season===R.season&&!CACHE[x.key]).forEach(x=>load(x.key,true));(window.requestIdleCallback?requestIdleCallback(go,{timeout:2000}):setTimeout(go,600))}
 const yr=y=>({"FR-1":"Freshman","SO-2":"Sophomore","JR-3":"Junior","SR-4":"Senior"}[y]||y||"");
@@ -521,12 +521,15 @@ const rlab=e=>String(e).replace(/^(\d[\d,]*) Meters$/,"$1m").replace(/,/g,"").re
 const rhigh=e=>/thlon|jump|vault|put|discus|hammer|javelin|throw/i.test(e);
 const rval=(e,m)=>parseMark(m,rlab(e));
 const pctOf=(e,v,v1)=>v==null||!v1?null:rhigh(e)?v/v1*100:v1/v*100;
-const ccKey=div=>{const x=RIDX.find(x=>x.year+"-"+x.season===R.season&&x.div===div);return x&&x.key};
-const ccData=c=>{const k=ccKey(c.div);if(!k)return {err:1};if(!CACHE[k]){load(k,true);return null}return CACHE[k].err?{err:1}:CACHE[k]};
+/* each column can carry its own season (c.s) so any comparison can run year against year (Ryan 2026-10-20) */
+const ccKey=(div,sea)=>{const x=RIDX.find(x=>x.year+"-"+x.season===(sea||R.season)&&x.div===div);return x&&x.key};
+const ccSea=c=>c.s||R.season;
+const ccData=c=>{const k=ccKey(c.div,ccSea(c));if(!k)return {err:1};if(!CACHE[k]){load(k,true);return null}return CACHE[k].err?{err:1}:CACHE[k]};
 const ccListOf=(D,l)=>l==="nat"?(D.lists.find(x=>x.nat)||D.lists[0]):(D.lists.find(x=>x.label===l)||D.lists.find(x=>x.nat)||D.lists[0]);
-const ccName=c=>`${c.t?c.t+" · ":""}${c.l==="nat"?(DIVINFO[c.div]||c.div):c.l} · ${c.g==="m"?"Men's":"Women's"} ${c.e==="*"?"all events":evLabel(c.e)}`;
-function ccSync(){try{const u=new URL(location.href);if(CC.on&&CC.cols.length){u.searchParams.set("tab","results");u.searchParams.set("cmp",CC.cols.map(c=>[c.div,c.l,c.g,c.e,c.t||""].map(x=>String(x).replace(/[|~]/g," ")).join("|")).join("~"))}else u.searchParams.delete("cmp");history.replaceState(history.state,"",u.pathname+u.search)}catch(e){}}
-function ccFromUrl(v){const cols=String(v||"").split("~").map(s=>{const [div,l,g,e,t]=s.split("|").map(x=>x||"");return div&&g&&e?{div,l:l||"nat",g:g==="w"?"w":"m",e,t}:null}).filter(Boolean).slice(0,4);if(cols.length){CC.on=true;CC.cols=cols}}
+const ccMixed=()=>new Set(CC.cols.map(ccSea)).size>1;
+const ccName=c=>`${ccMixed()?seasonLabel(ccSea(c))+" · ":""}${c.t?c.t+" · ":""}${c.l==="nat"?(DIVINFO[c.div]||c.div):c.l} · ${c.g==="m"?"Men's":"Women's"} ${c.e==="*"?"all events":evLabel(c.e)}`;
+function ccSync(){try{const u=new URL(location.href);if(CC.on&&CC.cols.length){u.searchParams.set("tab","results");u.searchParams.set("cmp",CC.cols.map(c=>[c.div,c.l,c.g,c.e,c.t||"",c.s||""].map(x=>String(x).replace(/[|~]/g," ")).join("|")).join("~"))}else u.searchParams.delete("cmp");history.replaceState(history.state,"",u.pathname+u.search)}catch(e){}}
+function ccFromUrl(v){const cols=String(v||"").split("~").map(s=>{const [div,l,g,e,t,sea]=s.split("|").map(x=>x||"");return div&&g&&e?{div,l:l||"nat",g:g==="w"?"w":"m",e,t,s:sea&&RIDX.some(r=>r.year+"-"+r.season===sea)?sea:""}:null}).filter(Boolean).slice(0,4);if(cols.length){CC.on=true;CC.cols=cols}}
 /* presets start from what the visitor is looking at (division, gender, event) */
 function ccPreset(p){syncSel();const div=R.div,g=R.g,D=CACHE[ccKey(div)];const L=D&&!D.err?ccListOf(D,"nat"):null;
   const evs=L?Object.keys(L.g[g]||{}):[],e=R.ev&&evs.includes(R.ev)?R.ev:(evs[0]||"100 Meters");
@@ -538,15 +541,18 @@ function ccPreset(p){syncSel();const div=R.div,g=R.g,D=CACHE[ccKey(div)];const L
     const cf=pick.length===2?pick:ok.sort((a,b)=>(b.g[g][e]||[]).length-(a.g[g][e]||[]).length).slice(0,2);
     CC.cols=cf.length===2?cf.map(x=>({div,l:x.label,g,e,t:""})):[{div,l:"nat",g,e,t:""}]}
   else if(p==="school"){const rows=L?((L.g[g]||{})[e]||[]):[],ts=[...new Set(rows.map(r=>D.teams[r[3]]))].slice(0,2);CC.cols=ts.map(t=>({div,l:"nat",g,e:"*",t}))}
+  else if(p==="yy"){const [y,sn]=R.season.split("-"),prev=seasons().filter(k=>k.endsWith("-"+sn)&&k<R.season&&RIDX.some(r=>r.year+"-"+r.season===k&&r.div===div));
+    CC.cols=[{div,l:"nat",g,e,t:"",s:R.season},...prev.slice(0,ccMax()-1).map(k=>({div,l:"nat",g,e,t:"",s:k}))]}
   else if(p==="div"){const ds=(R.sel.length>1?R.sel:seasonDivs().slice(0,3)).slice(0,ccMax());CC.cols=ds.map(d=>({div:d,l:"nat",g,e,t:""}))}
   CC.cols=CC.cols.slice(0,ccMax());CC.on=true;ccSync()}
 function ccColumn(c,i){
   const D=ccData(c),head=sel=>`<header class="cch" style="--cc:${CCOL[i]}">${sel}</header>`;
   if(!D)return `<section class="col cc">${head(`<b>${esc(ccName(c))}</b>`)}${skeleton()}</section>`;
-  if(D.err)return `<section class="col cc">${head(`<b>${esc(ccName(c))}</b>`)}<p class="ccmsg">Not available for this season.</p></section>`;
+  if(D.err)return `<section class="col cc">${head(`<b>${esc(ccName(c))}</b><div class="ccs"><select data-cc="s" data-i="${i}" aria-label="Season">${seasons().filter(k=>RIDX.some(r=>r.year+"-"+r.season===k&&r.div===c.div)).map(k=>`<option value="${k}" ${k===ccSea(c)?"selected":""}>${esc(seasonLabel(k))}</option>`).join("")}</select></div>`)}<p class="ccmsg">Not available for this season. Pick another one above.</p></section>`;
   const L=ccListOf(D,c.l),E=L.g[c.g]||{},evs=Object.keys(E);if(c.e!=="*"&&!evs.includes(c.e))c.e=evs[0]||c.e;
   const divs=seasonDivs(),NC=/region|qualif|ecac|ic4a|neicaaa|outdoor list|indoor list|division/i,lists=[...D.lists.filter(x=>x.nat),...D.lists.filter(x=>!x.nat&&!x.champ&&!NC.test(x.label)).sort((a,b)=>a.label.localeCompare(b.label)),...D.lists.filter(x=>!x.nat&&!x.champ&&NC.test(x.label))];
-  const ctl=`<div class="ccs"><select data-cc="div" data-i="${i}" aria-label="Division">${divs.map(d=>`<option ${d===c.div?"selected":""}>${esc(d)}</option>`).join("")}</select>
+  const seaOpts=seasons().filter(k=>RIDX.some(r=>r.year+"-"+r.season===k&&r.div===c.div));
+  const ctl=`<div class="ccs"><select data-cc="s" data-i="${i}" aria-label="Season">${seaOpts.map(k=>`<option value="${k}" ${k===ccSea(c)?"selected":""}>${esc(seasonLabel(k))}</option>`).join("")}</select><select data-cc="div" data-i="${i}" aria-label="Division">${divs.map(d=>`<option ${d===c.div?"selected":""}>${esc(d)}</option>`).join("")}</select>
     <select data-cc="l" data-i="${i}" aria-label="List">${lists.map(x=>{const v=x.nat?"nat":x.label;return `<option value="${esc(v)}" ${(c.l==="nat"?x===L:x.label===c.l)?"selected":""}>${esc(x.nat?"National list":x.label)}</option>`}).join("")}</select>
     <select data-cc="g" data-i="${i}" aria-label="Men or women"><option value="m" ${c.g==="m"?"selected":""}>Men</option><option value="w" ${c.g==="w"?"selected":""}>Women</option></select>
     <select data-cc="e" data-i="${i}" aria-label="Event">${c.t?`<option value="*" ${c.e==="*"?"selected":""}>All events</option>`:""}${evs.map(e=>`<option value="${esc(e)}" ${e===c.e?"selected":""}>${esc(evLabel(e))}</option>`).join("")}</select>
@@ -561,8 +567,14 @@ function ccColumn(c,i){
   const all=E[c.e]||[],rows=ti>=0?all.filter(r=>r[3]===ti):all,v1=rval(c.e,(all[0]||[])[4]);
   const P=[1,10,25,50].filter(k=>all[k-1]);
   return `<section class="col cc">${head(`<b>${esc(ccName(c))}</b><span>${all.length.toLocaleString()} marks${ti>=0?` · ${rows.length} from ${esc(c.t)}`:""}</span>${ctl}`)}
-    <div class="ccst">${P.map(k=>`<div><small>#${k}</small><b>${esc(all[k-1][4])}</b></div>`).join("")}</div>
+    <div class="ccst">${P.map(k=>`<div><small>#${k}</small><b>${esc(all[k-1][4])}</b>${ccDelta(c,i,k,all)}</div>`).join("")}</div>
     <ol>${rows.slice(0,RCAP(25)).map(r=>{const p=pctOf(c.e,rval(c.e,r[4]),v1);return `<li><span class="rk">${esc(r[0])}</span><span class="nm"><b>${esc(r[1]||D.teams[r[3]])}</b><small>${esc(D.teams[r[3]])}</small></span><span class="mk">${esc(r[4])}${p!=null?`<small>${p.toFixed(1)}%</small>`:""}</span></li>`}).join("")}</ol></section>`}
+/* how this column's #k mark differs from the first column's #k (same event): the year-to-year story */
+function ccDelta(c,i,k,all){if(!i)return "";const c0=CC.cols[0];if(!c0||c0.e!==c.e||c.e==="*")return "";const D0=ccData(c0);if(!D0||D0.err)return "";
+  const a0=((ccListOf(D0,c0.l).g[c0.g]||{})[c0.e]||[])[k-1];if(!a0||!all[k-1])return "";const v=rval(c.e,all[k-1][4]),v0=rval(c.e,a0[4]);if(v==null||v0==null)return "";
+  const hi=rhigh(c.e),d=hi?v-v0:v0-v;if(Math.abs(d)<0.005)return `<em class="ccd eq">same</em>`;
+  const amt=hi?(Math.abs(d)>=1?Math.abs(d).toFixed(2)+"m":Math.round(Math.abs(d)*100)+"cm"):Math.abs(d).toFixed(2)+"s";
+  return `<em class="ccd ${d>0?"up":"dn"}">${amt} ${hi?(d>0?"farther":"shorter"):(d>0?"faster":"slower")}</em>`}
 /* every list column's drop-off from #1 to #100, as % of its own leader, on one chart */
 function ccChart(){
   const S2=CC.cols.map((c,i)=>{if(c.e==="*")return null;const D=ccData(c);if(!D||D.err)return null;const all=(ccListOf(D,c.l).g[c.g]||{})[c.e]||[],v1=rval(c.e,(all[0]||[])[4]);
@@ -573,11 +585,39 @@ function ccChart(){
     ${[100,Math.round((100+lo)/2),lo].map(p=>`<line x1="${pad}" x2="${W-pad}" y1="${y(p)}" y2="${y(p)}" stroke="var(--pr-line)"/><text x="2" y="${y(p)+4}" font-size="11" fill="var(--pr-mute)">${p}%</text>`).join("")}
     ${S2.map(s=>`<path d="${s.pts.map((p,j)=>(j?"L":"M")+x(p[0]).toFixed(1)+" "+y(p[1]).toFixed(1)).join(" ")}" fill="none" stroke="${CCOL[s.i]}" stroke-width="2.5" vector-effect="non-scaling-stroke"/>${s.ti>=0?s.pts.filter(p=>p[2]===s.ti).map(p=>`<circle cx="${x(p[0])}" cy="${y(p[1])}" r="4" fill="${CCOL[s.i]}"/>`).join(""):""}`).join("")}</svg>
     <div class="cclg">${S2.map(s=>`<span><i style="background:${CCOL[s.i]}"></i>${esc(ccName(s.c))}</span>`).join("")}</div></div>`}
+/* ---------- compare: school standards (Ryan 2026-10-20: "school tiers data fully accessible in the comparison tool") ----------
+   Up to 4 programs side by side: Target / Recruit / Walk-On for one event (with the gap to the first school) or every event. */
+const CS={g:"m",e:"*",ids:null};
+function csSeed(){if(CS.ids)return;const ok=i=>i>=0&&!SCH[i].j;let a=INT.sch?SCH.findIndex(x=>x.n===INT.sch):-1;
+  if(!ok(a))a=SCH.findIndex(x=>/^Oregon$/i.test(x.t||x.n));
+  /* start with programs that differ: another conference in the same division (official standards first), then the next divisions down */
+  const pick=(f)=>{const L=SCH.map((x,i)=>[x,i]).filter(([x,i])=>!x.j&&i!==a&&f(x));return (L.find(([x])=>x.o)||L[0]||[])[1]};
+  const A=SCH[a]||{},nd=d=>DIVS[DIVS.indexOf(d)+1];
+  const b=pick(x=>x.d===A.d&&x.c!==A.c),c=pick(x=>x.d===nd(A.d)),e=WIDE()?pick(x=>x.d===nd(nd(A.d))):undefined;
+  CS.ids=[a,b,c,e].filter(i=>i!=null&&ok(i));CS.g=INT.g==="w"?"w":"m"}
+const csEvs=()=>{const set=new Set();CS.ids.forEach(i=>Object.keys(SCH[i][CS.g]||{}).forEach(e=>{if((SCH[i][CS.g][e]||[]).some(Boolean))set.add(e)}));return EVENTS.filter(e=>set.has(e))};
+function csGap(e,v,v0){if(v==null||v0==null)return "";const F=FIELD.has(e),d=F?v-v0:v0-v;if(Math.abs(d)<0.005)return '<em class="ccd eq">same</em>';
+  const amt=F?(Math.abs(d)>=1?Math.abs(d).toFixed(2)+"m":Math.round(Math.abs(d)*100)+"cm"):Math.abs(d).toFixed(2)+"s";return `<em class="ccd ${d>0?"dn":"up"}">${amt} ${d>0?"tougher":"easier"}</em>`}
+function stdCompare(){csSeed();const g=CS.g,evs=csEvs();if(CS.e!=="*"&&!evs.includes(CS.e))CS.e="*";
+  const head=CS.ids.map((i,k)=>{const x=SCH[i];return `<th style="--cc:${CCOL[k]}"><a href="/schools/${SLUG[i]}" data-school="${i}">${esc(x.t||x.n)}</a>${star(x)}<small>${esc(x.d)} · ${esc(x.c)}</small><small class="cssrc">${x.o?`Official${x.yr?" "+esc(x.yr):""}`:x.est?"Estimate":"Set from conference results"}</small>${CS.ids.length>1?`<button type="button" class="ccx" data-csdel="${k}" aria-label="Remove ${esc(x.t||x.n)}">×</button>`:""}</th>`}).join("");
+  const val=(i,e,t)=>{const a=(SCH[i][g]||{})[e];return a&&a[t]?a[t]:""};
+  let body="";
+  if(CS.e==="*") body=evs.map(e=>`<tr><th scope="row">${esc(e)}</th>${CS.ids.map(i=>`<td>${[0,1,2].map(t=>`<span class="cst ${"TRW"[t]}"><i></i>${val(i,e,t)?disp(SCH[i],g,e,t):"–"}</span>`).join("")}</td>`).join("")}</tr>`).join("");
+  else body=[0,1,2].map(t=>`<tr><th scope="row"><span class="pill2 ${"TRW"[t]}">${TN["TRW"[t]]}</span></th>${CS.ids.map((i,k)=>{const raw=val(i,CS.e,t),v=raw?parse(raw,CS.e):null,raw0=val(CS.ids[0],CS.e,t),v0=raw0?parse(raw0,CS.e):null;
+      return `<td><b>${raw?disp(SCH[i],g,CS.e,t):"–"}</b>${k&&raw&&raw0?csGap(CS.e,v,v0):""}</td>`}).join("")}</tr>`).join("");
+  const can=CS.ids.length<4;
+  return `<div class="cssec"><div class="csbar">${seg("csg",g)}
+    <label class="sr" for="cse">Event</label><select class="in" id="cse"><option value="*">Every event</option>${evs.map(e=>`<option ${e===CS.e?"selected":""}>${esc(e)}</option>`).join("")}</select>
+    ${can?`<label class="sr" for="csadd">Add a school</label><input class="in" id="csadd" list="csl" placeholder="Add a school (up to 4)" autocomplete="off"><datalist id="csl">${SCH.filter(x=>!x.j).map(x=>`<option value="${esc(x.n)}">`).join("")}</datalist>`:""}</div>
+    ${CS.ids.length?`<div class="cswrap"><table class="cstbl"><thead><tr><th></th>${head}</tr></thead><tbody>${body||`<tr><td colspan="${CS.ids.length+1}">No ${g==="m"?"men's":"women's"} standards for these schools.</td></tr>`}</tbody></table></div>`:'<p class="ccmsg">Add a school to start.</p>'}
+    <p class="note">${CS.e==="*"?"Each cell shows Target, Recruit and Walk-On.":"Gaps are measured against the first school."} ★ = official standards published by the school. Others are set from 2026 conference results; a few are estimates. ${NSTD.toLocaleString()} programs have standards (NJCAA colleges are results only).</p></div>`}
 function compareView(){
   const ctl=`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x)).map(x=>`<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}">${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`).join("")}</div></div>`;
-  const pre=[["mw","Men vs Women"],["ev","Event vs Event"],["conf","Conference vs Conference"],["school","School vs School"],["div","Division vs Division"]];
-  return `<div class="sec"><p class="lede">Compare any lists side by side: divisions, conferences, schools, men and women, or two events.</p><div class="rcard">
-    <div class="dsel"><button type="button" class="cmpsw" data-rcmp aria-pressed="true"><span class="sw" aria-hidden="true"></span>Compare</button><div class="ccp" role="group" aria-label="Quick comparisons">${pre.map(([k,t])=>`<button type="button" data-ccp="${k}">${t}</button>`).join("")}</div></div>${ctl}</div>
+  const pre=[["yy","Year vs Year"],["mw","Men vs Women"],["ev","Event vs Event"],["conf","Conference vs Conference"],["school","School vs School"],["div","Division vs Division"]];
+  const mode=`<div class="seg csmode" role="group" aria-label="What to compare"><button type="button" data-ccmode="res" aria-pressed="${CC.mode!=="std"}">Results lists</button><button type="button" data-ccmode="std" aria-pressed="${CC.mode==="std"}">School standards</button></div>`;
+  if(CC.mode==="std")return `<div class="sec"><p class="lede">Compare the Target, Recruit and Walk-On standards of up to four programs, for one event or every event.</p><div class="rcard"><div class="dsel"><button type="button" class="cmpsw" data-rcmp aria-pressed="true"><span class="sw" aria-hidden="true"></span>Compare</button>${mode}</div></div><div class="rbody swap">${stdCompare()}</div></div>`;
+  return `<div class="sec"><p class="lede">Compare any lists side by side, in any year: divisions, conferences, schools, men and women, two events, or one list year against year.</p><div class="rcard">
+    <div class="dsel"><button type="button" class="cmpsw" data-rcmp aria-pressed="true"><span class="sw" aria-hidden="true"></span>Compare</button>${mode}<div class="ccp" role="group" aria-label="Quick comparisons">${pre.map(([k,t])=>`<button type="button" data-ccp="${k}">${t}</button>`).join("")}</div></div>${ctl}</div>
     <div class="rbody${R.swap?" swap":""}"><div class="cols cc" style="--n:${CC.cols.length}">${CC.cols.map(ccColumn).join("")}</div>${ACC.member()?"":ACC.wall("results")}
     ${CC.cols.length<ccMax()?`<p style="margin:12px 2px"><button class="lnk" data-ccadd>+ Add a column</button></p>`:""}${ccChart()}
     <p class="note">Source: TFRRS performance lists. "% of #1" puts different events, genders and lists on one scale: the list leader is 100%.</p></div></div>`}
@@ -1189,6 +1229,9 @@ document.addEventListener("click",ev=>{
     syncSel();R.list=0;R.team=null;R.ath=null;R.an=100;R.cn=25;R.swap=true;render();return}
   if("rcmp" in d){if(CC.on){CC.on=false;ccSync()}else ccPreset(R.sel&&R.sel.length>1?"div":"mw");R.swap=true;render();return}
   if(d.ccp){ccPreset(d.ccp);R.swap=true;render();return}
+  if(d.ccmode){CC.mode=d.ccmode;R.swap=true;render();log("results_event",{detail:"compare-"+d.ccmode});return}
+  if(d.csg){CS.g=d.csg;render();return}
+  if(d.csdel!==undefined){CS.ids.splice(+d.csdel,1);render();return}
   if("ccadd" in d){const c=CC.cols[CC.cols.length-1]||{div:R.div,l:"nat",g:R.g,e:R.ev||"100 Meters",t:""};CC.cols.push({...c,g:c.g==="m"?"w":"m"});CC.cols=CC.cols.slice(0,ccMax());ccSync();render();return}
   if(d.ccdel!==undefined){CC.cols.splice(+d.ccdel,1);ccSync();render();return}
   if(d.ccteam){const [dv,t]=d.ccteam.split("|");CC.on=true;CC.cols=[{div:dv,l:"nat",g:R.g,e:"*",t}];ccSync();R.swap=true;render();return}
@@ -1212,8 +1255,10 @@ document.addEventListener("input",ev=>{const t=ev.target;
 document.addEventListener("keydown",ev=>{if(ev.target.id==="ct"&&ev.key==="Enter"&&!ev.shiftKey){ev.preventDefault();send(ev.target.value)}if(ev.key==="Escape"&&EV.shown&&!EV.dismissed)evalOut()});
 document.addEventListener("change",ev=>{const t=ev.target;
   if(t.dataset&&t.dataset.cc){const c=CC.cols[+t.dataset.i];if(c){const k=t.dataset.cc,v=t.value.trim();
-    if(k==="div"){c.div=v;c.l="nat";c.t=""}else if(k==="l")c.l=v;else if(k==="g")c.g=v;else if(k==="e")c.e=v;else if(k==="t"){c.t=v;if(!v&&c.e==="*")c.e=R.ev||"100 Meters"}
+    if(k==="s")c.s=v;else if(k==="div"){c.div=v;c.l="nat";c.t="";if(c.s&&!RIDX.some(r=>r.year+"-"+r.season===c.s&&r.div===v))c.s=""}else if(k==="l")c.l=v;else if(k==="g")c.g=v;else if(k==="e")c.e=v;else if(k==="t"){c.t=v;if(!v&&c.e==="*")c.e=R.ev||"100 Meters"}
     ccSync();R.swap=false;render()}return}
+  if(t.id==="cse"){CS.e=t.value;render();return}
+  if(t.id==="csadd"){const v=t.value.trim().toLowerCase();if(!v)return;let i=SCH.findIndex(x=>!x.j&&(x.n.toLowerCase()===v||(x.t||"").toLowerCase()===v));if(i<0)i=SCH.findIndex(x=>!x.j&&(x.n.toLowerCase().includes(v)||(x.t||"").toLowerCase().includes(v)));if(i>=0&&!CS.ids.includes(i)&&CS.ids.length<4){CS.ids.push(i);render()}return}
   if(t.id==="ev"){S.e=t.value;S.mark="";S.run=false;render()}
   if(t.id==="gr"){S.gr=INT.gr=+t.value;saveInt();t.classList.remove("ph");log("grade",{});const h=$("hint");if(h&&/grade/.test(h.textContent))h.textContent=""}
   if(t.id==="rs"){R.st=t.value;R.swap=true;render();if(R.st)log("results_state",{state:ST_NAME[R.st]||R.st,division:R.div,event:evLabel(R.ev||""),g:R.g})}

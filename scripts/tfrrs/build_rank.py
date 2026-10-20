@@ -35,7 +35,8 @@ def label(name):
 def national(name):
     # cross country (scrape_xc.py): the national championship meet is the division's main list; regions/conferences are not
     if "Cross_Country" in name: return bool(re.search(r"^(NCAA_Division_I+|NAIA|NJCAA_Division_I+)_Cross_Country_Championships$", name))
-    return bool(re.search(r"Qualifying|Division_I_Indoor_List|All_Schools|^\d{4}_NAIA", name)) and not re.search(r"East|West|NJCAA_DIII", name)
+    # 2026-10-20: also "Division_II/III_Indoor_List" (2025 indoor D2/D3) and "Division_I_Rankings" (2024 outdoor D1 had no qualifying list)
+    return bool(re.search(r"Qualifying|Division_I+_Indoor_List|Division_I+_Rankings|All_Schools|^\d{4}_NAIA", name)) and not re.search(r"East|West|NJCAA_DIII", name)
 
 def person(a):
     if "," in a:
@@ -63,6 +64,12 @@ for d in sorted(glob.glob(os.path.join(SRC, "*", "*", "*"))):
         ev = dict(sorted(ev.items(), key=lambda kv: (kv[0].endswith(" Team"), kv[0] if re.search(r" DI+\b", kv[0]) else "")))   # XC: individual first, NJCAA DI/DII/DIII in order
         L = lists.setdefault(name, {"label": label(name), "nat": national(name), "region": "Region" in name, "g": {}})
         L["g"]["m" if g == "m" else "w"] = ev
+    # one national list per season: prefer the qualifying list when TFRRS also publishes a rankings or "indoor list" page
+    nats = [n for n in lists if lists[n]["nat"]]
+    if len(nats) > 1:
+        keep = next((n for n in nats if "Qualifying" in n), nats[0])
+        for n in nats:
+            if n != keep: lists[n]["nat"] = False
     # --- national championship results (Ryan 2026-10-13: final lists close before nationals; TFRRS has the meets) ---
     cp = os.path.join(CHAMPS, year, season, div + ".json")
     if os.path.exists(cp):
