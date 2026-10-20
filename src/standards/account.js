@@ -18,22 +18,58 @@ let CFG = {}, SES = null, PRO = null, VIEW = "signup", MSG = "", BUSY = false, W
 import * as ONB from "./onboard.js";
 const store = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v){ try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
-async function api(path, { method = "GET", body, auth = true, prefer } = {}) {
+/* ---------- staying signed in (Ryan 2026-10-20: "I should not have to log in every single time I visit") ----------
+   The session lives in localStorage plus a 400-day first-party cookie backup (some phones and in-app browsers clear
+   localStorage). Access tokens last an hour and are renewed before they run out, on tab focus and on any 401, by one
+   tab at a time (Web Locks), and other tabs pick the new tokens up from storage. A failed network call never signs
+   anyone out: only the server saying the refresh token is invalid does. */
+const CK = "pr_rt";
+const cookie = { get() { const m = document.cookie.match(/(?:^|; )pr_rt=([^;]*)/); try { return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch (e) { return null; } },
+  set(v) { try { document.cookie = v ? `${CK}=${encodeURIComponent(JSON.stringify(v))}; Max-Age=${400 * 86400}; Path=/; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}` : `${CK}=; Max-Age=0; Path=/; SameSite=Lax`; } catch (e) {} } };
+async function api(path, { method = "GET", body, auth = true, prefer } = {}, retried) {
   const h = { apikey: KEY, "Content-Type": "application/json" };
   if (auth && SES) h.Authorization = "Bearer " + SES.access_token;
   if (prefer) h.Prefer = prefer;
   const r = await fetch(URL_ + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined });
   const t = await r.text(); let j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
+  if (r.status === 401 && auth && SES && !retried && !/\/auth\/v1\/token/.test(path)) { await fresh(true); if (SES) return api(path, { method, body, auth, prefer }, true); }
   if (!r.ok) { const m = (j && (j.msg || j.message || j.error_description || j.error)) || ("Error " + r.status); const e = new Error(m); e.status = r.status; e.code = j && (j.error_code || j.code); throw e; }
   return j;
 }
-const keep = s => { SES = s ? { access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at || (Math.floor(Date.now() / 1000) + (s.expires_in || 3600)), user: { id: s.user ? s.user.id : (SES && SES.user.id), email: s.user ? s.user.email : (SES && SES.user.email) } } : null; store.set(SK, SES); };
-async function fresh() {
+const keep = s => {
+  SES = s ? { access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at || (Math.floor(Date.now() / 1000) + (s.expires_in || 3600)), user: { id: s.user ? s.user.id : (SES && SES.user.id), email: s.user ? s.user.email : (SES && SES.user.email) } } : null;
+  store.set(SK, SES); cookie.set(SES ? { rt: SES.refresh_token, id: SES.user.id, email: SES.user.email } : null); schedule();
+};
+let REFRESHING = null, TIMER = null;
+function schedule() { clearTimeout(TIMER); if (!SES) return; const ms = Math.max(30000, (SES.expires_at - 120) * 1000 - Date.now()); TIMER = setTimeout(() => fresh(true), Math.min(ms, 2147483000)); }
+async function doRefresh(force) {
+  const latest = store.get(SK); if (latest && latest.refresh_token && (!SES || latest.expires_at > SES.expires_at)) SES = latest;   // another tab already renewed
   if (!SES) return null;
-  if (SES.expires_at - 60 > Date.now() / 1000) return SES;
-  try { keep(await api("/auth/v1/token?grant_type=refresh_token", { method: "POST", body: { refresh_token: SES.refresh_token }, auth: false })); }
-  catch (e) { keep(null); PRO = null; }
+  if (!force && SES.expires_at - 120 > Date.now() / 1000) return SES;
+  const rt = SES.refresh_token;
+  for (let i = 0; i < 3; i++) {
+    try { keep(await api("/auth/v1/token?grant_type=refresh_token", { method: "POST", body: { refresh_token: rt }, auth: false })); return SES; }
+    catch (e) {
+      const after = store.get(SK); if (after && after.refresh_token !== rt) { SES = after; schedule(); return SES; }   // renewed elsewhere meanwhile
+      if (e.status === 400 || e.status === 401 || e.status === 403) { keep(null); PRO = null; KIDS = []; changed(); return null; }   // the server says this sign-in is over
+      await new Promise(ok => setTimeout(ok, 800 * (i + 1)));   // network hiccup: keep the session and try again
+    }
+  }
   return SES;
+}
+async function fresh(force) {
+  if (!SES) return null;
+  if (!force && SES.expires_at - 120 > Date.now() / 1000) return SES;
+  if (REFRESHING) return REFRESHING;
+  REFRESHING = (navigator.locks ? navigator.locks.request("pr-auth-refresh", () => doRefresh(force)) : doRefresh(force)).finally(() => { REFRESHING = null; });
+  return REFRESHING;
+}
+/* restore a session from the cookie backup when localStorage was cleared */
+async function restore() {
+  if (SES) { const c = cookie.get(); if (!c || c.rt !== SES.refresh_token) cookie.set({ rt: SES.refresh_token, id: SES.user.id, email: SES.user.email }); return; }
+  const c = cookie.get(); if (!c || !c.rt) return;
+  SES = { access_token: "", refresh_token: c.rt, expires_at: 0, user: { id: c.id, email: c.email } };
+  await fresh(true);
 }
 async function loadProfile() {
   if (!(await fresh())) { PRO = null; return null; }
@@ -275,7 +311,12 @@ export async function init(cfg) {
   document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
   document.addEventListener("click", e => { if (e.target.id === "accbg") close(); });
   ONB.bind();
-  if (SES) await loadProfile();
+  await restore();
+  addEventListener("storage", e => { if (e.key !== SK) return; const v = store.get(SK);
+    if (!v && SES) { SES = null; PRO = null; KIDS = []; cookie.set(null); changed(); }
+    else if (v && (!SES || v.refresh_token !== SES.refresh_token)) { const was = !!SES; SES = v; schedule(); if (!was) loadProfile().then(changed); } });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && SES) fresh(); });
+  if (SES) { schedule(); await loadProfile(); }
   headBtn();
   await fromHash();
   /* Ryan 2026-10-19: a signed-in account must finish its profile before using the site */
