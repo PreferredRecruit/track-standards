@@ -278,6 +278,7 @@ async function next() {
 
 export async function show() {
   const el = layer(); document.documentElement.classList.add("onbon"); el.hidden = false;
+  if (!document.querySelector('meta[name="robots"][data-onb]')) document.head.insertAdjacentHTML("beforeend", '<meta name="robots" content="noindex, nofollow" data-onb>');
   if (!core.ses()) { el.innerHTML = top() + `<div class="onbwrap one"><section class="onbmain onbdone"><h1>Build your recruiting profile</h1><p class="onbsub">Create a free account first. It takes about two minutes and shows every college your marks fit.</p><div class="onbcta"><button type="button" class="acbtn" data-acc="signup" data-why="onboarding">Create free account</button><button type="button" class="onbback" data-acc="signin" data-why="onboarding">I already have an account</button></div></section></div>`; return; }
   if (IS_ADMIN == null) IS_ADMIN = await core.api("/rest/v1/rpc/is_admin", { method: "POST", body: {} }).catch(() => false) === true;
   D = draft(); D.marks = await loadMarks(); await loadAvatar();
