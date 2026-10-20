@@ -288,7 +288,7 @@ export async function show() {
   if (IS_ADMIN && location.pathname === "/account") TAB = "admin";
   render();
 }
-export function hide() { const el = document.getElementById("onb"); if (el) { el.hidden = true; el.innerHTML = ""; } document.documentElement.classList.remove("onbon"); }
+export function hide() { const el = document.getElementById("onb"); if (el) { el.hidden = true; el.innerHTML = ""; } document.documentElement.classList.remove("onbon"); const m = document.querySelector('meta[name="robots"][data-onb]'); if (m) m.remove(); }
 export const isPage = () => location.pathname === "/onboarding" || location.pathname === "/account";
 export function go(path) { if (location.pathname !== path) history.pushState({}, "", path); show(); window.scrollTo(0, 0); }
 
