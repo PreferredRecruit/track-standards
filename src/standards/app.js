@@ -720,7 +720,8 @@ function divTabs(){
   const divs=RIDX.filter(x=>x.year+"-"+x.season===R.season).map(x=>x.div).sort((a,b)=>Object.keys(DIVINFO).indexOf(a)-Object.keys(DIVINFO).indexOf(b));
   syncSel();const allOn=R.sel.length===divs.length&&divs.length>1;
   return `<div class="dsel"><button type="button" class="cmpsw" data-rcmp aria-pressed="${!!R.cmp}" title="Show selected divisions side by side"><span class="sw" aria-hidden="true"></span>Compare</button>
-  <div class="divs multi" role="group" aria-label="Divisions (select one or more)"><button type="button" data-rdiv="ALL" aria-pressed="${allOn}"><b>All</b></button>${divs.map(d=>`<button type="button" data-rdiv="${d}" aria-pressed="${R.sel.includes(d)&&!allOn}" aria-label="${d}"><b>${d.replace(/^NCAA /,"")}</b></button>`).join("")}</div></div>`;
+  <div class="divs multi" role="group" aria-label="Division"><button type="button" data-rdiv="ALL" aria-pressed="${allOn}"><b>All</b></button>${divs.map(d=>`<button type="button" data-rdiv="${d}" aria-pressed="${R.sel.includes(d)&&!allOn}" aria-label="${d}"><b>${d.replace(/^NCAA /,"")}</b></button>`).join("")}</div>
+  <button type="button" class="cmbsw" data-rmulti aria-pressed="${!!R.multi}" title="Pick more than one division"><span class="sw" aria-hidden="true"></span>Combine</button></div>`;
 }
 function hookRow(){const d=R.div;
   const t=d==="D1"?"Looking at D1 marks? See if you actually qualify.":`Could you compete in ${d}? See where you fit.`;
@@ -1318,13 +1319,17 @@ document.addEventListener("click",ev=>{
   if("more" in d){if(ACC.member())S.n=9999;render();return}
   if("clear" in d){S.div=S.conf=S.f=S.st="";S.n=24;render();return}
   if(d.rdiv){syncSel();const av=seasonDivs();
+    /* Ryan 2026-10-20 bug: taps added divisions to a combined list, so D2 "did nothing". Now a tap shows that division only;
+       All shows every division together; the Combine switch lets you pick several. */
     if(d.rdiv==="ALL")R.sel=R.sel.length===av.length?[R.div]:av.slice();
-    else if(R.sel.length===av.length&&av.length>1)R.sel=[d.rdiv];                     /* from "All", a tap picks just that one */
+    else if(!R.multi){R.sel=[d.rdiv];R.div=d.rdiv}
+    else if(R.sel.length===av.length&&av.length>1)R.sel=[d.rdiv];
     else if(R.sel.includes(d.rdiv)){if(R.sel.length>1)R.sel=R.sel.filter(x=>x!==d.rdiv)}else R.sel=[...R.sel,d.rdiv];
     syncSel();R.list=0;R.team=null;R.ath=null;R.an=100;R.cn=25;R.swap=true;render();return}
   if("rcmp" in d){if(CC.on){CC.on=false;ccSync()}else{CC.on=true;CM.g=R.g;CM.div=R.div;CM.sea=R.season;if(R.ev)CM.e=R.ev;CM.a=CM.b="";if(R.sel&&R.sel.length>1)CM.t="div"}R.swap=true;render();scrollTo({top:Math.max(0,($("app")||document.body).offsetTop-70)});return}
   if(d.cmt){CM.t=d.cmt;CM.a=CM.b="";CM.open=false;R.swap=true;render();log("results_event",{detail:"compare-"+d.cmt});return}
   if(d.cmg){CM.g=d.cmg;R.swap=true;render();return}
+  if("rmulti" in d){R.multi=!R.multi;if(!R.multi){syncSel();R.sel=[R.sel.includes(R.div)?R.div:R.sel[0]];R.div=R.sel[0]}R.swap=true;render();return}
   if("cmopen" in d){CM.open=!CM.open;R.swap=true;render();return}
   if(d.ccp){ccPreset(d.ccp);R.swap=true;render();return}
   if(d.ccmode){CC.mode=d.ccmode;R.swap=true;render();log("results_event",{detail:"compare-"+d.ccmode});return}
