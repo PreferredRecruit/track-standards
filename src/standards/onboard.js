@@ -43,7 +43,7 @@ function layer() {
   if (!el) { document.body.insertAdjacentHTML("beforeend", `<div class="onb" id="onb" role="main"></div>`); el = document.getElementById("onb"); }
   return el;
 }
-const top = (right = "") => `<header class="onbtop"><button type="button" class="onblogo" data-onb="exit" aria-label="Back to Track Standards"><span class="onbtile">PR</span><span><b>Preferred Recruit</b><small>Track Standards</small></span></button><div class="onbtr">${right}<button type="button" class="onbx" data-onb="exit">Back to standards</button></div></header>`;
+const top = (right = "") => `<header class="onbtop"><button type="button" class="onblogo" data-onb="exit" aria-label="Back to Track Standards"><span class="onbtile">PR</span><span><b>Preferred Recruit</b><small>Track Standards</small></span></button><div class="onbtr">${right}${core.ses() && !core.member() ? `<button type="button" class="onbx" data-onb="out">Sign out</button>` : `<button type="button" class="onbx" data-onb="exit">Back to standards</button>`}</div></header>`;
 
 function card() {
   const C = core.cfg(), name = D.role === "parent" ? (D.ath || "Your athlete") : [D.first, D.last].filter(Boolean).join(" ") || "Your name";
@@ -271,7 +271,7 @@ async function next() {
     await core.fresh(); await save(k, finish);
     core.cfg().log && core.cfg().log("account", { detail: finish ? "finished" : "step-" + k, placement: "onboarding" });
     STEP++; BUSY = false;
-    if (finish) core.changed();
+    if (finish) { core.changed(); if (location.pathname !== "/account") history.replaceState({}, "", "/account"); }
     render(); window.scrollTo(0, 0);
   } catch (e) { BUSY = false; MSG = "Couldn't save. " + e.message; render(); }
 }
@@ -293,7 +293,7 @@ export const isPage = () => location.pathname === "/onboarding" || location.path
 export function go(path) { if (location.pathname !== path) history.pushState({}, "", path); show(); window.scrollTo(0, 0); }
 
 export function bind() {
-  addEventListener("popstate", () => { if (isPage()) show(); else hide(); });
+  addEventListener("popstate", () => { if (isPage()) show(); else if (core.ses() && !core.member()) go("/onboarding"); else hide(); });
   document.addEventListener("click", e => {
     const el = document.getElementById("onb"); if (!el || el.hidden || !el.contains(e.target)) return;
     const s = e.target.closest("[data-set]");
@@ -302,7 +302,7 @@ export function bind() {
       if (k === "gender") D.marks = D.marks.map(m => [core.cfg().events(v).includes(m[0]) ? m[0] : "", m[1]]);
       return render(); }
     const b = e.target.closest("[data-onb]"); if (!b) return; const a = b.dataset.onb; e.preventDefault();
-    if (a === "exit") { history.pushState({}, "", "/"); hide(); core.changed(); return; }
+    if (a === "exit") { if (core.ses() && !core.member()) { MSG = "Finish your profile to use the site. It takes about two minutes."; return render(); } history.pushState({}, "", "/"); hide(); core.changed(); return; }
     if (a === "back") { read(); MSG = ""; STEP = Math.max(0, STEP - 1); return render(); }
     if (a === "add") { read(); D.marks.push(["", ""]); return render(); }
     if (a === "rm") { read(); D.marks.splice(+b.dataset.i, 1); return render(); }

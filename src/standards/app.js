@@ -53,7 +53,7 @@ const scrollPct=()=>{const h=document.documentElement;return Math.min(100,Math.r
 function log(kind,x){try{let ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}const b=Object.assign({sid:SID,kind,coach:ct,secs:Math.round((Date.now()-T0)/1000),scroll_pct:scrollPct(),hour:new Date().getHours(),grade:INT.gr||undefined,path:location.pathname+location.search,mobile:innerWidth<700,utm_source:new URLSearchParams(location.search).get("utm_source")||undefined},x||{});
   if(b.event&&!b.grp)b.grp=GRP(b.event);fetch(TRACK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(()=>{})}catch(e){}}
 /* the funnel link carries the intent too, so the evaluation and CRM know the event and grade (utm_term = event, pr_grade = grade) */
-function quizFor(){try{const u=new URL(QUIZ);if(INT.e)u.searchParams.set("utm_term",INT.e);if(INT.grp)u.searchParams.set("pr_group",INT.grp);if(INT.gr)u.searchParams.set("pr_grade",INT.gr);if(INT.m)u.searchParams.set("pr_mark",INT.m);if(INT.rs)u.searchParams.set("pr_status",INT.rs);return u.toString()}catch(e){return QUIZ}}
+function quizFor(){try{const u=new URL(QUIZ);if(INT.e)u.searchParams.set("utm_term",INT.e);if(INT.grp)u.searchParams.set("pr_group",INT.grp);if(INT.gr)u.searchParams.set("pr_grade",INT.gr);if(INT.m)u.searchParams.set("pr_mark",INT.m);if(INT.rs)u.searchParams.set("pr_status",INT.rs);if(ACC.member()){u.searchParams.set("pr_account","1");if(ACC.tier())u.searchParams.set("pr_tier",ACC.tier())}return u.toString()}catch(e){return QUIZ}}
 /* account limits (Ryan 2026-10-19): logged out = top 10 per results list, first 15 colleges, 5 AI questions */
 const RCAP=n=>ACC.member()?n:Math.min(n,ACC.LIMITS.results);
 const rwall=(len,shown)=>!ACC.member()&&len>shown?ACC.wall("results"):"";
@@ -229,6 +229,7 @@ const TIERB={gpa:"Your grades already help you with coaches. A free evaluation s
 function evalIn(title,body,delay,v,trig,bs){
   if(EV.shown||EV.dismissed||ACC.tier()==="C"||ACC.isOpen()) return; clearTimeout(EV.t);
   /* Tier B (GPA 2.3 to 2.99, or 3.0+ without a PR-standard mark yet): same headline, softer body (draft for Ryan's approval) */
+  {const P=ACC.member()&&ACC.profile(),who=P&&(P.role==="parent"?null:P.first_name);if(who&&/^Your /.test(title))title=`${who}, your ${title.slice(5)}`}
   if(ACC.tier()==="B"){const r=(ACC.profile()||{}).tier_reason||"";body=/^GPA 3\.0/.test(r)?TIERB.gpa:TIERB.grow;bs=null;v=(v||"generic")+"-b"}
   EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||(S.school!=null&&!EV.force)) return; EV.force=false; EV.v=v||"generic"; EV.trig=trig||"timer"; EV.title=title; EV.body=body; EV.bs=bs||null; openEval(true)},delay||0);
 }
@@ -241,7 +242,9 @@ const statusLine=k=>({none:"Coaches recruit the athletes they know about.",some:
 /* step 2 copy: once the athlete has answered, their answer + one short line replaces the long body */
 const evBody=()=>INT.rs&&EV.bs&&EV.bs[INT.rs]?EV.bs[INT.rs]:(EV.body||`${EVAL} which college programs would want you. It takes about a minute.`);
 function eyebrow(){if(S.school!=null){const s=SCH[S.school];return s?`${s.t||s.n} · ${s.d}`:""}
-  if(S.run&&S.mark)return `${S.g==="w"?"Girls":"Boys"} ${S.e} · ${S.mark.trim()}${S.gr?` · ${S.gr}th grade`:""}`;
+  const P=ACC.member()&&ACC.profile(),who=P&&(P.role==="parent"?P.athlete_first_name:P.first_name),cls=P&&P.grad_year?`Class of ${P.grad_year}`:"";
+  if(S.run&&S.mark)return who?`${who} · ${cls?cls+" · ":""}${S.e} ${S.mark.trim()}`:`${S.g==="w"?"Girls":"Boys"} ${S.e} · ${S.mark.trim()}${S.gr?` · ${S.gr}th grade`:""}`;
+  if(who)return `${who}${cls?" · "+cls:""}${INT.e&&INT.m?` · ${INT.e} ${INT.m}`:""}`;
   return "Free recruitment evaluation"}
 function openEval(log1){const el=$("eval");
   $("eve").textContent=eyebrow();$("evm").textContent=EV.title||"Talent gets you the offer. Visibility gets you in the room.";
@@ -1281,7 +1284,11 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     if (ev.target.closest("[data-back]") || ev.target.closest("[data-tab]")) { if (location.pathname !== "/") history.pushState({}, "", "/"); } }, true);
   addEventListener("popstate", () => { const m = location.pathname.match(/^\/schools\/([^/]+)/); route(m ? m[1] : null); });
   route(opts.slug);
+  const fromProfile=()=>{const P=ACC.member()&&ACC.profile();if(!P)return;
+    if(/^\d+$/.test(P.grade||"")){INT.gr=+P.grade;S.gr=+P.grade}
+    const rs={getting_started:"none",talking:"some",real_interest:"some",offers:"offers"}[P.recruiting_stage];if(rs)INT.rs=rs;
+    if(P.gender&&!INT.g)INT.g=P.gender;saveInt()};
   ACC.init({onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,nstd:NSTD,fits:(e,g,v)=>SCH.filter(s=>tier(s,g,e,v)).length,fmt:(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v),stats:(e,g,v)=>{const L=[];SCH.forEach((s,i)=>{const t=tier(s,g,e,v);if(t)L.push({s,i,t})});const c=k=>L.filter(x=>x.t===k).length;
     const top=["T","R","W"].map(k=>L.filter(x=>x.t===k&&DIVS.includes(x.s.d)).sort((a,b)=>DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||(b.s.o?1:0)-(a.s.o?1:0)||a.s.n.localeCompare(b.s.n))[0]).filter(Boolean).map(x=>({n:x.s.t||x.s.n,d:x.s.d,lv:TN[x.t],slug:SLUG[x.i]}));
-    const nm=nearMiss(g,e,v);return {n:L.length,T:c("T"),R:c("R"),W:c("W"),near:nm.n?{n:nm.n,lv:TN[nm.lvl],gap:nm.gap}:null,top}},intent:INT,sid:SID,log,onChange:()=>render()}).then(()=>render());
+    const nm=nearMiss(g,e,v);return {n:L.length,T:c("T"),R:c("R"),W:c("W"),near:nm.n?{n:nm.n,lv:TN[nm.lvl],gap:nm.gap}:null,top}},intent:INT,sid:SID,log,onChange:()=>{fromProfile();render()}}).then(()=>{fromProfile();render()});
 }

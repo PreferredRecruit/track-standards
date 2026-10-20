@@ -234,6 +234,7 @@ export async function init(cfg) {
   if (SES) await loadProfile();
   headBtn();
   await fromHash();
-  if (ONB.isPage()) ONB.show();
+  /* Ryan 2026-10-19: a signed-in account must finish its profile before using the site */
+  if (ONB.isPage()) ONB.show(); else if (SES && !member() && !/^\/(privacy|admin)\.html$/.test(location.pathname)) ONB.go("/onboarding");
   return member();
 }
