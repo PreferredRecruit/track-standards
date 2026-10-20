@@ -20,6 +20,7 @@ const THEMES = [["violet", "Violet"], ["track", "Track"], ["night", "Night meet"
 const svg = (p, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const PERSON = '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>', CAM = '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', CHECK = '<path d="M5 12l5 5 9-10"/>';
 
+let NEWPR = null;
 let D = null, KIDS = [], K = null, MODE = "onboard", SEL = 0, STEP = 0, MSG = "", BUSY = false, TAB = "profile", BANNER = false, IMGERR = "", IMGBUSY = "";
 let ADM = null, ADMQ = "", ADMT = "", IS_ADMIN = null;
 const IMG = {};   // storage path → blob URL
@@ -27,7 +28,10 @@ const IMG = {};   // storage path → blob URL
 const par = () => D.role === "parent";
 const fam = () => D.role === "athlete" || D.role === "parent";
 const S = () => par() ? K : D;   // the athlete being built or shown
+const QUICK = () => MODE.startsWith("q:");
+const kidOnly = () => par() && MODE !== "onboard" && MODE !== "edit";
 function stepsFor() {
+  if (QUICK()) return [MODE.slice(2)];
   if (!D.role) return ["who"];
   if (par() && (MODE === "addkid" || MODE === "editkid")) return ["about", "events", "gpa"];
   if (par()) return MODE === "edit" ? ["who", "you"] : ["who", "you", "about", "events", "gpa"];
@@ -49,7 +53,7 @@ async function loadAll() {
   const uid = core.ses().user.id;
   D = selfDraft();
   const ms = await core.api("/rest/v1/marks?select=event,mark,athlete_id&user_id=eq." + uid + "&order=id").catch(() => []) || [];
-  D.marks = ms.filter(m => !m.athlete_id).map(m => [m.event, fmtM(m.event, m.mark)]);
+  D.marks = ms.filter(m => !m.athlete_id).map(m => [m.event, fmtM(m.event, m.mark)]); D.marks0 = D.marks.map(m => m.slice());
   KIDS = [];
   if (par()) {
     const ks = await core.api("/rest/v1/athletes?select=*&parent_id=eq." + uid + "&order=created_at").catch(() => []) || [];
@@ -107,11 +111,11 @@ function stepBody(k) {
   if (k === "events") {
     const evs = sub.gender ? (C.events ? C.events(sub.gender) : []) : [];
     const sel = (cur, i) => `<select class="in" data-mk="e" data-i="${i}" aria-label="Event"><option value="">Choose an event</option>${evs.map(e => `<option value="${esc(e)}" ${e === cur ? "selected" : ""}>${evName(e, sub.gender)}</option>`).join("")}</select>`;
-    return `<h1>${p ? esc(sub.first || "Their") + (sub.first ? "'s" : "") + " events and PRs" : "Your events and PRs"}</h1><p class="onbsub">Add every event with ${p ? "their" : "your"} best mark. We compare each one against ${(C.nstd || 1200).toLocaleString()} college standards.</p>
+    return `<h1>${QUICK() ? (p ? "Update " + esc(sub.first) + "'s PRs" : "Update your PRs") : p ? esc(sub.first || "Their") + (sub.first ? "'s" : "") + " events and PRs" : "Your events and PRs"}</h1><p class="onbsub">${QUICK() ? "Change a mark when you PR, or add a new event. Your college matches update as soon as you save. " : ""}Add every event with ${p ? "their" : "your"} best mark. We compare each one against ${(C.nstd || 1200).toLocaleString()} college standards.</p>
       <div class="onbmk">${sub.marks.map((m, i) => { const f = fitsFor(sub, m[0], m[1]); return `<div class="onbmr">${sel(m[0], i)}<input class="in" data-mk="m" data-i="${i}" value="${esc(m[1])}" placeholder="${esc(m[0] && C.ph ? C.ph(m[0]) : "Best mark")}" inputmode="decimal" autocomplete="off" aria-label="Best mark"><span class="onbfit${f ? " on" : ""}" data-fit="${i}">${f != null ? `<b>${f.toLocaleString()}</b> programs` : ""}</span>${sub.marks.length > 1 ? `<button type="button" class="onbrm" data-onb="rm" data-i="${i}" aria-label="Remove event">×</button>` : ""}</div>`; }).join("")}</div>
       ${sub.marks.length < 6 ? `<button type="button" class="onbadd" data-onb="add">+ Add another event</button>` : ""}`;
   }
-  if (k === "gpa") return `<h1>GPA</h1><p class="onbsub">Coaches check grades before they recruit. A strong GPA can open more programs than a faster time.</p>
+  if (k === "gpa") return `<h1>${QUICK() ? (p ? "Update " + esc(sub.first) + "'s GPA" : "Update your GPA") : "GPA"}</h1><p class="onbsub">Coaches check grades before they recruit. A strong GPA can open more programs than a faster time.</p>
     <div class="onbgpa">${inp("gpa", "Cumulative high school GPA", sub.gpa, 'inputmode="decimal" placeholder="e.g. 3.4" maxlength="4"', "All of high school, on the scale your school uses.")}</div>
     ${D.role === "athlete" ? `<div class="onbsec"><b>A parent's contact</b><small>Optional. Recruiting help goes to a parent, never to an athlete directly.</small>
       ${inp("pname", "Parent's name", D.pname, 'maxlength="80"', "", "d")}<div class="onbg2">${inp("pemail", "Parent's email", D.pemail, 'type="email" maxlength="120"', "", "d")}${inp("pphone", "Parent's phone", D.pphone, 'type="tel" maxlength="30"', "", "d")}</div></div>${AGE()}` : ""}`;
@@ -119,13 +123,14 @@ function stepBody(k) {
 }
 function lastLabel() {
   if (MODE === "addkid") return "Add athlete";
+  if (QUICK()) return MODE === "q:events" ? "Save PRs" : "Save GPA";
   if (MODE === "editkid" || core.member()) return "Save profile";
   return "Finish my account";
 }
 function wizard() {
   const S2 = stepsFor(), k = S2[STEP] || S2[0], last = STEP >= S2.length - 1 && !!D.role;
   const bar = `<ol class="onbsteps" aria-label="Progress">${(D.role ? S2 : ["who", "about", "events", "gpa"]).map((s, i) => `<li class="${i < STEP ? "done" : i === STEP ? "on" : ""}"><span>${i + 1}</span>${STEP_NAME[s]}</li>`).join("")}</ol>`;
-  const back = STEP > 0 ? `<button type="button" class="onbback" data-onb="back">Back</button>` : (MODE === "addkid" || MODE === "editkid") ? `<button type="button" class="onbback" data-onb="cancel">Cancel</button>` : "<span></span>";
+  const back = STEP > 0 ? `<button type="button" class="onbback" data-onb="back">Back</button>` : (MODE !== "onboard") ? `<button type="button" class="onbback" data-onb="cancel">Cancel</button>` : "<span></span>";
   return top() + `<div class="onbwrap"><section class="onbmain">${bar}<form id="onbf" class="onbform" novalidate>${stepBody(k)}${MSG ? `<p class="acerr" role="alert">${esc(MSG)}</p>` : ""}
     ${k === "who" ? "" : `<div class="onbnav">${back}<button class="acbtn onbgo" ${BUSY ? "disabled" : ""}>${BUSY ? "Saving…" : last ? lastLabel() : "Continue"}</button></div>`}</form></section>${card()}</div>`;
 }
@@ -158,13 +163,14 @@ function profileCard(sub) {
   const best = stats.filter(x => x.st).sort((a, b) => b.st.n - a.st.n)[0];
   const tile = (v, l) => `<div class="prtile"><b>${v}</b><span>${l}</span></div>`;
   const evCard = ({ e, m, st }) => { const n = st ? st.n : 0, w = k => n ? Math.max(st[k] / n * 100, st[k] ? 4 : 0) : 0;
-    return `<article class="prev"><header><span>${evName(e, sub.gender)}</span><b>${esc(m)}</b></header>
+    const isNew = NEWPR && NEWPR.id === (sub.id || "self") && NEWPR.ev.includes(e);
+    return `<article class="prev${isNew ? " newpr" : ""}"><header><span>${evName(e, sub.gender)}${isNew ? '<em class="prnew">New PR</em>' : ""}</span><b>${esc(m)}</b></header>
       ${st ? `<div class="prfit"><b>${n.toLocaleString()}</b><span>college programs fit this mark</span></div>
       <div class="prbar" role="img" aria-label="${st.T} Target, ${st.R} Recruit, ${st.W} Walk-On"><i class="T" style="width:${w("T")}%"></i><i class="R" style="width:${w("R")}%"></i><i class="W" style="width:${w("W")}%"></i></div>
       <div class="prlv"><span><i class="T"></i>${st.T} Target</span><span><i class="R"></i>${st.R} Recruit</span><span><i class="W"></i>${st.W} Walk-On</span></div>
       ${st.near ? `<p class="prnear">${esc(st.near.gap)} from ${esc(st.near.lv)} level at ${st.near.n} more programs</p>` : ""}
       ${st.top.length ? `<ul class="prtop">${st.top.map(t => `<li><a href="/schools/${esc(t.slug)}" data-onb="school" data-slug="${esc(t.slug)}">${esc(t.n)}</a><small>${esc(t.d)} · ${esc(t.lv)}</small></li>`).join("")}</ul>` : ""}
-      <button type="button" class="onbback" data-onb="see" data-g="${esc(sub.gender)}" data-e="${esc(e)}" data-m="${esc(m)}">See all ${n.toLocaleString()} colleges</button>` : `<p class="prnear">No college standards for this event yet.</p>`}</article>`; };
+      <div class="prevact"><button type="button" class="onbback" data-onb="see" data-g="${esc(sub.gender)}" data-e="${esc(e)}" data-m="${esc(m)}">See all ${n.toLocaleString()} colleges</button><button type="button" class="aclnk" data-onb="quick" data-v="events">Update</button></div>` : `<p class="prnear">No college standards for this event yet.</p><button type="button" class="aclnk" data-onb="quick" data-v="events">Update</button>`}</article>`; };
   const bannerImg = sub.banner && IMG[sub.banner], theme = sub.theme || "violet", own = par() ? "their" : "your";
   return `<section class="prhero"><div class="prband bt-${esc(theme)}${bannerImg ? " img" : ""}"${bannerImg ? ` style="background-image:url('${bannerImg}')"` : ""}>
       <button type="button" class="prbbtn" data-onb="banner">${svg('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>', 15)}<span>Customize banner</span></button>
@@ -175,8 +181,8 @@ function profileCard(sub) {
       <div class="prid"><h1>${esc(nameOf(sub))}</h1><p>${esc([cls ? "Class of " + cls[0] : sub.year ? "In college" : "", sub.gender ? (sub.gender === "m" ? "Men's" : "Women's") + " track and field" : "", sub.school, core.ST[sub.state]].filter(Boolean).join(" · "))}</p>
         ${IMGERR ? `<p class="acerr">${esc(IMGERR)}</p>` : !sub.avatar ? `<button type="button" class="aclnk" data-onb="pick" data-v="avatar">Add a profile photo</button>` : ""}</div>
       <div class="pract"><button type="button" class="onbx" data-onb="${par() ? "editkid" : "edit"}">Edit profile</button></div></div>
-    <div class="prtiles">${tile(marks.length, marks.length === 1 ? "Event" : "Events")}${tile(best ? best.st.n.toLocaleString() : "–", `Programs ${own} best mark fits`)}${tile(esc(sub.gpa) || "–", "GPA")}${tile(cls ? esc(cls[1]) : sub.year ? "College" : "–", "Class")}</div></section>
-    <h2 class="prh2">${par() ? esc(sub.first) + "'s" : "Your"} events and PRs</h2><div class="prgrid">${stats.map(evCard).join("") || `<p class="onbsub">No events yet.</p>`}</div>
+    <div class="prtiles">${tile(marks.length, marks.length === 1 ? "Event" : "Events")}${tile(best ? best.st.n.toLocaleString() : "–", `Programs ${own} best mark fits`)}${tile(esc(sub.gpa) || "–", `GPA <button type="button" class="aclnk prtl" data-onb="quick" data-v="gpa">Update</button>`)}${tile(cls ? esc(cls[1]) : sub.year ? "College" : "–", "Class")}</div></section>
+    <div class="prh2row"><h2 class="prh2">${par() ? esc(sub.first) + "'s" : "Your"} events and PRs</h2><button type="button" class="onbx" data-onb="quick" data-v="events">${svg('<path d="M12 5v14M5 12h14"/>', 14)} Update PRs</button></div><div class="prgrid">${stats.map(evCard).join("") || `<p class="onbsub">No events yet.</p>`}</div>
     ${par() ? `<p class="prrm"><button type="button" class="aclnk" data-onb="rmkid">Remove ${esc(sub.first)} from this account</button></p>` : ""}`;
 }
 
@@ -307,7 +313,7 @@ async function save(k, finish) {
   if (k === "about" && !kid) Object.assign(prof, { first_name: sub.first, last_name: sub.last || null, grad_year: +sub.year, grade: gradeOf(+sub.year), gender: sub.gender, state: sub.state, high_school: sub.school || null });
   if (k === "gpa" && !kid) Object.assign(prof, { gpa: Math.round(+sub.gpa * 100) / 100, parent_name: D.pname || null, parent_email: D.pemail || null, parent_phone: D.pphone || null, age_13_plus: true });
   if (finish && (MODE === "onboard" || MODE === "edit")) prof.finished_at = (core.profile() && core.profile().finished_at) || new Date().toISOString();
-  if (!(kid && (MODE === "addkid" || MODE === "editkid"))) await core.api("/rest/v1/profiles?on_conflict=id", { method: "POST", body: prof, prefer: "resolution=merge-duplicates,return=minimal" });
+  if (!kidOnly()) await core.api("/rest/v1/profiles?on_conflict=id", { method: "POST", body: prof, prefer: "resolution=merge-duplicates,return=minimal" });
   if (kid && (k === "about" || k === "gpa")) {
     const row = k === "about" ? { first_name: sub.first, last_name: sub.last || null, grad_year: +sub.year, grade: gradeOf(+sub.year), gender: sub.gender, state: sub.state, high_school: sub.school || null } : { gpa: Math.round(+sub.gpa * 100) / 100 };
     if (sub.id) await core.api("/rest/v1/athletes?id=eq." + sub.id, { method: "PATCH", body: row, prefer: "return=minimal" });
@@ -319,14 +325,17 @@ async function save(k, finish) {
     if (ms.length) await core.api("/rest/v1/marks", { method: "POST", body: ms, prefer: "return=minimal" });
   }
 }
+const better = (e, a, b) => /Jump|Vault|Put|Discus|Hammer|Javelin/.test(e) ? b > a : b < a;
 async function next() {
   read(); const S2 = stepsFor(), k = S2[STEP], err = check(k);
+  const C0 = core.cfg(), before = k === "events" ? Object.fromEntries((QUICK() || MODE === "edit" || MODE === "editkid" ? (par() ? (KIDS[SEL] || {}).marks || [] : (D.marks0 || [])) : []).map(([e, m]) => [e, C0.parse(m, e)])) : null;
   if (err) { MSG = err; return render(); }
   const finish = STEP === S2.length - 1;
   BUSY = true; MSG = ""; render();
   try {
     await core.fresh(); await save(k, finish);
-    core.cfg().log && core.cfg().log("account", { detail: finish ? (MODE === "addkid" ? "added-athlete" : "finished") : "step-" + k, placement: "onboarding" });
+    core.cfg().log && core.cfg().log("account", { detail: finish ? (MODE === "addkid" ? "added-athlete" : QUICK() ? "updated-" + k : "finished") : "step-" + k, placement: "onboarding" });
+    if (before) { const sub = S(), news = sub.marks.filter(([e, m]) => m && before[e] != null && better(e, before[e], C0.parse(m, e))).map(m => m[0]); if (news.length) { NEWPR = { id: sub.id || "self", ev: news }; news.forEach(e => C0.log && C0.log("account", { detail: "new-pr", event: e, placement: "profile" })); } }
     BUSY = false;
     if (finish) {
       const keepId = S() && S().id; await core.loadProfile(); await loadAll();
@@ -369,11 +378,12 @@ export function bind() {
     const b = e.target.closest("[data-onb]"); if (!b) return; const a = b.dataset.onb; e.preventDefault();
     if (a === "exit") { if (core.ses() && !core.member()) { MSG = "Finish your profile to use the site. It takes about two minutes."; return render(); } history.pushState({}, "", "/"); hide(); core.changed(); return; }
     if (a === "back") { read(); MSG = ""; STEP = Math.max(0, STEP - 1); return render(); }
-    if (a === "cancel") { MODE = "onboard"; MSG = ""; K = KIDS[SEL] ? clone(KIDS[SEL]) : blankKid(); history.replaceState({}, "", "/account"); return render(); }
+    if (a === "cancel") { MODE = "onboard"; STEP = 0; MSG = ""; history.replaceState({}, "", "/account"); loadAll().then(render); return; }
     if (a === "add") { read(); S().marks.push(["", ""]); return render(); }
     if (a === "rm") { read(); S().marks.splice(+b.dataset.i, 1); return render(); }
     if (a === "edit") { if (par()) { K = KIDS[SEL] ? clone(KIDS[SEL]) : blankKid(); } return startMode("edit"); }
     if (a === "editkid") { K = clone(KIDS[SEL]); return startMode("editkid"); }
+    if (a === "quick") { if (par()) K = clone(KIDS[SEL]); NEWPR = null; return startMode("q:" + b.dataset.v); }
     if (a === "addkid") { K = blankKid(); K.state = (KIDS[0] && KIDS[0].state) || ""; return startMode("addkid"); }
     if (a === "kid") { SEL = +b.dataset.i; K = clone(KIDS[SEL]); BANNER = false; IMGERR = ""; return render(); }
     if (a === "rmkid") { const k2 = KIDS[SEL]; if (!k2 || !confirm(`Remove ${k2.first} from this account? Their PRs and photos are deleted.`)) return;

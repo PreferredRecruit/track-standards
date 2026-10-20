@@ -983,3 +983,8 @@ html.onbon,html.onbon body{overflow:hidden}
 .pcav.sm{width:40px;height:40px;border-radius:13px;font-size:14px;flex:none}
 .prrm{margin:18px 4px 0}.prrm .aclnk{color:#A32D2D;font-size:13.5px}
 @media (max-width:760px){.prbbtn span{display:none}.prbbtn{width:34px;padding:0;justify-content:center}.prbpick{left:12px;right:12px;width:auto}.prkid{min-width:170px}}
+.prh2row{display:flex;align-items:center;justify-content:space-between;gap:12px}.prh2row .onbx{display:inline-flex;align-items:center;gap:6px;margin-top:20px}
+.prevact{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto}.prevact .onbback{margin-top:0}
+.prtl{font-size:12.5px;margin-left:6px}
+.prnew{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:#E1F5EE;color:#085041;font-style:normal;font-size:11px;letter-spacing:.04em;vertical-align:middle}
+.prev.newpr{border-color:#5DCAA5;box-shadow:0 0 0 3px rgba(29,158,117,.14)}
