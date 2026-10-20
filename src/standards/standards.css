@@ -797,3 +797,10 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 @media (max-width:700px){.acchd{height:34px;padding:0 12px;font-size:13px}.acc .bd{padding:24px 18px 18px}.acmk{grid-template-columns:1fr 1fr}}
 .acc a{display:inline;height:auto;padding:0;border-radius:0;background:none;color:var(--pr-violet,#5B3FE4);font-weight:600;font-size:inherit}
 .acc .acfine{text-align:center}
+.acc .bd{box-sizing:border-box;width:auto;max-width:100%}
+.acc .acform,.acc .acf,.acc .acq{min-width:0}
+.acchd{display:inline-flex;align-items:center;gap:7px}
+.acchd svg{flex:none}
+@media (max-width:700px){.acchd{width:36px;height:36px;padding:0;justify-content:center;border-radius:50%;margin-right:-8px}.acchd span{display:none}}
+@media (max-width:700px){header .hd{gap:10px;padding:0 14px}.acchd{margin-right:0}}
+@media (max-width:420px){header .logo>span{display:none}.acchd{flex:none}}

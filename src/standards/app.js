@@ -224,8 +224,12 @@ document.addEventListener("click",ev=>{const b=ev.target.closest("[data-hlp],[da
 const EV={shown:false,dismissed:false,t:null,v:null,trig:null};
 try{EV.dismissed=sessionStorage.getItem("prEvalDismissed")==="1"}catch(e){}
 /* v = copy variant, logged with shown/clicked so the admin report compares conversion per copy, event group and grade */
+const TIERB={gpa:"Your grades already help you with coaches. A free evaluation shows which programs fit your marks now and how close you are to being recruited.",
+  grow:"Coaches look at your grades and your marks together. A free evaluation shows which programs fit you today and what to work on next."};
 function evalIn(title,body,delay,v,trig,bs){
   if(EV.shown||EV.dismissed||ACC.tier()==="C"||ACC.isOpen()) return; clearTimeout(EV.t);
+  /* Tier B (GPA 2.3 to 2.99, or 3.0+ without a PR-standard mark yet): same headline, softer body (draft for Ryan's approval) */
+  if(ACC.tier()==="B"){const r=(ACC.profile()||{}).tier_reason||"";body=/^GPA 3\.0/.test(r)?TIERB.gpa:TIERB.grow;bs=null;v=(v||"generic")+"-b"}
   EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||(S.school!=null&&!EV.force)) return; EV.force=false; EV.v=v||"generic"; EV.trig=trig||"timer"; EV.title=title; EV.body=body; EV.bs=bs||null; openEval(true)},delay||0);
 }
 /* centre modal (Ryan 2026-10-16, e-commerce benchmarks: centre 6.84% vs bottom-corner 2.88%; multi-step +12%; click-triggered
@@ -563,7 +567,7 @@ function compareView(){
   const pre=[["mw","Men vs Women"],["ev","Event vs Event"],["conf","Conference vs Conference"],["school","School vs School"],["div","Division vs Division"]];
   return `<div class="sec"><p class="lede">Compare any lists side by side: divisions, conferences, schools, men and women, or two events.</p><div class="rcard">
     <div class="dsel"><button type="button" class="cmpsw" data-rcmp aria-pressed="true"><span class="sw" aria-hidden="true"></span>Compare</button><div class="ccp" role="group" aria-label="Quick comparisons">${pre.map(([k,t])=>`<button type="button" data-ccp="${k}">${t}</button>`).join("")}</div></div>${ctl}</div>
-    <div class="rbody${R.swap?" swap":""}"><div class="cols cc" style="--n:${CC.cols.length}">${CC.cols.map(ccColumn).join("")}</div>
+    <div class="rbody${R.swap?" swap":""}"><div class="cols cc" style="--n:${CC.cols.length}">${CC.cols.map(ccColumn).join("")}</div>${ACC.member()?"":ACC.wall("results")}
     ${CC.cols.length<ccMax()?`<p style="margin:12px 2px"><button class="lnk" data-ccadd>+ Add a column</button></p>`:""}${ccChart()}
     <p class="note">Source: TFRRS performance lists. "% of #1" puts different events, genders and lists on one scale: the list leader is 100%.</p></div></div>`}
 function divTabs(){

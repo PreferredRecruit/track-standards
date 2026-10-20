@@ -72,6 +72,7 @@ async function insights() {
       tbl("Pop-ups by trigger (results-seen, timer, exit, nofit)", [["trig", "Trigger"], ["shown", "Shown"], ["clicks", "Clicks"], ["ctr", "CTR %"]], d.by_trigger || []),
       tbl("Pop-ups by time on page when shown", [["delay", "Time on page"], ["shown", "Shown"], ["clicks", "Clicks"], ["ctr", "CTR %"]], d.by_delay || []),
       tbl("Pop-ups by device and time of day", [["device", "Device"], ["part", "Time of day"], ["shown", "Shown"], ["clicks", "Clicks"], ["ctr", "CTR %"]], d.by_device_hour || []),
+      tbl("Sign-up funnel by wall (wall seen, opened, signed up, finished)", [["wall", "Wall"], ["step", "Step"], ["n", "Count"], ["people", "People"]], d.accounts || []),
       tbl("Helpful? / sent to parent / parent visits", [["kind", "Type"], ["detail", "Answer"], ["n", "Count"]], d.feedback || []),
       tbl("Pop-ups by event group and grade", [["grp", "Group"], ["grade", "Grade"], ["shown", "Shown"], ["clicks", "Clicks"], ["ctr", "CTR %"]], d.popup_by),
       tbl("Signed-in coaches: what they looked at", [["coach_school", "Coach's school"], ["kind", "Type"], ["what", "Athlete / school / event"], ["team", "Team"], ["n", "Views"], ["last", "Last"]], d.coaches));

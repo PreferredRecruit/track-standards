@@ -12,6 +12,7 @@ const ST = { AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California"
 const GPA = [["3_5_plus","3.5 or higher"],["3_0_to_3_49","3.0 to 3.49"],["2_3_to_2_99","2.3 to 2.99"],["under_2_3","Under 2.3"]];
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
+const SEEN = new Set();
 let CFG = {}, SES = null, PRO = null, VIEW = "signup", MSG = "", BUSY = false, WHY = "";
 const store = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v){ try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
@@ -51,6 +52,7 @@ export function wall(kind, total) {
     results: ["See the full list", "Create a free account to see every ranked mark, all divisions and side-by-side compare."],
     ai: ["Keep asking", `You've used your ${LIMITS.ai} free questions. Create a free account for unlimited answers.`] }[kind];
   const need = SES && !member();
+  if (CFG.log && !SEEN.has(kind)) { SEEN.add(kind); CFG.log("account", { detail: "wall-" + kind, placement: kind }); }
   return `<div class="acwall" data-wall="${kind}"><b>${esc(need ? "Finish your account" : t[0])}</b><p>${esc(need ? "Add your grade, events and GPA band to see everything. It takes about 20 seconds." : t[1])}</p>
     <button type="button" class="acbtn" data-acc="${need ? "finish" : "signup"}" data-why="${kind}">${need ? "Finish account" : "Create free account"}</button>${need ? "" : `<button type="button" class="aclnk" data-acc="signin" data-why="${kind}">I already have an account</button>`}</div>`;
 }
@@ -63,7 +65,8 @@ function shell() {
   const hd = document.querySelector("header .hd .pill");
   if (hd && !document.getElementById("acchd")) hd.insertAdjacentHTML("beforebegin", `<button type="button" class="acchd" id="acchd" data-acc="menu"></button>`);
 }
-function headBtn() { const b = document.getElementById("acchd"); if (b) b.textContent = SES ? (member() ? "My account" : "Finish account") : "Sign in"; }
+function headBtn() { const b = document.getElementById("acchd"); if (!b) return; const t = SES ? (member() ? "My account" : "Finish account") : "Sign in";
+  b.setAttribute("aria-label", t); b.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>${t}</span>`; }
 export const isOpen = () => { const el = document.getElementById("acc"); return !!(el && el.classList.contains("on")); };
 function open(v, why) { shell(); CFG.onOpen && CFG.onOpen(); VIEW = v; MSG = ""; if (why) WHY = why; draw(); const el = document.getElementById("acc"); el.classList.add("on"); el.setAttribute("aria-hidden", "false"); const bg = document.getElementById("accbg"); bg.hidden = false; requestAnimationFrame(() => bg.classList.add("on")); CFG.log && CFG.log("account", { detail: "open-" + v, placement: WHY || undefined }); setTimeout(() => { const f = el.querySelector("input,select"); f && f.focus(); }, 60); }
 function close() { const el = document.getElementById("acc"); if (!el) return; el.classList.remove("on"); el.setAttribute("aria-hidden", "true"); const bg = document.getElementById("accbg"); bg.classList.remove("on"); setTimeout(() => (bg.hidden = true), 300); }
