@@ -1281,5 +1281,5 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     if (ev.target.closest("[data-back]") || ev.target.closest("[data-tab]")) { if (location.pathname !== "/") history.pushState({}, "", "/"); } }, true);
   addEventListener("popstate", () => { const m = location.pathname.match(/^\/schools\/([^/]+)/); route(m ? m[1] : null); });
   route(opts.slug);
-  ACC.init({onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,intent:INT,sid:SID,log,onChange:()=>render()}).then(()=>render());
+  ACC.init({onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,nstd:NSTD,fits:(e,g,v)=>SCH.filter(s=>tier(s,g,e,v)).length,fmt:(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v),intent:INT,sid:SID,log,onChange:()=>render()}).then(()=>render());
 }

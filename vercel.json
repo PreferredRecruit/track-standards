@@ -7,6 +7,14 @@
     {
       "source": "/schools/:slug",
       "destination": "/schools/:slug.html"
+    },
+    {
+      "source": "/onboarding",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/account",
+      "destination": "/index.html"
     }
   ],
   "headers": [

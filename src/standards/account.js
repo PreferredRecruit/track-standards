@@ -14,6 +14,7 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt
 
 const SEEN = new Set();
 let CFG = {}, SES = null, PRO = null, VIEW = "signup", MSG = "", BUSY = false, WHY = "";
+import * as ONB from "./onboard.js";
 const store = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v){ try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
 async function api(path, { method = "GET", body, auth = true, prefer } = {}) {
@@ -53,8 +54,8 @@ export function wall(kind, total) {
     ai: ["Keep asking", `You've used your ${LIMITS.ai} free questions. Create a free account for unlimited answers.`] }[kind];
   const need = SES && !member();
   if (CFG.log && !SEEN.has(kind)) { SEEN.add(kind); CFG.log("account", { detail: "wall-" + kind, placement: kind }); }
-  return `<div class="acwall" data-wall="${kind}"><b>${esc(need ? "Finish your account" : t[0])}</b><p>${esc(need ? "Add your grade, events and GPA band to see everything. It takes about 20 seconds." : t[1])}</p>
-    <button type="button" class="acbtn" data-acc="${need ? "finish" : "signup"}" data-why="${kind}">${need ? "Finish account" : "Create free account"}</button>${need ? "" : `<button type="button" class="aclnk" data-acc="signin" data-why="${kind}">I already have an account</button>`}</div>`;
+  return `<div class="acwall" data-wall="${kind}"><b>${esc(need ? "Finish your account" : t[0])}</b><p>${esc(need ? "Build your recruiting profile to see everything. It takes about two minutes." : t[1])}</p>
+    <button type="button" class="acbtn" data-acc="${need ? "finish" : "signup"}" data-why="${kind}">${need ? "Finish my account" : "Create free account"}</button>${need ? "" : `<button type="button" class="aclnk" data-acc="signin" data-why="${kind}">I already have an account</button>`}</div>`;
 }
 export async function optIn() { if (member()) { try { await api("/rest/v1/rpc/record_opt_in", { method: "POST", body: {} }); } catch (e) {} } }
 
@@ -172,14 +173,14 @@ async function submit(id) {
     BUSY = true; MSG = ""; draw();
     try {
       if (VIEW === "signup") {
-        const r = await api("/auth/v1/signup?redirect_to=" + encodeURIComponent(location.origin + location.pathname), { method: "POST", body: { email, password: pw }, auth: false });
+        const r = await api("/auth/v1/signup?redirect_to=" + encodeURIComponent(location.origin + "/onboarding"), { method: "POST", body: { email, password: pw }, auth: false });
         CFG.log && CFG.log("account", { detail: "signup", placement: WHY || undefined });
-        if (r && r.access_token) { keep(r); await loadProfile(); BUSY = false; VIEW = "finish"; draw(); changed(); return; }
+        if (r && r.access_token) { keep(r); await loadProfile(); BUSY = false; close(); changed(); ONB.go("/onboarding"); return; }
         FORM._email = email; BUSY = false; VIEW = "check"; draw(); return;
       }
       keep(await api("/auth/v1/token?grant_type=password", { method: "POST", body: { email, password: pw }, auth: false }));
       await loadProfile(); BUSY = false; CFG.log && CFG.log("account", { detail: "signin" });
-      if (member()) { close(); changed(); } else { VIEW = "finish"; draw(); changed(); }
+      close(); changed(); if (ONB.isPage()) ONB.show(); else if (!member()) ONB.go("/onboarding");
     } catch (e) {
       BUSY = false;
       fail(/confirm/i.test(e.message) ? "Confirm your email first. Check your inbox for the link." : /invalid login/i.test(e.message) ? "That email and password don't match." : /already registered|exists/i.test(e.message) ? "That email already has an account. Sign in instead." : /pwned|weak|leaked/i.test(e.message + (e.code || "")) ? "That password has shown up in a data breach. Choose a different one." : e.message);
@@ -206,9 +207,11 @@ async function fromHash() {
   history.replaceState(null, "", location.pathname + location.search);
   try { const u = await api("/auth/v1/user"); SES.user = { id: u.id, email: u.email }; store.set(SK, SES); } catch (e) { keep(null); return; }
   await loadProfile(); changed();
-  if (h.get("type") === "recovery") open("reset"); else if (!member()) open("finish");
+  if (h.get("type") === "recovery") open("reset"); else if (!member()) ONB.go("/onboarding"); else if (ONB.isPage()) ONB.show();
 }
 
+function signOut() { api("/auth/v1/logout", { method: "POST" }).catch(() => {}); keep(null); PRO = null; for (const k in FORM) delete FORM[k]; changed(); }
+export const core = { ST, api, fresh, loadProfile, changed, signOut, member, profile: () => PRO, ses: () => SES, cfg: () => CFG };
 export async function init(cfg) {
   CFG = cfg || {}; SES = store.get(SK); shell(); headBtn();
   document.addEventListener("click", e => {
@@ -218,16 +221,19 @@ export async function init(cfg) {
     const a = t.dataset.acc; e.preventDefault();
     if (a === "close") return close();
     if (a === "addmk") { readFinish(); FORM.marks.push(["", ""]); return draw(); }
-    if (a === "out") { api("/auth/v1/logout", { method: "POST" }).catch(() => {}); keep(null); PRO = null; for (const k in FORM) delete FORM[k]; close(); changed(); return; }
-    if (a === "menu") return open(SES ? "menu" : "signin");
+    if (a === "out") { signOut(); close(); return; }
+    if (a === "menu") return SES ? ONB.go(member() ? "/account" : "/onboarding") : open("signin");
+    if (a === "finish") { close(); return ONB.go("/onboarding"); }
     if (VIEW === a && document.getElementById("acc").classList.contains("on")) return;
     open(a, t.dataset.why);
   });
   document.addEventListener("submit", e => { if (!e.target.closest("#acc")) return; e.preventDefault(); if (!BUSY) submit(e.target.id); });
   document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
   document.addEventListener("click", e => { if (e.target.id === "accbg") close(); });
+  ONB.bind();
   if (SES) await loadProfile();
   headBtn();
   await fromHash();
+  if (ONB.isPage()) ONB.show();
   return member();
 }

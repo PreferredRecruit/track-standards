@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { markup } from "@/standards/markup";
 import { mount } from "@/standards/app";
@@ -9,6 +9,7 @@ import { mount } from "@/standards/app";
 const StandardsHome = () => {
   const { schoolSlug } = useParams<{ schoolSlug?: string }>();
   const root = useRef<HTMLDivElement>(null);
+  const priv = /^\/(onboarding|account)$/.test(useLocation().pathname);   /* account pages: never indexed */
 
   useEffect(() => {
     mount({ slug: schoolSlug });
@@ -25,6 +26,7 @@ const StandardsHome = () => {
             content="Recruiting standards for every college track and field program: walk-on, recruit and scholarship times for NCAA D1, D2, D3 and NAIA, plus results since 2016."
           />
         )}
+        {priv && <meta name="robots" content="noindex, nofollow" />}
         <link rel="canonical" href={`https://trackandfieldstandards.com${schoolSlug ? `/schools/${schoolSlug}` : "/"}`} />
       </Helmet>
       <div ref={root} className="pr-standards" dangerouslySetInnerHTML={{ __html: markup }} />
