@@ -703,7 +703,7 @@ function compareView(){cmFix();const t=CM.t,g=CM.g;
     else{const ds=RIDX.filter(r=>r.year+"-"+r.season===CM.sea).map(r=>r.div).sort((a,b)=>Object.keys(DIVINFO).indexOf(a)-Object.keys(DIVINFO).indexOf(b));
       row=`${gsel}${ev}${cmPick("sea","Season",cmOpts(seasons().filter(k=>!k.endsWith("-xc")),CM.sea,seasonLabel))}${cmPick("a","Division A",cmOpts(ds,CM.a,d=>DIVINFO[d]||d),"ca")}<span class="cmvs">vs</span>${cmPick("b","Division B",cmOpts(ds,CM.b,d=>DIVINFO[d]||d),"cb")}`}
     body=cmResults()}
-  return `<div class="sec cmx"><div class="cmhd"><h3>Compare</h3><button type="button" class="lnk" data-rcmp>Back to results</button></div>
+  return `<div class="sec cmx"><div class="cmhd"><button type="button" class="cmpsw" data-rcmp aria-pressed="true" title="Turn compare off to go back to the results lists"><span class="sw" aria-hidden="true"></span>Compare</button><span class="cmoff">Turn off to go back to the results</span></div>
     <p class="cmq">What do you want to compare?</p><div class="cmtypes" role="tablist">${types.map(([k,l,d])=>`<button type="button" role="tab" data-cmt="${k}" aria-selected="${t===k}"><b>${l}</b><small>${d}</small></button>`).join("")}</div>
     <div class="cmrow">${row}</div><div class="cmout">${body}</div>${ACC.member()||t==="schools"?"":`<p class="note">Source: TFRRS performance lists.</p>`}</div>`}
 function compareViewOld(){
@@ -1326,7 +1326,7 @@ document.addEventListener("click",ev=>{
     else if(R.sel.length===av.length&&av.length>1)R.sel=[d.rdiv];
     else if(R.sel.includes(d.rdiv)){if(R.sel.length>1)R.sel=R.sel.filter(x=>x!==d.rdiv)}else R.sel=[...R.sel,d.rdiv];
     syncSel();R.list=0;R.team=null;R.ath=null;R.an=100;R.cn=25;R.swap=true;render();return}
-  if("rcmp" in d){if(CC.on){CC.on=false;ccSync()}else{CC.on=true;CM.g=R.g;CM.div=R.div;CM.sea=R.season;if(R.ev)CM.e=R.ev;CM.a=CM.b="";if(R.sel&&R.sel.length>1)CM.t="div"}R.swap=true;render();scrollTo({top:Math.max(0,($("app")||document.body).offsetTop-70)});return}
+  if("rcmp" in d){if(CC.on){CC.on=false;ccSync()}else{CC.on=true;CM.g=R.g;CM.div=R.div;CM.sea=R.season;if(R.ev)CM.e=R.ev;CM.a=CM.b="";if(R.sel&&R.sel.length>1)CM.t="div"}R.swap=true;render();return}
   if(d.cmt){CM.t=d.cmt;CM.a=CM.b="";CM.open=false;R.swap=true;render();log("results_event",{detail:"compare-"+d.cmt});return}
   if(d.cmg){CM.g=d.cmg;R.swap=true;render();return}
   if("rmulti" in d){R.multi=!R.multi;if(!R.multi){syncSel();R.sel=[R.sel.includes(R.div)?R.div:R.sel[0]];R.div=R.sel[0]}R.swap=true;render();return}
