@@ -1020,3 +1020,37 @@ html.onbon,html.onbon body{overflow:hidden}
 .cst{display:flex;align-items:center;gap:7px;line-height:1.7;white-space:nowrap}.cst i{width:7px;height:7px;border-radius:50%;flex:none;background:#C8C3D9}
 .cst.T i{background:#1D9E75}.cst.R i{background:#7A45F0}
 @media (max-width:700px){.csmode{margin-right:0;width:100%}.csbar .in{min-width:0;flex:1}}
+
+/* ---------- Compare, simple version (Ryan 2026-10-20) ---------- */
+.cmx{max-width:860px;margin:0 auto}
+.cmhd{display:flex;align-items:baseline;justify-content:space-between;margin:6px 2px 4px}.cmhd h3{margin:0;font-size:24px;letter-spacing:-.02em}
+.cmq{margin:8px 2px 12px;font-size:17px;font-weight:600;color:var(--pr-ink2)}
+.cmtypes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.cmtypes button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:16px;border-radius:18px;border:2px solid var(--pr-line);background:var(--pr-card);color:var(--pr-ink);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s}
+.cmtypes button b{font-size:17px;letter-spacing:-.01em}.cmtypes button small{font-size:13px;color:var(--pr-faint);line-height:1.3}
+.cmtypes button:hover{border-color:color-mix(in srgb,var(--pr-accent) 45%,var(--pr-line))}
+.cmtypes button[aria-selected="true"]{border-color:var(--pr-accent);background:color-mix(in srgb,var(--pr-accent) 8%,var(--pr-card))}
+.cmrow{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;padding:16px;border-radius:20px;background:var(--pr-card);border:1px solid var(--pr-line);margin-bottom:16px}
+.cmp{display:grid;gap:5px;flex:1 1 140px;min-width:0}.cmp>span{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pr-faint)}
+.cmp select,.cmp input{height:46px;width:100%;border-radius:13px;border:1.5px solid var(--pr-line);background:var(--pr-soft);padding:0 12px;font:inherit;font-size:16px;color:var(--pr-ink);appearance:none;-webkit-appearance:none}
+.cmp select{background:var(--pr-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235E5E66' fill='none' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 12px center;padding-right:32px}
+.cmp.ca select,.cmp.ca input{border-color:#7A45F0;background-color:color-mix(in srgb,#7A45F0 6%,var(--pr-card))}
+.cmp.cb select,.cmp.cb input{border-color:#E8590C;background-color:color-mix(in srgb,#E8590C 6%,var(--pr-card))}
+.cmp.ca>span{color:#5B3FE4}.cmp.cb>span{color:#C2410C}
+.cmvs{align-self:center;padding:18px 2px 0;font-weight:800;color:var(--pr-faint)}
+.cmgs{flex:0 0 auto;align-self:flex-end}
+.cmout{background:var(--pr-card);border:1px solid var(--pr-line);border-radius:20px;padding:20px}
+.cmans{margin:0 0 16px;font-size:19px;line-height:1.4;letter-spacing:-.01em;color:var(--pr-ink)}
+.ca{color:#5B3FE4}.cb{color:#C2410C}
+.cmt{width:100%;border-collapse:collapse;font-size:15px}
+.cmt th,.cmt td{padding:12px 10px;border-bottom:1px solid var(--pr-line);text-align:left;vertical-align:top}
+.cmt thead th{font-size:13px;font-weight:700}.cmt thead th small{display:block;font-weight:500;color:var(--pr-faint)}.cmt thead a{color:inherit;text-decoration:none}
+.cmt tbody th{font-weight:600;color:var(--pr-mute);white-space:nowrap}
+.cmt td b{font-size:18px;font-variant-numeric:tabular-nums}.cmt td small{display:block;font-size:12px;color:var(--pr-faint)}
+.cmt tr:last-child>*{border-bottom:0}
+.cmg{white-space:nowrap;font-weight:600;color:var(--pr-mute)}.cmg span{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;color:#fff;font-size:12px;margin-right:4px}
+.cmg span.ca{background:#7A45F0;color:#fff}.cmg span.cb{background:#E8590C;color:#fff}
+.cmmore{margin-top:14px;border:0;background:none;padding:6px 0;color:var(--pr-accent);font:inherit;font-weight:600;cursor:pointer}
+.cmlists{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px}.cmlists ol{margin:8px 0 0;padding-left:22px}.cmlists li{display:flex;justify-content:space-between;gap:8px;padding:5px 0;font-size:14px}.cmlists li small{display:block;color:var(--pr-faint);font-size:12px}
+.cmload{padding:24px;text-align:center;color:var(--pr-faint)}
+@media (max-width:700px){.cmtypes{grid-template-columns:1fr 1fr}.cmtypes button{padding:13px}.cmrow{padding:12px}.cmp{flex:1 1 45%}.cmvs{display:none}.cmans{font-size:17px}.cmt{font-size:14px}.cmt td b{font-size:16px}.cmlists{grid-template-columns:1fr}.cmt th,.cmt td{padding:10px 6px}}
