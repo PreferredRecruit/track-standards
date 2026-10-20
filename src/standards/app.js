@@ -491,7 +491,7 @@ const MULTI=()=>{syncSel();return R.sel.length>1};
 const curKey=()=>{if(MULTI())return null;const x=RIDX.find(x=>x.year+"-"+x.season===R.season&&x.div===R.div)||RIDX.find(x=>x.year+"-"+x.season===R.season);if(x)R.div=x.div;return x&&x.key};
 function load(key,quiet){if(CACHE[key]||LOADING[key])return LOADING[key];
   LOADING[key]=getRank(key).then(d=>{CACHE[key]=cleanRank(d)}).catch(()=>{CACHE[key]={err:1,lists:[]}})
-    .then(()=>{if((key===curKey()||MULTI()&&key.startsWith(R.season+"-")||CC.on&&cmKeys().concat([keyOf(CM.sea,CM.div)]).includes(key))&&S.tab==="results"&&S.school==null){R.swap=true;render()} if(!quiet) prefetch()});
+    .then(()=>{if((key===curKey()||MULTI()&&key.startsWith(R.season+"-")||CC.on&&cmKeys().concat([keyOf(CM.sea,CM.div)],[CM.sa,CM.sb].map(i=>SCH[i]&&keyOf(CM.tsea,SCH[i].d))).includes(key))&&S.tab==="results"&&S.school==null){R.swap=true;render()} if(!quiet) prefetch()});
   return LOADING[key]}
 function prefetch(){const go=()=>RIDX.filter(x=>x.year+"-"+x.season===R.season&&!CACHE[x.key]).forEach(x=>load(x.key,true));(window.requestIdleCallback?requestIdleCallback(go,{timeout:2000}):setTimeout(go,600))}
 const yr=y=>({"FR-1":"Freshman","SO-2":"Sophomore","JR-3":"Junior","SR-4":"Senior"}[y]||y||"");
@@ -653,23 +653,47 @@ function cmResults(){const sd=cmSides(),A=cmData(sd[0]),B=cmData(sd[1]);
     ${P.map(([k,lab])=>`<tr><th scope="row">${lab}</th><td><b>${mk(ra,k)}</b>${k===1?who(ra,A.D):""}</td><td><b>${mk(rb,k)}</b>${k===1?who(rb,B.D):""}</td>${cmGap(CM.e,v(ra,k),v(rb,k))}</tr>`).join("")}</tbody></table>
     <button type="button" class="cmmore" data-cmopen>${CM.open?"Hide":"Show"} the top 10 for both</button>
     ${CM.open?`<div class="cmlists">${[[ra,A.D,"ca",sd[0].name],[rb,B.D,"cb",sd[1].name]].map(([rows,D,c,n])=>`<div><b class="${c}">${esc(n)}</b><ol>${rows.slice(0,10).map(r=>`<li><span>${esc(r[1]||D.teams[r[3]])}<small>${esc(D.teams[r[3]])}</small></span><b>${esc(r[4])}</b></li>`).join("")}</ol></div>`).join("")}</div>`:""}`}
-function cmSchools(){if(CM.sa==null){csSeed();CM.sa=CS.ids[0];CM.sb=CS.ids[1]}
-  const A=SCH[CM.sa],B=SCH[CM.sb],g=CM.g;if(!A||!B)return '<p class="ccmsg">Type a school name in A and B.</p>';
-  const evs=EVENTS.filter(e=>((A[g]||{})[e]||[]).some(Boolean)||((B[g]||{})[e]||[]).some(Boolean));if(!evs.includes(CM.se))CM.se=evs.includes("400m")?"400m":evs[0];
-  const val=(x,t)=>{const a=(x[g]||{})[CM.se];return a&&a[t]?a[t]:""};
-  const rows=[0,1,2].map(t=>{const a=val(A,t),b=val(B,t);return `<tr><th scope="row"><span class="pill2 ${"TRW"[t]}">${TN["TRW"[t]]}</span></th><td><b>${a?disp(A,g,CM.se,t):"–"}</b></td><td><b>${b?disp(B,g,CM.se,t):"–"}</b></td>${a&&b?cmGap(CM.se,parse(a,CM.se),parse(b,CM.se)):"<td>–</td>"}</tr>`}).join("");
-  const ra=val(A,1),rb=val(B,1),na=A.t||A.n,nb=B.t||B.n;
-  let ans="";if(ra&&rb){const va=parse(ra,CM.se),vb=parse(rb,CM.se),hi=FIELD.has(CM.se),d=hi?va-vb:vb-va;
-    ans=Math.abs(d)<0.005?`<p class="cmans">${esc(na)} and ${esc(nb)} have the same Recruit mark.</p>`:`<p class="cmans"><b class="${d>0?"ca":"cb"}">${esc(d>0?na:nb)}</b>'s Recruit mark in the ${esc(evSay(CM.se))} is <b>${hi?(Math.abs(d)>=1?Math.abs(d).toFixed(2)+" m farther":Math.round(Math.abs(d)*100)+" cm farther"):Math.abs(d).toFixed(2)+" seconds faster"}</b> than ${esc(d>0?nb:na)}'s.</p>`}
-  return {evs,html:`${ans}<table class="cmt"><thead><tr><th></th><th class="ca">A · <a href="/schools/${SLUG[CM.sa]}" data-school="${CM.sa}">${esc(na)}</a>${star(A)}<small>${esc(A.d)}</small></th><th class="cb">B · <a href="/schools/${SLUG[CM.sb]}" data-school="${CM.sb}">${esc(nb)}</a>${star(B)}<small>${esc(B.d)}</small></th><th>Tougher</th></tr></thead><tbody>${rows}</tbody></table>
-    <p class="note">Target is the full-scholarship range, Recruit is where coaches start talking, Walk-On is the minimum to make the team. ★ = official standards from the school.</p>`}}
+/* Teams (Ryan 2026-10-20: "make sure the compare feature is for kids' times on the teams"): two schools' athletes in one event and
+   season, from every TFRRS list that season (national + conference), best mark per athlete. Plus "where would you fit". */
+const tkey=x=>[x.n,x.t,...(x.a||[])].filter(Boolean).map(tnorm).flatMap(k=>[k,k.replace(/^university of /,"")]);
+function teamRows(i,sea,e,g){const x=SCH[i];if(!x)return null;const k=keyOf(sea,x.d);if(!k)return {err:"no list"};const D=CACHE[k];if(!D){load(k,true);return null}if(D.err)return {err:"no list"};
+  const want=new Set(tkey(x)),tis=D.teams.map((t,j)=>want.has(tnorm(t))?j:-1).filter(j=>j>=0);if(!tis.length)return {err:"no team",D};
+  const best=new Map();for(const L of D.lists){for(const r of ((L.g[g]||{})[e]||[])){if(!tis.includes(r[3]))continue;const v=rval(e,r[4]);if(v==null)continue;const nm=r[1]||D.teams[r[3]];const b=best.get(nm);if(!b||(rhigh(e)?v>b.v:v<b.v))best.set(nm,{v,r})}}
+  const rows=[...best.values()].sort((a,b)=>rhigh(e)?b.v-a.v:a.v-b.v);return {rows,D}}
+function teamEvents(i,sea,g){const x=SCH[i];const k=x&&keyOf(sea,x.d),D=k&&CACHE[k];if(!D||D.err){if(k&&!D)load(k,true);return []}
+  const L=D.lists.find(z=>z.nat)||D.lists[0];return Object.keys((L&&L.g[g])||{}).filter(e=>!/Relay|thlon/i.test(e))}
+function cmTeams(){if(CM.sa==null){csSeed();const f=re=>SCH.findIndex(x=>!x.j&&re.test(x.t||x.n));const last=INT.sch?SCH.findIndex(x=>x.n===INT.sch&&!x.j):-1;
+    CM.sa=last>=0?last:f(/^Oregon$/i);CM.sb=[f(/^USC$/i),f(/^Oregon$/i),CS.ids[1]].find(i=>i>=0&&i!==CM.sa)}
+  const A=SCH[CM.sa],B=SCH[CM.sb],g=CM.g;if(!A||!B)return {html:'<p class="ccmsg">Type a school in A and B.</p>',evs:[],ss:[]};
+  const ss=seaOf(A.d).filter(k=>seaOf(B.d).includes(k));if(!ss.includes(CM.tsea))CM.tsea=ss.includes(R.season)?R.season:ss[0];
+  const evs=[...new Set([...teamEvents(CM.sa,CM.tsea,g),...teamEvents(CM.sb,CM.tsea,g)])];if(evs.length&&!evs.includes(CM.te))CM.te=evs.includes("400 Meters")?"400 Meters":evs[0];
+  const e=CM.te,ta=teamRows(CM.sa,CM.tsea,e,g),tb=teamRows(CM.sb,CM.tsea,e,g),na=A.t||A.n,nb=B.t||B.n;
+  if(!ta||!tb)return {html:'<div class="cmload">Loading the teams…</div>',evs,ss};
+  const miss=[[ta,na],[tb,nb]].filter(([t])=>t.err||!t.rows.length).map(([t,n])=>n);
+  const ra=ta.rows||[],rb=tb.rows||[],N=Math.max(ra.length,rb.length,1),show=CM.open?Math.min(N,25):Math.min(N,5);
+  const cell=(t,k)=>{const x=(t.rows||[])[k];return x?`<td><b>${esc(x.r[4])}</b><small>${esc(x.r[1]||"")}${x.r[2]?" · "+esc(yr(x.r[2])):""}</small></td>`:"<td>–</td>"};
+  let ans="";if(ra[0]&&rb[0]){const d=rhigh(e)?ra[0].v-rb[0].v:rb[0].v-ra[0].v,amt=rhigh(e)?(Math.abs(d)>=1?Math.abs(d).toFixed(2)+" m":Math.round(Math.abs(d)*100)+" cm"):Math.abs(d).toFixed(2)+" seconds";
+    ans=Math.abs(d)<0.005?`<p class="cmans">Their best ${esc(evLabel(e))} marks are the same.</p>`:`<p class="cmans"><b class="${d>0?"ca":"cb"}">${esc(d>0?na:nb)}</b>'s best ${esc(evLabel(e))} athlete is <b>${amt} ${rhigh(e)?"farther":"faster"}</b> than ${esc(d>0?nb:na)}'s.</p>`}
+  /* where would you fit: the kid's own PR (profile) or a typed mark */
+  const mine=(ACC.myMarks&&ACC.myMarks()||[]).find(m=>m.e===rlab(e)),kid=pickKid(),kidm=kid&&kid.marks.find(m=>m.e===rlab(e));
+  const myv=CM.my?rval(e,CM.my):mine?mine.v:kidm?kidm.v:null,who=CM.my?"You":mine?"You":kid?kid.first_name:"You";
+  const place=rows=>rows.filter(x=>rhigh(e)?x.v>myv:x.v<myv).length+1;
+  const fit=myv!=null&&(ra.length||rb.length)?`<p class="cmfit">${esc(who)}${who==="You"?"’d":" would"} be <b class="ca">#${place(ra)} on ${esc(na)}</b> and <b class="cb">#${place(rb)} on ${esc(nb)}</b> in the ${esc(evLabel(e))} this season.</p>`:"";
+  const stdA=(A[g]||{})[rlab(e)],stdB=(B[g]||{})[rlab(e)];
+  const std=stdA&&stdA[1]||stdB&&stdB[1]?`<p class="note">Recruit standard: ${esc(na)} ${stdA&&stdA[1]?esc(stdA[1]):"–"} · ${esc(nb)} ${stdB&&stdB[1]?esc(stdB[1]):"–"}</p>`:"";
+  return {evs,ss,html:`${miss.length?`<p class="ccmsg">No ${g==="m"?"men's":"women's"} ${esc(evLabel(e))} marks for ${esc(miss.join(" or "))} on TFRRS lists this season.</p>`:""}${ans}${fit}
+    <table class="cmt"><thead><tr><th></th><th class="ca">A · <a href="/schools/${SLUG[CM.sa]}" data-school="${CM.sa}">${esc(na)}</a><small>${esc(A.d)} · ${ra.length} athlete${ra.length===1?"":"s"}</small></th><th class="cb">B · <a href="/schools/${SLUG[CM.sb]}" data-school="${CM.sb}">${esc(nb)}</a><small>${esc(B.d)} · ${rb.length} athlete${rb.length===1?"":"s"}</small></th></tr></thead>
+    <tbody>${Array.from({length:show},(_,k)=>`<tr><th scope="row">#${k+1}</th>${cell(ta,k)}${cell(tb,k)}</tr>`).join("")}</tbody></table>
+    ${N>5?`<button type="button" class="cmmore" data-cmopen>${CM.open?"Show top 5":"Show every athlete"}</button>`:""}${std}
+    <p class="note">Athletes come from this season's TFRRS conference and national lists, so you see each team's athletes who made those lists, not the full roster.</p>`}}
 function compareView(){cmFix();const t=CM.t,g=CM.g;
-  const types=[["years","Years","Same event, two seasons"],["conf","Conferences","Two conferences, one season"],["div","Divisions","D1 vs D2, D3, NAIA"],["schools","Schools","Two schools' standards"]];
+  const types=[["years","Years","Same event, two seasons"],["conf","Conferences","Two conferences, one season"],["div","Divisions","D1 vs D2, D3, NAIA"],["schools","Teams","Two teams' athletes and times"]];
   const gsel=`<div class="seg cmgs" role="group" aria-label="Men or women"><button type="button" data-cmg="m" aria-pressed="${g==="m"}">Men</button><button type="button" data-cmg="w" aria-pressed="${g==="w"}">Women</button></div>`;
   let row="",body="";
-  if(t==="schools"){const r=cmSchools();const schoolIn=(id,i,c)=>`<label class="cmp ${c}"><span>${c==="ca"?"School A":"School B"}</span><input data-cmsch="${id}" list="cmsl" value="${esc(SCH[i]?SCH[i].n:"")}" placeholder="Type a school" autocomplete="off"></label>`;
-    row=`${gsel}${cmPick("se","Event",typeof r==="string"?"":cmOpts(r.evs||[],CM.se))}${schoolIn("sa",CM.sa,"ca")}<span class="cmvs">vs</span>${schoolIn("sb",CM.sb,"cb")}<datalist id="cmsl">${SCH.filter(x=>!x.j).map(x=>`<option value="${esc(x.n)}">`).join("")}</datalist>`;
-    body=typeof r==="string"?r:r.html}
+  if(t==="schools"){const r=cmTeams();const schoolIn=(id,i,c)=>`<label class="cmp ${c}"><span>${c==="ca"?"Team A":"Team B"}</span><input data-cmsch="${id}" list="cmsl" value="${esc(SCH[i]?SCH[i].n:"")}" placeholder="Type a school" autocomplete="off"></label>`;
+    row=`${gsel}${cmPick("te","Event",cmOpts(r.evs.length?r.evs:[CM.te||"400 Meters"],CM.te,evLabel))}${cmPick("tsea","Season",cmOpts(r.ss,CM.tsea,seasonLabel))}${schoolIn("sa",CM.sa,"ca")}<span class="cmvs">vs</span>${schoolIn("sb",CM.sb,"cb")}<datalist id="cmsl">${SCH.filter(x=>!x.j).map(x=>`<option value="${esc(x.n)}">`).join("")}</datalist>
+      <label class="cmp cmmy"><span>Your time (optional)</span><input data-cmmy value="${esc(CM.my||"")}" placeholder="e.g. 49.50" inputmode="decimal" autocomplete="off"></label>`;
+    body=r.html}
   else{const divsAll=Object.keys(DIVINFO).filter(d=>RIDX.some(r=>r.div===d));
     const evsrc=cmData(cmSides()[0]),evs=evsrc&&!evsrc.err&&evsrc.L?Object.keys(evsrc.L.g[g]||{}):[];if(evs.length&&!evs.includes(CM.e))CM.e=evs[0];
     const ev=cmPick("e","Event",cmOpts(evs.length?evs:[CM.e],CM.e,evLabel));
@@ -1332,6 +1356,7 @@ document.addEventListener("change",ev=>{const t=ev.target;
     if(k==="s")c.s=v;else if(k==="div"){c.div=v;c.l="nat";c.t="";if(c.s&&!RIDX.some(r=>r.year+"-"+r.season===c.s&&r.div===v))c.s=""}else if(k==="l")c.l=v;else if(k==="g")c.g=v;else if(k==="e")c.e=v;else if(k==="t"){c.t=v;if(!v&&c.e==="*")c.e=R.ev||"100 Meters"}
     ccSync();R.swap=false;render()}return}
   if(t.dataset&&t.dataset.cm){const k=t.dataset.cm;CM[k]=t.value;if(k==="div"||k==="sea"){if(CM.t!=="div")CM.a=CM.b=""}R.swap=true;render();return}
+  if(t.dataset&&"cmmy" in t.dataset){CM.my=t.value.trim();R.swap=true;render();return}
   if(t.dataset&&t.dataset.cmsch){const v=t.value.trim().toLowerCase();let i=SCH.findIndex(x=>!x.j&&(x.n.toLowerCase()===v||(x.t||"").toLowerCase()===v));if(i<0&&v)i=SCH.findIndex(x=>!x.j&&(x.n.toLowerCase().includes(v)||(x.t||"").toLowerCase().includes(v)));if(i>=0){CM[t.dataset.cmsch]=i;R.swap=true;render()}return}
   if(t.id==="cse"){CS.e=t.value;render();return}
   if(t.id==="csadd"){const v=t.value.trim().toLowerCase();if(!v)return;let i=SCH.findIndex(x=>!x.j&&(x.n.toLowerCase()===v||(x.t||"").toLowerCase()===v));if(i<0)i=SCH.findIndex(x=>!x.j&&(x.n.toLowerCase().includes(v)||(x.t||"").toLowerCase().includes(v)));if(i>=0&&!CS.ids.includes(i)&&CS.ids.length<4){CS.ids.push(i);render()}return}

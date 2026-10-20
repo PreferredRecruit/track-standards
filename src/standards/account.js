@@ -13,7 +13,7 @@ const GPA = [["3_5_plus","3.5 or higher"],["3_0_to_3_49","3.0 to 3.49"],["2_3_to
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
 const SEEN = new Set();
-let KIDS = [], RESENT = 0;
+let KIDS = [], MINE = [], RESENT = 0;
 let CFG = {}, SES = null, PRO = null, VIEW = "signup", MSG = "", BUSY = false, WHY = "";
 import * as ONB from "./onboard.js";
 const store = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v){ try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
@@ -74,7 +74,8 @@ async function restore() {
 async function loadProfile() {
   if (!(await fresh())) { PRO = null; return null; }
   const rows = await api("/rest/v1/profiles?select=*&id=eq." + SES.user.id).catch(() => []);
-  PRO = rows && rows[0] || null; KIDS = [];
+  PRO = rows && rows[0] || null; KIDS = []; MINE = [];
+  if (PRO && PRO.role === "athlete") { const ms = await api("/rest/v1/marks?select=event,mark&user_id=eq." + SES.user.id + "&athlete_id=is.null").catch(() => []); MINE = (ms || []).map(m => ({ e: m.event, v: +m.mark })); }
   if (PRO && PRO.role === "parent") {
     const [ks, ms] = await Promise.all([api("/rest/v1/athletes?select=id,first_name,gender,grad_year,grade,tier&parent_id=eq." + SES.user.id + "&order=created_at").catch(() => []), api("/rest/v1/marks?select=event,mark,athlete_id&user_id=eq." + SES.user.id).catch(() => [])]);
     KIDS = (ks || []).map(k => Object.assign(k, { marks: (ms || []).filter(m => m.athlete_id === k.id).map(m => ({ e: m.event, v: +m.mark })) }));
@@ -88,6 +89,8 @@ export const member = () => !!(SES && PRO && PRO.finished_at);
 export const tier = () => member() ? PRO.tier : null;
 export const profile = () => PRO;
 export const kids = () => KIDS;
+/* the signed-in athlete's own PRs ({e, v}), for "where would you fit" in Compare */
+export const myMarks = () => MINE;
 export function aiLeft() { if (member()) return Infinity; return Math.max(0, LIMITS.ai - (+store.get(AIK) || 0)); }
 export function aiUse() { if (!member()) store.set(AIK, (+store.get(AIK) || 0) + 1); }
 /* inline wall: blurred hint + one button, never a full-screen block (Google intrusive-interstitial rule) */
