@@ -13,7 +13,7 @@ const GPA = [["3_5_plus","3.5 or higher"],["3_0_to_3_49","3.0 to 3.49"],["2_3_to
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
 const SEEN = new Set();
-let KIDS = [];
+let KIDS = [], RESENT = 0;
 let CFG = {}, SES = null, PRO = null, VIEW = "signup", MSG = "", BUSY = false, WHY = "";
 import * as ONB from "./onboard.js";
 const store = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v){ try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
@@ -101,7 +101,12 @@ function draw() {
       <form id="accr" class="acform" novalidate>${field("acre", "Email", `<input class="in" id="acre" type="email" autocomplete="email" required>`)}${err}<button class="acbtn" ${BUSY ? "disabled" : ""}>Send reset link</button></form>
       <p class="acalt"><button type="button" class="aclnk" data-acc="signin">Back to sign in</button></p>`;
   } else if (VIEW === "check") {
-    b.innerHTML = `<p class="eye">One more step</p><h2 class="evh" id="acch">Check your email</h2><p class="acsub">We sent a confirmation link to <b>${esc(FORM._email || "your email")}</b>. Open it on this device to finish your account.</p><button type="button" class="acbtn" data-acc="close">Got it</button>`;
+    const em = FORM._email || "", dom = (em.split("@")[1] || "").toLowerCase();
+    const inbox = /gmail|googlemail/.test(dom) ? ["Open Gmail", "https://mail.google.com/mail/u/0/#search/from%3Atrackandfieldstandards.com"] : /outlook|hotmail|live|msn/.test(dom) ? ["Open Outlook", "https://outlook.live.com/mail/0/"] : /yahoo/.test(dom) ? ["Open Yahoo Mail", "https://mail.yahoo.com/"] : /icloud|me\.com|mac\.com/.test(dom) ? ["Open iCloud Mail", "https://www.icloud.com/mail"] : null;
+    b.innerHTML = `<p class="eye">One more step</p><h2 class="evh" id="acch">Check your email</h2><p class="acsub">We sent a link to <b>${esc(em || "your email")}</b>. Tap <b>Confirm my email</b> in that email and you'll come right back here to build your profile.</p>
+      ${inbox ? `<a class="acbtn acmail" href="${inbox[1]}" target="_blank" rel="noopener">${inbox[0]}</a>` : ""}
+      <p class="achint">It comes from Track &amp; Field Standards. Not there after a minute? Check spam or promotions.</p>${MSG ? `<p class="acerr" role="alert">${esc(MSG)}</p>` : ""}
+      <div class="acrow"><button type="button" class="aclnk" data-acc="resend" ${RESENT > Date.now() ? "disabled" : ""}>${RESENT > Date.now() ? "Email sent again" : "Send it again"}</button><button type="button" class="aclnk" data-acc="signup">Wrong email? Start over</button></div>`;
   } else if (VIEW === "reset") {
     b.innerHTML = `<p class="eye">Reset password</p><h2 class="evh" id="acch">Choose a new password</h2><form id="accn" class="acform" novalidate>${field("acnp", "New password", `<input class="in" id="acnp" type="password" autocomplete="new-password" minlength="8" required>`)}${err}<button class="acbtn" ${BUSY ? "disabled" : ""}>Save password</button></form>`;
   } else if (VIEW === "finish") drawFinish(b, err);
@@ -190,6 +195,7 @@ async function submit(id) {
       close(); changed(); if (ONB.isPage()) ONB.show(); else if (!member()) ONB.go("/onboarding");
     } catch (e) {
       BUSY = false;
+      if (/confirm/i.test(e.message)) { FORM._email = email; VIEW = "check"; MSG = "Confirm your email first. Use the link we sent, or send it again below."; return draw(); }
       fail(/confirm/i.test(e.message) ? "Confirm your email first. Check your inbox for the link." : /invalid login/i.test(e.message) ? "That email and password don't match." : /already registered|exists/i.test(e.message) ? "That email already has an account. Sign in instead." : /pwned|weak|leaked/i.test(e.message + (e.code || "")) ? "That password has shown up in a data breach. Choose a different one." : e.message);
     }
   } else if (id === "accr") {
@@ -227,6 +233,9 @@ export async function init(cfg) {
     if (t.dataset.seg) { readFinish(); FORM[t.dataset.seg] = t.dataset.v; MSG = ""; draw(); return; }
     const a = t.dataset.acc; e.preventDefault();
     if (a === "close") return close();
+    if (a === "resend") { const em = FORM._email; if (!em) return; MSG = ""; RESENT = Date.now() + 60000; draw();
+      api("/auth/v1/resend?redirect_to=" + encodeURIComponent(location.origin + "/onboarding"), { method: "POST", body: { type: "signup", email: em }, auth: false }).catch(err => { MSG = /seconds|rate/i.test(err.message) ? "Please wait a minute before sending again." : err.message; RESENT = 0; draw(); });
+      CFG.log && CFG.log("account", { detail: "resend" }); setTimeout(draw, 60500); return; }
     if (a === "addmk") { readFinish(); FORM.marks.push(["", ""]); return draw(); }
     if (a === "out") { signOut(); close(); return; }
     if (a === "menu") return SES ? ONB.go(member() ? "/account" : "/onboarding") : open("signin");

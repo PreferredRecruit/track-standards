@@ -138,7 +138,7 @@ function wizard() {
 /* ---------- profile pages ---------- */
 function doneView() {
   return top(IS_ADMIN ? `<button type="button" class="onbtab${TAB === "admin" ? " on" : ""}" data-onb="tab" data-v="admin">Accounts</button><button type="button" class="onbtab${TAB === "profile" ? " on" : ""}" data-onb="tab" data-v="profile">My profile</button>` : "") +
-    (TAB === "admin" && IS_ADMIN ? adminView() : D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : simpleDone());
+    (TAB === "admin" && IS_ADMIN ? adminView() : D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`);
 }
 function simpleDone() {
   return `<div class="onbwrap one"><section class="onbmain onbdone"><span class="onbok">${svg(CHECK, 26)}</span><h1>Your account is ready</h1>
@@ -157,7 +157,7 @@ function parentView() {
       <div class="prfoot"><p class="onbmail">Signed in as ${esc(core.ses() ? core.ses().user.email : "")}. Profiles are private: only you and the Preferred Recruit team can see them.</p><button type="button" class="onbback" data-onb="out">Sign out</button></div></section></div>`;
 }
 /* one athlete's page: banner (theme or photo), photo, basics, stats per event */
-function profileCard(sub) {
+function profileCard(sub, lite) {
   const C = core.cfg(), marks = (sub.marks || []).filter(m => m[0] && m[1]), cls = CLASSES.find(c => c[0] === +sub.year);
   const stats = marks.map(([e, m]) => { const v = C.parse(m, e); return { e, m, st: v != null && C.stats ? C.stats(e, sub.gender, v) : null }; });
   const best = stats.filter(x => x.st).sort((a, b) => b.st.n - a.st.n)[0];
@@ -181,9 +181,10 @@ function profileCard(sub) {
       <div class="prid"><h1>${esc(nameOf(sub))}</h1><p>${esc([cls ? "Class of " + cls[0] : sub.year ? "In college" : "", sub.gender ? (sub.gender === "m" ? "Men's" : "Women's") + " track and field" : "", sub.school, core.ST[sub.state]].filter(Boolean).join(" · "))}</p>
         ${IMGERR ? `<p class="acerr">${esc(IMGERR)}</p>` : !sub.avatar ? `<button type="button" class="aclnk" data-onb="pick" data-v="avatar">Add a profile photo</button>` : ""}</div>
       <div class="pract"><button type="button" class="onbx" data-onb="${par() ? "editkid" : "edit"}">Edit profile</button></div></div>
+    ${lite ? `<div class="prlite"><p>${D.role === "coach" ? "Coach account" : "Fan account"}${IS_ADMIN ? " · Admin" : ""}. Every standard, full results list and unlimited Recruiting AI is open to you.</p><div class="onbcta"><button type="button" class="acbtn" data-onb="exit">Go to the standards</button>${IS_ADMIN ? `<button type="button" class="onbback" data-onb="tab" data-v="admin">Open the Accounts dashboard</button>` : ""}</div><p class="onbmail">Want a recruiting profile with PRs and college matches? Tap Edit profile and choose athlete or parent.</p></div></section>` : `
     <div class="prtiles">${tile(marks.length, marks.length === 1 ? "Event" : "Events")}${tile(best ? best.st.n.toLocaleString() : "–", `Programs ${own} best mark fits`)}${tile(esc(sub.gpa) || "–", `GPA <button type="button" class="aclnk prtl" data-onb="quick" data-v="gpa">Update</button>`)}${tile(cls ? esc(cls[1]) : sub.year ? "College" : "–", "Class")}</div></section>
     <div class="prh2row"><h2 class="prh2">${par() ? esc(sub.first) + "'s" : "Your"} events and PRs</h2><button type="button" class="onbx" data-onb="quick" data-v="events">${svg('<path d="M12 5v14M5 12h14"/>', 14)} Update PRs</button></div><div class="prgrid">${stats.map(evCard).join("") || `<p class="onbsub">No events yet.</p>`}</div>
-    ${par() ? `<p class="prrm"><button type="button" class="aclnk" data-onb="rmkid">Remove ${esc(sub.first)} from this account</button></p>` : ""}`;
+    ${par() ? `<p class="prrm"><button type="button" class="aclnk" data-onb="rmkid">Remove ${esc(sub.first)} from this account</button></p>` : ""}`}`;
 }
 
 /* ---------- admin dashboard (read-only): one row per athlete, parents' kids included ---------- */
@@ -260,7 +261,7 @@ async function upload(kind, file) {
 async function setTheme(v) { const sub = subNow(); if (!sub) return; sub.theme = v; sub.banner = null; BANNER = false; render(); try { await patchSub(sub, { banner_theme: v, banner_path: null }); } catch (e) { IMGERR = "Couldn't save the banner."; render(); } }
 
 /* ---------- render + save ---------- */
-const onWizard = () => !(core.member() && location.pathname === "/account" && MODE === "onboard") && !(IS_ADMIN && location.pathname === "/account" && MODE === "onboard");
+const onWizard = () => !(core.member() && location.pathname === "/account" && MODE === "onboard") && !(IS_ADMIN && TAB === "admin" && location.pathname === "/account");
 function render() {
   const el = layer(); if (!D) return;
   const html = onWizard() ? wizard() : doneView();
@@ -357,7 +358,7 @@ export async function show() {
   MODE = "onboard";
   STEP = core.member() ? 0 : Math.min(p.onboarding_step || 0, stepsFor().length - 1);
   if (core.member() && location.pathname === "/onboarding") history.replaceState({}, "", "/account");
-  if (IS_ADMIN && location.pathname === "/account") TAB = "admin";
+  TAB = "profile";
   render();
 }
 export function hide() { const el = document.getElementById("onb"); if (el) { el.hidden = true; el.innerHTML = ""; } document.documentElement.classList.remove("onbon"); const m = document.querySelector('meta[name="robots"][data-onb]'); if (m) m.remove(); }
