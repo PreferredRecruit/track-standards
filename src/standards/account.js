@@ -211,7 +211,7 @@ async function fromHash() {
 }
 
 function signOut() { api("/auth/v1/logout", { method: "POST" }).catch(() => {}); keep(null); PRO = null; for (const k in FORM) delete FORM[k]; changed(); }
-export const core = { ST, api, fresh, loadProfile, changed, signOut, member, profile: () => PRO, ses: () => SES, cfg: () => CFG };
+export const core = { URL: URL_, KEY, ST, api, fresh, loadProfile, changed, signOut, member, profile: () => PRO, ses: () => SES, cfg: () => CFG };
 export async function init(cfg) {
   CFG = cfg || {}; SES = store.get(SK); shell(); headBtn();
   document.addEventListener("click", e => {

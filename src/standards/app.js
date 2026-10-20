@@ -1281,5 +1281,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     if (ev.target.closest("[data-back]") || ev.target.closest("[data-tab]")) { if (location.pathname !== "/") history.pushState({}, "", "/"); } }, true);
   addEventListener("popstate", () => { const m = location.pathname.match(/^\/schools\/([^/]+)/); route(m ? m[1] : null); });
   route(opts.slug);
-  ACC.init({onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,nstd:NSTD,fits:(e,g,v)=>SCH.filter(s=>tier(s,g,e,v)).length,fmt:(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v),intent:INT,sid:SID,log,onChange:()=>render()}).then(()=>render());
+  ACC.init({onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,nstd:NSTD,fits:(e,g,v)=>SCH.filter(s=>tier(s,g,e,v)).length,fmt:(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v),stats:(e,g,v)=>{const L=[];SCH.forEach((s,i)=>{const t=tier(s,g,e,v);if(t)L.push({s,i,t})});const c=k=>L.filter(x=>x.t===k).length;
+    const top=["T","R","W"].map(k=>L.filter(x=>x.t===k&&DIVS.includes(x.s.d)).sort((a,b)=>DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||(b.s.o?1:0)-(a.s.o?1:0)||a.s.n.localeCompare(b.s.n))[0]).filter(Boolean).map(x=>({n:x.s.t||x.s.n,d:x.s.d,lv:TN[x.t],slug:SLUG[x.i]}));
+    const nm=nearMiss(g,e,v);return {n:L.length,T:c("T"),R:c("R"),W:c("W"),near:nm.n?{n:nm.n,lv:TN[nm.lvl],gap:nm.gap}:null,top}},intent:INT,sid:SID,log,onChange:()=>render()}).then(()=>render());
 }

@@ -18,6 +18,7 @@ const ROLES = [["athlete", "I'm an athlete", "Build your own recruiting profile"
 const ICON = { athlete: '<path d="M13 4a2 2 0 1 1 0 .01M9 21l2.5-6 2.5 2v4M7.5 12.5 10 9l3 1 2.5 3 3 .5"/>', parent: '<circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 20c.8-3.6 3.2-5.5 6-5.5s5.2 1.9 6 5.5M14.5 20c.4-2.4 1.6-4 3.5-4 1.6 0 2.7 1 3 3"/>', coach: '<path d="M4 5h16v11H4zM8 21h8M12 16v5"/><path d="M8 9l3 3 5-5"/>', fan: '<path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/>' };
 const svg = (p, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 
+let AVA = { url: null, path: null, busy: false, err: "" };
 let D = null, STEP = 0, MSG = "", BUSY = false, TAB = "profile", ADM = null, ADMQ = "", ADMT = "", IS_ADMIN = null;
 
 const fam = () => D.role === "athlete" || D.role === "parent";
@@ -28,7 +29,7 @@ function draft() {
   const p = core.profile() || {}, I = core.cfg().intent || {};
   return { role: p.role || "", first: p.first_name || "", last: p.last_name || "", phone: p.phone || "", sms: !!p.sms_consent, ath: p.athlete_first_name || "",
     gender: p.gender || I.g || "", year: p.grad_year || (I.gr ? SENIOR + (12 - +I.gr) : ""), state: p.state || "", gpa: p.gpa != null ? String(p.gpa) : "",
-    stage: p.recruiting_stage || "", serious: p.seriousness || "", involve: p.parent_involvement || "", pname: p.parent_name || "", pemail: p.parent_email || "", pphone: p.parent_phone || "",
+    school: p.high_school || "", stage: p.recruiting_stage || "", serious: p.seriousness || "", involve: p.parent_involvement || "", pname: p.parent_name || "", pemail: p.parent_email || "", pphone: p.parent_phone || "",
     age: !!p.age_13_plus, marks: null };
 }
 async function loadMarks() {
@@ -53,7 +54,7 @@ function card() {
   const cls = CLASSES.find(c => c[0] === +D.year);
   const total = stepsFor().length, done = Math.min(STEP, total), pct = D.role ? Math.round(done / total * 100) : 0;
   const row = (k, v) => `<div class="pcr"><span>${k}</span><b>${v ? esc(v) : '<i>Not added yet</i>'}</b></div>`;
-  return `<aside class="pcard" aria-label="Your recruiting profile"><div class="pchd"><div class="pcav">${ini ? esc(ini) : svg('<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>', 24)}</div><div><b>${esc(name)}</b><small>${esc([cls ? "Class of " + cls[0] : "", D.gender ? (D.gender === "m" ? "Men's" : "Women's") + " track" : "", core.ST[D.state] || ""].filter(Boolean).join(" · ") || "Recruiting profile")}</small></div>
+  return `<aside class="pcard" aria-label="Your recruiting profile"><div class="pchd"><div class="pcav">${AVA.url ? `<img src="${AVA.url}" alt="">` : ini ? esc(ini) : svg('<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>', 24)}</div><div><b>${esc(name)}</b><small>${esc([cls ? "Class of " + cls[0] : "", D.gender ? (D.gender === "m" ? "Men's" : "Women's") + " track" : "", core.ST[D.state] || ""].filter(Boolean).join(" · ") || "Recruiting profile")}</small></div>
     <div class="pcring" style="--p:${pct}"><span>${pct}%</span></div></div>
     ${fam() ? `<div class="pcev">${marks.length ? marks.map(m => `<span class="pcchip"><b>${esc(C.evName ? C.evName(m[0], D.gender) : m[0])}</b>${esc(m[1])}</span>`).join("") : '<span class="pcempty">Your events and PRs show here</span>'}</div>
     ${best ? `<div class="pcfit"><b>${best[1].toLocaleString()}</b><span>college programs fit your ${esc(C.evName ? C.evName(best[0][0], D.gender) : best[0][0])}</span></div>` : ""}
@@ -73,7 +74,7 @@ function stepBody(k) {
     ${par ? inp("phone", "Your phone", D.phone, 'type="tel" autocomplete="tel" maxlength="30"') + `<label class="onbck"><input type="checkbox" data-ck="sms" ${D.sms ? "checked" : ""}><span>Preferred Recruit may text me about my athlete's recruiting. Message rates apply. Reply STOP to opt out.</span></label>` + inp("ath", "Your athlete's first name", D.ath, 'maxlength="60"') : ""}
     ${fam() ? `<div class="onbq"><span>${par ? "Your athlete's class" : "Your class"}</span>${opt("year", [...CLASSES.map(([y, l]) => [y, l, "Class of " + y]), [SENIOR - 1, "In college", "Already there"]], D.year, "c5")}</div>
     <div class="onbq"><span>Team</span>${opt("gender", [["m", "Men"], ["w", "Women"]], D.gender, "c2")}</div>
-    <label class="onbf" for="state"><span>State</span><select class="in" id="state" data-in="state"><option value="">Choose a state</option>${Object.entries(core.ST).map(([k2, v]) => `<option value="${k2}" ${k2 === D.state ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label>` : AGE()}`;
+    <label class="onbf" for="state"><span>State</span><select class="in" id="state" data-in="state"><option value="">Choose a state</option>${Object.entries(core.ST).map(([k2, v]) => `<option value="${k2}" ${k2 === D.state ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label>` + inp("school", par ? "Your athlete's high school (optional)" : "High school (optional)", D.school, 'maxlength="100" autocomplete="off"') : AGE()}`;
   if (k === "events") {
     const evs = D.gender ? (C.events ? C.events(D.gender) : []) : [];
     const sel = (cur, i) => `<select class="in" data-mk="e" data-i="${i}" aria-label="Event"><option value="">Choose an event</option>${evs.map(e => `<option value="${esc(e)}" ${e === cur ? "selected" : ""}>${esc(C.evName ? C.evName(e, D.gender) : e)}</option>`).join("")}</select>`;
@@ -104,12 +105,43 @@ function doneView() {
   const C = core.cfg(), marks = (D.marks || []).filter(m => m[0] && m[1]);
   const best = marks.map(m => [m, fitsFor(m[0], m[1])]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1])[0];
   return top(IS_ADMIN ? `<button type="button" class="onbtab${TAB === "admin" ? " on" : ""}" data-onb="tab" data-v="admin">Accounts</button><button type="button" class="onbtab${TAB === "profile" ? " on" : ""}" data-onb="tab" data-v="profile">My profile</button>` : "") +
-    (TAB === "admin" && IS_ADMIN ? adminView() : `<div class="onbwrap"><section class="onbmain onbdone"><span class="onbok">${svg('<path d="M5 12l5 5 9-10"/>', 26)}</span>
-    <h1>${fam() ? "Your profile is ready" : "Your account is ready"}</h1><p class="onbsub">${fam() && best ? `${esc(D.role === "parent" ? (D.ath || "Your athlete") + "'s" : "Your")} ${esc(C.evName ? C.evName(best[0][0], D.gender) : best[0][0])} fits <b>${best[1].toLocaleString()}</b> college programs. Every standard, full results list and unlimited Recruiting AI is open to you now.` : "Every standard, full results list and unlimited Recruiting AI is open to you now."}</p>
-    <div class="onbcta">${fam() && best ? `<button type="button" class="acbtn" data-onb="see" data-e="${esc(best[0][0])}" data-m="${esc(best[0][1])}">See every college ${D.role === "parent" ? "they" : "you"} fit</button>` : `<button type="button" class="acbtn" data-onb="exit">Go to the standards</button>`}
-    <button type="button" class="onbback" data-onb="edit">Edit profile</button><button type="button" class="onbback" data-onb="out">Sign out</button></div>
-    <p class="onbmail">Signed in as ${esc(core.ses() ? core.ses().user.email : "")}</p></section>${card()}</div>`);
+    (TAB === "admin" && IS_ADMIN ? adminView() : fam() ? profileView() : simpleDone());
 }
+function simpleDone() {
+  return `<div class="onbwrap one"><section class="onbmain onbdone"><span class="onbok">${svg('<path d="M5 12l5 5 9-10"/>', 26)}</span><h1>Your account is ready</h1>
+    <p class="onbsub">Every standard, full results list and unlimited Recruiting AI is open to you now.</p>
+    <div class="onbcta"><button type="button" class="acbtn" data-onb="exit">Go to the standards</button><button type="button" class="onbback" data-onb="edit">Edit account</button><button type="button" class="onbback" data-onb="out">Sign out</button></div>
+    <p class="onbmail">Signed in as ${esc(core.ses() ? core.ses().user.email : "")}</p></section></div>`;
+}
+/* the athlete's own profile: photo, basics and full stats per event (private to the account and admins) */
+function profileView() {
+  const C = core.cfg(), par = D.role === "parent", marks = (D.marks || []).filter(m => m[0] && m[1]);
+  const name = par ? (D.ath || "Your athlete") : [D.first, D.last].filter(Boolean).join(" ");
+  const ini = name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const cls = CLASSES.find(c => c[0] === +D.year), stats = marks.map(([e, m]) => { const v = C.parse(m, e); return { e, m, st: v != null && C.stats ? C.stats(e, D.gender, v) : null }; });
+  const best = stats.filter(x => x.st).sort((a, b) => b.st.n - a.st.n)[0];
+  const ev = e => esc(C.evName ? C.evName(e, D.gender) : e);
+  const tile = (v, l) => `<div class="prtile"><b>${v}</b><span>${l}</span></div>`;
+  const evCard = ({ e, m, st }) => { const n = st ? st.n : 0, w = k => n ? Math.max(st[k] / n * 100, st[k] ? 4 : 0) : 0;
+    return `<article class="prev"><header><span>${ev(e)}</span><b>${esc(m)}</b></header>
+      ${st ? `<div class="prfit"><b>${n.toLocaleString()}</b><span>college programs fit this mark</span></div>
+      <div class="prbar" role="img" aria-label="${st.T} Target, ${st.R} Recruit, ${st.W} Walk-On"><i class="T" style="width:${w("T")}%"></i><i class="R" style="width:${w("R")}%"></i><i class="W" style="width:${w("W")}%"></i></div>
+      <div class="prlv"><span><i class="T"></i>${st.T} Target</span><span><i class="R"></i>${st.R} Recruit</span><span><i class="W"></i>${st.W} Walk-On</span></div>
+      ${st.near ? `<p class="prnear">${esc(st.near.gap)} from ${esc(st.near.lv)} level at ${st.near.n} more programs</p>` : ""}
+      ${st.top.length ? `<ul class="prtop">${st.top.map(t => `<li><a href="/schools/${esc(t.slug)}" data-onb="school" data-slug="${esc(t.slug)}">${esc(t.n)}</a><small>${esc(t.d)} · ${esc(t.lv)}</small></li>`).join("")}</ul>` : ""}
+      <button type="button" class="onbback" data-onb="see" data-e="${esc(e)}" data-m="${esc(m)}">See all ${n.toLocaleString()} colleges</button>` : `<p class="prnear">No college standards for this event yet.</p>`}</article>`; };
+  return `<div class="prwrap"><section class="prhero"><div class="prband"></div><div class="prhead">
+      <div class="prav${AVA.busy ? " busy" : ""}">${AVA.url ? `<img src="${AVA.url}" alt="${esc(name)}">` : `<span>${esc(ini || "PR")}</span>`}
+        <label class="prcam" title="${AVA.url ? "Change photo" : "Add a photo"}">${svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', 18)}<input type="file" accept="image/jpeg,image/png,image/webp" data-onb-file hidden></label></div>
+      <div class="prid"><h1>${esc(name)}</h1><p>${esc([cls ? "Class of " + cls[0] : D.year ? "In college" : "", D.gender ? (D.gender === "m" ? "Men's" : "Women's") + " track and field" : "", D.school, core.ST[D.state]].filter(Boolean).join(" · "))}</p>
+        ${AVA.err ? `<p class="acerr">${esc(AVA.err)}</p>` : !AVA.url ? `<button type="button" class="aclnk" data-onb="pick">Add a profile photo</button>` : ""}</div>
+      <div class="pract"><button type="button" class="onbx" data-onb="edit">Edit profile</button></div></div>
+      <div class="prtiles">${tile(marks.length, marks.length === 1 ? "Event" : "Events")}${tile(best ? best.st.n.toLocaleString() : "–", "Programs your best mark fits")}${tile(D.gpa || "–", "GPA")}${tile(esc(({ getting_started: "Getting started", talking: "Talking to coaches", real_interest: "Real interest", offers: "Has offers" })[D.stage] || "–"), "Recruiting")}</div></section>
+    <h2 class="prh2">${par ? "Their" : "Your"} events and PRs</h2><div class="prgrid">${stats.map(evCard).join("") || `<p class="onbsub">No events yet. <button type="button" class="aclnk" data-onb="edit">Add your PRs</button></p>`}</div>
+    <section class="prmore"><div><h2 class="prh2">Recruiting</h2>${[["Where things stand", lab(STAGE, D.stage)], ["Goal", lab(SERIOUS, D.serious)], ["Parents involved", lab(INVOLVE, D.involve)], par ? ["Your phone", D.phone] : ["Parent", [D.pname, D.pemail].filter(Boolean).join(" · ")]].map(([k, v]) => `<div class="pcr"><span>${k}</span><b>${v ? esc(v) : "<i>Not added yet</i>"}</b></div>`).join("")}</div>
+      <div class="prfoot"><p class="onbmail">Signed in as ${esc(core.ses() ? core.ses().user.email : "")}. Your profile is private: only you and the Preferred Recruit team can see it.</p><button type="button" class="onbback" data-onb="out">Sign out</button></div></section></div>`;
+}
+
 
 /* ---------- admin dashboard (read-only) ---------- */
 const lab = (list, v) => (list.find(x => x[0] === v) || [])[1] || "";
@@ -139,6 +171,37 @@ function csv() {
   const cell = v => { v = v == null ? "" : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
   const lines = [H.join(",")].concat(ADM.rows.map(r => H.map(h => cell(h === "marks" ? (r.marks || []).map(m => m.e + " " + (C.fmt ? C.fmt(m.e, +m.m) : m.m)).join("; ") : r[h])).join(",")));
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" })); a.download = `standards-accounts-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+}
+
+/* ---------- profile photo: square crop to 512px JPEG, private bucket "avatars/<user id>/avatar.jpg" ---------- */
+async function loadAvatar() {
+  const p = core.profile() || {}; if (!p.avatar_path) { AVA.url = null; return; }
+  if (AVA.path === p.avatar_path && AVA.url) return;
+  try { await core.fresh(); const r = await fetch(core.URL + "/storage/v1/object/authenticated/avatars/" + p.avatar_path.split("?")[0], { headers: { apikey: core.KEY, Authorization: "Bearer " + core.ses().access_token } });
+    if (!r.ok) throw new Error(r.status); if (AVA.url) URL.revokeObjectURL(AVA.url); AVA.url = URL.createObjectURL(await r.blob()); AVA.path = p.avatar_path; } catch (e) { AVA.url = null; }
+}
+async function squareJpeg(file) {
+  const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error("That file isn't an image we can read.")); i.src = URL.createObjectURL(file); });
+  const z = Math.min(img.naturalWidth, img.naturalHeight), c = document.createElement("canvas"); c.width = c.height = 512;
+  c.getContext("2d").drawImage(img, (img.naturalWidth - z) / 2, (img.naturalHeight - z) / 2, z, z, 0, 0, 512, 512); URL.revokeObjectURL(img.src);
+  return await new Promise(ok => c.toBlob(ok, "image/jpeg", 0.88));
+}
+async function upload(file) {
+  AVA.err = "";
+  if (!file) return;
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { AVA.err = "Use a JPG, PNG or WebP photo."; return render(); }
+  if (file.size > 15 * 1024 * 1024) { AVA.err = "That photo is too big. Try one under 15 MB."; return render(); }
+  AVA.busy = true; render();
+  try {
+    const blob = await squareJpeg(file), uid = core.ses().user.id, path = uid + "/avatar.jpg";
+    await core.fresh();
+    const r = await fetch(core.URL + "/storage/v1/object/avatars/" + path, { method: "POST", headers: { apikey: core.KEY, Authorization: "Bearer " + core.ses().access_token, "Content-Type": "image/jpeg", "x-upsert": "true", "cache-control": "60" }, body: blob });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || "upload failed");
+    await core.api("/rest/v1/profiles?id=eq." + uid, { method: "PATCH", body: { avatar_path: path + "?v=" + Date.now() }, prefer: "return=minimal" });
+    await core.loadProfile(); if (AVA.url) URL.revokeObjectURL(AVA.url); AVA.url = URL.createObjectURL(blob); AVA.path = core.profile().avatar_path;
+    core.cfg().log && core.cfg().log("account", { detail: "photo", placement: "profile" });
+  } catch (e) { AVA.err = "Couldn't upload the photo. " + e.message; }
+  AVA.busy = false; render();
 }
 
 /* ---------- render + save ---------- */
@@ -186,7 +249,7 @@ async function save(k, finish) {
   const C = core.cfg(), uid = core.ses().user.id, par = D.role === "parent", F = fam();
   const row = { id: uid, role: D.role, onboarding_step: STEP + 1, site_sid: C.sid || null };
   if (k === "about") Object.assign(row, { first_name: D.first || null, last_name: D.last || null, phone: par ? (D.phone || null) : null, sms_consent: par && !!D.phone && !!D.sms,
-    athlete_first_name: par ? D.ath : null, grad_year: F ? +D.year : null, grade: F ? gradeOf(+D.year) : null, gender: F ? D.gender : null, state: F ? D.state : null });
+    athlete_first_name: par ? D.ath : null, grad_year: F ? +D.year : null, grade: F ? gradeOf(+D.year) : null, gender: F ? D.gender : null, state: F ? D.state : null, high_school: F ? (D.school || null) : null });
   if (k === "school") row.gpa = Math.round(+D.gpa * 100) / 100;
   if (k === "goals") Object.assign(row, { recruiting_stage: D.stage, seriousness: D.serious, parent_involvement: D.involve,
     parent_name: D.role === "athlete" ? (D.pname || null) : null, parent_email: D.role === "athlete" ? (D.pemail || null) : null, parent_phone: D.role === "athlete" ? (D.pphone || null) : null });
@@ -217,7 +280,7 @@ export async function show() {
   const el = layer(); document.documentElement.classList.add("onbon"); el.hidden = false;
   if (!core.ses()) { el.innerHTML = top() + `<div class="onbwrap one"><section class="onbmain onbdone"><h1>Build your recruiting profile</h1><p class="onbsub">Create a free account first. It takes about two minutes and shows every college your marks fit.</p><div class="onbcta"><button type="button" class="acbtn" data-acc="signup" data-why="onboarding">Create free account</button><button type="button" class="onbback" data-acc="signin" data-why="onboarding">I already have an account</button></div></section></div>`; return; }
   if (IS_ADMIN == null) IS_ADMIN = await core.api("/rest/v1/rpc/is_admin", { method: "POST", body: {} }).catch(() => false) === true;
-  D = draft(); D.marks = await loadMarks();
+  D = draft(); D.marks = await loadMarks(); await loadAvatar();
   if (!D.marks.length) { const I = core.cfg().intent || {}; D.marks = [[I.e && (core.cfg().events ? core.cfg().events(D.gender || "m").includes(I.e) : true) ? I.e : "", I.m || ""]]; }
   const p = core.profile() || {};
   STEP = core.member() ? (location.pathname === "/account" ? stepsFor().length : 0) : Math.min(p.onboarding_step || 0, stepsFor().length - 1);
@@ -244,10 +307,12 @@ export function bind() {
     if (a === "rm") { read(); D.marks.splice(+b.dataset.i, 1); return render(); }
     if (a === "edit") { STEP = 1; TAB = "profile"; history.pushState({}, "", "/onboarding"); return render(); }
     if (a === "tab") { TAB = b.dataset.v; return render(); }
+    if (a === "pick") { const f = el.querySelector("[data-onb-file]"); return f && f.click(); }
+    if (a === "school") { const slug = b.dataset.slug; history.pushState({}, "", "/schools/" + slug); hide(); core.changed(); window.__prStandardsRoute && window.__prStandardsRoute(slug); return; }
     if (a === "adt") { ADMT = b.dataset.v; return render(); }
     if (a === "reload") { ADM = null; return render(); }
     if (a === "csv") return ADM && ADM.rows && csv();
-    if (a === "out") { core.signOut(); hide(); history.pushState({}, "", "/"); return; }
+    if (a === "out") { if (AVA.url) URL.revokeObjectURL(AVA.url); AVA = { url: null, path: null, busy: false, err: "" }; core.signOut(); hide(); history.pushState({}, "", "/"); return; }
     if (a === "see") { history.pushState({}, "", `/?g=${D.gender}&e=${encodeURIComponent(b.dataset.e)}&m=${encodeURIComponent(b.dataset.m)}`); hide(); core.changed(); window.__prStandardsRoute && window.__prStandardsRoute(null); return; }
   });
   document.addEventListener("submit", e => { if (e.target.id !== "onbf") return; e.preventDefault(); if (!BUSY) next(); });
@@ -259,5 +324,5 @@ export function bind() {
       const c = el.querySelector(".pcard"); if (c) c.outerHTML = card(); }
     else if (e.target.dataset.in) { read(); const c = el.querySelector(".pcard"); if (c) c.outerHTML = card(); }
   });
-  document.addEventListener("change", e => { const el = document.getElementById("onb"); if (el && !el.hidden && el.contains(e.target) && (e.target.dataset.mk === "e" || e.target.dataset.in === "state")) { read(); render(); } });
+  document.addEventListener("change", e => { if (e.target.matches && e.target.matches("[data-onb-file]")) { upload(e.target.files && e.target.files[0]); e.target.value = ""; return; } const el = document.getElementById("onb"); if (el && !el.hidden && el.contains(e.target) && (e.target.dataset.mk === "e" || e.target.dataset.in === "state")) { read(); render(); } });
 }

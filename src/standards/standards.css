@@ -905,3 +905,48 @@ html.onbon,html.onbon body{overflow:hidden}
 .onbopt.c5{grid-template-columns:repeat(5,minmax(0,1fr))}.onbopt.c5 button[aria-checked="true"]::after{top:12px;margin-top:0}
 @media (max-width:600px){.onbopt.c5{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .onbadm h1{font-size:30px;letter-spacing:-.028em;margin:0}
+
+/* ---------- athlete profile page (/account) ---------- */
+.pcav img,.prav img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
+.pcav{overflow:hidden}
+.prwrap{max-width:1080px;margin:0 auto;padding:28px 24px 80px}
+.prhero{position:relative;background:var(--pr-card);border:1px solid var(--pr-line);border-radius:28px;overflow:hidden;box-shadow:0 18px 50px -30px rgba(16,12,40,.22)}
+.prband{height:132px;background:radial-gradient(120% 140% at 0% 0%,#B196FF 0%,#7A45F0 45%,#3B1A9E 100%);position:relative}
+.prband::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.07) 0 2px,transparent 2px 26px)}
+.prhead{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:20px;align-items:end;padding:0 28px 22px;margin-top:-56px;position:relative}
+.prav{position:relative;width:124px;height:124px;border-radius:34px;background:var(--pr-violet);border:5px solid var(--pr-card);box-shadow:0 12px 30px -12px rgba(30,16,80,.5);display:grid;place-items:center;color:#fff;font-size:40px;font-weight:700;letter-spacing:-.03em}
+.prav.busy::after{content:"";position:absolute;inset:0;border-radius:29px;background:rgba(255,255,255,.55) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='11' fill='none' stroke='%237A45F0' stroke-width='3' stroke-dasharray='50 30'%3E%3CanimateTransform attributeName='transform' type='rotate' from='0 14 14' to='360 14 14' dur='.8s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E") no-repeat center}
+.prcam{position:absolute;right:-8px;bottom:-8px;width:40px;height:40px;border-radius:50%;background:var(--pr-card);color:var(--pr-ink);display:grid;place-items:center;box-shadow:0 4px 14px rgba(16,12,40,.22);cursor:pointer;border:1px solid var(--pr-line)}
+.prcam:hover{color:var(--pr-accent)}
+.prid{padding-bottom:6px;min-width:0}
+.prid h1{margin:0;font-size:32px;line-height:1.1;letter-spacing:-.03em}
+.prid p{margin:6px 0 0;font-size:15px;color:var(--pr-mute)}
+.prid .aclnk{margin-top:8px}.prid .acerr{margin-top:10px}
+.pract{padding-bottom:8px}
+.prtiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--pr-line)}
+.prtile{padding:18px 24px;border-left:1px solid var(--pr-line)}.prtile:first-child{border-left:0}
+.prtile b{display:block;font-size:26px;letter-spacing:-.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.prtile span{font-size:13px;color:var(--pr-faint)}
+.prh2{margin:34px 4px 14px;font-size:20px;letter-spacing:-.02em}
+.prgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.prev{display:flex;flex-direction:column;gap:12px;background:var(--pr-card);border:1px solid var(--pr-line);border-radius:22px;padding:22px}
+.prev header{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.prev header span{font-size:14px;font-weight:600;color:var(--pr-mute);text-transform:uppercase;letter-spacing:.05em}
+.prev header b{font-size:30px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.prfit{display:flex;align-items:baseline;gap:8px}.prfit b{font-size:22px;color:var(--pr-accent);letter-spacing:-.02em}.prfit span{font-size:13.5px;color:var(--pr-mute)}
+.prbar{display:flex;height:10px;border-radius:10px;overflow:hidden;background:var(--pr-soft);gap:2px}
+.prbar i,.prlv i{display:block;background:#1D9E75}.prbar i.R,.prlv i.R{background:#7A45F0}.prbar i.W,.prlv i.W{background:#C8C3D9}
+.prlv{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--pr-mute)}.prlv span{display:inline-flex;align-items:center;gap:6px}.prlv i{width:8px;height:8px;border-radius:50%}
+.prnear{margin:0;padding:10px 12px;border-radius:12px;background:var(--pr-soft);font-size:13.5px;color:var(--pr-ink2)}
+.prtop{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.prtop li{display:flex;justify-content:space-between;gap:10px;font-size:14px}.prtop a{color:var(--pr-ink);font-weight:600;text-decoration:none}.prtop a:hover{color:var(--pr-accent)}.prtop small{color:var(--pr-faint);white-space:nowrap}
+.prev .onbback{margin-top:auto}
+.prmore{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end;margin-top:8px}
+.prmore .pcr{font-size:14.5px}
+.prfoot{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding-bottom:6px}
+@media (max-width:760px){.prwrap{padding:14px 12px 60px}.prband{height:96px}.prhead{grid-template-columns:1fr;gap:12px;padding:0 18px 18px;margin-top:-52px}.prav{width:104px;height:104px;font-size:34px;border-radius:30px}
+  .pract{position:absolute;right:18px;top:62px}.prid h1{font-size:26px}.prtiles{grid-template-columns:repeat(2,minmax(0,1fr))}.prtile:nth-child(3){border-left:0}.prtile:nth-child(n+3){border-top:1px solid var(--pr-line)}
+  .prtile{padding:14px 18px}.prtile b{font-size:22px}.prmore{grid-template-columns:1fr}.prgrid{grid-template-columns:1fr}}
+.prid,.pract{padding-top:62px}
+.prtile:last-child b{font-size:19px;line-height:1.55}
+@media (max-width:760px){.prid{padding-top:0}.pract{padding-top:0}}
+.prtile:last-child b{white-space:normal;overflow:visible}
