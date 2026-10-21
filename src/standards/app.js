@@ -962,15 +962,19 @@ function hsView(){
   ${rwall(rows.length,cap)}${hookRow()}
   <p class="note">${esc(sn)} is the first state. More states and years are on the way. Source: athletic.net performance lists, checked by Preferred Recruit (${esc(sn)} schools only, grades 9 to 12, legal wind). Names show first name and last initial. "club" means the mark was run for a club team outside the school season.</p></div></div>`;
   return o}
-{const hide=w=>{const t=w.querySelector(".ctip"),g=w.querySelector(".chov");if(t)t.hidden=true;if(g)g.style.display="none"};
-  const move=ev=>{const w=ev.target.closest&&ev.target.closest(".curve[data-cv]");if(!w)return;const c=CV[w.dataset.cv],svg=w.querySelector("svg");if(!c||!svg)return;
+{let ACT=null;const hide=()=>{if(!ACT)return;const t=ACT.querySelector(".ctip"),g=ACT.querySelector(".chov");if(t)t.hidden=true;if(g)g.style.display="none";ACT=null};
+  /* visible only while the pointer is over the plot: anything else (moving off, scrolling, leaving the window, lifting a finger) hides it */
+  const move=ev=>{const svg=ev.target.closest&&ev.target.closest(".curve[data-cv] svg"),w=svg&&svg.closest(".curve");if(!w){hide();return}const c=CV[w.dataset.cv];if(!c){hide();return}
+    if(ACT&&ACT!==w)hide();ACT=w;
     const b=svg.getBoundingClientRect(),sx=(ev.clientX-b.left)/b.width*c.W;let best=c.pts[0];for(const p of c.pts)if(Math.abs(p.x-sx)<Math.abs(best.x-sx))best=p;
     const g=w.querySelector(".chov"),l=g.querySelector("line"),o=g.querySelector("circle");g.style.display="";l.setAttribute("x1",best.x);l.setAttribute("x2",best.x);o.setAttribute("cx",best.x);o.setAttribute("cy",best.y);
     const t=w.querySelector(".ctip");t.hidden=false;t.innerHTML=`<b>${esc(best.m)}</b><span>${ord(best.pl)}${best.who?" · "+esc(best.who):""}</span>`;
     const wb=w.getBoundingClientRect(),px=b.left-wb.left+best.x/c.W*b.width,py=b.top-wb.top+best.y/c.H*b.height,tw=t.offsetWidth;
     t.style.left=Math.max(8,Math.min(wb.width-tw-8,px-tw/2))+"px";t.style.top=Math.max(4,py-t.offsetHeight-14)+"px"};
   document.addEventListener("pointermove",move);document.addEventListener("pointerdown",move);
-  document.addEventListener("pointerout",ev=>{const w=ev.target.closest&&ev.target.closest(".curve[data-cv]");if(w&&!w.contains(ev.relatedTarget))hide(w)})}
+  document.addEventListener("pointerout",ev=>{if(ACT&&(!ev.relatedTarget||!ACT.querySelector("svg").contains(ev.relatedTarget)))hide()});
+  document.addEventListener("pointerup",ev=>{if(ev.pointerType!=="mouse")hide()});document.addEventListener("pointercancel",hide);
+  addEventListener("scroll",hide,{passive:true});addEventListener("blur",hide);document.addEventListener("mouseleave",hide)}
 function results(){
   if(TM.i!=null)return teamPage();
   if(R.lvl==="hs")return hsView();
