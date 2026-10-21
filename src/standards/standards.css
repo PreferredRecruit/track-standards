@@ -1136,3 +1136,48 @@ button.tpa{cursor:pointer;transition:transform .15s,box-shadow .15s}button.tpa:h
 header .hd .acchd{flex:none;visibility:visible}
 @media (max-width:360px){header .hd{gap:8px;padding:0 10px}header .hd .pill{padding-left:12px;padding-right:12px;font-size:13px}}
 @media (max-width:700px) and (min-width:360px){.acchd{width:auto;height:36px;padding:0 12px;border-radius:999px;gap:6px}.acchd span{display:inline;font-size:13px}}
+
+/* ---- compare v4 (2026-10-21: "simple and visual", bigger buttons, side by side) ---- */
+.cmx .cmq{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;letter-spacing:-.02em;margin:26px 2px 12px}
+.cmx .cmq span{flex:none;width:28px;height:28px;border-radius:50%;background:var(--pr-ink);color:var(--pr-card);font-size:14px;display:flex;align-items:center;justify-content:center}
+.cmx .cmtypes button{min-height:84px;padding:16px 18px;border-width:2px}.cmx .cmtypes button b{font-size:18px}.cmx .cmtypes button small{font-size:13.5px}
+.cmx .cmrow{gap:14px;padding:18px;margin-bottom:0}
+.cmx .cmp>span{font-size:12.5px;color:var(--pr-mute)}
+.cmx .cmp select,.cmx .cmp input{height:54px;font-size:17px;border-radius:15px;font-weight:600}
+.cmgp{flex:0 0 auto}.cmgp .seg{height:54px;border-radius:15px;padding:4px}.cmgp .seg button{height:46px;padding:0 20px;font-size:16px;border-radius:12px}
+.cmab{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:14px;align-items:stretch;margin-bottom:22px}
+.cmside{position:relative;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:20px 18px 18px;border-radius:22px;border:2px solid;min-width:0}
+.cmside.ca{border-color:#7A45F0;background:color-mix(in srgb,#7A45F0 7%,var(--pr-card))}.cmside.cb{border-color:#E8590C;background:color-mix(in srgb,#E8590C 7%,var(--pr-card))}
+.cmtag{position:absolute;top:-14px;left:16px;width:30px;height:30px;border-radius:50%;color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center}
+.ca>.cmtag,.cmside.ca .cmtag{background:#7A45F0}.cmside.cb .cmtag{background:#E8590C}
+.cmside .cmp{flex:none}.cmside .cmp select{background-color:var(--pr-card)}
+.cmab .cmvs{align-self:center;font-size:15px;font-weight:800;color:var(--pr-faint);display:block}
+.cmteam{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:10px 14px;border-radius:16px;border:1.5px solid var(--pr-line);background:var(--pr-card);font:inherit;color:inherit;text-align:left;cursor:pointer}
+.cmteam .dlogo{width:42px;height:42px;border-radius:11px}.cmteam span{flex:1;min-width:0}.cmteam b{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmteam small{display:block;font-size:13px;color:var(--pr-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmteam em{font-style:normal;font-size:14px;font-weight:700;color:var(--pr-accent);padding:8px 12px;border-radius:999px;background:var(--pr-soft)}
+.cmteam:hover{border-color:var(--pr-accent)}
+.cmsearch .in{height:54px;font-size:17px}.cmsearch .drop{z-index:25}
+.cmpair{border-radius:22px;background:var(--pr-card);box-shadow:var(--pr-rim);overflow:hidden;margin-top:12px}
+.cmr{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1fr);border-top:1px solid var(--pr-line)}
+.cmr.cmh{border-top:0;background:var(--pr-soft)}
+.cmh>div{display:flex;align-items:center;gap:8px;padding:12px 14px;font-weight:750;font-size:15px;min-width:0}.cmh>div span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmh>div i{flex:none;font-style:normal;width:24px;height:24px;border-radius:50%;color:#fff;font-size:12.5px;display:flex;align-items:center;justify-content:center}
+.cmh .ca{color:#7A45F0}.cmh .ca i{background:#7A45F0}.cmh .cb{color:#E8590C}.cmh .cb i{background:#E8590C}
+.cmk{display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--pr-mute);font-variant-numeric:tabular-nums}
+.cmc{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;min-width:0;border-left:1px solid var(--pr-line)}
+.cmc.win.ca{background:color-mix(in srgb,#7A45F0 12%,transparent)}.cmc.win.cb{background:color-mix(in srgb,#E8590C 12%,transparent)}
+.cmc.win .cmm{color:inherit}.cmc.win.ca .cmm{color:#5B2FD6}.cmc.win.cb .cmm{color:#C2410C}
+.cmn{min-width:0}.cmn b{display:block;font-size:15.5px;font-weight:620;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cmn small{display:block;font-size:12.5px;color:var(--pr-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmm{font-size:19px;font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cmc.none{color:var(--pr-faint)}
+.cmx .cmmore{display:block;width:100%;height:52px;margin-top:12px;border-radius:16px;font-size:16px}
+.cmkey{display:flex;align-items:center;gap:8px;margin:10px 2px 0;font-size:13px;color:var(--pr-mute)}.cmkey .sw1{width:14px;height:14px;border-radius:4px;background:linear-gradient(90deg,color-mix(in srgb,#7A45F0 25%,#fff) 50%,color-mix(in srgb,#E8590C 25%,#fff) 50%)}
+.cmx .cmans{font-size:20px;line-height:1.35}
+@media (max-width:700px){.cmx .cmq{font-size:17px;margin:22px 2px 10px}.cmx .cmtypes button{min-height:72px;padding:13px}.cmx .cmtypes button b{font-size:16px}
+  .cmx .cmrow{padding:12px;gap:10px}.cmx .cmp{flex:1 1 45%}.cmgp{flex:1 1 100%}.cmgp .seg{display:flex}.cmgp .seg button{flex:1}
+  .cmab{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.cmab .cmvs{display:none}.cmside{padding:18px 10px 12px;border-radius:18px}
+  .cmteam{flex-direction:column;align-items:flex-start;gap:6px;padding:10px}.cmteam b{font-size:15px;white-space:normal;line-height:1.2}.cmteam em{padding:6px 10px;font-size:13px}
+  .cmr{grid-template-columns:30px minmax(0,1fr) minmax(0,1fr)}.cmc{flex-direction:column;align-items:flex-start;gap:2px;padding:10px}.cmm{font-size:17px}.cmn b{font-size:14px}.cmn small{font-size:11.5px}
+  .cmh>div{padding:10px;font-size:13.5px}.cmx .cmans{font-size:17px}}
+.cmc.ca,.cmc.cb{color:var(--pr-ink)}.cmc.win.ca .cmn b{color:#5B2FD6}.cmc.win.cb .cmn b{color:#C2410C}
