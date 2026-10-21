@@ -9,6 +9,10 @@
       "destination": "/schools/:slug.html"
     },
     {
+      "source": "/teams/:slug",
+      "destination": "/index.html"
+    },
+    {
       "source": "/onboarding",
       "destination": "/index.html"
     },

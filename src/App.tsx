@@ -9,6 +9,7 @@ const App = () => (
     <Routes>
       <Route path="/" element={<StandardsHome />} />
       <Route path="/schools/:schoolSlug" element={<StandardsHome />} />
+      <Route path="/teams/:teamSlug" element={<StandardsHome />} />
       <Route path="/onboarding" element={<StandardsHome />} />
       <Route path="/account" element={<StandardsHome />} />
       <Route path="*" element={<NotFound />} />
