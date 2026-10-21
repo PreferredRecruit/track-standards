@@ -1203,3 +1203,10 @@ header .hd .acchd{flex:none;visibility:visible}
 .curve .ct{fill:var(--pr-mute);font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums}
 .curve .cm{fill:var(--pr-ink);font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
 .curve .cd{fill:#fff;stroke:#7A45F0;stroke-width:2.5}
+/* chart hover / drag (2026-10-21) */
+.curve{position:relative}
+.curve svg{touch-action:pan-y;cursor:crosshair}
+.curve .chl{stroke:var(--pr-ink);stroke-width:1;stroke-dasharray:3 3;opacity:.45}
+.curve .chd{fill:#7A45F0;stroke:#fff;stroke-width:2.5}
+.ctip{position:absolute;z-index:3;pointer-events:none;display:flex;flex-direction:column;gap:1px;padding:8px 12px;border-radius:12px;background:var(--pr-ink);color:var(--pr-card);box-shadow:0 10px 24px -10px rgba(0,0,0,.5);white-space:nowrap;max-width:calc(100% - 16px)}
+.ctip b{font-size:16px;font-variant-numeric:tabular-nums}.ctip span{font-size:12.5px;opacity:.8;overflow:hidden;text-overflow:ellipsis}

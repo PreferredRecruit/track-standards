@@ -509,19 +509,23 @@ const mval=m=>{m=String(m).replace(/[^0-9:.]/g,"");if(!m)return null;const p=m.s
 /* results chart (Ryan 2026-10-21: no "Target/Recruit/Walk-On line" labels on D1 lists, real time values, and it follows the filters).
    Plots the marks being viewed (after state/search filters) by place, with the actual mark at fixed places (1st, 10th, 25th, 50th, last)
    and three labelled value lines. */
-function curve(rows,e){
+/* drag across the chart (Ryan 2026-10-21: "drag my mouse across it and see the individual things"): a marker follows the line and
+   shows place, mark, athlete and team for the athlete under the pointer (mouse, pen or finger). */
+const CV={};let CVN=0;
+function curve(rows,e,lab){
   const P=rows.map((r,i)=>({i,v:mval(r[4]),m:r[4]})).filter(p=>p.v!=null&&isFinite(p.v));if(P.length<5)return "";
   const hi=higher(e,rows[0][4]),vs=P.map(p=>p.v),lo=Math.min(...vs),mx=Math.max(...vs),n=P.length,W=640,H=190,pl=62,pr=18,pt=34,pb=30;
   const X=k=>pl+(k/(n-1))*(W-pl-pr),Y=v=>{const t=(v-lo)/((mx-lo)||1);return pt+(hi?1-t:t)*(H-pt-pb)};
   const fmt=v=>hi?v.toFixed(2)+"m":fmtT(v);
+  const id="cv"+(++CVN);CV[id]={W,H,pt,pb,pts:P.map((p,k)=>{const r=rows[p.i];return {x:X(k),y:Y(p.v),m:p.m,pl:+r[0]||k+1,who:lab?lab(r):""}})};
   const d=P.map((p,k)=>(k?"L":"M")+X(k).toFixed(1)+" "+Y(p.v).toFixed(1)).join(" ");
   const grid=[mx,(lo+mx)/2,lo].map(v=>`<line x1="${pl}" x2="${W-pr}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" class="cg"/><text x="${pl-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" class="ct">${esc(fmt(v))}</text>`).join("");
   const ticks=[];for(const k of [...new Set([1,10,25,50,100,n].filter(k=>k<=n))]){while(ticks.length&&X(k-1)-X(ticks[ticks.length-1]-1)<64&&ticks[ticks.length-1]!==1)ticks.pop();if(!ticks.length||X(k-1)-X(ticks[ticks.length-1]-1)>=64||k===n)ticks.push(k)}
   const dots=ticks.map(k=>{const p=P[k-1],x=X(k-1),y=Y(p.v),anc=k===n?"end":k===1?"start":"middle";
     return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" class="cd"/><text x="${x.toFixed(1)}" y="${(y-10).toFixed(1)}" text-anchor="${anc}" class="cm">${esc(p.m)}</text><text x="${x.toFixed(1)}" y="${H-8}" text-anchor="${anc}" class="ct">${k===1?"1st":ord(k)}</text>`}).join("");
-  return `<div class="curve"><div class="cl"><span>Marks by place · ${n.toLocaleString()} athletes shown</span><span>${hi?"Farther":"Faster"} at the top</span></div>
+  return `<div class="curve" data-cv="${id}"><div class="ctip" hidden></div><div class="cl"><span>Marks by place · ${n.toLocaleString()} athletes shown</span><span>${hi?"Farther":"Faster"} at the top</span></div>
   <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Marks from 1st (${esc(P[0].m)}) to ${ord(n)} (${esc(P[n-1].m)})"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7A45F0" stop-opacity=".22"/><stop offset="1" stop-color="#7A45F0" stop-opacity="0"/></linearGradient></defs>
-  ${grid}<path d="${d} L${X(n-1).toFixed(1)} ${H-pb} L${pl} ${H-pb} Z" fill="url(#cg)"/><path d="${d}" fill="none" stroke="#7A45F0" stroke-width="2.5" stroke-linejoin="round"/>${dots}</svg></div>`;
+  ${grid}<path d="${d} L${X(n-1).toFixed(1)} ${H-pb} L${pl} ${H-pb} Z" fill="url(#cg)"/><path d="${d}" fill="none" stroke="#7A45F0" stroke-width="2.5" stroke-linejoin="round"/>${dots}<g class="chov" style="display:none"><line y1="${pt-8}" y2="${H-pb}" class="chl"/><circle r="6" class="chd"/></g><rect x="${pl}" y="0" width="${W-pl-pr}" height="${H}" fill="transparent" class="chit"/></svg></div>`;
 }
 /* ---------- Compare anything (Ryan 2026-10-19: "should not be limited to D1/D2/D3 ... Men vs Women, Conference vs Conference,
    School vs School ... compare different events on the same view"). A comparison is 2-4 columns (2 on phones); each column is
@@ -958,6 +962,15 @@ function hsView(){
   ${rwall(rows.length,cap)}${hookRow()}
   <p class="note">${esc(sn)} is the first state. More states and years are on the way. Source: athletic.net performance lists, checked by Preferred Recruit (${esc(sn)} schools only, grades 9 to 12, legal wind). Names show first name and last initial. "club" means the mark was run for a club team outside the school season.</p></div></div>`;
   return o}
+{const hide=w=>{const t=w.querySelector(".ctip"),g=w.querySelector(".chov");if(t)t.hidden=true;if(g)g.style.display="none"};
+  const move=ev=>{const w=ev.target.closest&&ev.target.closest(".curve[data-cv]");if(!w)return;const c=CV[w.dataset.cv],svg=w.querySelector("svg");if(!c||!svg)return;
+    const b=svg.getBoundingClientRect(),sx=(ev.clientX-b.left)/b.width*c.W;let best=c.pts[0];for(const p of c.pts)if(Math.abs(p.x-sx)<Math.abs(best.x-sx))best=p;
+    const g=w.querySelector(".chov"),l=g.querySelector("line"),o=g.querySelector("circle");g.style.display="";l.setAttribute("x1",best.x);l.setAttribute("x2",best.x);o.setAttribute("cx",best.x);o.setAttribute("cy",best.y);
+    const t=w.querySelector(".ctip");t.hidden=false;t.innerHTML=`<b>${esc(best.m)}</b><span>${ord(best.pl)}${best.who?" · "+esc(best.who):""}</span>`;
+    const wb=w.getBoundingClientRect(),px=b.left-wb.left+best.x/c.W*b.width,py=b.top-wb.top+best.y/c.H*b.height,tw=t.offsetWidth;
+    t.style.left=Math.max(8,Math.min(wb.width-tw-8,px-tw/2))+"px";t.style.top=Math.max(4,py-t.offsetHeight-14)+"px"};
+  document.addEventListener("pointermove",move);document.addEventListener("pointerdown",move);
+  document.addEventListener("pointerout",ev=>{const w=ev.target.closest&&ev.target.closest(".curve[data-cv]");if(w&&!w.contains(ev.relatedTarget))hide(w)})}
 function results(){
   if(TM.i!=null)return teamPage();
   if(R.lvl==="hs")return hsView();
@@ -992,7 +1005,7 @@ function resultsCollege(){
   const last=all.length-1;
   o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
   <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${L.nat?"":esc(L.label)+" "}${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(listName)} · ${esc(seasonLabel(R.season))} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools (national rank shown)`:`${all.length} marks`}</span></div>
-  ${tsug}${L.nat?`<div class="stats">${[1,10,25,50].filter(k=>rows[k-1]).map(k=>stR(rows[k-1],k===1?"Best":ord(k)+" best",k===1?"lead":"")).join("")}</div>${curve(rows,R.ev)}`:""}
+  ${tsug}${L.nat?`<div class="stats">${[1,10,25,50].filter(k=>rows[k-1]).map(k=>stR(rows[k-1],k===1?"Best":ord(k)+" best",k===1?"lead":"")).join("")}</div>${curve(rows,R.ev,r=>(r[1]||D.teams[r[3]])+(r[1]?" · "+D.teams[r[3]]:""))}`:""}
   <div class="grid${L.nat?"":" raw"}"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span>${L.nat?"<span>Meet</span>":""}</div>
   ${rows.slice(0,RCAP(R.n)).map((r,i)=>{const k=all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span>${L.nat?`<span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span>`:""}</div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
   </div>${rwall(rows.length,RCAP(R.n))}${hookRow()}
