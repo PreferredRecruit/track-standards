@@ -1421,7 +1421,7 @@ function render(){
   $("app").innerHTML=onSchool?school():{standards,results,ask}[S.tab]();
   if(fid){const n=$(fid);if(n){n.value=fval;n.focus();try{n.setSelectionRange(fpos,fpos)}catch(e){}if(fid==="q")drop();else teamDrop(fid)}}  /* a data load mid-typing keeps the search box and its list */
   if(S.tab==="standards"&&!onSchool) drop();
-  moveInd(); if(S.tab==="standards"&&!onSchool) watchMore();  R.swap=false;
+  moveInd(); if(S.tab==="standards"&&!onSchool) watchMore();  R.swap=false; ACC.ensureHead&&ACC.ensureHead();
 }
 addEventListener("resize",moveInd);
 matchMedia("(min-width:761px)").addEventListener("change",()=>{if(S.tab==="results"&&R.cmp&&MULTI())render()});

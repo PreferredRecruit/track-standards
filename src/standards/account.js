@@ -109,8 +109,16 @@ export async function optIn() { if (member()) { try { await api("/rest/v1/rpc/re
 function shell() {
   if (document.getElementById("acc")) return;
   document.body.insertAdjacentHTML("beforeend", `<div class="evbg" id="accbg" hidden></div><aside class="eval acc" id="acc" role="dialog" aria-modal="true" aria-labelledby="acch" aria-hidden="true"><button class="x" data-acc="close" aria-label="Close">×</button><div class="bd" id="accb"></div></aside>`);
-  const hd = document.querySelector("header .hd .pill");
-  if (hd && !document.getElementById("acchd")) hd.insertAdjacentHTML("beforebegin", `<button type="button" class="acchd" id="acchd" data-acc="menu"></button>`);
+  ensureHead();
+}
+/* header Sign in / My account button (Ryan 2026-10-21: "make sure the sign-in button remains persistent and visible across all views").
+   The header can be redrawn (route change, React remount); every render calls this, so the button is put back and relabelled. */
+export function ensureHead() {
+  const pill = document.querySelector("header .hd .pill"); if (!pill) return;
+  let b = document.getElementById("acchd");
+  if (b && !pill.parentNode.contains(b)) { b.remove(); b = null; }
+  if (!b) { pill.insertAdjacentHTML("beforebegin", `<button type="button" class="acchd" id="acchd" data-acc="menu"></button>`); headBtn(); }
+  else if (!b.firstChild) headBtn();
 }
 function headBtn() { const b = document.getElementById("acchd"); if (!b) return; const t = SES ? (member() ? "My account" : "Finish account") : "Sign in";
   b.setAttribute("aria-label", t); b.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>${t}</span>`; }
