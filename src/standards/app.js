@@ -330,7 +330,19 @@ function hits(q){q=q.trim().toLowerCase().replace(/\s+/g," ");if(q.length<2)retu
 /* official charts from 2024 (Ryan 2026-10-19: no 2025-27 chart found -> say so professionally) */
 const oldChart=s=>!!(s.o&&!s.cv&&+s.yr&&+s.yr<=2024),OLDNOTE=s=>oldChart(s)?` These are the most recent standards the program has published (${s.yr}). Current requirements may differ, so confirm with the coaching staff.`:"";
 const star=s=>s.o?'<span class="star" title="Official standards, verified">★</span>':"";
-function drop(){const el=$("drop");if(!el)return;const h=hits(S.q.trim().toLowerCase());el.innerHTML=h.length?`<div class="drop">${h.map(([s,i])=>`<button data-school="${i}"><em>${esc(s.n)}${star(s)}</em><span>${s.d} · ${esc(s.c)}</span></button>`).join("")}</div>`:(S.q.trim().length>1?'<div class="drop"><p class="none">No college matches that. Try the full name or a short name like USC.</p></div>':"")}
+/* Team search (Ryan 2026-10-20: "the same smooth experience as the standards search"): same matcher (hits), same live dropdown that
+   updates in place while typing (no page redraw), school logo on every row, arrow keys + Enter, Escape closes. */
+const TQ={v:""};
+const tlogo=s=>{const B=brandOf(s);return B&&B.logo&&!B.hide_logo?`<img class="dlogo" src="${esc(B.logo)}" alt="" width="32" height="32" loading="lazy">`:`<i class="dlogo dini" aria-hidden="true">${esc((s.t||s.n).replace(/\(.*?\)/g,"").split(/[^A-Za-z&]+/).filter(w=>w&&!/^(of|the|at|and|in|for|university|college)$/i.test(w)).map(w=>w[0]).join("").slice(0,3).toUpperCase())}</i>`};
+function teamDrop(id){const el=$(id+"d"),inp=$(id);if(!el||!inp)return;const q=inp.value.trim();if(id==="tq")TQ.v=inp.value;const h=hits(q.toLowerCase());
+  el.innerHTML=h.length?`<div class="drop tdrop" role="listbox">${h.map(([x,i],k)=>`<button type="button" role="option" data-tpage="${i}" class="${k===0?"on":""}">${tlogo(x)}<em>${esc(x.n)}</em><span>${esc(x.d.replace("NCAA ",""))}${x.c&&x.c!==x.d?" · "+esc(x.c):""}<b>Team ›</b></span></button>`).join("")}</div>`
+    :(q.length>1?'<div class="drop"><p class="none">No team matches that. Try the full name or a short name like USC.</p></div>':"")}
+document.addEventListener("keydown",ev=>{const id=ev.target&&ev.target.id;if(!["q","tq","tq2"].includes(id))return;const box=$(id==="q"?"drop":id+"d");const bs=box?[...box.querySelectorAll("button")]:[];
+  if(ev.key==="Escape"){if(box)box.innerHTML="";return}if(!bs.length)return;let k=bs.findIndex(b=>b.classList.contains("on"));
+  if(ev.key==="ArrowDown"||ev.key==="ArrowUp"){ev.preventDefault();k=ev.key==="ArrowDown"?Math.min(bs.length-1,k+1):Math.max(0,k-1);bs.forEach((b,j)=>b.classList.toggle("on",j===k));bs[k].scrollIntoView({block:"nearest"})}
+  else if(ev.key==="Enter"){ev.preventDefault();(bs[k]||bs[0]).click()}});
+document.addEventListener("click",ev=>{if(!ev.target.closest(".search"))["drop","tqd","tq2d"].forEach(x=>{const e=$(x);if(e)e.innerHTML=""})});
+function drop(){const el=$("drop");if(!el)return;const h=hits(S.q.trim().toLowerCase());el.innerHTML=h.length?`<div class="drop">${h.map(([s,i],k)=>`<button data-school="${i}" class="${k===0?"on":""}">${tlogo(s)}<em>${esc(s.n)}${star(s)}</em><span>${s.d} · ${esc(s.c)}</span></button>`).join("")}</div>`:(S.q.trim().length>1?'<div class="drop"><p class="none">No college matches that. Try the full name or a short name like USC.</p></div>':"")}
 const disp=(s,g,e,i)=>{const o=(s.om||{})[g]||{};if(o[e])return esc(o[e][i]||"–");if(s.em)return esc(((s[g][e]||[])[i])||"–");const c=(((CT[s.ck]||{})[g]||{})[e]||[])[i];return c?(c[1]?`${esc(c[1])} <small>${esc(c[0])}</small>`:esc(c[0]))+(c[2]?'<sup class="dest" title="Too few athletes in this conference event to set it, so this is the division median">est</sup>':""):"–"};
 function ruleText(s){if(s.est)return `These are Preferred Recruit estimates for ${esc(s.n)}. Its conference has no 2026 results list on TFRRS, so they can't be set from conference marks yet.`;const [t,r,w]=RULES[s.d]||[];const c=esc(s.c);
   if(!r) return `${s.d==="NCAA D3"?"NCAA D3 programs don't give athletic scholarships, so every athlete is effectively a walk-on. ":""}Target is a top-${t} mark in the ${c} this season. Walk-On is the ${ord(w)}-best mark (or the last one listed).`;
@@ -781,7 +793,7 @@ function multiResults(){
   const hi=all.length&&higher(R.ev,all[0].mark);all.sort((a,b)=>hi?b.v-a.v:a.v-b.v);
   const sts=[...new Set(all.map(x=>teamSt(x.team)).filter(Boolean))].sort((a,b)=>(ST_NAME[a]||a).localeCompare(ST_NAME[b]||b));
   o+=ctl+`<label class="sr" for="rs">State</label><select class="in" id="rs"><option value="">All states</option>${sts.map(x=>`<option value="${x}" ${x===R.st?"selected":""}>${esc(ST_NAME[x]||x)}</option>`).join("")}</select>
-    <div class="search">${MAG}<label class="sr" for="rq">Find an athlete or team</label><input class="in" id="rq" placeholder="Search an athlete or school" value="${esc(R.q)}" autocomplete="off"></div></div></div>`;
+    <div class="search">${MAG}<label class="sr" for="rq">Find an athlete or team</label><input class="in" id="rq" placeholder="Find an athlete" value="${esc(R.q)}" autocomplete="off"></div></div></div>`;
   const q=R.q.trim().toLowerCase(),rows=all.filter(x=>(!q||(x.name||"").toLowerCase().includes(q)||(x.team||"").toLowerCase().includes(q))&&(!R.st||teamSt(x.team)===R.st));
   const show=R.an||100;
   o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
@@ -836,7 +848,7 @@ function tModel(i,sea,g){const s=SCH[i],b=tbase(s),F=b&&TDATA[b]&&!TDATA[b].none
   return {F,events,roster,best,loading:!LR}}
 function tSeasons(i,g){const s=SCH[i],b=tbase(s),F=b&&TDATA[b]&&!TDATA[b].none?TDATA[b]:null,set=new Set(seaOf(s.d));
   if(F)F.A.forEach(a=>{if(a.g===g&&a.h)a.h.forEach(h=>h[0]&&set.add(h[0]))});return [...set].filter(k=>!k.endsWith("-xc")).sort().reverse()}
-function openTeam(i,push=true){if(i==null||i<0)return;TM.i=i;TM.ath=null;TM.ev="";TM.open={};TM.tab="results";TM.g=(SCH[i].ng||[]).includes(R.g)?(R.g==="m"?"w":"m"):R.g;TM.sea="";
+function openTeam(i,push=true){if(i==null||i<0)return;TQ.v="";TM.i=i;TM.ath=null;TM.ev="";TM.open={};TM.tab="results";TM.g=(SCH[i].ng||[]).includes(R.g)?(R.g==="m"?"w":"m"):R.g;TM.sea="";
   S.tab="results";S.school=null;CC.on=false;if(push)history.pushState({},"","/teams/"+tslug(i));tMeta(i);R.swap=true;render();scrollTo(0,0);log("team",{school:SCH[i].n,division:SCH[i].d})}
 function closeTeam(){TM.i=null;TM.ath=null;history.pushState({},"","/?tab=results");R.swap=true;render();scrollTo(0,0)}
 function tMeta(i){const s=SCH[i];if(window.__prMeta)window.__prMeta(`${s.t||s.n} Track & Field Results, Roster & Athletes | Preferred Recruit`,`${s.n} track and field: every athlete's season best by event, the full roster by class, and each athlete's meet history (${s.d}${s.c!==s.d?", "+s.c:""}). From TFRRS.`,"/teams/"+tslug(i))}
@@ -853,7 +865,7 @@ function teamPage(){const i=TM.i,s=SCH[i];if((s.ng||[]).includes(TM.g))TM.g=TM.g
   const b=tbase(s);if(b&&!TDATA[b])loadTeam(b);
   const ss=tSeasons(i,g);if(!ss.includes(TM.sea))TM.sea=ss.includes(R.season)?R.season:ss[0]||R.season;
   const M=tModel(i,TM.sea,g),nm=s.n.replace(/\s*\(.*?\)\s*/g," ").trim();
-  let o=`<div class="sec branded simple tpage${R.swap?" swap":""}" style="padding-top:0;${bv}"><button class="back" data-tclose>‹ Back to results</button>
+  let o=`<div class="sec branded simple tpage${R.swap?" swap":""}" style="padding-top:0;${bv}"><div class="tptop"><button class="back" data-tclose>‹ Back to results</button><div class="search tpsearch">${MAG}<label class="sr" for="tq2">Search another team</label><input class="in" id="tq2" placeholder="Search another team" autocomplete="off" enterkeyhint="go"><div id="tq2d"></div></div></div>
   <div class="sband">${mark}<div><small>${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(ST_NAME[s.s]||s.s):""}</small><h1 class="sname">${esc(nm)} Track &amp; Field</h1>
     <span class="tplinks">${s.j?"":`<a href="/schools/${window.__prSlug(i)}" data-school="${i}">Recruiting standards ›</a>`}${s.u?`<a href="${esc(TM.g==="w"?s.u.replace("_college_m_","_college_f_"):s.u)}" target="_blank" rel="noopener nofollow">TFRRS ›</a>`:""}</span></div></div>`;
   if(TM.ath!=null&&M&&M.F)return o+tAthlete(M.F,TM.ath,s)+`</div>`;
@@ -909,10 +921,12 @@ function results(){
   if(CC.on)return compareView();
   if(MULTI())return multiResults();
   const key=curKey(), D=key&&CACHE[key]; if(key&&!D) load(key);
-  let o=`<div class="sec"><p class="lede">The top marks in college track this season. Pick a level, then an event.</p><div class="rcard">${divTabs()}`;
+  const NT=SCH.length;loadBrand();
+  let o=`<div class="sec"><div class="one tfind"><h4>Find a team</h4><p>Roster, results by event and every athlete's meet history for ${NT.toLocaleString()} college programs.</p><div class="search">${MAG}<label class="sr" for="tq">Search teams</label><input class="in" id="tq" placeholder="Try Oregon, LSU or Grand Valley" autocomplete="off" enterkeyhint="go" value="${esc(TQ.v)}"><div id="tqd"></div></div></div>
+  <p class="lede">Or browse the top marks in college track this season. Pick a level, then an event.</p><div class="rcard">${divTabs()}`;
   const ctl=(L)=>`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=x==="xc"||RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}
     ${L?(()=>{const sts=[...new Set(D.teams.map(teamSt).filter(Boolean))].sort((a,b)=>(ST_NAME[a]||a).localeCompare(ST_NAME[b]||b));return `<label class="sr" for="rs">State</label><select class="in" id="rs"><option value="">All states</option>${sts.map(x=>`<option value="${x}" ${x===R.st?"selected":""}>${esc(ST_NAME[x]||x)}</option>`).join("")}</select>`})():""}
-    <div class="search">${MAG}<label class="sr" for="rq">Find an athlete or team</label><input class="in" id="rq" placeholder="Search an athlete or school" value="${esc(R.q)}" autocomplete="off"></div></div></div>`;
+    <div class="search">${MAG}<label class="sr" for="rq">Find an athlete or team</label><input class="in" id="rq" placeholder="Find an athlete" value="${esc(R.q)}" autocomplete="off"></div></div></div>`;
   if(!D||D.err){o+=ctl(null)+(D&&D.err?`<div class="loading">These results aren't available in the preview.</div>`:skeleton());return o+`</div>`}
   const natI=Math.max(0,D.lists.findIndex(z=>z.nat)),ci=R.conf?confIdx(D,R.conf):natI,miss=R.conf&&ci<0;R.list=ci<0?natI:ci;
   const L=D.lists[R.list], E=L.g[R.g]||{}, evNames=Object.keys(E); if(!evNames.includes(R.ev)) R.ev=evNames[0];
@@ -1404,7 +1418,9 @@ function render(){
   {const pl=$("evpill");if(pl)pl.hidden=onSchool||!EV.dismissed||EV.shown&&$("eval").classList.contains("on");}
   document.querySelectorAll(".switch button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));
   $("app").className=S.tab==="results"&&!onSchool?"wide":"";
+  const ae=document.activeElement,fid=ae&&/^(tq|tq2|q)$/.test(ae.id)?ae.id:null,fpos=fid?ae.selectionStart:0,fval=fid?ae.value:"";
   $("app").innerHTML=onSchool?school():{standards,results,ask}[S.tab]();
+  if(fid){const n=$(fid);if(n){n.value=fval;n.focus();try{n.setSelectionRange(fpos,fpos)}catch(e){}if(fid==="q")drop();else teamDrop(fid)}}  /* a data load mid-typing keeps the search box and its list */
   if(S.tab==="standards"&&!onSchool) drop();
   moveInd(); if(S.tab==="standards"&&!onSchool) watchMore();  R.swap=false;
 }
@@ -1469,6 +1485,7 @@ document.addEventListener("click",ev=>{
 });
 document.addEventListener("input",ev=>{const t=ev.target;
   if(t.id==="q"){S.q=t.value;drop()}
+  if(t.id==="tq"||t.id==="tq2"){teamDrop(t.id);return}
   if(t.id==="mk") S.mark=t.value;
   if(t.id==="rq"){R.q=t.value;const pos=t.selectionStart;render();const n=$("rq");n.focus();n.setSelectionRange(pos,pos)}
   if(t.id==="ct"){CHAT.draft=t.value;t.style.height="auto";t.style.height=Math.min(t.scrollHeight,160)+"px";$("send").disabled=!t.value.trim()||CHAT.busy}});
