@@ -16,7 +16,7 @@ import { hsPages } from "./hs.mjs";
 import { parseMark, cleanRank } from "./markparse.mjs";
 import { fitTitle, fitDesc, tailsFor, levelWords, SEASON } from "./meta.mjs";
 import { schoolPages } from "./schools.mjs";
-import { topicPages } from "./topics.mjs";
+import { topicPages, EDITED } from "./topics.mjs";
 import { gapGuides } from "./gap-guides.mjs";
 import { dailyPages } from "./daily.mjs";
 const SITE = "https://trackandfieldstandards.com";
@@ -67,7 +67,7 @@ var p=a.closest(".pill,header nav")?"header":a.closest(".inl")?"hero":a.closest(
 var path=location.pathname,kind=path==="/"?"home":path.indexOf("/schools/")===0?"school":path.split("/")[1].replace(".html","")||"home";
 try{var u=new URL(a.href);u.searchParams.set("utm_content",p);a.href=u.toString()}catch(x){}
 window.va("event",{name:"Evaluation click",data:{placement:p,page:kind,path:path.slice(0,120)}});if(window.prLog)window.prLog("popup_click",{placement:p,trig:p==="seo-bar"&&window.prBarTrig?window.prBarTrig():undefined,variant:p==="seo-bar"?(document.querySelector("#sbar b").textContent.indexOf("If you want")===0?"bar-event":"bar-generic"):undefined,event:(function(){try{return JSON.parse(localStorage.getItem("prIntent")).e}catch(e){}})()})},true);</script><script defer src="/_vercel/speed-insights/script.js"></script><link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<script type="application/ld+json">${JSON.stringify(bc)}</script><script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@type": "WebPage", name: title, url, dateModified: /^\/(results|champions)\//.test(pathname) ? resultsDate(pathname) : DATES.db })}</script>${(ld || []).map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join("")}
+<script type="application/ld+json">${JSON.stringify(bc)}</script><script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@type": "WebPage", name: title, url, dateModified: EDITED[pathname] || (/^\/(results|champions)\//.test(pathname) ? resultsDate(pathname) : DATES.db) })}</script>${(ld || []).map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join("")}
 <style>:root{--ink:#0B0B0F;--ink2:#2E2E36;--mute:#4A4A52;--line:#E4E3EA;--soft:#F3F2F7;--accent:#7A45F0}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#FDFDFE,#F1F0F6);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
 a{color:var(--accent)}header{background:rgba(255,255,255,.85);border-bottom:1px solid var(--line)}header div{max-width:1000px;margin:0 auto;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
@@ -377,7 +377,7 @@ ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter((
   if (DAILY.finalize) console.log(`daily pages: ${DAILY.finalize()} inbound link blocks`);
   /* sitemap index + one sitemap per section, each URL dated by the data it shows (so Google can trust lastmod) */
   const schoolUrls = [...new Set(S.map(sl))].sort();
-  const lastmod = u => DAILY.dates.get(u) || (/^\/(results|champions)\//.test(u) ? resultsDate(u) : u === "/" || u.startsWith("/schools/") ? DATES.max : DATES.db);
+  const lastmod = u => EDITED[u] || DAILY.dates.get(u) || (/^\/(results|champions)\//.test(u) ? resultsDate(u) : u === "/" || u.startsWith("/schools/") ? DATES.max : DATES.db);
   const groups = { schools: schoolUrls, results: files.filter(u => /^\/(results|champions)\//.test(u)).sort(),
     standards: ["/", ...files.filter(u => /^\/(standards|conferences|states)\//.test(u) || u === "/explore.html").sort()] };
   groups.colleges = files.filter(u => u === "/colleges.html" || u.startsWith("/colleges/")).sort();

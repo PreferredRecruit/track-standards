@@ -14,6 +14,8 @@ const WA_RULES = "https://worldathletics.org/about-iaaf/documents/book-of-rules"
 const NFHS = "https://www.nfhs.org/";
 
 export const TOPIC_DATE = "2026-10-16";
+/* per-guide content edits: dateModified + "Updated" follow the real edit date (2026-10-21: two #7-ranked guides rebuilt with data) */
+export const EDITED = { "/guides/how-to-get-recruited-for-track-and-field.html": "2026-10-21", "/guides/how-to-email-college-track-coaches.html": "2026-10-21" };
 
 export function topicPages({ S, CT, write, page, parse, esc, slug, evPath, FIELD, SITE, gName, STATE, statePath, resultPages, DATES, QUIZ }) {
   const raw = (s, g, e) => { const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? v[0] : "")) : null; };
@@ -43,7 +45,7 @@ export function topicPages({ S, CT, write, page, parse, esc, slug, evPath, FIELD
   const done = [];
 
   function art({ p, title, desc, h1, crumb, answer, sections, faq = [], how, related = [], sources = [] }) {
-    const url = SITE + p, upd = DATES.db > TOPIC_DATE ? DATES.db : TOPIC_DATE, plain = s => s.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&");
+    const url = SITE + p, base = DATES.db > TOPIC_DATE ? DATES.db : TOPIC_DATE, upd = (EDITED[p] || "") > base ? EDITED[p] : base, plain = s => s.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&");
     const ld = [{ "@context": "https://schema.org", "@type": "Article", headline: plain(h1), description: desc, author: ORG, publisher: ORG, datePublished: TOPIC_DATE, dateModified: upd, mainEntityOfPage: url, image: SITE + "/og.jpg", about: "College track and field recruiting" }];
     if (faq.length) ld.push({ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: [["Quick answer: " + plain(h1), answer], ...faq].map(([q, a]) => ({ "@type": "Question", name: q.replace(/^Quick answer: /, ""), acceptedAnswer: { "@type": "Answer", text: plain(a) } })) });
     if (how) ld.push({ "@context": "https://schema.org", "@type": "HowTo", name: plain(h1), step: how.map(([nm, tx], i) => ({ "@type": "HowToStep", position: i + 1, name: nm, text: plain(tx) })) });
@@ -88,7 +90,7 @@ export function topicPages({ S, CT, write, page, parse, esc, slug, evPath, FIELD
   art({ p: GP("how-to-get-recruited-for-track-and-field"), crumb: "How to get recruited",
     title: "How to Get Recruited for Track and Field in High School (Step by Step)", h1: "How to get recruited for track and field in high school",
     desc: "A step-by-step plan for high school track and field athletes: know which colleges your marks fit, build a profile, email coaches, follow up and handle visits and offers.",
-    answer: "Find the colleges where your marks already fit, then email those coaches directly with your marks, video and grades, and follow up after every new PR. Coaches recruit athletes they know about, so being seen by the right programs matters as much as running fast.",
+    answer: `Find the colleges where your marks already fit, then email those coaches yourself with your marks, results link and grades, and follow up after every PR. At a typical NCAA D1 program the roster mark in the 400m is about ${m("NCAA D1", "m", "400m", 2)} for men and ${m("NCAA D1", "w", "400m", 2)} for women, and it drops at D2, D3 and NAIA.`,
     how: [["Know your fit", `Enter your event and best mark on the <a href="/">standards finder</a> to see every college where it is a Target, Recruit or Walk-On level.`],
       ["Build a simple profile", `Put your marks, meet links, graduation year, GPA and a short video in one place. See <a href="${GP("how-to-build-a-track-and-field-recruiting-profile")}">how to build a recruiting profile</a>.`],
       ["Register where required", `Athletes aiming for NCAA D1 or D2 register with the <a href="${ELIG}" rel="noopener">NCAA Eligibility Center</a>, and NAIA athletes register at <a href="${NAIA}" rel="noopener">PlayNAIA</a>.`],
@@ -96,8 +98,11 @@ export function topicPages({ S, CT, write, page, parse, esc, slug, evPath, FIELD
       ["Fill out questionnaires", `Most programs have a recruiting questionnaire on their track page. See <a href="${GP("track-and-field-recruiting-questionnaires-by-conference")}">questionnaires by conference</a>.`],
       ["Follow up after every PR", "Send a short update with the new mark and the meet results link, so each coach sees you improving."],
       ["Visit and compare offers", "Visit the schools that reply, ask about roster spots and aid, and compare the full cost, not only the athletic money."]],
-    sections: [["When should you start?", "<p>Sophomore year is a good time to build your list and profile, and junior year is when most recruiting conversations happen. Seniors still get recruited, especially in the fall and after strong indoor marks.</p>"]],
-    faq: [["Do college coaches find athletes on their own?", "Some do, through results databases and big meets, but many athletes who get recruited reached out first."],
+    sections: [["How fast do you need to be?", `<p>These are the typical marks that put an athlete on a college roster (the Walk-On level), from every program's official chart or its conference results. Scholarship interest starts higher, so check each school's page for its Target and Recruit marks.</p>${evTable("m", ["100m", "200m", "400m", "800m", "1500m", "110m Hurdles", "Long Jump", "Shot Put"], 2)}${evTable("w", ["100m", "200m", "400m", "800m", "1500m", "100m Hurdles", "Long Jump", "Shot Put"], 2)}`],
+      ["When should you start? A timeline by grade", "<ol><li><b>9th grade:</b> train, race legal (FAT) meets and keep your results correct on your state's results site.</li><li><b>10th grade:</b> build your college list and profile and fill out questionnaires. In the summer after 10th grade, NCAA D1 and D2 coaches can usually start contacting you (confirm the dates in the NCAA's current guide).</li><li><b>11th grade:</b> the busiest year. Email every program on your list, send an update after every PR and take visits.</li><li><b>12th grade:</b> decide between offers. Seniors still get recruited in the fall and after strong indoor marks, so keep emailing.</li></ol>"],
+      ["Why you can't wait for a chart", "<p>Only about 1 in 5 NCAA D1 programs publishes a current official standards chart (76 of 354 in our October 2026 count). For every other school, this site works out the levels from that conference's current results, so you can still see where you fit before you email.</p>"]],
+    faq: [["How many colleges publish track recruiting standards?", "About 1 in 5 NCAA D1 programs publishes a current official chart (76 of 354 in our October 2026 count). This site estimates the rest from each conference's current results."],
+      ["Do college coaches find athletes on their own?", "Some do, through results databases and big meets, but many athletes who get recruited reached out first."],
       ["Do I need a recruiting service?", "No. You can do every step yourself. A service saves time and gets your marks in front of more coaches faster."],
       ["Which marks count for recruiting?", `Fully automatic (FAT) times and legal-wind marks from sanctioned meets. See <a href="${GP("understanding-track-and-field-prs-for-recruiting")}">understanding PRs</a>.`]],
     related: CORE, sources: [[ELIG, "NCAA Eligibility Center"], [NAIA, "PlayNAIA eligibility"], [NCAA, "NCAA recruiting resources"]] });
@@ -188,7 +193,7 @@ export function topicPages({ S, CT, write, page, parse, esc, slug, evPath, FIELD
   art({ p: GP("how-to-email-college-track-coaches"), crumb: "Emailing coaches (templates)",
     title: "How to Email College Track Coaches (Free Templates)", h1: "How to email college track coaches",
     desc: "Free email templates for high school track and field athletes to email college coaches: the first email, the PR update and the follow-up, plus what coaches want to see.",
-    answer: "Send a short email from your own address to the event coach and the head coach, with your marks, results link, graduation year, GPA and a video link in the first few lines. Send an update after every PR and follow up if you don't hear back.",
+    answer: "Email the event coach and the head coach at every program where your best mark reaches at least that school's Walk-On level. Write it yourself from your own address, put your event, mark, graduation year and results link in the subject and first two lines, and send an update after every PR.",
     how: [["Pick the right coach", "Find the event coach (sprints, distance, jumps or throws) on the school's staff page, and copy the head coach."],
       ["Lead with marks", "Put your best marks and the results link in the first two lines. Coaches decide quickly."],
       ["Keep it short", "Five to eight lines. Add grades, test scores if you have them, and a video link."],
@@ -220,8 +225,13 @@ I wanted to follow up on my email from [date]. My best [event] is [mark], and I'
 
 Thank you,
 [Name]</div>`],
+      ["Which coaches to email", `<p>Type your event and best mark into the <a href="/">standards finder</a>. Every school where your mark is at the Walk-On level or better belongs on your list, across D1, D2, D3 and NAIA. The longer the list, the more replies you get.</p>`],
+      ["What a coach checks first", "<ol><li><b>The subject line:</b> grad year, event and mark tell them in one glance whether to open it.</li><li><b>Your mark against their standard:</b> they compare it with what their athletes run.</li><li><b>Proof:</b> a results link they can click to confirm the mark.</li><li><b>Grades:</b> GPA decides academic aid and admission, which matters as much as the athletic money.</li></ol>"],
+      ["Emails that get ignored", "<ul><li>The same email sent to many schools in one BCC.</li><li>No marks, or marks without a results link.</li><li>A parent writing as if they were the athlete.</li><li>\"I love your program\" with no real reason that fits that school.</li><li>A long life story before the marks.</li></ul>"],
+      ["When to email, by grade", "<p>You can email any coach at any age. Freshmen and sophomores introduce themselves and send PR updates. Juniors email their whole list in the fall and again after indoor and outdoor PRs. Seniors email right away, because coaches are still filling their class.</p>"],
       ["Finding the right coach", `<p>Every school page on this site links to that program's roster and staff or athletics pages. See <a href="${GP("college-track-coach-contact-list-by-state")}">college track programs by state</a>.</p>`]],
-    faq: [["Should my parent email the coach?", "Coaches prefer to hear from the athlete. A parent can help write it and stay copied."],
+    faq: [["When is the best time to email college track coaches?", "Any time is allowed, but the fall of junior year and right after every new PR are the moments coaches pay most attention."],
+      ["Should my parent email the coach?", "Coaches prefer to hear from the athlete. A parent can help write it and stay copied."],
       ["How many coaches should I email?", "Every program where your marks fit, across divisions, so your list should be long."],
       ["What if a coach never replies?", "Follow up after your next PR. No reply usually means the timing or the fit isn't there yet, not a final no."]],
     related: [[GP("how-to-get-recruited-for-track-and-field"), "How to get recruited"], [GP("how-to-build-a-track-and-field-recruiting-profile"), "Build a recruiting profile"], ...CORE.slice(0, 1)],
