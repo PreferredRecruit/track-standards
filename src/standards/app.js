@@ -506,17 +506,22 @@ function prefetch(){const go=()=>RIDX.filter(x=>x.year+"-"+x.season===R.season&&
 const yr=y=>({"FR-1":"Freshman","SO-2":"Sophomore","JR-3":"Junior","SR-4":"Senior"}[y]||y||"");
 const higher=(e,m)=>/m$/.test(m)||/thlon/i.test(e);
 const mval=m=>{m=String(m).replace(/[^0-9:.]/g,"");if(!m)return null;const p=m.split(":").map(Number);return p.length===2?p[0]*60+p[1]:p.length===3?p[0]*3600+p[1]*60+p[2]:+p[0]};
+/* results chart (Ryan 2026-10-21: no "Target/Recruit/Walk-On line" labels on D1 lists, real time values, and it follows the filters).
+   Plots the marks being viewed (after state/search filters) by place, with the actual mark at fixed places (1st, 10th, 25th, 50th, last)
+   and three labelled value lines. */
 function curve(rows,e){
-  const v=rows.map(r=>mval(r[4])).filter(x=>x!=null&&isFinite(x)); if(v.length<5) return "";
-  const hi=higher(e,rows[0][4]), lo=Math.min(...v), mx=Math.max(...v), W=600, H=96, pad=6;
-  const y=x=>{const t=(x-lo)/((mx-lo)||1);return pad+(hi?1-t:t)*(H-pad*2)};
-  const pts=v.map((x,i)=>[i/(v.length-1)*W,y(x)]), d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
-  const tick=[0,Math.min(9,v.length-1),v.length-1];
-  const ok=rows.filter(r=>{const m=mval(r[4]);return m!=null&&isFinite(m)}),L=ok[ok.length-1];
-  return `<div class="curve"><div class="cl"><span>How marks drop off across ${v.length.toLocaleString()} athletes</span><span>#1 <b>${esc(ok[0][4])}</b> · #${v.length.toLocaleString()} <b>${esc(L[4])}</b></span></div>
-  <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7A45F0" stop-opacity=".28"/><stop offset="1" stop-color="#7A45F0" stop-opacity="0"/></linearGradient></defs>
-  <path d="${d} L${W} ${H} L0 ${H} Z" fill="url(#cg)"/><path d="${d}" fill="none" stroke="#7A45F0" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
-  ${tick.map(i=>`<circle cx="${pts[i][0]}" cy="${pts[i][1]}" r="4" fill="#fff" stroke="#7A45F0" stroke-width="2.5" vector-effect="non-scaling-stroke"/>`).join("")}</svg></div>`;
+  const P=rows.map((r,i)=>({i,v:mval(r[4]),m:r[4]})).filter(p=>p.v!=null&&isFinite(p.v));if(P.length<5)return "";
+  const hi=higher(e,rows[0][4]),vs=P.map(p=>p.v),lo=Math.min(...vs),mx=Math.max(...vs),n=P.length,W=640,H=190,pl=62,pr=18,pt=34,pb=30;
+  const X=k=>pl+(k/(n-1))*(W-pl-pr),Y=v=>{const t=(v-lo)/((mx-lo)||1);return pt+(hi?1-t:t)*(H-pt-pb)};
+  const fmt=v=>hi?v.toFixed(2)+"m":fmtT(v);
+  const d=P.map((p,k)=>(k?"L":"M")+X(k).toFixed(1)+" "+Y(p.v).toFixed(1)).join(" ");
+  const grid=[mx,(lo+mx)/2,lo].map(v=>`<line x1="${pl}" x2="${W-pr}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" class="cg"/><text x="${pl-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" class="ct">${esc(fmt(v))}</text>`).join("");
+  const ticks=[];for(const k of [...new Set([1,10,25,50,100,n].filter(k=>k<=n))]){while(ticks.length&&X(k-1)-X(ticks[ticks.length-1]-1)<64&&ticks[ticks.length-1]!==1)ticks.pop();if(!ticks.length||X(k-1)-X(ticks[ticks.length-1]-1)>=64||k===n)ticks.push(k)}
+  const dots=ticks.map(k=>{const p=P[k-1],x=X(k-1),y=Y(p.v),anc=k===n?"end":k===1?"start":"middle";
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" class="cd"/><text x="${x.toFixed(1)}" y="${(y-10).toFixed(1)}" text-anchor="${anc}" class="cm">${esc(p.m)}</text><text x="${x.toFixed(1)}" y="${H-8}" text-anchor="${anc}" class="ct">${k===1?"1st":ord(k)}</text>`}).join("");
+  return `<div class="curve"><div class="cl"><span>Marks by place · ${n.toLocaleString()} athletes shown</span><span>${hi?"Farther":"Faster"} at the top</span></div>
+  <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Marks from 1st (${esc(P[0].m)}) to ${ord(n)} (${esc(P[n-1].m)})"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7A45F0" stop-opacity=".22"/><stop offset="1" stop-color="#7A45F0" stop-opacity="0"/></linearGradient></defs>
+  ${grid}<path d="${d} L${X(n-1).toFixed(1)} ${H-pb} L${pl} ${H-pb} Z" fill="url(#cg)"/><path d="${d}" fill="none" stroke="#7A45F0" stroke-width="2.5" stroke-linejoin="round"/>${dots}</svg></div>`;
 }
 /* ---------- Compare anything (Ryan 2026-10-19: "should not be limited to D1/D2/D3 ... Men vs Women, Conference vs Conference,
    School vs School ... compare different events on the same view"). A comparison is 2-4 columns (2 on phones); each column is
@@ -926,9 +931,39 @@ function confBar(D,L,miss){const cs=confsOf(D),oth=D.lists.filter(z=>!z.nat&&!cs
   return `<div class="rconf"><label class="cmp"><span>Conference</span><select id="rconf"><option value="" ${L.nat?"selected":""}>All of ${esc(R.div)}</option>${cs.length?`<optgroup label="Conferences">${cs.map(op).join("")}</optgroup>`:""}${oth.length?`<optgroup label="Other lists">${oth.map(op).join("")}</optgroup>`:""}</select></label>
     ${L.nat?"":`<button type="button" class="rcbtn" data-rconfx>Show all of ${esc(R.div)}</button><button type="button" class="rcbtn rcgo" data-rconfcmp>Compare years in ${esc(L.label)}</button>`}</div>
     ${miss?`<p class="ccmsg">${esc(R.conf)} has no list for ${esc(seasonLabel(R.season))}, so this is all of ${esc(R.div)}.</p>`:""}`}
+/* High school results (Ryan 2026-10-21: "just do highschool tab it can switch to dont make ui more complicated than it needs to be").
+   One College | High School switch on Results. High school = plain ranked list per state: rank, athlete (first name + last initial),
+   grade, school, mark. Data: /data/hs/<year>-<ST>.json (scripts/hs/build_hs.py, checked athletic.net lists). */
+const HS={idx:null,data:{},st:"",y:"",g:"m",ev:""};
+const lvlSw=()=>`<div class="lvlrow"><div class="seg lvlsw" role="group" aria-label="College or high school"><button type="button" data-lvl="college" aria-pressed="${R.lvl!=="hs"}">College</button><button type="button" data-lvl="hs" aria-pressed="${R.lvl==="hs"}">High School</button></div></div>`;
+const withSw=h=>h.replace('<div class="sec">','<div class="sec">'+lvlSw());
+function hsView(){
+  if(HS.idx===null){HS.idx=false;fetch("/data/hs/index.json").then(r=>r.json()).then(j=>{HS.idx=j.lists||{};render()}).catch(()=>{HS.idx={};render()})}
+  let o=`<div class="sec">${lvlSw()}<p class="lede">The top high school marks in each state. Pick a state, then an event.</p><div class="rcard">`;
+  if(!HS.idx)return o+`</div>${skeleton()}</div>`;
+  const ys=Object.keys(HS.idx).sort().reverse();if(!ys.includes(HS.y))HS.y=ys[0]||"";const sts=(HS.idx[HS.y]||[]).slice().sort((a,b)=>(ST_NAME[a]||a).localeCompare(ST_NAME[b]||b));if(!sts.includes(HS.st))HS.st=sts[0]||"";
+  const key=HS.y+"-"+HS.st,D=HS.data[key];
+  if(D===undefined){HS.data[key]=null;fetch(`/data/hs/${key}.json`).then(r=>r.json()).then(j=>{HS.data[key]=j;render()}).catch(()=>{HS.data[key]={err:1};render()})}
+  const G=D&&D.g?D.g[HS.g]||{}:{},evs=Object.keys(G);if(evs.length&&!evs.includes(HS.ev))HS.ev=evs[0];
+  o+=`<div class="rctl hsctl"><label class="sr" for="hsst">State</label><select class="in" id="hsst">${sts.map(x=>`<option value="${x}" ${x===HS.st?"selected":""}>${esc(ST_NAME[x]||x)}</option>`).join("")}</select>
+    <label class="sr" for="hsy">Year</label><select class="in" id="hsy">${ys.map(y=>`<option ${y===HS.y?"selected":""}>${y}</option>`).join("")}</select>
+    <div class="seg" role="group" aria-label="Boys or girls"><button type="button" data-hsg="m" aria-pressed="${HS.g==="m"}">Boys</button><button type="button" data-hsg="w" aria-pressed="${HS.g==="w"}">Girls</button></div></div></div>`;
+  if(!D)return o+skeleton()+`</div>`;
+  if(D.err)return o+`<p class="ccmsg">This list isn't available right now.</p></div>`;
+  const rows=G[HS.ev]||[],cap=RCAP(rows.length),sn=ST_NAME[HS.st]||HS.st,gn=HS.g==="m"?"Boys'":"Girls'";
+  o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evs.map(e=>`<button data-hsev="${esc(e)}" aria-pressed="${e===HS.ev}">${esc(e)}</button>`).join("")}</div></div>
+  <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${esc(sn)} ${gn} ${esc(HS.ev)}</h3><span>${esc(HS.y)} outdoor · top ${rows.length} high school marks</span></div>
+  <div class="grid raw hsg"><div class="gh"><span>Rank</span><span>Athlete</span><span>School</span><span style="text-align:right">Mark</span></div>
+  ${rows.slice(0,cap).map(r=>`<div class="gr ${r[0]<=3?"p"+r[0]:""}"><span class="rkb">${r[0]}</span><span class="gnmw"><span class="gnm"><b>${esc(r[1])}</b></span><small>${r[2]?"Grade "+esc(r[2]):""}</small></span><span class="gtm" style="cursor:default">${esc(r[3])}${(r[6]||[]).map(t=>`<em class="hstag">${esc(t)}</em>`).join("")}</span><span class="gmk">${esc(r[4])}${r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span></div>`).join("")||`<div class="gr"><span></span><span class="gnm"><small>No marks.</small></span></div>`}</div>
+  ${rwall(rows.length,cap)}${hookRow()}
+  <p class="note">${esc(sn)} is the first state. More states and years are on the way. Source: athletic.net performance lists, checked by Preferred Recruit (${esc(sn)} schools only, grades 9 to 12, legal wind). Names show first name and last initial. "club" means the mark was run for a club team outside the school season.</p></div></div>`;
+  return o}
 function results(){
   if(TM.i!=null)return teamPage();
+  if(R.lvl==="hs")return hsView();
   if(CC.on)return compareView();
+  return withSw(resultsCollege())}
+function resultsCollege(){
   if(MULTI())return multiResults();
   const key=curKey(), D=key&&CACHE[key]; if(key&&!D) load(key);
   loadBrand();
@@ -952,11 +987,12 @@ function results(){
   }
   const all=E[R.ev]||[], q=R.q.trim().toLowerCase(), rows=all.filter(r=>(!q||r[1].toLowerCase().includes(q)||D.teams[r[3]].toLowerCase().includes(q))&&(!R.st||teamSt(D.teams[r[3]])===R.st));
   const tsug="";
+  const stR=(r,lab,cls="")=>r?`<div class="st ${cls}"><small>${lab}</small><b>${esc(r[4])}</b><span>${esc(r[1]||D.teams[r[3]])}${r[1]?" · "+esc(D.teams[r[3]]):""}</span></div>`:"";
   const st=(i,lab,cls="")=>{const r=all[i];return r?`<div class="st ${cls}"><small>${lab}</small><b>${esc(r[4])}</b><span>${esc(r[1]||D.teams[r[3]])}${r[1]?" · "+esc(D.teams[r[3]]):""}</span></div>`:""};
   const last=all.length-1;
   o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
   <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${L.nat?"":esc(L.label)+" "}${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(listName)} · ${esc(seasonLabel(R.season))} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools (national rank shown)`:`${all.length} marks`}</span></div>
-  ${tsug}${L.nat?`<div class="stats">${st(0,"#1 · "+R.div,"lead")}${(R.season.endsWith("xc")?[]:RULES[R.div]||[]).map((k,j)=>k&&all[k-1]?st(k-1,`${ord(k)} · ${["Target","Recruit","Walk-On"][j]} line`):"").join("")}</div>${curve(all,R.ev)}`:""}
+  ${tsug}${L.nat?`<div class="stats">${[1,10,25,50].filter(k=>rows[k-1]).map(k=>stR(rows[k-1],k===1?"Best":ord(k)+" best",k===1?"lead":"")).join("")}</div>${curve(rows,R.ev)}`:""}
   <div class="grid${L.nat?"":" raw"}"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span>${L.nat?"<span>Meet</span>":""}</div>
   ${rows.slice(0,RCAP(R.n)).map((r,i)=>{const k=all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span>${L.nat?`<span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span>`:""}</div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
   </div>${rwall(rows.length,RCAP(R.n))}${hookRow()}
@@ -1459,6 +1495,9 @@ document.addEventListener("click",ev=>{
     else if(R.sel.includes(d.rdiv)){if(R.sel.length>1)R.sel=R.sel.filter(x=>x!==d.rdiv)}else R.sel=[...R.sel,d.rdiv];
     syncSel();R.list=0;R.conf="";R.team=null;R.ath=null;R.an=100;R.cn=25;R.swap=true;render();return}
   if("rcmp" in d){if(CC.on){CC.on=false;ccSync()}else{CC.on=true;CM.g=R.g;CM.div=R.div;CM.sea=R.season;if(R.ev)CM.e=R.ev;CM.a=CM.b="";CM.conf="";if(R.sel&&R.sel.length>1)CM.t="div";else if(R.conf){CM.t="years";CM.conf=R.conf}}R.swap=true;render();return}
+  if(d.lvl){R.lvl=d.lvl==="hs"?"hs":"college";CC.on=false;R.swap=true;render();log("results_event",{detail:"level-"+R.lvl});return}
+  if(d.hsg){HS.g=d.hsg;R.swap=true;render();return}
+  if(d.hsev!==undefined){HS.ev=d.hsev;R.swap=true;render();return}
   if("rconfx" in d){R.conf="";R.team=null;R.ath=null;R.swap=true;render();return}
   if("rconfcmp" in d){CC.on=true;CM.t="years";CM.g=R.g;CM.div=R.div;CM.conf=R.conf||"";CM.sea=R.season;if(R.ev)CM.e=R.ev;CM.a=R.season;CM.b="";CM.open=false;R.swap=true;render();scrollTo({top:0});log("results_event",{detail:"conf-years"});return}
   if(d.cmt){CM.t=d.cmt;CM.a=CM.b="";CM.open=false;R.swap=true;render();log("results_event",{detail:"compare-"+d.cmt});return}
@@ -1514,6 +1553,8 @@ document.addEventListener("change",ev=>{const t=ev.target;
   if(t.id==="rs"){R.st=t.value;R.swap=true;render();if(R.st)log("results_state",{state:ST_NAME[R.st]||R.st,division:R.div,event:evLabel(R.ev||""),g:R.g})}
   if(["fd","fc","ft","fs"].includes(t.id)){S[{fd:"div",fc:"conf",ft:"f",fs:"st"}[t.id]]=t.value;S.n=24;render()}
   if(t.id==="ry"){const y=t.value,s=R.season.split("-")[1],f=RIDX.find(r=>r.year===y);R.season=RIDX.some(r=>r.year===y&&r.season===s)?y+"-"+s:f.year+"-"+f.season;R.list=0;R.team=null;R.ath=null;R.swap=true;render()}
+  if(t.id==="hsst"){HS.st=t.value;HS.ev="";R.swap=true;render();return}
+  if(t.id==="hsy"){HS.y=t.value;R.swap=true;render();return}
   if(t.id==="tsea"){TM.sea=t.value;TM.ath=null;TM.open={};R.swap=true;render();return}
   if(t.id==="rconf"){R.conf=t.value;R.team=null;R.ath=null;R.swap=true;render();if(t.value)log("results_event",{detail:"conf-list",list:t.value})}});
 document.addEventListener("submit",ev=>{ev.preventDefault();

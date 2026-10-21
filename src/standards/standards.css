@@ -1191,3 +1191,15 @@ header .hd .acchd{flex:none;visibility:visible}
 .onbhb{height:46px;padding:0 20px;border-radius:999px;border:1.5px solid var(--pr-line);background:var(--pr-card);font:inherit;font-size:15.5px;font-weight:700;color:var(--pr-ink);cursor:pointer;box-shadow:var(--pr-rim)}
 .onbhb:hover{border-color:var(--pr-violet,#7A45F0);color:var(--pr-violet,#7A45F0)}
 @media (max-width:760px){.onbnav{display:none}.onbhome{margin:14px auto -6px}}
+/* College | High School switch + high school lists (2026-10-21) */
+.lvlrow{display:flex;justify-content:center;margin:0 0 14px}
+.lvlsw{padding:5px;border-radius:16px}.lvlsw button{height:44px;padding:0 26px;font-size:16px;font-weight:700;border-radius:12px}
+.hsctl{grid-template-columns:minmax(0,1.2fr) minmax(0,.7fr) auto}
+.hstag{font-style:normal;margin-left:8px;font-size:11.5px;font-weight:650;padding:2px 8px;border-radius:999px;background:var(--pr-soft);color:var(--pr-mute);white-space:nowrap}
+@media (max-width:760px){.lvlsw{width:100%;display:flex}.lvlsw button{flex:1}.hsctl{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.hsctl .seg{grid-column:1/-1;display:flex}.hsctl .seg button{flex:1}}
+/* results chart v2 (2026-10-21) */
+.curve svg{height:auto;margin:8px 0 2px}
+.curve .cg{stroke:var(--pr-line);stroke-width:1}
+.curve .ct{fill:var(--pr-mute);font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.curve .cm{fill:var(--pr-ink);font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.curve .cd{fill:#fff;stroke:#7A45F0;stroke-width:2.5}
