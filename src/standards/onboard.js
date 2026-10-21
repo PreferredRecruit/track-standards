@@ -76,6 +76,7 @@ function layer() {
   if (!el) { document.body.insertAdjacentHTML("beforeend", `<div class="onb" id="onb" role="main"></div>`); el = document.getElementById("onb"); }
   return el;
 }
+const NAV = `<nav class="onbnav" aria-label="Site"><button type="button" data-onb="home" data-v="standards">Standards</button><button type="button" data-onb="home" data-v="results">Results</button><button type="button" data-onb="home" data-v="ask">Recruiting AI</button></nav>`;
 const top = (right = "") => `<header class="onbtop"><button type="button" class="onblogo" data-onb="exit" aria-label="Back to Track Standards"><span class="onbtile">PR</span><span><b>Preferred Recruit</b><small>Track Standards</small></span></button><div class="onbtr">${right}${core.ses() && !core.member() ? `<button type="button" class="onbx" data-onb="out">Sign out</button>` : `<button type="button" class="onbx" data-onb="exit">Back to standards</button>`}</div></header>`;
 const opt = (name, list, cur, cls = "") => `<div class="onbopt ${cls}" role="radiogroup">${list.map(([v, l, d]) => `<button type="button" role="radio" data-set="${name}" data-v="${v}" aria-checked="${String(cur) === String(v)}"><b>${esc(l)}</b>${d ? `<small>${esc(d)}</small>` : ""}</button>`).join("")}</div>`;
 const inp = (id, label, val, attrs = "", help = "", obj = "s") => `<label class="onbf" for="f-${id}"><span>${label}</span><input class="in" id="f-${id}" data-in="${id}" data-obj="${obj}" value="${esc(val)}" ${attrs}>${help ? `<small>${help}</small>` : ""}</label>`;
@@ -137,8 +138,8 @@ function wizard() {
 
 /* ---------- profile pages ---------- */
 function doneView() {
-  return top(IS_ADMIN ? `<button type="button" class="onbtab${TAB === "admin" ? " on" : ""}" data-onb="tab" data-v="admin">Accounts</button><button type="button" class="onbtab${TAB === "profile" ? " on" : ""}" data-onb="tab" data-v="profile">My profile</button>` : "") +
-    (TAB === "admin" && IS_ADMIN ? adminView() : D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`);
+  return top(NAV + (IS_ADMIN ? `<button type="button" class="onbtab${TAB === "admin" ? " on" : ""}" data-onb="tab" data-v="admin">Accounts</button><button type="button" class="onbtab${TAB === "profile" ? " on" : ""}" data-onb="tab" data-v="profile">My profile</button>` : "")) +
+    `<div class="onbhome"><button type="button" class="onbhb" data-onb="home" data-v="standards">‹ Back to the site</button></div>` + (TAB === "admin" && IS_ADMIN ? adminView() : D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`);
 }
 function simpleDone() {
   return `<div class="onbwrap one"><section class="onbmain onbdone"><span class="onbok">${svg(CHECK, 26)}</span><h1>Your account is ready</h1>
@@ -377,7 +378,8 @@ export function bind() {
       if (k === "gender") sub.marks = sub.marks.map(m => [core.cfg().events(v).includes(m[0]) ? m[0] : "", m[1]]);
       return render(); }
     const b = e.target.closest("[data-onb]"); if (!b) return; const a = b.dataset.onb; e.preventDefault();
-    if (a === "exit") { if (core.ses() && !core.member()) { MSG = "Finish your profile to use the site. It takes about two minutes."; return render(); } history.pushState({}, "", "/"); hide(); core.changed(); return; }
+    if (a === "home") { const v = b.dataset.v || "standards"; history.pushState({}, "", v === "results" ? "/?tab=results" : "/"); hide(); core.changed(); window.__prStandardsRoute && window.__prStandardsRoute(null); const t = document.querySelector(`.switch [data-tab="${v}"]`) || document.querySelector(`[data-tab="${v}"]:not(.logo)`); if (t) t.click(); window.scrollTo(0, 0); return; }
+    if (a === "exit") { if (core.ses() && !core.member() && location.pathname !== "/account") { MSG = "Finish your profile to use the site. It takes about two minutes."; return render(); } history.pushState({}, "", "/"); hide(); core.changed(); return; }
     if (a === "back") { read(); MSG = ""; STEP = Math.max(0, STEP - 1); return render(); }
     if (a === "cancel") { MODE = "onboard"; STEP = 0; MSG = ""; history.replaceState({}, "", "/account"); loadAll().then(render); return; }
     if (a === "add") { read(); S().marks.push(["", ""]); return render(); }

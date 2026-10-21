@@ -1181,3 +1181,13 @@ header .hd .acchd{flex:none;visibility:visible}
   .cmr{grid-template-columns:30px minmax(0,1fr) minmax(0,1fr)}.cmc{flex-direction:column;align-items:flex-start;gap:2px;padding:10px}.cmm{font-size:17px}.cmn b{font-size:14px}.cmn small{font-size:11.5px}
   .cmh>div{padding:10px;font-size:13.5px}.cmx .cmans{font-size:17px}}
 .cmc.ca,.cmc.cb{color:var(--pr-ink)}.cmc.win.ca .cmn b{color:#5B2FD6}.cmc.win.cb .cmn b{color:#C2410C}
+/* account pages: always a way back to the site (2026-10-21) */
+.onbtop .onblogo,.onbtop .onbtr{visibility:visible;opacity:1}
+.onbnav{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--pr-soft)}
+.onbnav button{height:36px;padding:0 16px;border:0;border-radius:999px;background:none;font:inherit;font-size:14px;font-weight:650;color:var(--pr-ink2,#3a3a44);cursor:pointer}
+.onbnav button:hover{background:var(--pr-card);color:var(--pr-ink);box-shadow:var(--pr-rim)}
+.onbtr{display:flex;align-items:center;gap:10px}
+.onbhome{max-width:1080px;margin:22px auto -14px;padding:0 24px}
+.onbhb{height:46px;padding:0 20px;border-radius:999px;border:1.5px solid var(--pr-line);background:var(--pr-card);font:inherit;font-size:15.5px;font-weight:700;color:var(--pr-ink);cursor:pointer;box-shadow:var(--pr-rim)}
+.onbhb:hover{border-color:var(--pr-violet,#7A45F0);color:var(--pr-violet,#7A45F0)}
+@media (max-width:760px){.onbnav{display:none}.onbhome{margin:14px auto -6px}}
