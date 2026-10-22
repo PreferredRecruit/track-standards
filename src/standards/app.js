@@ -1028,7 +1028,7 @@ function resultsCollege(){
   }
   const all=E[R.ev]||[], q=R.q.trim().toLowerCase(), rows=all.filter(r=>(!q||r[1].toLowerCase().includes(q)||D.teams[r[3]].toLowerCase().includes(q))&&(!R.st||teamSt(D.teams[r[3]])===R.st));
   const tsug="";
-  const stR=(r,lab,cls="")=>r?`<div class="st ${cls}"><small>${lab}</small><b>${esc(r[4])}</b><span>${esc(r[1]||D.teams[r[3]])}${r[1]?" · "+esc(D.teams[r[3]]):""}</span></div>`:"";
+  const stR=(r,lab,cls="")=>r?`<div class="st ${cls}"><small>${lab}</small><b>${esc(r[4])}</b><span>${esc(r[1]||D.teams[r[3]])}</span>${r[1]?`<span class="stt">${esc(D.teams[r[3]])}</span>`:""}</div>`:"";   /* name and team on their own lines so neither gets cut (Ryan 2026-10-22) */
   const st=(i,lab,cls="")=>{const r=all[i];return r?`<div class="st ${cls}"><small>${lab}</small><b>${esc(r[4])}</b><span>${esc(r[1]||D.teams[r[3]])}${r[1]?" · "+esc(D.teams[r[3]]):""}</span></div>`:""};
   const last=all.length-1;
   o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>

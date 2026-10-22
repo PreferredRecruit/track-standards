@@ -1235,3 +1235,10 @@ header .hd .acchd{flex:none;visibility:visible}
 .dreamchip button{width:24px;height:24px;border-radius:50%;border:0;background:var(--pr-card);color:var(--pr-mute);cursor:pointer;font-size:15px;line-height:1}
 .admst{grid-template-columns:repeat(7,minmax(0,1fr))}.admtier.tA\+{background:#6852F2;color:#fff}.admdream{color:#6852F2!important;font-weight:650}
 @media (max-width:900px){.admst{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* stat cards: athlete + team lines wrap instead of being cut off; the three cards share one row on phones (Ryan 2026-10-22) */
+.st span{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;line-height:1.3}
+.st span.stt{margin-top:1px;font-size:12.5px;opacity:.85}
+.curve .cl{flex-wrap:wrap;row-gap:2px}
+@media (max-width:760px){
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.st.lead{grid-column:1/-1}
+  .st{padding:12px 12px 13px;border-radius:18px}.st b{font-size:22px}.st.lead b{font-size:32px}.st small{font-size:11.5px}.st span{font-size:12px}.st span.stt{font-size:11.5px}}
