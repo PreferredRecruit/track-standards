@@ -4,8 +4,8 @@ For the ACC, Big Ten, Big 12 and SEC, from each conference's 2026 outdoor TFRRS 
   Target  = the middle mark of the 8th-10th best (9th)
   Recruit = the middle mark of the 15th-25th best (20th; a list shorter than 25 uses the middle of 15th-last)
   Walk-On = none
-Official school charts keep their own marks: the lowest published tier moves into Recruit when the chart has no Recruit, and any
-Walk-On tier is dropped. Usage: python3 scripts/data/power4_levels.py [--write]   (dry run by default)"""
+Schools with an official posted chart keep it exactly as published, Walk-On tier included (Ryan 2026-10-22); this only sets the
+conference levels used by every other Power 4 school. Usage: python3 scripts/data/power4_levels.py [--write]   (dry run by default)"""
 import json, sys, pathlib, statistics
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 P = ROOT / "public/data/db.json"
@@ -40,13 +40,6 @@ def main(write):
                 if n: out.append((c, g, e, [x and x[0] for x in (o or [])], [x and x[0] for x in n])); old[e] = n
             ct[g] = old
         ct["rule"] = "p4"
-    for s in d["schools"]:
-        if s.get("ck", "").split("|")[-1] in P4 and s["ck"].startswith("NCAA D1") and s.get("om"):
-            for g, evs in s["om"].items():
-                for e, t in evs.items():
-                    t = list(t) + [""] * (3 - len(t))
-                    if not t[1] and t[2]: t[1] = t[2]
-                    t[2] = ""; evs[e] = t
     d["rules"]["P4"] = [9, 20, None]
     for c, g, e, o, n in out: print(f"{c:8} {g} {e:20} {str(o):40} -> {n}")
     if write: json.dump(d, open(P, "w"), ensure_ascii=False, separators=(",", ":")); print("written", P)
