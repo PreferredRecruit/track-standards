@@ -945,22 +945,22 @@ function hsView(){
   if(HS.idx===null){HS.idx=false;fetch("/data/hs/index.json").then(r=>r.json()).then(j=>{HS.idx=j.lists||{};render()}).catch(()=>{HS.idx={};render()})}
   let o=`<div class="sec">${lvlSw()}<p class="lede">The top high school marks in each state. Pick a state, then an event.</p><div class="rcard">`;
   if(!HS.idx)return o+`</div>${skeleton()}</div>`;
-  const ys=Object.keys(HS.idx).sort().reverse();if(!ys.includes(HS.y))HS.y=ys[0]||"";const sts=(HS.idx[HS.y]||[]).slice().sort((a,b)=>(ST_NAME[a]||a).localeCompare(ST_NAME[b]||b));if(!sts.includes(HS.st))HS.st=sts[0]||"";
+  const ys=Object.keys(HS.idx).sort().reverse();if(!ys.includes(HS.y))HS.y=ys[0]||"";const stLab=x=>x==="US27"?"National · Class of 2027":(ST_NAME[x]||x);const sts=(HS.idx[HS.y]||[]).slice().sort((a,b)=>(a==="US27"?-1:b==="US27"?1:stLab(a).localeCompare(stLab(b))));if(!sts.includes(HS.st))HS.st=sts[0]||"";
   const key=HS.y+"-"+HS.st,D=HS.data[key];
   if(D===undefined){HS.data[key]=null;fetch(`/data/hs/${key}.json`).then(r=>r.json()).then(j=>{HS.data[key]=j;render()}).catch(()=>{HS.data[key]={err:1};render()})}
   const G=D&&D.g?D.g[HS.g]||{}:{},evs=Object.keys(G);if(evs.length&&!evs.includes(HS.ev))HS.ev=evs[0];
-  o+=`<div class="rctl hsctl"><label class="sr" for="hsst">State</label><select class="in" id="hsst">${sts.map(x=>`<option value="${x}" ${x===HS.st?"selected":""}>${esc(ST_NAME[x]||x)}</option>`).join("")}</select>
+  o+=`<div class="rctl hsctl"><label class="sr" for="hsst">State</label><select class="in" id="hsst">${sts.map(x=>`<option value="${x}" ${x===HS.st?"selected":""}>${esc(stLab(x))}</option>`).join("")}</select>
     <label class="sr" for="hsy">Year</label><select class="in" id="hsy">${ys.map(y=>`<option ${y===HS.y?"selected":""}>${y}</option>`).join("")}</select>
     <div class="seg" role="group" aria-label="Boys or girls"><button type="button" data-hsg="m" aria-pressed="${HS.g==="m"}">Boys</button><button type="button" data-hsg="w" aria-pressed="${HS.g==="w"}">Girls</button></div></div></div>`;
   if(!D)return o+skeleton()+`</div>`;
   if(D.err)return o+`<p class="ccmsg">This list isn't available right now.</p></div>`;
-  const rows=G[HS.ev]||[],cap=RCAP(rows.length),sn=ST_NAME[HS.st]||HS.st,gn=HS.g==="m"?"Boys'":"Girls'";
+  const rows=G[HS.ev]||[],cap=RCAP(rows.length),sn=stLab(HS.st),gn=HS.g==="m"?"Boys'":"Girls'";
   o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evs.map(e=>`<button data-hsev="${esc(e)}" aria-pressed="${e===HS.ev}">${esc(e)}</button>`).join("")}</div></div>
-  <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${esc(sn)} ${gn} ${esc(HS.ev)}</h3><span>${esc(HS.y)} outdoor · top ${rows.length} high school marks</span></div>
+  <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${esc(sn)} ${gn} ${esc(HS.ev)}</h3><span>${esc(D.label||HS.y+" outdoor")} · ${rows.length} marks</span></div>
   <div class="grid raw hsg"><div class="gh"><span>Rank</span><span>Athlete</span><span>School</span><span style="text-align:right">Mark</span></div>
   ${rows.slice(0,cap).map(r=>`<div class="gr ${r[0]<=3?"p"+r[0]:""}"><span class="rkb">${r[0]}</span><span class="gnmw"><span class="gnm"><b>${esc(r[1])}</b></span><small>${r[2]?"Grade "+esc(r[2]):""}</small></span><span class="gtm" style="cursor:default">${esc(r[3])}${(r[6]||[]).map(t=>`<em class="hstag">${esc(t)}</em>`).join("")}</span><span class="gmk">${esc(r[4])}${r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span></div>`).join("")||`<div class="gr"><span></span><span class="gnm"><small>No marks.</small></span></div>`}</div>
   ${rwall(rows.length,cap)}${hookRow()}
-  <p class="note">${esc(sn)} is the first state. More states and years are on the way. Source: athletic.net performance lists, checked by Preferred Recruit (${esc(sn)} schools only, grades 9 to 12, legal wind). Names show first name and last initial. "club" means the mark was run for a club team outside the school season.</p></div></div>`;
+  <p class="note">${D.note?esc(D.note)+"</p><p class=\"note\" hidden>":""}${esc(sn)} is the first state. More states and years are on the way. Source: athletic.net performance lists, checked by Preferred Recruit (${esc(sn)} schools only, grades 9 to 12, legal wind). Names show first name and last initial. "club" means the mark was run for a club team outside the school season.</p></div></div>`;
   return o}
 {let ACT=null;const hide=()=>{if(!ACT)return;const t=ACT.querySelector(".ctip"),g=ACT.querySelector(".chov");if(t)t.hidden=true;if(g)g.style.display="none";ACT=null};
   /* visible only while the pointer is over the plot: anything else (moving off, scrolling, leaving the window, lifting a finger) hides it */
