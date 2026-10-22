@@ -7,7 +7,7 @@
    PARSE_SRC is the same function as text, pasted into the app (src/standards/app.js) and the high school pages' inline script. */
 export const PARSE_SRC = String.raw`function parseMark(str,e){
   if(str==null)return null;var s=String(str).toLowerCase().replace(/[’′‘]/g,"'").replace(/[”″“]/g,'"').replace(/\*/g,"").replace(/''/g,'"').replace(/\[/g,"(").replace(/\]/g,")").replace(/\bmet(?:er|re)s?\b/g,"m").trim();if(!s)return null;
-  var FR={"High Jump":[1,2.5],"Pole Vault":[1.5,6.3],"Long Jump":[3,9],"Triple Jump":[7,18.5],"Shot Put":[5,23.5],"Discus":[12,72],"Hammer":[12,82],"Javelin":[12,76],"Weight Throw":[8,26]};
+  var FR={"High Jump":[1,2.5],"Pole Vault":[1.5,6.3],"Long Jump":[3,9],"Triple Jump":[7,18.5],"Shot Put":[5,24],"Discus":[12,75],"Hammer":[12,87],"Javelin":[12,99],"Weight Throw":[8,26]};
   var TR={"100m":[9.5,16],"200m":[19,35],"400m":[43,90],"800m":[100,200],"1500m":[205,420],"1600m":[225,450],"Mile":[225,450],"3000m":[450,900],"3200m":[480,960],"5000m":[760,1500],"10000m":[1600,3200],"100m Hurdles":[12,22],"110m Hurdles":[12.8,24],"300m Hurdles":[34,60],"400m Hurdles":[46,95],"3000m Steeplechase":[490,1000]};
   var inR=function(v,r){return v!=null&&isFinite(v)&&(!r||(v>=r[0]&&v<=r[1]))};
   if(FR[e]){var r=FR[e],m;

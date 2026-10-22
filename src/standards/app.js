@@ -66,7 +66,7 @@ const MAG='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="c
 /* mark reader: same function as scripts/seo/markparse.mjs (keep in sync) */
 function parseMark(str,e){
   if(str==null)return null;var s=String(str).toLowerCase().replace(/[’′‘]/g,"'").replace(/[”″“]/g,'"').replace(/\*/g,"").replace(/''/g,'"').replace(/\[/g,"(").replace(/\]/g,")").replace(/\bmet(?:er|re)s?\b/g,"m").trim();if(!s)return null;
-  var FR={"High Jump":[1,2.5],"Pole Vault":[1.5,6.3],"Long Jump":[3,9],"Triple Jump":[7,18.5],"Shot Put":[5,23.5],"Discus":[12,72],"Hammer":[12,82],"Javelin":[12,76],"Weight Throw":[8,26]};
+  var FR={"High Jump":[1,2.5],"Pole Vault":[1.5,6.3],"Long Jump":[3,9],"Triple Jump":[7,18.5],"Shot Put":[5,24],"Discus":[12,75],"Hammer":[12,87],"Javelin":[12,99],"Weight Throw":[8,26]};
   var TR={"100m":[9.5,16],"200m":[19,35],"400m":[43,90],"800m":[100,200],"1500m":[205,420],"1600m":[225,450],"Mile":[225,450],"3000m":[450,900],"3200m":[480,960],"5000m":[760,1500],"10000m":[1600,3200],"100m Hurdles":[12,22],"110m Hurdles":[12.8,24],"300m Hurdles":[34,60],"400m Hurdles":[46,95],"3000m Steeplechase":[490,1000]};
   var inR=function(v,r){return v!=null&&isFinite(v)&&(!r||(v>=r[0]&&v<=r[1]))};
   if(FR[e]){var r=FR[e],m;
@@ -759,15 +759,18 @@ function skeleton(){return `<div class="grid">${Array.from({length:8},(_,i)=>`<d
 let ATH=null,ATHL=null;
 function loadAth(){if(ATH||ATHL)return;ATHL=fetch("/data/athletes.json").then(r=>r.json()).then(d=>{ATH=d}).catch(()=>{ATH={}}).then(()=>{if(R.ath)render()})}
 const evName=e=>/^\d[\d,]*$/.test(e)?e+"m":e;
+/* athlete profile pages (scripts/seo/athletes.mjs): TFRRS id -> /athletes/<slug>.html, linked from the in-app athlete view */
+let AIX=null;function loadAix(){if(AIX!==null)return;AIX={};fetch("/data/athletes-index.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(j=>{AIX=j||{};if(R.ath)render()})}
 function athView(D){
-  const a=R.ath, P=ATH&&ATH[a.path]; if(a.path&&!ATH) loadAth();
+  const a=R.ath, P=ATH&&ATH[a.path]; if(a.path&&!ATH) loadAth(); loadAix();
+  const prof=a.path&&AIX&&AIX[String(a.path).split("/")[0]];
   const marks=[];D.lists.forEach(l=>{Object.entries(l.g[R.g]||{}).forEach(([e,rows])=>rows.forEach(r=>{if(r[1]===a.name&&r[3]===a.team)marks.push({e,l,r})}))});
   const best={};marks.forEach(m=>{const c=best[m.e];if(!c||(m.l.nat&&!c.l.nat)||(m.l.nat===c.l.nat&&m.r[0]<c.r[0]))best[m.e]=m});
   const init=a.name.split(" ").map(w=>w[0]).slice(0,2).join("");
   const tlink=a.path?`https://tf.tfrrs.org/athletes/${a.path}`:"";
   const pbs=P&&P.bests&&P.bests.length?P.bests.map(([e,m,w])=>[evName(e),m,w]):Object.values(best).map(m=>[evLabel(m.e),m.r[4],m.r[5]]);
   let o=`<div class="rbody${R.swap?" swap":""}"><p style="margin:14px 2px 0"><button class="lnk" data-athback>‹ Back to rankings</button></p>
-  <div class="ahead"><div class="avt" aria-hidden="true">${esc(init)}</div><div><h3>${esc(a.name)}</h3><p>${esc([yr(a.yr),D.teams[a.team],DIVINFO[R.div]||R.div].filter(Boolean).join(" · "))}</p></div>${tlink?`<a href="${tlink}" target="_blank" rel="noopener">Full profile on TFRRS ›</a>`:""}</div>
+  <div class="ahead"><div class="avt" aria-hidden="true">${esc(init)}</div><div><h3>${esc(a.name)}</h3><p>${esc([yr(a.yr),D.teams[a.team],DIVINFO[R.div]||R.div].filter(Boolean).join(" · "))}</p></div>${prof?`<a href="${prof}">Full profile ›</a>`:tlink?`<a href="${tlink}" target="_blank" rel="noopener">Full profile on TFRRS ›</a>`:""}</div>
   <div class="ah2">College bests</div><div class="pbs">${pbs.map(([e,m,w])=>`<div><small>${esc(e)}</small><b>${esc(m)}</b>${w?`<span>wind ${esc(w)}</span>`:""}</div>`).join("")}</div>
   <div class="ah2">${esc(seasonLabel(R.season))} rankings</div><div class="grid"><div class="gh agr"><span>Event</span><span class="al">List</span><span>Rank</span><span style="text-align:right">Mark</span></div>
   ${Object.values(best).map(m=>`<div class="gr agr"><span style="font-weight:600">${esc(evLabel(m.e))}</span><span class="al" style="color:var(--pr-mute);font-size:14px">${esc(m.l.nat?(DIVINFO[R.div]||R.div)+" national":m.l.label)}</span><span class="rkb" style="width:auto;padding:0 10px;border-radius:999px">#${esc(m.r[0])}</span><span class="gmk">${esc(m.r[4])}${m.r[8]?`<small>${esc(m.r[8])}</small>`:""}</span></div>`).join("")}</div>
