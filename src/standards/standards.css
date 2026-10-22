@@ -1229,3 +1229,9 @@ header .hd .acchd{flex:none;visibility:visible}
 .admnudge{margin-top:6px;height:30px;padding:0 10px;border-radius:999px;border:1.5px solid var(--pr-line);background:var(--pr-card);font:inherit;font-size:12px;font-weight:700;color:var(--pr-accent);cursor:pointer;white-space:nowrap}
 .admnudge:hover{border-color:var(--pr-accent)}.admsent{color:#16A34A!important;font-weight:700}
 @media (max-width:900px){.admst{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* dream schools on the profile form (2026-10-21) */
+.dreamchips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 8px}.dreamchips:empty{display:none}
+.dreamchip{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 6px 0 14px;border-radius:999px;background:color-mix(in srgb,var(--pr-violet,#7A45F0) 12%,var(--pr-card));color:var(--pr-ink);font-size:14px;font-weight:650}
+.dreamchip button{width:24px;height:24px;border-radius:50%;border:0;background:var(--pr-card);color:var(--pr-mute);cursor:pointer;font-size:15px;line-height:1}
+.admst{grid-template-columns:repeat(7,minmax(0,1fr))}.admtier.tA\+{background:#6852F2;color:#fff}.admdream{color:#6852F2!important;font-weight:650}
+@media (max-width:900px){.admst{grid-template-columns:repeat(4,minmax(0,1fr))}}

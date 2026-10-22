@@ -41,13 +41,13 @@ function stepsFor() {
 const STEP_NAME = { who: "Start", you: "About you", about: "Athlete", events: "Events and PRs", gpa: "GPA" };
 
 const fmtM = (e, v) => core.cfg().fmt ? core.cfg().fmt(e, +v) : String(v);
-function blankKid() { const I = core.cfg().intent || {}; return { id: null, first: "", last: "", gender: I.g || "", year: I.gr ? SENIOR + (12 - +I.gr) : "", state: D && D.state || "", school: "", gpa: "", marks: [[I.e || "", I.m || ""]], avatar: null, banner: null, theme: null }; }
+function blankKid() { const I = core.cfg().intent || {}; return { id: null, first: "", last: "", gender: I.g || "", year: I.gr ? SENIOR + (12 - +I.gr) : "", state: D && D.state || "", school: "", gpa: "", email: "", phone: "", dream: [], marks: [[I.e || "", I.m || ""]], avatar: null, banner: null, theme: null }; }
 function selfDraft() {
   const p = core.profile() || {}, I = core.cfg().intent || {};
   return { id: null, role: p.role || "", first: p.first_name || "", last: p.last_name || "", phone: p.phone || "", sms: !!p.sms_consent,
     gender: p.gender || I.g || "", year: p.grad_year || (I.gr ? SENIOR + (12 - +I.gr) : ""), state: p.state || "", school: p.high_school || "", gpa: p.gpa != null ? String(p.gpa) : "",
     pname: p.parent_name || "", pemail: p.parent_email || "", pphone: p.parent_phone || "", age: !!p.age_13_plus,
-    avatar: p.avatar_path || null, banner: p.banner_path || null, theme: p.banner_theme || null, marks: [] };
+    avatar: p.avatar_path || null, banner: p.banner_path || null, theme: p.banner_theme || null, marks: [], dream: p.dream_schools || [] };
 }
 async function loadAll() {
   const uid = core.ses().user.id;
@@ -58,7 +58,7 @@ async function loadAll() {
   if (par()) {
     const ks = await core.api("/rest/v1/athletes?select=*&parent_id=eq." + uid + "&order=created_at").catch(() => []) || [];
     KIDS = ks.map(a => ({ id: a.id, first: a.first_name || "", last: a.last_name || "", gender: a.gender || "", year: a.grad_year || "", state: a.state || "", school: a.high_school || "",
-      gpa: a.gpa != null ? String(a.gpa) : "", avatar: a.avatar_path, banner: a.banner_path, theme: a.banner_theme, marks: ms.filter(m => m.athlete_id === a.id).map(m => [m.event, fmtM(m.event, m.mark)]) }));
+      gpa: a.gpa != null ? String(a.gpa) : "", email: a.email || "", phone: a.phone || "", dream: a.dream_schools || [], avatar: a.avatar_path, banner: a.banner_path, theme: a.banner_theme, marks: ms.filter(m => m.athlete_id === a.id).map(m => [m.event, fmtM(m.event, m.mark)]) }));
   }
   if (!D.marks.length) { const I = core.cfg().intent || {}; D.marks = [[I.e || "", I.m || ""]]; }
   SEL = Math.min(SEL, Math.max(0, KIDS.length - 1));
@@ -108,7 +108,10 @@ function stepBody(k) {
     <div class="onbg2">${inp("first", p ? "Athlete's first name" : "First name", sub.first, 'autocomplete="off" maxlength="60"')}${inp("last", p ? "Athlete's last name" : "Last name", sub.last, 'autocomplete="off" maxlength="60"')}</div>
     <div class="onbq"><span>Class</span>${opt("year", [...CLASSES.map(([y, l]) => [y, l, "Class of " + y]), [SENIOR - 1, "In college", "Already there"]], sub.year, "c5")}</div>
     <div class="onbq"><span>Team</span>${opt("gender", [["m", "Men"], ["w", "Women"]], sub.gender, "c2")}</div>
-    <div class="onbg2"><label class="onbf" for="f-state"><span>State</span><select class="in" id="f-state" data-in="state" data-obj="s"><option value="">Choose a state</option>${Object.entries(core.ST).map(([k2, v]) => `<option value="${k2}" ${k2 === sub.state ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label>${inp("school", "High school (optional)", sub.school, 'maxlength="100" autocomplete="off"')}</div>`;
+    <div class="onbg2"><label class="onbf" for="f-state"><span>State</span><select class="in" id="f-state" data-in="state" data-obj="s"><option value="">Choose a state</option>${Object.entries(core.ST).map(([k2, v]) => `<option value="${k2}" ${k2 === sub.state ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label>${inp("school", "High school (optional)", sub.school, 'maxlength="100" autocomplete="off"')}</div>
+    ${p ? `<div class="onbsec"><b>${esc(sub.first || "Your athlete")}'s contact</b><small>Optional. Only Preferred Recruit sees it.</small><div class="onbg2">${inp("email", "Athlete's email", sub.email, 'type="email" maxlength="120" autocomplete="off"')}${inp("phone", "Athlete's phone", sub.phone, 'type="tel" maxlength="30" autocomplete="off"')}</div></div>`
+      : `<div class="onbsec"><b>Your phone</b><small>Optional. Only Preferred Recruit sees it.</small><div class="onbg2">${inp("phone", "Your phone", sub.phone, 'type="tel" maxlength="30" autocomplete="tel"')}<span></span></div></div>`}
+    ${dreamBox(sub, p)}`;
   if (k === "events") {
     const evs = sub.gender ? (C.events ? C.events(sub.gender) : []) : [];
     const sel = (cur, i) => `<select class="in" data-mk="e" data-i="${i}" aria-label="Event"><option value="">Choose an event</option>${evs.map(e => `<option value="${esc(e)}" ${e === cur ? "selected" : ""}>${evName(e, sub.gender)}</option>`).join("")}</select>`;
@@ -121,6 +124,13 @@ function stepBody(k) {
     ${D.role === "athlete" ? `<div class="onbsec"><b>A parent's contact</b><small>Optional. Recruiting help goes to a parent, never to an athlete directly.</small>
       ${inp("pname", "Parent's name", D.pname, 'maxlength="80"', "", "d")}<div class="onbg2">${inp("pemail", "Parent's email", D.pemail, 'type="email" maxlength="120"', "", "d")}${inp("pphone", "Parent's phone", D.pphone, 'type="tel" maxlength="30"', "", "d")}</div></div>${AGE()}` : ""}`;
   return "";
+}
+/* dream schools: up to 3, picked from the schools on this site (the pop-ups speak to them) */
+function dreamBox(sub, p) {
+  const list = (core.cfg().schools ? core.cfg().schools() : []), d = sub.dream || [];
+  return `<div class="onbsec onbdream"><b>${p ? esc(sub.first || "Your athlete") + "'s dream schools" : "Your dream schools"}</b><small>Optional, up to 3. We'll show how close ${p ? "they are" : "you are"} to each one.</small>
+    <div class="dreamchips">${d.map((n, i) => `<span class="dreamchip">${esc(n)}<button type="button" data-onb="dreamx" data-i="${i}" aria-label="Remove ${esc(n)}">×</button></span>`).join("")}</div>
+    ${d.length < 3 ? `<input class="in" data-dream list="dreaml" placeholder="Type a school, like Harvard or Oregon" autocomplete="off"><datalist id="dreaml">${list.map(n => `<option value="${esc(n)}">`).join("")}</datalist>` : ""}</div>`;
 }
 function lastLabel() {
   if (MODE === "addkid") return "Add athlete";
@@ -194,8 +204,8 @@ function flat() {
   for (const r of ADM.rows) {
     const contact = [r.email, r.phone && (r.phone + (r.sms_consent ? " (texts OK)" : "")), r.parent_name && "Parent: " + r.parent_name, r.parent_email, r.parent_phone].filter(Boolean);
     const acct = [r.first_name, r.last_name].filter(Boolean).join(" ");
-    if (r.role === "parent" && (r.athletes || []).length) for (const a of r.athletes) out.push({ name: [a.first_name, a.last_name].filter(Boolean).join(" "), sub: "Parent: " + (acct || r.email), role: "parent's athlete", gender: a.gender, state: a.state, school: a.high_school, year: a.grad_year, gpa: a.gpa, tier: a.tier, done: !!r.finished_at, confirmed: r.confirmed, marks: a.marks || [], contact, email: r.email, opted: r.opted_in_at, created: r.created_at, confirmed: r.confirmed });
-    else out.push({ name: acct, sub: r.role || "no profile yet", role: r.role, gender: r.gender, state: r.state, school: r.high_school, year: r.grad_year, gpa: r.gpa, tier: r.tier, done: !!r.finished_at, marks: r.marks || [], contact, email: r.email, opted: r.opted_in_at, created: r.created_at, confirmed: r.confirmed });
+    if (r.role === "parent" && (r.athletes || []).length) for (const a of r.athletes) out.push({ dream: a.dream_schools || [], kidContact: [a.email, a.phone && "Athlete: " + a.phone].filter(Boolean), name: [a.first_name, a.last_name].filter(Boolean).join(" "), sub: "Parent: " + (acct || r.email), role: "parent's athlete", gender: a.gender, state: a.state, school: a.high_school, year: a.grad_year, gpa: a.gpa, tier: a.tier, done: !!r.finished_at, confirmed: r.confirmed, marks: a.marks || [], contact, email: r.email, opted: r.opted_in_at, created: r.created_at, confirmed: r.confirmed });
+    else out.push({ dream: r.dream_schools || [], kidContact: [], name: acct, sub: r.role || "no profile yet", role: r.role, gender: r.gender, state: r.state, school: r.high_school, year: r.grad_year, gpa: r.gpa, tier: r.tier, done: !!r.finished_at, marks: r.marks || [], contact, email: r.email, opted: r.opted_in_at, created: r.created_at, confirmed: r.confirmed });
   }
   for (const x of out) {
     const athleteRow = x.role === "athlete" || x.role === "parent's athlete";
@@ -221,17 +231,17 @@ function adminView() {
   const all = flat(), q = ADMQ.trim().toLowerCase();
   const rows = all.filter(r => (!ADMT || r.group === ADMT) && (!q || [r.email, r.name, r.sub, r.state, r.school].join(" ").toLowerCase().includes(q)));
   const n = k => all.filter(r => r.group === k).length;
-  const GROUPS = [["A", "Tier A"], ["B", "Tier B"], ["C", "Tier C"], ["open", "Profile not finished"], ["unconf", "Email not confirmed"]];
+  const GROUPS = [["A+", "Tier A+"], ["A", "Tier A"], ["B", "Tier B"], ["C", "Tier C"], ["open", "Profile not finished"], ["unconf", "Email not confirmed"]];
   const mk = r => r.marks.map(m => `${evName(m.e, r.gender)} ${esc(fmtM(m.e, m.m))}`).join("<br>");
-  return `<div class="onbadm"><div class="admhd"><h1>Accounts</h1><p class="onbsub">One row per athlete (a parent's kids each get their own row). Tier A = GPA 3.0+ and a mark that meets the Preferred Recruit outreach standard. "Profile" shows what each person has filled in. Reminder buttons send that one person a fresh confirm email or a one-click link back to their profile form.</p></div>
+  return `<div class="onbadm"><div class="admhd"><h1>Accounts</h1><p class="onbsub">One row per athlete (a parent's kids each get their own row). Tier A+ = Tier A plus a full profile and a parent contact. Tier A = GPA 3.0+ and a mark that meets the Preferred Recruit outreach standard. "Profile" shows what each person has filled in. Reminder buttons send that one person a fresh confirm email or a one-click link back to their profile form.</p></div>
     <div class="admst">${[["", "All", all.length], ...GROUPS.map(([k, l]) => [k, l, n(k)])].map(([k, l, c]) => `<button type="button" data-onb="adt" data-v="${k}" class="${ADMT === k ? "on" : ""}"><b>${c}</b><span>${l}</span></button>`).join("")}</div>
     <div class="admbar"><input class="in" id="admq" data-in="admq" placeholder="Search name, email, school or state" value="${esc(ADMQ)}"><button type="button" class="onbback" data-onb="csv">Download CSV</button><button type="button" class="onbback" data-onb="reload">Refresh</button></div>
     <div class="admtbl"><table><thead><tr><th>Athlete</th><th>Tier</th><th>Profile</th><th>Class</th><th>Events and PRs</th><th>GPA</th><th>High school</th><th>Contact</th><th>Joined</th></tr></thead><tbody>
-    ${(ADMT ? [[ADMT, ""]] : GROUPS).map(([gk, gl]) => { const G = rows.filter(r => r.group === gk); if (!G.length) return ""; return (gl ? `<tr class="admgrp"><td colspan="9">${esc(gl)} <span>${G.length}</span></td></tr>` : "") + G.map(r => `<tr><td><b>${esc(r.name || "–")}</b><small>${esc(r.sub)}${r.state ? " · " + esc(r.state) : ""}${r.gender ? " · " + (r.gender === "m" ? "Men" : "Women") : ""}</small></td>
+    ${(ADMT ? [[ADMT, ""]] : GROUPS).map(([gk, gl]) => { const G = rows.filter(r => r.group === gk); if (!G.length) return ""; return (gl ? `<tr class="admgrp"><td colspan="9">${esc(gl)} <span>${G.length}</span></td></tr>` : "") + G.map(r => `<tr><td><b>${esc(r.name || "–")}</b>${r.dream.length ? `<small class="admdream">Dream: ${esc(r.dream.join(", "))}</small>` : ""}<small>${esc(r.sub)}${r.state ? " · " + esc(r.state) : ""}${r.gender ? " · " + (r.gender === "m" ? "Men" : "Women") : ""}</small></td>
       <td><span class="admtier t${esc(r.done ? r.tier : "x")}">${r.done ? esc(r.tier) : "–"}</span>${r.opted ? '<small>clicked evaluation</small>' : ""}</td>
       <td class="admprof"><b class="${r.have === r.need ? "full" : ""}">${r.have}/${r.need}</b><small>${r.have === r.need ? "Complete" : "Missing: " + esc(r.missing.join(", "))}</small>${!r.confirmed || !r.done ? (SENT[r.email] ? `<small class="admsent">Reminder ${esc(SENT[r.email])}</small>` : `<button type="button" class="admnudge" data-onb="nudge" data-e="${esc(r.email)}" data-k="${r.confirmed ? "profile" : "confirm"}">${r.confirmed ? "Send finish-profile link" : "Resend confirm email"}</button>`) : ""}</td>
       <td>${r.year ? esc(r.year) : "–"}</td><td>${mk(r) || "–"}</td><td>${r.gpa != null ? esc(r.gpa) : "–"}</td><td>${esc(r.school || "–")}</td>
-      <td class="admc">${r.contact.map(esc).join("<br>")}${r.confirmed ? "" : '<small class="admwarn">email not confirmed</small>'}</td><td>${esc(new Date(r.created).toLocaleDateString())}</td></tr>`).join(""); }).join("") || `<tr><td colspan="9">No accounts match.</td></tr>`}
+      <td class="admc">${[...r.kidContact, ...r.contact].map(esc).join("<br>")}${r.confirmed ? "" : '<small class="admwarn">email not confirmed</small>'}</td><td>${esc(new Date(r.created).toLocaleDateString())}</td></tr>`).join(""); }).join("") || `<tr><td colspan="9">No accounts match.</td></tr>`}
     </tbody></table></div></div>`;
 }
 async function loadAdmin() { try { const r = await core.api("/rest/v1/rpc/admin_accounts", { method: "POST", body: {} }); ADM = { rows: r || [] }; } catch (e) { ADM = { err: "Couldn't load accounts. " + e.message }; } render(); }
@@ -302,6 +312,8 @@ function check(k) {
     if (!D.age) return "Please confirm you're 13 or older.";
   }
   if (k === "about") {
+    if (sub.phone && sub.phone.replace(/\D/g, "").length < 10) return par() ? "Check your athlete's phone number, or leave it blank." : "Check your phone number, or leave it blank.";
+    if (sub.email && !/^\S+@\S+\.\S+$/.test(sub.email)) return "Check your athlete's email, or leave it blank.";
     if (!sub.first) return par() ? "Add your athlete's first name." : "Add your first name.";
   }
   if (k === "events") {
@@ -325,12 +337,13 @@ async function save(k, finish) {
   if (k === "who") Object.assign(prof, {});
   if (k === "you") Object.assign(prof, { first_name: D.first || null, last_name: D.last || null, phone: kid ? (D.phone || null) : null, sms_consent: kid && !!D.phone && !!D.sms, age_13_plus: true });
   const yr = sub.year ? +sub.year : null, gpa = sub.gpa !== "" && sub.gpa != null && !isNaN(+sub.gpa) ? Math.round(+sub.gpa * 100) / 100 : null;
-  if (k === "about" && !kid) Object.assign(prof, { first_name: sub.first, last_name: sub.last || null, grad_year: yr, grade: yr ? gradeOf(yr) : null, gender: sub.gender || null, state: sub.state || null, high_school: sub.school || null });
+  if (k === "about" && !kid) Object.assign(prof, { first_name: sub.first, last_name: sub.last || null, grad_year: yr, grade: yr ? gradeOf(yr) : null, gender: sub.gender || null, state: sub.state || null, high_school: sub.school || null, phone: sub.phone || null, dream_schools: (sub.dream || []).length ? sub.dream : null });
   if (k === "gpa" && !kid) Object.assign(prof, { gpa, parent_name: D.pname || null, parent_email: D.pemail || null, parent_phone: D.pphone || null, age_13_plus: true });
   if (finish && (MODE === "onboard" || MODE === "edit")) prof.finished_at = (core.profile() && core.profile().finished_at) || new Date().toISOString();
   if (!kidOnly()) await core.api("/rest/v1/profiles?on_conflict=id", { method: "POST", body: prof, prefer: "resolution=merge-duplicates,return=minimal" });
   if (kid && (k === "about" || k === "gpa")) {
-    const row = k === "about" ? { first_name: sub.first, last_name: sub.last || null, grad_year: yr, grade: yr ? gradeOf(yr) : null, gender: sub.gender || null, state: sub.state || null, high_school: sub.school || null } : { gpa };
+    const row = k === "about" ? { first_name: sub.first, last_name: sub.last || null, grad_year: yr, grade: yr ? gradeOf(yr) : null, gender: sub.gender || null, state: sub.state || null, high_school: sub.school || null,
+      email: sub.email || null, phone: sub.phone || null, dream_schools: (sub.dream || []).length ? sub.dream : null } : { gpa };
     if (sub.id) await core.api("/rest/v1/athletes?id=eq." + sub.id, { method: "PATCH", body: row, prefer: "return=minimal" });
     else { const r = await core.api("/rest/v1/athletes", { method: "POST", body: Object.assign({ parent_id: uid }, row), prefer: "return=representation" }); sub.id = r[0].id; }
   }
@@ -410,6 +423,7 @@ export function bind() {
     if (a === "tab") { TAB = b.dataset.v; return render(); }
     if (a === "pick") { const f = el.querySelector(`[data-onb-file="${b.dataset.v || "avatar"}"]`); return f && f.click(); }
     if (a === "school") { const slug = b.dataset.slug; history.pushState({}, "", "/schools/" + slug); hide(); core.changed(); window.__prStandardsRoute && window.__prStandardsRoute(slug); return; }
+    if (a === "dreamx") { read(); const sub = S(); sub.dream = (sub.dream || []).filter((x, i) => i !== +b.dataset.i); return render(); }
     if (a === "adt") { ADMT = b.dataset.v; return render(); }
     if (a === "nudge") { if (!SENT[b.dataset.e]) sendNudge(b.dataset.e, b.dataset.k); return; }
     if (a === "reload") { ADM = null; return render(); }
@@ -421,6 +435,8 @@ export function bind() {
   document.addEventListener("input", e => {
     const el = document.getElementById("onb"); if (!el || el.hidden || !el.contains(e.target)) return;
     if (e.target.dataset.in === "admq") { ADMQ = e.target.value; return render(); }
+    if (e.target.matches("[data-dream]")) { const v = e.target.value.trim(), list = core.cfg().schools ? core.cfg().schools() : [], hit = list.find(n => n.toLowerCase() === v.toLowerCase());
+      if (hit) { read(); const sub = S(); sub.dream = [...new Set([...(sub.dream || []), hit])].slice(0, 3); render(); const n = el.querySelector("[data-dream]"); if (n) n.focus(); } return; }
     if (e.target.dataset.mk) { read(); const sub = S(), i = +e.target.dataset.i, f = fitsFor(sub, ...sub.marks[i]), s = el.querySelector(`[data-fit="${i}"]`);
       if (s) { s.className = "onbfit" + (f != null ? " on" : ""); s.innerHTML = f != null ? `<b>${f.toLocaleString()}</b> programs` : ""; }
       const c = el.querySelector(".pcard"); if (c) c.outerHTML = card(); }

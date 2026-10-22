@@ -186,7 +186,8 @@ function offerCopy(){const v=parse(S.mark,S.e);if(v==null)return null;
   const bs={none:`Coaches recruit the athletes they know about. ${EVAL} which of these programs would want you.`,
     some:`Interest is a good start. ${EVAL} how to turn it into offers.`,
     offers:`Offers mean options. ${EVAL} who else would want you before you sign.`};
-  if(!BUCKET&&nm.n>=3) return {n,v:"nearmiss"+sfx,bs,t:`You're ${nm.gap} from Recruit level at ${nm.n} programs.`.replace("Recruit level",`${TN[nm.lvl]} level`),b:`${EVAL} which coaches would want you now and where to focus next.`};
+  {const ds=dreamSchool(),d=ds&&dreamCopy(ds,S.g,S.e,v);if(!BUCKET&&d)return {n,v:"dream-"+d.k+sfx,bs:dreamBs(d),t:d.t,b:d.b}}
+  if(!BUCKET&&nm.n>=3) return {n,v:"nearmiss"+sfx,bs,t:`You're so close to the next level at ${nm.n} colleges.`,b:`A little more and a lot more coaches will want you. ${EVAL} where to focus next.`};
   if(!BUCKET&&!T&&!Rr) return {n,v:"walkon"+sfx,bs,t:`You meet the walk-on standard at ${N} programs.`,b:`${EVAL} which coaches could recruit you instead.`};
   if(!BUCKET&&ls) return {n,v:"school"+sfx,bs,t:`Your ${mk} meets ${ls.t||ls.n}'s standard.`,b:`${ls.t||ls.n}'s coaches recruit the athletes they know about. ${EVAL} if they'd want you.`};
   return {n,v:"intent"+sfx,bs,t:`Your ${mk} meets the standard at ${N} programs.`,b:bs.none};
@@ -248,6 +249,22 @@ const evBody=()=>INT.rs&&EV.bs&&EV.bs[INT.rs]?EV.bs[INT.rs]:(EV.body||`${EVAL} w
 /* parents: the pop-up speaks about the kid whose event they're looking at, else their best-tier kid (Ryan: "your kids") */
 const pickKid=()=>{const P=ACC.member()&&ACC.profile();if(!P||P.role!=="parent")return null;const ks=ACC.kids();if(!ks.length)return null;
   return ks.find(k=>k.gender===S.g&&k.marks.some(m=>m.e===S.e))||ks.find(k=>k.marks.some(m=>m.e===INT.e))||[...ks].sort((a,b)=>a.tier.localeCompare(b.tier))[0]};
+/* dream-school copy (Ryan 2026-10-21: "use emotional hooks ... 'You are so close to reaching the standards for Harvard. Do you want help
+   closing that gap?'"). The school = the athlete's own dream school (profile), else the school page they're on / last opened.
+   Four lines by how close the mark is, no decimals on screen. A parent sees their athlete's name. human-copy rules. */
+function dreamSchool(here){if(here!=null&&SCH[here])return SCH[here];const P=ACC.member()&&ACC.profile(),kid=pickKid(),names=(kid&&kid.dream_schools)||(P&&P.dream_schools)||[];
+  for(const n of names){const x=SCH.find(y=>y.n===n&&!y.j);if(x)return x}const x=INT.sch&&SCH.find(y=>y.n===INT.sch&&!y.j);return x||null}
+function dreamCopy(s,g,e,v){if(!s||v==null||!s[g])return null;const nm=s.t||s.n,t=tier(s,g,e,v),kid=pickKid(),who=kid&&kid.first_name;
+  let lv=s[g][e],ev=e,vv=toCol(s,g,e,v);if(!lv){const c=convert(e,g,v)||[];const x=c.find(z=>s[g][z.e]);if(!x)return null;lv=s[g][x.e];ev=x.e;vv=x.v}
+  const You=who?`${who} is`:"You're",yr=who?"Their":"Your";
+  if(t==="T"||t==="R")return {k:"fit",t:who?`${who} already has what ${nm} looks for.`:`You already have what ${nm} looks for.`,b:`${nm}'s coaches recruit the athletes they know about. Want help getting on their radar?`};
+  if(t)return {k:"range",t:`${You} in range for ${nm}.`,b:`${nm} could be a real option. Want help turning it into one?`};
+  const L=lv.map(x=>x?parse(x,ev):null).filter(x=>x!=null);if(!L.length)return null;
+  const F=FIELD.has(ev),walk=F?Math.min(...L):Math.max(...L),gap=F?(walk-vv)/walk:(vv-walk)/walk;
+  if(gap<=(F?0.06:0.04))return {k:"close",t:`${You} so close to ${nm}.`,b:`${yr} dream school is within reach. Want help closing that gap?`};
+  return {k:"far",t:`${nm} is worth chasing.`,b:`Athletes close gaps like this with the right plan. ${EVAL} what it would take.`}}
+/* the step-2 body after "Have coaches contacted you yet?" keeps the dream-school line */
+const dreamBs=d=>({none:d.b,some:`Interest is a good start. ${d.b}`,offers:`Offers mean options. ${d.b}`});
 function eyebrow(){if(S.school!=null){const s=SCH[S.school];return s?`${s.t||s.n} · ${s.d}`:""}
   const P=ACC.member()&&ACC.profile(),kid=pickKid(),who=kid?kid.first_name:P&&P.role!=="parent"?P.first_name:null,yr=kid?kid.grad_year:P&&P.grad_year,cls=yr?`Class of ${yr}`:"";
   if(S.run&&S.mark)return who?`${who} · ${cls?cls+" · ":""}${S.e} ${S.mark.trim()}`:`${S.g==="w"?"Girls":"Boys"} ${S.e} · ${S.mark.trim()}${S.gr?` · ${S.gr}th grade`:""}`;
@@ -409,7 +426,9 @@ function armSchoolOffer(i){clearInterval(SARM);const s=SCH[i];if(!s||s.j||EV.sho
   SARM=setInterval(()=>{if(S.school!==i||EV.shown||EV.dismissed){clearInterval(SARM);return}
     const t=document.querySelector(".simple .scroll"),r=t&&t.getBoundingClientRect();if(!r)return;
     if(r.bottom<innerHeight*.6){if(!since)since=Date.now();else if(Date.now()-since>1200){clearInterval(SARM);EV.force=true;
-      evalIn(`Does ${nm} know your name?`,`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,0,"school-page"+(+S.gr>=11?"-11-12":S.gr?"-9-10":""),"school-scroll",bs)}}else since=0},300)}
+      const dv=INT.e&&INT.m?parse(INT.m,INT.e):null,d=dv!=null&&!BUCKET?dreamCopy(s,INT.g||S.g,INT.e,dv):null;
+      if(d)evalIn(d.t,d.b,0,"school-dream-"+d.k+(+S.gr>=11?"-11-12":S.gr?"-9-10":""),"school-scroll",dreamBs(d));
+      else evalIn(`Does ${nm} know your name?`,`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,0,"school-page"+(+S.gr>=11?"-11-12":S.gr?"-9-10":""),"school-scroll",bs)}}else since=0},300)}
 function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m"?"w":"m";const g=S.g,src=(CT[s.ck]||{}).src,B=brandOf(s);
   /* simple layout (Ryan 2026-10-16: "make it less cluttered and simple"): band (logo + name as the H1) → checker → table.
      Description, links and the evaluation card move to "About" at the bottom (still on the page for search engines).
@@ -1657,7 +1676,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     const kid=pickKid(),gr=kid?kid.grade:P.grade;if(/^\d+$/.test(gr||"")){INT.gr=+gr;S.gr=+gr}
     const rs={getting_started:"none",talking:"some",real_interest:"some",offers:"offers"}[P.recruiting_stage];if(rs)INT.rs=rs;
     if(P.gender&&!INT.g)INT.g=P.gender;saveInt()};
-  ACC.init({onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,nstd:NSTD,fits:(e,g,v)=>SCH.filter(s=>tier(s,g,e,v)).length,fmt:(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v),stats:(e,g,v)=>{const L=[];SCH.forEach((s,i)=>{const t=tier(s,g,e,v);if(t)L.push({s,i,t})});const c=k=>L.filter(x=>x.t===k).length;
+  ACC.init({schools:(()=>{let L=null;return ()=>L||(L=SCH.filter(x=>!x.j).map(x=>x.n).sort())})(),onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,nstd:NSTD,fits:(e,g,v)=>SCH.filter(s=>tier(s,g,e,v)).length,fmt:(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v),stats:(e,g,v)=>{const L=[];SCH.forEach((s,i)=>{const t=tier(s,g,e,v);if(t)L.push({s,i,t})});const c=k=>L.filter(x=>x.t===k).length;
     const top=["T","R","W"].map(k=>L.filter(x=>x.t===k&&DIVS.includes(x.s.d)).sort((a,b)=>DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||(b.s.o?1:0)-(a.s.o?1:0)||a.s.n.localeCompare(b.s.n))[0]).filter(Boolean).map(x=>({n:x.s.t||x.s.n,d:x.s.d,lv:TN[x.t],slug:SLUG[x.i]}));
     const nm=nearMiss(g,e,v);return {n:L.length,T:c("T"),R:c("R"),W:c("W"),near:nm.n?{n:nm.n,lv:TN[nm.lvl],gap:nm.gap}:null,top}},intent:INT,sid:SID,log,onChange:()=>{fromProfile();render()}}).then(()=>{fromProfile();render()});
 }
