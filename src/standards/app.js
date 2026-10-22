@@ -952,9 +952,13 @@ function tAthlete(F,ai,s){const a=F.A[ai],ys=Object.entries(a.y).sort().reverse(
 const cnorm=x=>String(x||"").toLowerCase().replace(/\bconference\b|\bthe\b|[^a-z0-9]/g,"");
 function confIdx(D,lab){let i=D.lists.findIndex(z=>z.label===lab);if(i<0){const n=cnorm(lab);i=D.lists.findIndex(z=>!z.nat&&cnorm(z.label)===n)}return i}
 const confsOf=D=>D.lists.filter(z=>!z.nat&&!z.champ&&!NCL.test(z.label)).map(z=>z.label).sort((a,b)=>a.localeCompare(b));
+document.addEventListener("click",ev=>{if(R.cdd&&!ev.target.closest(".cdd")){R.cdd=false;render()}});
+document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&R.cdd){R.cdd=false;render();const b=document.querySelector("[data-cdd]");if(b)b.focus()}});
 function confBar(D,L,miss){const cs=confsOf(D),oth=D.lists.filter(z=>!z.nat&&!cs.includes(z.label)).map(z=>z.label);
-  const op=v=>`<option value="${esc(v)}" ${!L.nat&&L.label===v?"selected":""}>${esc(v)}</option>`;
-  return `<div class="rconf"><label class="cmp"><span>Conference</span><select id="rconf"><option value="" ${L.nat?"selected":""}>All of ${esc(R.div)}</option>${cs.length?`<optgroup label="Conferences">${cs.map(op).join("")}</optgroup>`:""}${oth.length?`<optgroup label="Other lists">${oth.map(op).join("")}</optgroup>`:""}</select></label>
+  /* own menu, not a native <select> (Ryan 2026-10-22: the Mac menu draws "Conferences" / "Other lists" faint gray over the page) */
+  const cur=L.nat?`All of ${R.div}`:L.label,op=(v,t)=>`<button type="button" role="option" class="cddo${(v===""?L.nat:!L.nat&&L.label===v)?" on":""}" aria-selected="${v===""?L.nat:!L.nat&&L.label===v}" data-rconfv="${esc(v)}">${esc(t||v)}</button>`;
+  return `<div class="rconf"><div class="cmp cdd"><span id="cddl">Conference</span><button type="button" class="cddb" data-cdd aria-haspopup="listbox" aria-expanded="${!!R.cdd}" aria-labelledby="cddl"><b>${esc(cur)}</b><i aria-hidden="true"></i></button>
+    ${R.cdd?`<div class="cddp" role="listbox" aria-label="Conference">${op("",`All of ${R.div}`)}${cs.length?`<p class="cddh">Conferences</p>${cs.map(v=>op(v)).join("")}`:""}${oth.length?`<p class="cddh">Other lists <span>regions and qualifying</span></p>${oth.map(v=>op(v)).join("")}`:""}</div>`:""}</div>
     ${L.nat?"":`<button type="button" class="rcbtn" data-rconfx>Show all of ${esc(R.div)}</button><button type="button" class="rcbtn rcgo" data-rconfcmp>Compare years in ${esc(L.label)}</button>`}</div>
     ${miss?`<p class="ccmsg">${esc(R.conf)} has no list for ${esc(seasonLabel(R.season))}, so this is all of ${esc(R.div)}.</p>`:""}`}
 /* High school results (Ryan 2026-10-21: "just do highschool tab it can switch to dont make ui more complicated than it needs to be").
@@ -1539,6 +1543,8 @@ document.addEventListener("click",ev=>{
   if(d.lvl){R.lvl=d.lvl==="hs"?"hs":"college";CC.on=false;R.swap=true;render();log("results_event",{detail:"level-"+R.lvl});return}
   if(d.hsg){HS.g=d.hsg;R.swap=true;render();return}
   if(d.hsev!==undefined){HS.ev=d.hsev;R.swap=true;render();return}
+  if("cdd" in d){R.cdd=!R.cdd;render();if(R.cdd){const o=document.querySelector(".cddo.on");if(o)o.scrollIntoView({block:"nearest"})}return}
+  if(d.rconfv!==undefined){R.cdd=false;R.conf=d.rconfv;R.team=null;R.ath=null;R.swap=true;render();if(d.rconfv)log("results_event",{detail:"conf-list",list:d.rconfv});return}
   if("rconfx" in d){R.conf="";R.team=null;R.ath=null;R.swap=true;render();return}
   if("rconfcmp" in d){CC.on=true;CM.t="years";CM.g=R.g;CM.div=R.div;CM.conf=R.conf||"";CM.sea=R.season;if(R.ev)CM.e=R.ev;CM.a=R.season;CM.b="";CM.open=false;R.swap=true;render();scrollTo({top:0});log("results_event",{detail:"conf-years"});return}
   if(d.cmt){CM.t=d.cmt;CM.a=CM.b="";CM.open=false;R.swap=true;render();log("results_event",{detail:"compare-"+d.cmt});return}
