@@ -382,7 +382,8 @@ ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter((
   if (DAILY.finalize) console.log(`daily pages: ${DAILY.finalize()} inbound link blocks`);
   /* sitemap index + one sitemap per section, each URL dated by the data it shows (so Google can trust lastmod) */
   const schoolUrls = [...new Set(S.map(sl))].sort();
-  const lastmod = u => EDITED[u] || DAILY.dates.get(u) || (/^\/(results|champions)\//.test(u) ? resultsDate(u) : u === "/" || u.startsWith("/schools/") ? DATES.max : DATES.db);
+  const AREL = new Map(AIDX.live.map(x => [x.url, x.release > DATES.max ? x.release : DATES.max]));   /* athlete pages: release day (data changes move it via DATES.max) */
+  const lastmod = u => EDITED[u] || DAILY.dates.get(u) || AREL.get(u) || (/^\/(results|champions)\//.test(u) ? resultsDate(u) : u === "/" || u.startsWith("/schools/") ? DATES.max : DATES.db);
   const groups = { schools: schoolUrls, results: files.filter(u => /^\/(results|champions)\//.test(u)).sort(),
     standards: ["/", ...files.filter(u => /^\/(standards|conferences|states)\//.test(u) || u === "/explore.html").sort()] };
   groups.colleges = files.filter(u => u === "/colleges.html" || u.startsWith("/colleges/")).sort();

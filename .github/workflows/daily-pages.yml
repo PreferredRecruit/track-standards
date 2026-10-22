@@ -30,8 +30,11 @@ jobs:
           import json, re, urllib.request, datetime
           host, key = "trackandfieldstandards.com", "9fca9ca5284c2ff286008601e0e776fd"
           today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
-          x = urllib.request.urlopen(f"https://{host}/sitemap-colleges.xml", timeout=30).read().decode()
-          urls = [u for u, d in re.findall(r"<loc>([^<]+)</loc><lastmod>([^<]+)</lastmod>", x) if d == today]
+          urls = []
+          for sm in ("colleges", "athletes"):   # daily state x event pages + athlete pages (100/day, scripts/seo/athletes.mjs)
+              try: x = urllib.request.urlopen(f"https://{host}/sitemap-{sm}.xml", timeout=30).read().decode()
+              except Exception as e: print(sm, "sitemap unavailable:", e); continue
+              urls += [u for u, d in re.findall(r"<loc>([^<]+)</loc><lastmod>([^<]+)</lastmod>", x) if d == today]
           print(f"{len(urls)} pages published {today}")
           if not urls: raise SystemExit(0)
           body = json.dumps({"host": host, "key": key, "keyLocation": f"https://{host}/{key}.txt", "urlList": urls}).encode()
