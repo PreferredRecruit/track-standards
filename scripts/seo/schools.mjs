@@ -13,7 +13,7 @@ const JG = "/guides/junior-college-track-and-field-recruiting.html";
 const divHub = d => `/standards/${String(d).toLowerCase().replace(/[^a-z0-9]+/g, "-")}-track-and-field-recruiting-standards.html`;   /* same path as prerender divPath */
 const DK = { "NCAA D1": "d1", "NCAA D2": "d2", "NCAA D3": "d3", NAIA: "naia", NJCAA: "njcaa" };   /* NJCAA: season bests only */
 
-export function schoolPages({ root, out, S, DATES = {}, SITE, QUIZ, esc, schoolSlug, std, EVENTS, STATE, evLabel, confUrl, statePath, evPath, gName }) {
+export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, esc, schoolSlug, std, EVENTS, STATE, evLabel, confUrl, statePath, evPath, gName }) {
   const shellFile = path.join(out, "index.html");
   if (!fs.existsSync(shellFile)) return [];
   const shell = fs.readFileSync(shellFile, "utf8");
@@ -96,7 +96,7 @@ export function schoolPages({ root, out, S, DATES = {}, SITE, QUIZ, esc, schoolS
     const T = `Track & Field Recruiting Standards ${SEASON}`, common = s.t && !/[().]/.test(s.t) && s.t !== s.n && T_COUNT.get(s.t) === 1 ? s.t : null;
     const title = fitTitle(J ? `${short} Track & Field (NJCAA): ${B ? B.y + " " : ""}Results & Roster`
       : `${s.n} ${T}`.length <= 60 ? `${s.n} ${T}` : common && `${common} ${T}`.length <= 60 ? `${common} ${T}` : `${short} ${T}`);
-    const lw = levelWords(s.d), ofc = s.o ? ", from the official team chart" : "", conf = s.c !== s.d ? ", " + s.c : "";
+    const p4 = (CT[s.ck] || {}).rule === "p4", lw = p4 ? "recruit and scholarship-level" : levelWords(s.d), ofc = s.o ? ", from the official team chart" : "", conf = s.c !== s.d ? ", " + s.c : "";
     const exTxt = ex.length ? " " + ex.map(([g, e, v]) => `${g === "m" ? "Men's" : "Women's"} ${e} walk-on: ${v}.`).join(" ") : "";
     const weekly = B ? [" Season bests updated weekly.", " Free, no sign-up.", " Free."] : [" Free, no sign-up.", " Free to use.", " Free."];
     const desc = J ? pickDesc([`${s.n} (NJCAA) junior college track and field: ${B ? `${B.y} season bests in every event, ` : ""}roster and TFRRS links, and how junior college recruiting works.`,
@@ -115,7 +115,7 @@ export function schoolPages({ root, out, S, DATES = {}, SITE, QUIZ, esc, schoolS
       const off = s.o && (s.off || {})[g];
       if (off) return tbl(["Event", ...off.tiers.map(esc)], off.rows.map(r => [esc(r[0]), ...off.tiers.map((_, i) => esc(r[i + 1] || "–"))]));
       const ev = EVENTS.filter(e => std(s, g, e));
-      return ev.length ? tbl(["Event", "Target", "Recruit", "Walk-On"], ev.map(e => [`<a href="${evPath(s.d, g, e)}">${esc(e)}</a>`, ...std(s, g, e).map(x => esc(x || "–"))])) : "<p>No marks listed yet.</p>";
+      return ev.length ? tbl(["Event", "Target", "Recruit", ...(p4 ? [] : ["Walk-On"])], ev.map(e => [`<a href="${evPath(s.d, g, e)}">${esc(e)}</a>`, ...std(s, g, e).slice(0, p4 ? 2 : 3).map(x => esc(x || "–"))])) : "<p>No marks listed yet.</p>";
     };
     const bestTbl = g => B && B[g].length ? `<h3>${gName(g)}</h3>` + tbl(["Event", "Mark", "Athlete", B.conf ? "Conference rank" : "", "National rank"].filter(Boolean),
       B[g].map(r => [esc(r.e), esc(r.mk) + (parseFloat(r.w) > 2 ? "w" : ""), esc(r.a), ...(B.conf ? [r.cp ? "#" + r.cp : "–"] : []), r.np ? "#" + r.np : "–"])) : "";
