@@ -961,7 +961,9 @@ function confBar(D,L,miss){const cs=confsOf(D),oth=D.lists.filter(z=>!z.nat&&!cs
    One College | High School switch on Results. High school = plain ranked list per state: rank, athlete (first name + last initial),
    grade, school, mark. Data: /data/hs/<year>-<ST>.json (scripts/hs/build_hs.py, checked athletic.net lists). */
 const HS={idx:null,data:{},st:"",y:"",g:"m",ev:""};
-const lvlSw=()=>`<div class="lvlrow"><div class="seg lvlsw" role="group" aria-label="College or high school"><button type="button" data-lvl="college" aria-pressed="${R.lvl!=="hs"}">College</button><button type="button" data-lvl="hs" aria-pressed="${R.lvl==="hs"}">High School</button></div></div>`;
+/* Ryan 2026-10-21: "hide the high school results for now until we are able to import all the data". Flip to true to bring the switch back. */
+const HS_ON=false;
+const lvlSw=()=>!HS_ON?"":`<div class="lvlrow"><div class="seg lvlsw" role="group" aria-label="College or high school"><button type="button" data-lvl="college" aria-pressed="${R.lvl!=="hs"}">College</button><button type="button" data-lvl="hs" aria-pressed="${R.lvl==="hs"}">High School</button></div></div>`;
 const withSw=h=>h.replace('<div class="sec">','<div class="sec">'+lvlSw());
 function hsView(){
   if(HS.idx===null){HS.idx=false;fetch("/data/hs/index.json").then(r=>r.json()).then(j=>{HS.idx=j.lists||{};render()}).catch(()=>{HS.idx={};render()})}
@@ -999,7 +1001,7 @@ function hsView(){
   addEventListener("scroll",hide,{passive:true});addEventListener("blur",hide);document.addEventListener("mouseleave",hide)}
 function results(){
   if(TM.i!=null)return teamPage();
-  if(R.lvl==="hs")return hsView();
+  if(R.lvl==="hs"&&HS_ON)return hsView();
   if(CC.on)return compareView();
   return withSw(resultsCollege())}
 function resultsCollege(){
