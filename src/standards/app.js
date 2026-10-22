@@ -227,7 +227,7 @@ try{EV.dismissed=sessionStorage.getItem("prEvalDismissed")==="1"}catch(e){}
 const TIERB={gpa:"Your grades already help you with coaches. A free evaluation shows which programs fit your marks now and how close you are to being recruited.",
   grow:"Coaches look at your grades and your marks together. A free evaluation shows which programs fit you today and what to work on next."};
 function evalIn(title,body,delay,v,trig,bs){
-  if(EV.shown||EV.dismissed||ACC.tier()==="C"||ACC.isOpen()||document.documentElement.classList.contains("onbon")||(ACC.signedIn()&&!ACC.member())) return; clearTimeout(EV.t);
+  if(EV.shown||EV.dismissed||ACC.tier()==="C"||ACC.isOpen()||document.getElementById("prnudge")||document.documentElement.classList.contains("onbon")||(ACC.signedIn()&&!ACC.member())) return; clearTimeout(EV.t);
   /* Tier B (GPA 2.3 to 2.99, or 3.0+ without a PR-standard mark yet): same headline, softer body (draft for Ryan's approval) */
   {const P=ACC.member()&&ACC.profile(),kid=pickKid();
    if(kid){const n=kid.first_name;title=title.replace(/^Your /,`${n}'s `).replace(/\byour\b/,`${n}'s`).replace(/^You're /,`${n} is `).replace(/^You /,`${n} `);

@@ -1214,3 +1214,18 @@ header .hd .acchd{flex:none;visibility:visible}
 /* low-friction signup: "Skip for now" (2026-10-21) */
 .onbskip{border:0;background:none;font:inherit;font-size:15px;font-weight:650;color:var(--pr-mute);cursor:pointer;padding:0 10px;margin-left:auto;margin-right:10px}
 .onbskip:hover{color:var(--pr-ink);text-decoration:underline}
+/* re-engagement bars (2026-10-21): confirm email / finish profile, once per visit, bottom of screen */
+.prnudge{position:fixed;left:max(12px,env(safe-area-inset-left,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));z-index:58;max-width:min(560px,calc(100vw - 24px));display:flex;align-items:center;gap:12px;padding:12px 12px 12px 18px;border-radius:18px;background:var(--pr-card);border:1px solid var(--pr-line);box-shadow:0 18px 48px -18px rgba(20,16,60,.45);opacity:0;transform:translateY(12px);transition:opacity .35s ease,transform .5s cubic-bezier(.165,.84,.44,1)}
+.prnudge.on{opacity:1;transform:none}
+.prnudge p{margin:0;font-size:14.5px;line-height:1.35;color:var(--pr-ink2)}.prnudge p b{color:var(--pr-ink)}.prnudge p span{display:block;font-size:13.5px;color:var(--pr-mute)}
+.prnb{flex:none;height:40px;display:inline-flex;align-items:center;padding:0 16px;border-radius:999px;border:0;background:var(--pr-violet,#7A45F0);color:#fff;font:inherit;font-size:14px;font-weight:700;text-decoration:none;cursor:pointer;white-space:nowrap}
+.prnb:disabled{background:var(--pr-soft);color:var(--pr-mute);cursor:default}
+.prnx{flex:none;width:30px;height:30px;border-radius:50%;border:0;background:var(--pr-soft);color:var(--pr-mute);font-size:18px;line-height:1;cursor:pointer}
+@media (max-width:560px){.prnudge{left:12px;right:12px;max-width:none;flex-wrap:wrap}.prnudge p{flex:1 1 100%}.prnb{flex:1}}
+/* admin: tier groups + profile completeness + reminder buttons (2026-10-21) */
+.admst{grid-template-columns:repeat(6,minmax(0,1fr))}
+.admgrp td{background:var(--pr-soft);font-weight:800;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--pr-ink2)}.admgrp span{color:var(--pr-mute);margin-left:6px}
+.admprof b{display:block;font-size:15px;color:#C2410C}.admprof b.full{color:#16A34A}.admprof small{display:block;color:var(--pr-mute);max-width:190px}
+.admnudge{margin-top:6px;height:30px;padding:0 10px;border-radius:999px;border:1.5px solid var(--pr-line);background:var(--pr-card);font:inherit;font-size:12px;font-weight:700;color:var(--pr-accent);cursor:pointer;white-space:nowrap}
+.admnudge:hover{border-color:var(--pr-accent)}.admsent{color:#16A34A!important;font-weight:700}
+@media (max-width:900px){.admst{grid-template-columns:repeat(3,minmax(0,1fr))}}

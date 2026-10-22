@@ -77,7 +77,7 @@ async function loadProfile() {
   PRO = rows && rows[0] || null; KIDS = []; MINE = [];
   if (PRO && PRO.role === "athlete") { const ms = await api("/rest/v1/marks?select=event,mark&user_id=eq." + SES.user.id + "&athlete_id=is.null").catch(() => []); MINE = (ms || []).map(m => ({ e: m.event, v: +m.mark })); }
   if (PRO && PRO.role === "parent") {
-    const [ks, ms] = await Promise.all([api("/rest/v1/athletes?select=id,first_name,gender,grad_year,grade,tier&parent_id=eq." + SES.user.id + "&order=created_at").catch(() => []), api("/rest/v1/marks?select=event,mark,athlete_id&user_id=eq." + SES.user.id).catch(() => [])]);
+    const [ks, ms] = await Promise.all([api("/rest/v1/athletes?select=id,first_name,gender,grad_year,grade,gpa,tier&parent_id=eq." + SES.user.id + "&order=created_at").catch(() => []), api("/rest/v1/marks?select=event,mark,athlete_id&user_id=eq." + SES.user.id).catch(() => [])]);
     KIDS = (ks || []).map(k => Object.assign(k, { marks: (ms || []).filter(m => m.athlete_id === k.id).map(m => ({ e: m.event, v: +m.mark })) }));
   }
   return PRO;
@@ -253,7 +253,7 @@ async function submit(id) {
         const r = await api("/auth/v1/signup?redirect_to=" + encodeURIComponent(location.origin + "/onboarding"), { method: "POST", body: { email, password: pw }, auth: false });
         CFG.log && CFG.log("account", { detail: "signup", placement: WHY || undefined });
         if (r && r.access_token) { keep(r); await loadProfile(); BUSY = false; close(); changed(); ONB.go("/onboarding"); return; }
-        FORM._email = email; BUSY = false; VIEW = "check"; draw(); return;
+        FORM._email = email; BUSY = false; VIEW = "check"; draw(); try { localStorage.setItem("prPending", JSON.stringify({ e: email, t: Date.now() })); } catch (e2) {} return;
       }
       keep(await api("/auth/v1/token?grant_type=password", { method: "POST", body: { email, password: pw }, auth: false }));
       await loadProfile(); BUSY = false; CFG.log && CFG.log("account", { detail: "signin" });
@@ -290,6 +290,37 @@ async function fromHash() {
 }
 
 function signOut() { api("/auth/v1/logout", { method: "POST" }).catch(() => {}); keep(null); PRO = null; for (const k in FORM) delete FORM[k]; changed(); }
+/* re-engagement bars (Ryan 2026-10-21: "on-site pop-up reminders for when they return"). Once per visit each, bottom of the screen:
+   - signed up, email never confirmed (remembered in this browser): confirm reminder + "Send it again"
+   - signed-in member missing PRs / GPA / class (or a parent with no athlete yet): finish-profile reminder
+   While a bar is up the evaluation pop-up waits (app.js checks #prnudge). */
+export function needs() {
+  if (!SES || !member() || !PRO) return [];
+  if (PRO.role === "athlete") { const m = []; if (!MINE.length) m.push("prs"); if (PRO.gpa == null) m.push("gpa"); if (!PRO.grad_year) m.push("class"); return m; }
+  if (PRO.role === "parent") { if (!KIDS.length) return ["athlete"]; const k = KIDS[0], m = []; if (!(k.marks || []).length) m.push("prs"); if (k.gpa == null) m.push("gpa"); return m; }
+  return [];
+}
+function bar(id, html) {
+  if (document.getElementById("prnudge")) return;
+  try { if (sessionStorage.getItem(id)) return; sessionStorage.setItem(id, "1"); } catch (e) {}
+  document.body.insertAdjacentHTML("beforeend", `<div class="prnudge" id="prnudge" role="status">${html}<button type="button" class="prnx" data-nudgex aria-label="Close">×</button></div>`);
+  const el = document.getElementById("prnudge"); requestAnimationFrame(() => el.classList.add("on"));
+  CFG.log && CFG.log("account", { detail: "nudge-shown-" + id.replace("prNudge-", "") });
+}
+function nudges() {
+  if (document.documentElement.classList.contains("onbon") || isOpen()) return;   /* not over the profile pages or the sign-in sheet */
+  if (!SES) {
+    let P = null; try { P = JSON.parse(localStorage.getItem("prPending") || "null"); } catch (e) {}
+    if (P && P.e && Date.now() - P.t < 14 * 864e5) { FORM._email = P.e; const em = String(P.e).replace(/^(.).*?(@.*)$/, "$1•••$2");
+      bar("prNudge-confirm", `<p><b>Confirm your email to finish your free account.</b> <span>We sent a link to ${esc(em)}.</span></p><button type="button" class="prnb" data-acc="resend">Send it again</button>`); }
+    return;
+  }
+  try { localStorage.removeItem("prPending"); } catch (e) {}
+  const n = needs(); if (!n.length) return;
+  const what = n[0] === "athlete" ? "Add your athlete" : n.includes("prs") ? "Add your PRs" : n.includes("gpa") ? "Add your GPA" : "Add your class";
+  const why = n[0] === "athlete" ? "to see every college their marks fit." : n.includes("prs") ? "to see every college your marks fit." : "so your profile shows the right colleges.";
+  bar("prNudge-profile", `<p><b>${what}</b> <span>${why}</span></p><a class="prnb" href="/account" data-nudgego>Finish profile</a>`);
+}
 export const core = { URL: URL_, KEY, ST, api, fresh, loadProfile, changed, signOut, member, profile: () => PRO, ses: () => SES, cfg: () => CFG };
 export async function init(cfg) {
   CFG = cfg || {}; SES = store.get(SK); shell(); headBtn();
@@ -330,6 +361,10 @@ export async function init(cfg) {
   if (SES) { schedule(); await loadProfile(); }
   headBtn();
   await fromHash();
+  document.addEventListener("click", e => { const rs = e.target.closest('#prnudge [data-acc="resend"]'); if (rs) setTimeout(() => { rs.textContent = "Sent. Check your inbox"; rs.disabled = true; }, 0); });
+  document.addEventListener("click", e => { const x = e.target.closest("[data-nudgex],[data-nudgego]"); if (!x) return; const el = document.getElementById("prnudge"); if (el) el.remove();
+    if (x.matches("[data-nudgego]")) { e.preventDefault(); CFG.log && CFG.log("account", { detail: "nudge-click" }); ONB.go("/account"); } });
+  setTimeout(nudges, 4000);   /* after the page settles, never on arrival */
   /* Ryan 2026-10-19: a signed-in account must finish its profile before using the site */
   if (ONB.isPage()) ONB.show(); else if (SES && !member() && !/^\/(privacy|admin)\.html$/.test(location.pathname)) ONB.go("/onboarding");
   return member();

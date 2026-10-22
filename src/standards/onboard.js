@@ -194,26 +194,44 @@ function flat() {
   for (const r of ADM.rows) {
     const contact = [r.email, r.phone && (r.phone + (r.sms_consent ? " (texts OK)" : "")), r.parent_name && "Parent: " + r.parent_name, r.parent_email, r.parent_phone].filter(Boolean);
     const acct = [r.first_name, r.last_name].filter(Boolean).join(" ");
-    if (r.role === "parent" && (r.athletes || []).length) for (const a of r.athletes) out.push({ name: [a.first_name, a.last_name].filter(Boolean).join(" "), sub: "Parent: " + (acct || r.email), role: "parent's athlete", gender: a.gender, state: a.state, school: a.high_school, year: a.grad_year, gpa: a.gpa, tier: a.tier, done: !!r.finished_at, marks: a.marks || [], contact, email: r.email, opted: r.opted_in_at, created: r.created_at, confirmed: r.confirmed });
+    if (r.role === "parent" && (r.athletes || []).length) for (const a of r.athletes) out.push({ name: [a.first_name, a.last_name].filter(Boolean).join(" "), sub: "Parent: " + (acct || r.email), role: "parent's athlete", gender: a.gender, state: a.state, school: a.high_school, year: a.grad_year, gpa: a.gpa, tier: a.tier, done: !!r.finished_at, confirmed: r.confirmed, marks: a.marks || [], contact, email: r.email, opted: r.opted_in_at, created: r.created_at, confirmed: r.confirmed });
     else out.push({ name: acct, sub: r.role || "no profile yet", role: r.role, gender: r.gender, state: r.state, school: r.high_school, year: r.grad_year, gpa: r.gpa, tier: r.tier, done: !!r.finished_at, marks: r.marks || [], contact, email: r.email, opted: r.opted_in_at, created: r.created_at, confirmed: r.confirmed });
   }
+  for (const x of out) {
+    const athleteRow = x.role === "athlete" || x.role === "parent's athlete";
+    const F = athleteRow ? [["Name", x.name], ["Class", x.year], ["State", x.state], ["Men/Women", x.gender], ["PRs", x.marks.length], ["GPA", x.gpa != null]] : [["Name", x.name]];
+    x.have = F.filter(f => f[1]).length; x.need = F.length; x.missing = F.filter(f => !f[1]).map(f => f[0]);
+    x.group = !x.confirmed ? "unconf" : !x.done ? "open" : x.tier;
+  }
   return out;
+}
+const SENT = {};
+async function sendNudge(email, kind) {
+  SENT[email] = "sending"; render();
+  try {
+    if (kind === "confirm") await core.api("/auth/v1/resend?redirect_to=" + encodeURIComponent(location.origin + "/onboarding"), { method: "POST", body: { type: "signup", email }, auth: false });
+    else await core.api("/auth/v1/otp?redirect_to=" + encodeURIComponent(location.origin + "/onboarding"), { method: "POST", body: { email, create_user: false }, auth: false });
+    SENT[email] = "sent";
+  } catch (e) { SENT[email] = /seconds|rate/i.test(e.message) ? "wait a minute" : "failed"; }
+  render();
 }
 function adminView() {
   if (!ADM) { loadAdmin(); return `<div class="onbwrap one"><section class="onbmain"><p class="onbsub">Loading accounts…</p></section></div>`; }
   if (ADM.err) return `<div class="onbwrap one"><section class="onbmain"><p class="acerr">${esc(ADM.err)}</p></section></div>`;
   const all = flat(), q = ADMQ.trim().toLowerCase();
-  const rows = all.filter(r => (!ADMT || (ADMT === "open" ? !r.done : r.done && r.tier === ADMT)) && (!q || [r.email, r.name, r.sub, r.state, r.school].join(" ").toLowerCase().includes(q)));
-  const n = k => all.filter(r => r.done && r.tier === k).length, open = all.filter(r => !r.done).length;
+  const rows = all.filter(r => (!ADMT || r.group === ADMT) && (!q || [r.email, r.name, r.sub, r.state, r.school].join(" ").toLowerCase().includes(q)));
+  const n = k => all.filter(r => r.group === k).length;
+  const GROUPS = [["A", "Tier A"], ["B", "Tier B"], ["C", "Tier C"], ["open", "Profile not finished"], ["unconf", "Email not confirmed"]];
   const mk = r => r.marks.map(m => `${evName(m.e, r.gender)} ${esc(fmtM(m.e, m.m))}`).join("<br>");
-  return `<div class="onbadm"><div class="admhd"><h1>Accounts</h1><p class="onbsub">Read-only. One row per athlete (a parent's kids each get their own row). Tier A = GPA 3.0+ and a mark that meets the Preferred Recruit outreach standard.</p></div>
-    <div class="admst">${[["", "All", all.length], ["A", "Tier A", n("A")], ["B", "Tier B", n("B")], ["C", "Tier C", n("C")], ["open", "Not finished", open]].map(([k, l, c]) => `<button type="button" data-onb="adt" data-v="${k}" class="${ADMT === k ? "on" : ""}"><b>${c}</b><span>${l}</span></button>`).join("")}</div>
+  return `<div class="onbadm"><div class="admhd"><h1>Accounts</h1><p class="onbsub">One row per athlete (a parent's kids each get their own row). Tier A = GPA 3.0+ and a mark that meets the Preferred Recruit outreach standard. "Profile" shows what each person has filled in. Reminder buttons send that one person a fresh confirm email or a one-click link back to their profile form.</p></div>
+    <div class="admst">${[["", "All", all.length], ...GROUPS.map(([k, l]) => [k, l, n(k)])].map(([k, l, c]) => `<button type="button" data-onb="adt" data-v="${k}" class="${ADMT === k ? "on" : ""}"><b>${c}</b><span>${l}</span></button>`).join("")}</div>
     <div class="admbar"><input class="in" id="admq" data-in="admq" placeholder="Search name, email, school or state" value="${esc(ADMQ)}"><button type="button" class="onbback" data-onb="csv">Download CSV</button><button type="button" class="onbback" data-onb="reload">Refresh</button></div>
-    <div class="admtbl"><table><thead><tr><th>Athlete</th><th>Tier</th><th>Class</th><th>Events and PRs</th><th>GPA</th><th>High school</th><th>Contact</th><th>Joined</th></tr></thead><tbody>
-    ${rows.map(r => `<tr><td><b>${esc(r.name || "–")}</b><small>${esc(r.sub)}${r.state ? " · " + esc(r.state) : ""}${r.gender ? " · " + (r.gender === "m" ? "Men" : "Women") : ""}</small></td>
+    <div class="admtbl"><table><thead><tr><th>Athlete</th><th>Tier</th><th>Profile</th><th>Class</th><th>Events and PRs</th><th>GPA</th><th>High school</th><th>Contact</th><th>Joined</th></tr></thead><tbody>
+    ${(ADMT ? [[ADMT, ""]] : GROUPS).map(([gk, gl]) => { const G = rows.filter(r => r.group === gk); if (!G.length) return ""; return (gl ? `<tr class="admgrp"><td colspan="9">${esc(gl)} <span>${G.length}</span></td></tr>` : "") + G.map(r => `<tr><td><b>${esc(r.name || "–")}</b><small>${esc(r.sub)}${r.state ? " · " + esc(r.state) : ""}${r.gender ? " · " + (r.gender === "m" ? "Men" : "Women") : ""}</small></td>
       <td><span class="admtier t${esc(r.done ? r.tier : "x")}">${r.done ? esc(r.tier) : "–"}</span>${r.opted ? '<small>clicked evaluation</small>' : ""}</td>
+      <td class="admprof"><b class="${r.have === r.need ? "full" : ""}">${r.have}/${r.need}</b><small>${r.have === r.need ? "Complete" : "Missing: " + esc(r.missing.join(", "))}</small>${!r.confirmed || !r.done ? (SENT[r.email] ? `<small class="admsent">Reminder ${esc(SENT[r.email])}</small>` : `<button type="button" class="admnudge" data-onb="nudge" data-e="${esc(r.email)}" data-k="${r.confirmed ? "profile" : "confirm"}">${r.confirmed ? "Send finish-profile link" : "Resend confirm email"}</button>`) : ""}</td>
       <td>${r.year ? esc(r.year) : "–"}</td><td>${mk(r) || "–"}</td><td>${r.gpa != null ? esc(r.gpa) : "–"}</td><td>${esc(r.school || "–")}</td>
-      <td class="admc">${r.contact.map(esc).join("<br>")}${r.confirmed ? "" : '<small class="admwarn">email not confirmed</small>'}</td><td>${esc(new Date(r.created).toLocaleDateString())}</td></tr>`).join("") || `<tr><td colspan="8">No accounts match.</td></tr>`}
+      <td class="admc">${r.contact.map(esc).join("<br>")}${r.confirmed ? "" : '<small class="admwarn">email not confirmed</small>'}</td><td>${esc(new Date(r.created).toLocaleDateString())}</td></tr>`).join(""); }).join("") || `<tr><td colspan="9">No accounts match.</td></tr>`}
     </tbody></table></div></div>`;
 }
 async function loadAdmin() { try { const r = await core.api("/rest/v1/rpc/admin_accounts", { method: "POST", body: {} }); ADM = { rows: r || [] }; } catch (e) { ADM = { err: "Couldn't load accounts. " + e.message }; } render(); }
@@ -393,6 +411,7 @@ export function bind() {
     if (a === "pick") { const f = el.querySelector(`[data-onb-file="${b.dataset.v || "avatar"}"]`); return f && f.click(); }
     if (a === "school") { const slug = b.dataset.slug; history.pushState({}, "", "/schools/" + slug); hide(); core.changed(); window.__prStandardsRoute && window.__prStandardsRoute(slug); return; }
     if (a === "adt") { ADMT = b.dataset.v; return render(); }
+    if (a === "nudge") { if (!SENT[b.dataset.e]) sendNudge(b.dataset.e, b.dataset.k); return; }
     if (a === "reload") { ADM = null; return render(); }
     if (a === "csv") return ADM && ADM.rows && csv();
     if (a === "out") { for (const k2 in IMG) { URL.revokeObjectURL(IMG[k2]); delete IMG[k2]; } KIDS = []; K = null; core.signOut(); hide(); history.pushState({}, "", "/"); return; }
