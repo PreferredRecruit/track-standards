@@ -133,7 +133,7 @@ function wizard() {
   const bar = `<ol class="onbsteps" aria-label="Progress">${(D.role ? S2 : ["who", "about", "events", "gpa"]).map((s, i) => `<li class="${i < STEP ? "done" : i === STEP ? "on" : ""}"><span>${i + 1}</span>${STEP_NAME[s]}</li>`).join("")}</ol>`;
   const back = STEP > 0 ? `<button type="button" class="onbback" data-onb="back">Back</button>` : (MODE !== "onboard") ? `<button type="button" class="onbback" data-onb="cancel">Cancel</button>` : "<span></span>";
   return top() + `<div class="onbwrap"><section class="onbmain">${bar}<form id="onbf" class="onbform" novalidate>${stepBody(k)}${MSG ? `<p class="acerr" role="alert">${esc(MSG)}</p>` : ""}
-    ${k === "who" ? "" : `<div class="onbnav">${back}<button class="acbtn onbgo" ${BUSY ? "disabled" : ""}>${BUSY ? "Saving…" : last ? lastLabel() : "Continue"}</button></div>`}</form></section>${card()}</div>`;
+    ${k === "who" ? "" : `<div class="onbnav">${back}${(k === "events" || k === "gpa") && !QUICK() ? `<button type="button" class="onbskip" data-onb="skip">Skip for now</button>` : ""}<button class="acbtn onbgo" ${BUSY ? "disabled" : ""}>${BUSY ? "Saving…" : last ? lastLabel() : "Continue"}</button></div>`}</form></section>${card()}</div>`;
 }
 
 /* ---------- profile pages ---------- */
@@ -280,25 +280,19 @@ function check(k) {
   const C = core.cfg(), sub = S();
   if (k === "you") {
     if (!D.first) return "Add your first name.";
-    if (par() && !D.last) return "Add your last name.";
     if (par() && D.phone && D.phone.replace(/\D/g, "").length < 10) return "Check your phone number.";
     if (!D.age) return "Please confirm you're 13 or older.";
   }
   if (k === "about") {
     if (!sub.first) return par() ? "Add your athlete's first name." : "Add your first name.";
-    if (!par() && !sub.last) return "Add your last name.";
-    if (!sub.year) return "Choose a class.";
-    if (!sub.gender) return "Choose Men or Women.";
-    if (!sub.state) return "Choose a state.";
   }
   if (k === "events") {
     const ok = sub.marks.filter(m => m[0] || m[1]);
-    if (!ok.length) return "Add at least one event and best mark.";
     for (const [e, m] of ok) if (!e || !m || C.parse(m, e) == null) return `Check the mark for ${e ? (C.evName ? C.evName(e, sub.gender) : e) : "the event"}${e && C.ph ? " (for example " + C.ph(e) + ")" : ""}.`;
     if (new Set(ok.map(m => m[0])).size < ok.length) return "Each event only once, please.";
   }
   if (k === "gpa") {
-    const g = +sub.gpa; if (!sub.gpa || isNaN(g) || g < 0 || g > 5) return "Enter a GPA between 0.0 and 5.0, like 3.4.";
+    const g = +sub.gpa; if (sub.gpa !== "" && sub.gpa != null && (isNaN(g) || g < 0 || g > 5)) return "Enter a GPA between 0.0 and 5.0, like 3.4, or leave it blank for now.";
     if (D.role === "athlete") {
       if (D.pemail && !/^\S+@\S+\.\S+$/.test(D.pemail)) return "Check the parent's email.";
       if (D.pphone && D.pphone.replace(/\D/g, "").length < 10) return "Check the parent's phone number.";
@@ -312,12 +306,13 @@ async function save(k, finish) {
   const prof = { id: uid, role: D.role, onboarding_step: STEP + 1, site_sid: C.sid || null };
   if (k === "who") Object.assign(prof, {});
   if (k === "you") Object.assign(prof, { first_name: D.first || null, last_name: D.last || null, phone: kid ? (D.phone || null) : null, sms_consent: kid && !!D.phone && !!D.sms, age_13_plus: true });
-  if (k === "about" && !kid) Object.assign(prof, { first_name: sub.first, last_name: sub.last || null, grad_year: +sub.year, grade: gradeOf(+sub.year), gender: sub.gender, state: sub.state, high_school: sub.school || null });
-  if (k === "gpa" && !kid) Object.assign(prof, { gpa: Math.round(+sub.gpa * 100) / 100, parent_name: D.pname || null, parent_email: D.pemail || null, parent_phone: D.pphone || null, age_13_plus: true });
+  const yr = sub.year ? +sub.year : null, gpa = sub.gpa !== "" && sub.gpa != null && !isNaN(+sub.gpa) ? Math.round(+sub.gpa * 100) / 100 : null;
+  if (k === "about" && !kid) Object.assign(prof, { first_name: sub.first, last_name: sub.last || null, grad_year: yr, grade: yr ? gradeOf(yr) : null, gender: sub.gender || null, state: sub.state || null, high_school: sub.school || null });
+  if (k === "gpa" && !kid) Object.assign(prof, { gpa, parent_name: D.pname || null, parent_email: D.pemail || null, parent_phone: D.pphone || null, age_13_plus: true });
   if (finish && (MODE === "onboard" || MODE === "edit")) prof.finished_at = (core.profile() && core.profile().finished_at) || new Date().toISOString();
   if (!kidOnly()) await core.api("/rest/v1/profiles?on_conflict=id", { method: "POST", body: prof, prefer: "resolution=merge-duplicates,return=minimal" });
   if (kid && (k === "about" || k === "gpa")) {
-    const row = k === "about" ? { first_name: sub.first, last_name: sub.last || null, grad_year: +sub.year, grade: gradeOf(+sub.year), gender: sub.gender, state: sub.state, high_school: sub.school || null } : { gpa: Math.round(+sub.gpa * 100) / 100 };
+    const row = k === "about" ? { first_name: sub.first, last_name: sub.last || null, grad_year: yr, grade: yr ? gradeOf(yr) : null, gender: sub.gender || null, state: sub.state || null, high_school: sub.school || null } : { gpa };
     if (sub.id) await core.api("/rest/v1/athletes?id=eq." + sub.id, { method: "PATCH", body: row, prefer: "return=minimal" });
     else { const r = await core.api("/rest/v1/athletes", { method: "POST", body: Object.assign({ parent_id: uid }, row), prefer: "return=representation" }); sub.id = r[0].id; }
   }
@@ -380,6 +375,7 @@ export function bind() {
     const b = e.target.closest("[data-onb]"); if (!b) return; const a = b.dataset.onb; e.preventDefault();
     if (a === "home") { const v = b.dataset.v || "standards"; history.pushState({}, "", v === "results" ? "/?tab=results" : "/"); hide(); core.changed(); window.__prStandardsRoute && window.__prStandardsRoute(null); const t = document.querySelector(`.switch [data-tab="${v}"]`) || document.querySelector(`[data-tab="${v}"]:not(.logo)`); if (t) t.click(); window.scrollTo(0, 0); return; }
     if (a === "exit") { if (core.ses() && !core.member() && location.pathname !== "/account") { MSG = "Finish your profile to use the site. It takes about two minutes."; return render(); } history.pushState({}, "", "/"); hide(); core.changed(); return; }
+    if (a === "skip") { read(); const sub = S(), k2 = stepsFor()[STEP]; if (k2 === "events") sub.marks = sub.marks.filter(m => m[0] && m[1] && core.cfg().parse(m[1], m[0]) != null); if (!sub.marks.length) sub.marks = [["", ""]]; if (k2 === "gpa" && (sub.gpa === "" || isNaN(+sub.gpa))) sub.gpa = ""; MSG = ""; return next(); }
     if (a === "back") { read(); MSG = ""; STEP = Math.max(0, STEP - 1); return render(); }
     if (a === "cancel") { MODE = "onboard"; STEP = 0; MSG = ""; history.replaceState({}, "", "/account"); loadAll().then(render); return; }
     if (a === "add") { read(); S().marks.push(["", ""]); return render(); }
