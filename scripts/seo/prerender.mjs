@@ -390,6 +390,7 @@ ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter((
   groups.athletes = files.filter(u => u === "/athletes.html" || u.startsWith("/athletes/")).sort();
   const used = new Set([...groups.schools, ...groups.results, ...groups.standards, ...groups.colleges, ...groups.athletes]);
   groups.guides = files.filter(u => !used.has(u)).sort();
+  for (const k of Object.keys(groups)) groups[k] = [...new Set(groups[k])];   /* a page written twice (guides.html) is listed once */
   const urls = Object.values(groups).flat();
   for (const [k, list] of Object.entries(groups)) fs.writeFileSync(path.join(out, `sitemap-${k}.xml`), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${list.map(u => `  <url><loc>${SITE}${u}</loc><lastmod>${lastmod(u)}</lastmod></url>`).join("\n")}\n</urlset>\n`);
   fs.writeFileSync(path.join(out, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${Object.entries(groups).map(([k, list]) => `  <sitemap><loc>${SITE}/sitemap-${k}.xml</loc><lastmod>${list.map(lastmod).sort().pop()}</lastmod></sitemap>`).join("\n")}\n</sitemapindex>\n`);
