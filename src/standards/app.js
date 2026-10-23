@@ -24,6 +24,15 @@ export async function mount(opts = {}) {
 
 const EVENTS=["100m", "200m", "400m", "800m", "1500m", "1600m", "Mile", "3000m", "3200m", "5000m", "10000m", "100m Hurdles", "110m Hurdles", "110m Hurdles (39\")", "300m Hurdles", "400m Hurdles", "3000m Steeplechase", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Hammer", "Javelin"], CT=DB.ct, RULES=DB.rules;
 const SCH=DB.schools.map(x=>{const side=g=>{if((x.ng||[]).includes(g))return {};if(x.em)return (x.em[g]||{});const o=(x.om||{})[g]||{},c=(CT[x.ck]||{})[g]||{},r={};EVENTS.forEach(e=>{if(o[e])r[e]=o[e];else if(c[e])r[e]=c[e].map(v=>v?v[0]:"")});return r};return Object.assign(x,{m:side("m"),w:side("w")})});
+/* nicknames people actually type (Ryan 2026-10-23: "UCSB or Cal Poly ... not appearing"): curated ones, plus "UC X" -> ucx initials
+   (UCSB, UCSD, UCR) and "Cal State X" -> csu + initials (CSUF, CSUB, CSULA). A generated one is only added when no other school uses it. */
+{const NICK={"UC Santa Barbara":["ucsb","santa barbara","university of california santa barbara"],"Cal Poly":["cal poly slo","cal poly san luis obispo","san luis obispo","slo","california polytechnic state university"],
+  "Long Beach State":["lbsu","csulb","cal state long beach","the beach"],"San Diego State":["sdsu"],"NC State University":["ncsu","north carolina state"],"SIU Edwardsville":["siue"],
+  "University of Connecticut":["uconn"],"University of Vermont":["uvm"],"Stephen F. Austin State University":["sfa"],"University of Pennsylvania":["upenn"],"University of Missouri":["mizzou"],
+  "Oklahoma State University":["okst","ok state"],"Arizona State University":["asu"],"California State University, Sacramento":["sac state"]};
+ const used=new Set(SCH.flatMap(x=>x.a)),ini=t=>t.toLowerCase().split(/[^a-z]+/).filter(w=>w&&!["of","the","at","and"].includes(w)).map(w=>w[0]).join("");
+ SCH.forEach(x=>{const add=(v,force)=>{if(v&&(force||!used.has(v))&&!x.a.includes(v)){x.a.push(v);used.add(v)}};(NICK[x.n]||[]).forEach(v=>add(v,true));
+   for(const nm of [x.n,x.t]){let m=nm.match(/^UC (.+)$/);if(m)add("uc"+ini(m[1]));m=nm.match(/^(?:Cal State|Cal St\.|CSU|California State University,?) (.+)$/);if(m&&!/polytechnic/i.test(nm))add("csu"+ini(m[1]))}})}
 const ACR=SCH.map(s=>s.n.toLowerCase().replace(/\(.*?\)/g," ").split(/[^a-z&]+/).filter(w=>w&&!["of","the","at","and","in","for"].includes(w)).map(w=>w[0]).join(""));
 const TOK=SCH.map(s=>[...new Set((s.n+" "+s.t+" "+(s.a||[]).join(" ")).toLowerCase().split(/[^a-z0-9&]+/).filter(Boolean))]);
 const DIVS=["NCAA D1","NCAA D2","NCAA D3","NAIA"];
@@ -351,8 +360,19 @@ const star=s=>s.o?'<span class="star" title="Official standards, verified">★</
    updates in place while typing (no page redraw), school logo on every row, arrow keys + Enter, Escape closes. */
 const TQ={v:""};
 const tlogo=s=>{const B=brandOf(s);return B&&B.logo&&!B.hide_logo?`<img class="dlogo" src="${esc(B.logo)}" alt="" width="32" height="32" loading="lazy">`:`<i class="dlogo dini" aria-hidden="true">${esc((s.t||s.n).replace(/\(.*?\)/g,"").split(/[^A-Za-z&]+/).filter(w=>w&&!/^(of|the|at|and|in|for|university|college)$/i.test(w)).map(w=>w[0]).join("").slice(0,3).toUpperCase())}</i>`};
+/* athletes in the search dropdown (Ryan 2026-10-23: "individuals from smaller schools are not appearing when searching by name"):
+   every athlete on this season's national list, any event, men and women, not just the event on screen */
+const AIDX=new WeakMap();   /* keyed by the loaded season object, so the wind toggle gets its own index */
+function athIdx(key){const D=CACHE[key];if(!D||D.err)return null;if(AIDX.has(D))return AIDX.get(D);const li=Math.max(0,D.lists.findIndex(z=>z.nat)),L=D.lists[li],best=new Map();
+  for(const g of ["m","w"])for(const [ev,rows] of Object.entries(L.g[g]||{})){if(/Relay/.test(ev))continue;rows.forEach((r,i)=>{if(!r[1])return;const k=r[1].toLowerCase()+"|"+r[3]+"|"+g,b=best.get(k);if(!b||r[0]<b.r[0])best.set(k,{li,g,ev,i,r,t:r[1].toLowerCase().split(/[^a-z0-9']+/).filter(Boolean)})})}
+  const out=[...best.values()];AIDX.set(D,out);return out}
+function athHits(q){const key=curKey();if(!key||q.length<3)return [];const X=athIdx(key);if(!X)return [];const ws=q.toLowerCase().split(/\s+/).filter(Boolean);
+  return X.filter(a=>ws.every(w=>a.t.some(t=>t.startsWith(w)))).sort((a,b)=>a.r[0]-b.r[0]).slice(0,8)}
 function teamDrop(id){const el=$(id+"d"),inp=$(id);if(!el||!inp)return;const q=inp.value.trim();if(id==="tq")TQ.v=inp.value;const h=hits(q.toLowerCase());
-  if(id==="rq"&&!h.length){el.innerHTML="";return}   /* an athlete name: no schools, the list below does the filtering */
+  if(id==="rq"){const A=athHits(q),D=CACHE[curKey()];if(!h.length&&!A.length){el.innerHTML="";return}
+    const ah=A.length?`<p class="dhd">Athletes</p>${A.map(a=>`<button type="button" role="option" data-rath="${a.li}|${a.g}|${esc(a.ev)}|${a.i}"><i class="dlogo dini" aria-hidden="true">${esc(a.r[1].split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase())}</i><em>${esc(a.r[1])}</em><span>${esc(D.teams[a.r[3]])} · ${a.g==="m"?"Men's":"Women's"} ${esc(evLabel(a.ev))} ${esc(a.r[4])}<b>Athlete ›</b></span></button>`).join("")}`:"";
+    if(!h.length){el.innerHTML=`<div class="drop tdrop" role="listbox">${ah}</div>`;return}
+    el.innerHTML=`<div class="drop tdrop" role="listbox"><p class="dhd">Schools</p>${h.map(([x,i],k)=>`<button type="button" role="option" data-tpage="${i}" class="${k===0?"on":""}">${tlogo(x)}<em>${esc(x.n)}</em><span>${esc(x.d.replace("NCAA ",""))}${x.c&&x.c!==x.d?" · "+esc(x.c):""}<b>Team ›</b></span></button>`).join("")}${ah}</div>`;return}
   const cmk=/^cms[ab]$/.test(id)?"s"+id[3]:null;
   el.innerHTML=h.length?`<div class="drop tdrop" role="listbox">${id==="rq"?'<p class="dhd">Schools</p>':""}${h.map(([x,i],k)=>`<button type="button" role="option" ${cmk?`data-cmpick="${cmk}|${i}"`:`data-tpage="${i}"`} class="${k===0?"on":""}">${tlogo(x)}<em>${esc(x.n)}</em><span>${esc(x.d.replace("NCAA ",""))}${x.c&&x.c!==x.d?" · "+esc(x.c):""}${cmk?"":"<b>Team ›</b>"}</span></button>`).join("")}</div>`
     :(q.length>1?'<div class="drop"><p class="none">No team matches that. Try the full name or a short name like USC.</p></div>':"")}
@@ -1604,6 +1624,8 @@ document.addEventListener("click",ev=>{
   if("cmore" in d){R.cn=(R.cn||25)+50;render();return}
   if("amore" in d){R.an=(R.an||100)+200;render();return}
   if(d.wind!==undefined){setWind(!WIND);return}
+  if(d.rath){const [li,g,ev,i]=d.rath.split("|"),D=CACHE[curKey()],r=D&&((D.lists[+li].g[g]||{})[ev]||[])[+i];if(!r)return;
+    R.conf="";R.g=g;R.ev=ev;R.q="";R.team=null;R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();{const x=$("rqd"),qi=$("rq");if(x)x.innerHTML="";if(qi)qi.value=""}scrollTo(0,0);log("athlete",{athlete:r[1],team:D.teams[r[3]],from:"search"});return}
   if(d.rg){R.g=d.rg;R.team=null;R.ath=null;R.swap=true;render();return}
   if(d.rev){R.ev=d.rev;R.swap=true;render();{const el=evLabel(d.rev);intent(el,R.g);log("results_event",{event:el,g:R.g,division:R.div,state:R.st?ST_NAME[R.st]:undefined})}const a=document.querySelector('.evs [aria-pressed="true"]');if(a)a.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});return}
   if(d.rsea){const y0=R.season.split("-")[0];const y=RIDX.some(r=>r.year===y0&&r.season===d.rsea)?y0:RIDX.filter(r=>r.season===d.rsea).map(r=>r.year).sort().pop();R.season=y+"-"+d.rsea;R.list=0;R.team=null;R.ath=null;R.swap=true;render();return}
