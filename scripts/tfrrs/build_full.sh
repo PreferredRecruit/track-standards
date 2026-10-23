@@ -18,4 +18,5 @@ out = [nk.pop(x["key"], x) for x in cur] + list(nk.values())
 json.dump(out, open(sys.argv[1], "w")); print(len(nk), "new keys,", len(new), "rebuilt")
 PY
 python3 "$SITE/scripts/tfrrs/build_legal.py" | tail -1
+python3 "$SITE/scripts/tfrrs/build_career.py"
 rm -rf "$TMP"

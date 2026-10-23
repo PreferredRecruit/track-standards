@@ -839,6 +839,15 @@ function loadAth(){if(ATH||ATHL)return;ATHL=fetch("/data/athletes.json").then(r=
 const evName=e=>/^\d[\d,]*$/.test(e)?e+"m":e;
 /* athlete profile pages (scripts/seo/athletes.mjs): TFRRS id -> /athletes/<slug>.html, linked from the in-app athlete view */
 let AIX=null;function loadAix(){if(AIX!==null)return;AIX={};fetch("/data/athletes-index.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(j=>{AIX=j||{};if(R.ath)render()})}
+/* careers (Ryan 2026-10-23: "my cal poly times arent here"): every season, every school, joined by TFRRS athlete id
+   (scripts/tfrrs/build_career.py -> /data/career/<id % 512>.dat) */
+const CAR={},CARL={};
+function loadCareer(id){const b=+id%512;if(CAR[b]||CARL[b])return;CARL[b]=fetch("/data/career/"+b+".dat").then(r=>{if(!r.ok||typeof DecompressionStream==="undefined")throw 0;return unpack(r)}).then(j=>{CAR[b]=j}).catch(()=>{CAR[b]={}}).then(()=>{R.swap=false;render()})}
+const DIVKEY={"NCAA D1":"d1","NCAA D2":"d2","NCAA D3":"d3",NAIA:"naia",NJCAA:"njcaa",NCCAA:"nccaa",NWAC:"nwac",USCAA:"uscaa"};
+/* wind-legal careers: an aided season best is swapped for that season's legal best (same /data/legal files as the lists) */
+function legalAlt(x,aid){const k=x[0]+"-"+DIVKEY[x[1]];if(!wkey(k))return null;const G=LEG[k];if(!G){loadLegal(k).then(()=>{R.swap=false;render()});return undefined}
+  for(const g of ["m","w"]){const E=(G[g]||{})[x[2]];if(E)for(const p in E)if(p.split("/")[0]===aid)return E[p]}return null}
+const careerOf=id=>{const b=CAR[+id%512];return b?(b[id]||{n:"",s:[]}):null};
 function athView(D){
   const a=R.ath, P=ATH&&ATH[a.path]; if(a.path&&!ATH) loadAth(); loadAix();
   const prof=a.path&&AIX&&AIX[String(a.path).split("/")[0]];
@@ -846,16 +855,23 @@ function athView(D){
   const best={};marks.forEach(m=>{const c=best[m.e];if(!c||(m.l.nat&&!c.l.nat)||(m.l.nat===c.l.nat&&m.r[0]<c.r[0]))best[m.e]=m});
   const init=a.name.split(" ").map(w=>w[0]).slice(0,2).join("");
   const tlink=a.path?`https://tf.tfrrs.org/athletes/${a.path}`:"";
-  const pbs=P&&P.bests&&P.bests.length?P.bests.map(([e,m,w])=>[evName(e),m,w]):Object.values(best).map(m=>[evLabel(m.e),m.r[4],m.r[5]]);
+  const aid=a.path?String(a.path).split("/")[0]:"";if(aid)loadCareer(aid);const C=aid?careerOf(aid):null,cs=(C?C.s:[]).map(x=>{if(!WIND||!WEV.has(x[2])||!aided(x[4]))return x;const L=legalAlt(x,aid);if(!L)return Object.assign(x.slice(),{ad:1});const y=x.slice();y[3]=L[0];y[4]=L[1];y[7]=L[2];y[8]=L[3];y[6]=0;y.lg=1;return y});
+  /* college bests across every season and school */
+  const cb={};cs.forEach(x=>{const c=ecode(x[2]),v=tval(x[3]);if(v==null||x.ad)return;const k=x[2]+"|"+x[0].split("-")[1],o=cb[k];if(!o||tbetter(c,v,o.v))cb[k]={x,v}});
+  const pbs=cs.length?Object.values(cb).sort((p,q)=>eord(ecode(p.x[2]))-eord(ecode(q.x[2]))).map(({x})=>[evLabel(x[2])+(/indoor/.test(x[0])&&!/^(60|Mile|Weight|Pent|600|1000|3000 M)/.test(x[2])?" (indoor)":""),x[3],x[4],x[0].slice(0,4)+" · "+x[5]])
+    :P&&P.bests&&P.bests.length?P.bests.map(([e,m,w])=>[evName(e),m,w]):Object.values(best).map(m=>[evLabel(m.e),m.r[4],m.r[5]]);
+  const schools=[...new Set(cs.slice().reverse().map(x=>x[5]))];
   let o=`<div class="rbody${R.swap?" swap":""}"><p style="margin:14px 2px 0"><button class="lnk" data-athback>‹ Back to rankings</button></p>
-  <div class="ahead"><div class="avt" aria-hidden="true">${esc(init)}</div><div><h3>${esc(a.name)}</h3><p>${esc([yr(a.yr),D.teams[a.team],DIVINFO[R.div]||R.div].filter(Boolean).join(" · "))}</p></div>${prof?`<a href="${prof}">Full profile ›</a>`:tlink?`<a href="${tlink}" target="_blank" rel="noopener">Full profile on TFRRS ›</a>`:""}</div>
-  <div class="ah2">College bests</div><div class="pbs">${pbs.map(([e,m,w])=>`<div><small>${esc(e)}</small><b>${esc(m)}</b>${w?`<span>wind ${esc(w)}</span>`:""}</div>`).join("")}</div>
+  <div class="ahead"><div class="avt" aria-hidden="true">${esc(init)}</div><div><h3>${esc(a.name)}</h3><p>${esc([yr(a.yr),schools.length>1?schools.join(" → "):D.teams[a.team],DIVINFO[R.div]||R.div].filter(Boolean).join(" · "))}</p></div>${prof?`<a href="${prof}">Full profile ›</a>`:tlink?`<a href="${tlink}" target="_blank" rel="noopener">Full profile on TFRRS ›</a>`:""}</div>
+  <div class="ah2">College bests</div><div class="pbs">${pbs.map(([e,m,w,sub])=>`<div><small>${esc(e)}</small><b>${esc(m)}</b>${w?`<span>wind ${esc(w)}</span>`:""}${sub?`<span>${esc(sub)}</span>`:""}</div>`).join("")}</div>
   <div class="ah2">${esc(seasonLabel(R.season))} rankings</div><div class="grid"><div class="gh agr"><span>Event</span><span class="al">List</span><span>Rank</span><span style="text-align:right">Mark</span></div>
   ${Object.values(best).map(m=>`<div class="gr agr"><span style="font-weight:600">${esc(evLabel(m.e))}</span><span class="al" style="color:var(--pr-mute);font-size:14px">${esc(m.l.nat?(DIVINFO[R.div]||R.div)+" national":m.l.label)}</span><span class="rkb" style="width:auto;padding:0 10px;border-radius:999px">#${esc(m.r[0])}</span><span class="gmk">${esc(m.r[4])}${m.r[8]?`<small>${esc(m.r[8])}</small>`:""}</span></div>`).join("")}</div>
+  ${cs.length?`<div class="ah2">Career by season</div><div class="grid"><div class="gh agr"><span>Season</span><span class="al">School · event</span><span>Rank</span><span style="text-align:right">Mark</span></div>
+  ${cs.map(x=>`<div class="gr agr"><span style="font-weight:600">${esc(seasonLabel(x[0]))}</span><span class="al" style="font-size:14px">${esc(x[5])} · ${esc(evLabel(x[2]))}<small style="display:block;color:var(--pr-mute)">${esc(x[7])} · ${esc(x[8])}</small></span><span class="rkb" style="width:auto;padding:0 10px;border-radius:999px">${x[6]?"#"+esc(x[6]):"–"}</span><span class="gmk">${esc(x[3])}${x[4]?`<small>wind ${esc(x[4])}${x.lg?" · legal best":WEV.has(x[2])&&aided(x[4])?" · aided":""}</small>`:""}</span></div>`).join("")}</div>${WIND&&cs.some(x=>x.lg||x.ad)?`<p class="wnote">Wind-legal is on: wind-aided season bests are replaced by that season's legal best${cs.some(x=>x.ad)?"; marked aided where no legal mark was found yet":""}.</p>`:""}`:""}
   <div class="ah2">Meet history</div>`;
   if(a.path&&!ATH) o+=skeleton();
   else if(P&&P.meets&&P.meets.length) o+=`<div class="meets">${P.meets.map(m=>`<article class="mt1"><div class="mh"><b>${esc(m.meet)}</b><span>${esc(m.date)}</span></div>${m.rows.map(r=>`<div class="mr"><span>${esc(evName(r[0]))}</span><b>${esc(r[1])}${r[2]?`<small>wind ${esc(r[2])}</small>`:""}</b>${r[3]?`<span class="plc ${/^1st/.test(r[3])?"w1":""}">${esc(r[3].replace(/\s*\(P\)/," · Prelim").replace(/\s*\(F\)/," · Final"))}</span>`:"<span></span>"}</div>`).join("")}</article>`).join("")}</div>`;
-  else o+=`<div class="soon">Full meet history for every athlete comes with the live site. This preview includes it for the top 5 in each D1 outdoor event.${tlink?` <a href="${tlink}" target="_blank" rel="noopener">See ${esc(a.name)} on TFRRS ›</a>`:""}</div>`;
+  else o+=`<div class="soon">Every race, round and meet for ${esc(a.name)} is on TFRRS.${tlink?` <a href="${tlink}" target="_blank" rel="noopener">See the full meet history ›</a>`:""}</div>`;
   return o+`${hookRow()}</div></div>`;
 }
 /* ---------- All divisions + Compare (Ryan 2026-10-17: "combine divisions ... all colleges ranked ... or even compare divisions") ----------
