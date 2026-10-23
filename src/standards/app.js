@@ -519,7 +519,9 @@ const aided=w=>{const x=parseFloat(w);return isFinite(x)&&x>2};
 const wkey=k=>/-outdoor-/.test(k);
 function loadLegal(key){if(LEG[key])return Promise.resolve();
   const get=u=>fetch(u,{cache:"no-cache"}).then(r=>r.ok?r.json():Promise.reject(r.status));
-  return (LIVE_KEYS.has(key)?get(LIVE_BASE+"legal/"+key+".json").catch(()=>get("/data/legal/"+key+".json")):get("/data/legal/"+key+".json")).then(j=>{LEG[key]=j}).catch(()=>{LEG[key]={}})}
+  /* current season: the Monday refresh copy and the site copy (updated as more athlete pages come in) are merged */
+  const merge=(a,b)=>{for(const g in b)for(const e in b[g])Object.assign(((a[g]||(a[g]={}))[e]||(a[g][e]={})),b[g][e]);return a};
+  return Promise.all([LIVE_KEYS.has(key)?get(LIVE_BASE+"legal/"+key+".json").catch(()=>({})):{},get("/data/legal/"+key+".json").catch(()=>({}))]).then(([a,b])=>{LEG[key]=merge(a,b)}).catch(()=>{LEG[key]={}})}
 const ftq=m=>{const i=Math.round(m/0.0254*4)/4,ft=Math.floor(i/12);return `${ft}' ${+(i-ft*12).toFixed(2)}"`};
 function legalOf(key){const D=RAW[key],G=LEG[key];if(!D||D.err||!wkey(key))return D;if(LEGC[key])return LEGC[key];
   const meets=D.meets.slice(),mi=new Map(meets.map((m,i)=>[m,i]));
