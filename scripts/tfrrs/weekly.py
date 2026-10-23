@@ -26,6 +26,8 @@ for x in idx:
 # wind-legal bests for the wind toggle (Ryan 2026-10-22): reuse the shipped files, fetch up to 1,500 new athlete pages
 subprocess.run([sys.executable, os.path.join(HERE, "build_legal.py"), os.path.join(OUT, "rank"), os.path.join(OUT, "legal")],
                env={**os.environ, "TFRRS_CACHE": os.path.join(HERE, "cache"), "LEGAL_BASE": os.path.join(HERE, "..", "..", "public", "data", "legal"), "LEGAL_FETCH": "1500"})
+# athlete careers (Ryan 2026-10-23: "keep adding peoples times, even if they are at multiple schools"): every season, this week's included
+subprocess.run([sys.executable, os.path.join(HERE, "build_career.py"), os.path.join(OUT, "career"), os.path.join(HERE, "..", "..", "public", "data", "rank"), os.path.join(OUT, "rank")])
 json.dump(idx, open(os.path.join(OUT, "rank_index.json"), "w"))
 json.dump({"updated": datetime.datetime.utcnow().isoformat(timespec="minutes") + "Z"}, open(os.path.join(OUT, "updated.json"), "w"))
 print(len(idx), "result sets for", year, "·", len(glob.glob(os.path.join(OUT, "rank", "*.dat"))), "files")

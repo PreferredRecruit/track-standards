@@ -4,10 +4,12 @@ viewed, so transfers and multi-season athletes looked incomplete. This joins eve
 athlete's best mark per event per season, at whatever school, with the national rank where the national list has it.
 Output: public/data/career/<id % 512>.dat  gzip JSON {id: {"n": name, "s": [[season key, division, event, mark, wind, team,
   national rank or 0, meet, date, class], ...]}}   (season key like "2023-outdoor"; newest season first)
-Usage: python3 scripts/tfrrs/build_career.py"""
-import glob, gzip, json, os, re
+Usage: python3 scripts/tfrrs/build_career.py [out dir] [rank dir ...]   (default public/data/career from public/data/rank; the
+Monday refresh passes its fresh current-season folder after the site's, so this week's marks replace that season's file)"""
+import glob, gzip, json, os, re, sys
 SITE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-RANK, OUT = os.path.join(SITE, "public", "data", "rank"), os.path.join(SITE, "public", "data", "career")
+OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(SITE, "public", "data", "career")
+RANKS = sys.argv[2:] or [os.path.join(SITE, "public", "data", "rank")]
 DIVS = {"d1": "NCAA D1", "d2": "NCAA D2", "d3": "NCAA D3", "naia": "NAIA", "njcaa": "NJCAA", "nccaa": "NCCAA", "nwac": "NWAC", "uscaa": "USCAA"}
 B = 512
 FIELD = re.compile(r"Jump|Vault|Put|Throw|Discus|Hammer|Javelin|thlon", re.I)
@@ -20,7 +22,10 @@ def val(m):
 
 def main():
     car = {}
-    for f in sorted(glob.glob(os.path.join(RANK, "*.dat"))):
+    files = {}
+    for rd in RANKS:
+        for f in glob.glob(os.path.join(rd, "*.dat")): files[os.path.basename(f)] = f   # a later folder replaces the same season
+    for f in [files[k] for k in sorted(files)]:
         k = os.path.basename(f)[:-4]; y, season, div = k.split("-", 2)
         if season == "xc": continue
         d = json.loads(gzip.decompress(open(f, "rb").read()))

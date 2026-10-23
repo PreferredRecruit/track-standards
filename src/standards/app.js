@@ -842,7 +842,9 @@ let AIX=null;function loadAix(){if(AIX!==null)return;AIX={};fetch("/data/athlete
 /* careers (Ryan 2026-10-23: "my cal poly times arent here"): every season, every school, joined by TFRRS athlete id
    (scripts/tfrrs/build_career.py -> /data/career/<id % 512>.dat) */
 const CAR={},CARL={};
-function loadCareer(id){const b=+id%512;if(CAR[b]||CARL[b])return;CARL[b]=fetch("/data/career/"+b+".dat").then(r=>{if(!r.ok||typeof DecompressionStream==="undefined")throw 0;return unpack(r)}).then(j=>{CAR[b]=j}).catch(()=>{CAR[b]={}}).then(()=>{R.swap=false;render()})}
+function loadCareer(id){const b=+id%512;if(CAR[b]||CARL[b])return;const get=u=>fetch(u,{cache:"no-cache"}).then(r=>{if(!r.ok||typeof DecompressionStream==="undefined")throw 0;return unpack(r)});
+  /* the Monday refresh's copy has this week's marks; the site copy is the fallback */
+  CARL[b]=(LIVE_KEYS.size?get(LIVE_BASE+"career/"+b+".dat").catch(()=>get("/data/career/"+b+".dat")):get("/data/career/"+b+".dat")).then(j=>{CAR[b]=j}).catch(()=>{CAR[b]={}}).then(()=>{R.swap=false;render()})}
 const DIVKEY={"NCAA D1":"d1","NCAA D2":"d2","NCAA D3":"d3",NAIA:"naia",NJCAA:"njcaa",NCCAA:"nccaa",NWAC:"nwac",USCAA:"uscaa"};
 /* wind-legal careers: an aided season best is swapped for that season's legal best (same /data/legal files as the lists) */
 function legalAlt(x,aid){const k=x[0]+"-"+DIVKEY[x[1]];if(!wkey(k))return null;const G=LEG[k];if(!G){loadLegal(k).then(()=>{R.swap=false;render()});return undefined}
