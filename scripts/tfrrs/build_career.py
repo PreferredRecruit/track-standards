@@ -20,8 +20,43 @@ def val(m):
     except ValueError: return None
     return p[0] * 3600 + p[1] * 60 + p[2] if len(p) == 3 else p[0] * 60 + p[1] if len(p) == 2 else p[0]
 
+# one athlete's two spellings of one school ("Boston U." / "Boston University", "App State" / "Appalachian State",
+# "NC State" / "North Carolina St.", "Wis.-Milwaukee" / "Milwaukee"). Strict, so real transfers stay apart: no extra trailing words
+# (Kansas / Kansas State), different parentheses stay different (Miami (Ohio) / Miami (Fla.)), only system prefixes may lead.
+LEAD = {("wis",), ("arkansas",), ("ul",), ("cal", "st"), ("cal", "state")}
+def toks(t):
+    par = re.findall(r"\(([^)]*)\)", t.lower()); t = re.sub(r"\([^)]*\)", " ", t.lower()).replace("&", " and ")
+    w = [x for x in re.split(r"[^a-z0-9]+", t) if x and x not in ("university", "univ", "u")]
+    return ["state" if x in ("st", "saint") and i > 0 else x for i, x in enumerate(w)], tuple(re.sub(r"[^a-z]", "", p) for p in par)
+def cover(a, b):
+    """a (the shorter name) matches the end of b token by token (same word, a 3+ letter prefix, or 2-letter initials of two
+    b words); whatever is left at the front of b must be a known system prefix (Wis., Arkansas, UL, Cal St.)"""
+    i, j = len(a) - 1, len(b) - 1
+    while i >= 0:
+        x = a[i]
+        if j >= 0 and (b[j] == x or (len(x) >= 3 and (b[j].startswith(x) or x.startswith(b[j])))): i -= 1; j -= 1; continue
+        if j >= 1 and len(x) == 2 and x == b[j - 1][0] + b[j][0]: i -= 1; j -= 2; continue
+        return False
+    return j < 0 or tuple(b[:j + 1]) in LEAD
+def same(p, q):
+    (a, pa), (b, pb) = toks(p), toks(q)
+    # "(OH)" = "(Ohio)", "(IL)" = "(Ill.)": one abbreviation starts the other
+    if pa and pb and not (len(pa) == len(pb) and all(x.startswith(y) or y.startswith(x) for x, y in zip(pa, pb))): return False
+    if len(a) > len(b): a, b = b, a
+    return bool(a) and cover(a, b)
+
+# known renames whose spellings don't match (old TFRRS name -> current)
+RENAME = {"Western State": "Western Colorado", "Western Colorado University": "Western Colorado", "Grandview": "Grand View", "ULM": "UL-Monroe",
+          "West Virginia Tech": "WVU Tech", "William Jessup": "Jessup", "Metro State": "MSU Denver", "Nebraska-Omaha": "Omaha",
+          "Bryant & Stratton (VA)": "Bryant & Stratton (Virginia)", "Mid. Tenn. State": "Middle Tennessee", "Williams Baptist College": "Williams Baptist",
+          "Williams Baptist University": "Williams Baptist", "Southwestern Assemblies of God": "Nelson University", "SAGU": "Nelson University",
+          "Ranger CC": "Ranger", "Southern New Hampshire": "SNHU", "Wheeling Jesuit": "Wheeling University", "Wheeling": "Wheeling University",
+          "Dixie State": "Utah Tech", "Houston Baptist": "Houston Christian", "Humboldt State": "Cal Poly Humboldt", "IUPUI": "IU Indianapolis",
+          "TAMU-Commerce": "East Texas A&M", "UL-Lafayette": "Louisiana", "Northwest Christian": "Bushnell", "UMKC": "Kansas City",
+          "Cal St. San B'dino": "CSUSB", "Salem Int'l": "Salem (W.V.)", "Bryant & Stratton (VA)": "Bryant & Stratton (Virginia)"}
+
 def main():
-    car = {}
+    car = {}; seen = {}   # team name -> seasons it appears in
     files = {}
     for rd in RANKS:
         for f in glob.glob(os.path.join(rd, "*.dat")): files[os.path.basename(f)] = f   # a later folder replaces the same season
@@ -29,6 +64,7 @@ def main():
         k = os.path.basename(f)[:-4]; y, season, div = k.split("-", 2)
         if season == "xc": continue
         d = json.loads(gzip.decompress(open(f, "rb").read()))
+        for t in d["teams"]: seen.setdefault(t, set()).add(f"{y}-{season}")
         for l in d["lists"]:
             if l.get("champ"): continue
             for g, E in (l.get("g") or {}).items():
@@ -44,13 +80,43 @@ def main():
                         nat = r[0] if l.get("nat") else 0
                         row = [f"{y}-{season}", DIVS.get(div, div), ev, r[4], r[5], d["teams"][r[3]], nat, d["meets"][r[6]], r[7], r[2], v]
                         if cur is None or (v > cur[10] if hi else v < cur[10]) or (v == cur[10] and nat and not cur[6]): a["b"][sk] = row
+    # TFRRS renames ("Wis.-Milwaukee" -> "Milwaukee", "Dixie State" -> "Utah Tech"): two names sharing 3+ athletes that never
+    # appear in the same season are one school; a name matching more than one other name ("Carroll") is left alone.
+    pairs = {}
+    for a in car.values():
+        ts = sorted({x[5] for x in a["b"].values()})
+        for i in range(len(ts)):
+            for j in range(i + 1, len(ts)): pairs[(ts[i], ts[j])] = pairs.get((ts[i], ts[j]), 0) + 1
+    link = {}
+    for (p, q), n in pairs.items():
+        if n >= 3 and not (seen.get(p, set()) & seen.get(q, set())): link.setdefault(p, set()).add(q); link.setdefault(q, set()).add(p)
+    canon = {}
+    for t in link:
+        if len(link[t]) > 1 and any(len(link[u]) == 1 for u in link[t]) and len({max(seen[u]) for u in link[t]}) > 1 and not any(seen[u] & seen[v] for u in link[t] for v in link[t] if u < v):
+            pass   # a chain of renames (A -> B -> C): resolved below
+        elif len(link[t]) > 1: continue
+        group, todo = {t}, [t]
+        while todo:
+            u = todo.pop()
+            for v in link.get(u, ()):
+                if v not in group and (len(link[v]) == 1 or not any(seen[v] & seen[w] for w in group)): group.add(v); todo.append(v)
+        if any(seen[u] & seen[v] for u in group for v in group if u < v): continue
+        canon[t] = max(group, key=lambda u: max(seen[u]))
     buckets = {}
     for aid, a in car.items():
+        for x in a["b"].values(): x[5] = RENAME.get(x[5], canon.get(x[5], x[5]))
+        ts = sorted({x[5] for x in a["b"].values()}, key=lambda t: max(x[0] for x in a["b"].values() if x[5] == t), reverse=True)
+        if len(ts) > 1:
+            m = {}
+            for i, t in enumerate(ts):
+                for u in ts[:i]:
+                    if same(t, u): m[t] = m.get(u, u); break
+            for x in a["b"].values(): x[5] = m.get(x[5], x[5])
         rows = sorted(a["b"].values(), key=lambda x: (x[0], x[2]), reverse=True)
         buckets.setdefault(int(aid) % B, {})[aid] = {"n": a["n"], "s": [x[:10] for x in rows]}
     os.makedirs(OUT, exist_ok=True)
     for i, b in buckets.items():
         with open(os.path.join(OUT, f"{i}.dat"), "wb") as fh: fh.write(gzip.compress(json.dumps(b, separators=(",", ":")).encode(), 9))
-    print(len(car), "athletes,", len(buckets), "files")
+    print(len(car), "athletes,", len(buckets), "files,", sum(1 for k, v in canon.items() if k != v), "old team names merged")
 
 if __name__ == "__main__": main()
