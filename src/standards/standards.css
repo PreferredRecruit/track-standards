@@ -1253,3 +1253,8 @@ header .hd .acchd{flex:none;visibility:visible}
 .cddo{display:block;width:100%;padding:10px 12px;border:0;border-radius:10px;background:none;font:inherit;font-size:15px;color:var(--pr-ink);text-align:left;cursor:pointer}
 .cddo:hover{background:var(--pr-soft)}.cddo.on{background:color-mix(in srgb,var(--pr-violet,#7A45F0) 12%,var(--pr-card));font-weight:700}
 @media (max-width:760px){.cddp{width:100%;max-width:none}}
+/* wind-legal toggle (Ryan 2026-10-22): same switch as Compare / Combine */
+.windsw{flex:none;white-space:nowrap}
+.rctl:has(.windsw){grid-template-columns:auto auto auto auto minmax(0,.9fr) minmax(0,1.1fr)}
+@media (max-width:760px){.rctl:has(.windsw){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.wnote{margin:10px 2px 0;font-size:13px;color:var(--pr-mute)}

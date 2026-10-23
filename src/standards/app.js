@@ -507,6 +507,40 @@ const tnorm=x=>String(x||"").toLowerCase().replace(/\s*\([a-z]\)\s*$/,"").replac
 const TST=new Map();SCH.forEach(s=>{if(!s.s)return;[s.n,s.t,...(s.a||[])].forEach(a=>{const k=tnorm(a);if(k&&!TST.has(k))TST.set(k,s.s)})});
 const teamSt=n=>TST.get(tnorm(n))||TST.get(tnorm(n).replace(/^university of /,""))||"";
 const CACHE={},LOADING={};
+/* wind-legal toggle (Ryan 2026-10-22: "only times within the wind-legal system ... similar to TFRRS"). TFRRS lists keep one
+   all-conditions best per athlete, so with the toggle on every wind-aided row (wind over +2.0 in the 100m, 200m, sprint hurdles,
+   long and triple jump) is swapped for that athlete's legal best of the season from /data/legal/<key>.json
+   (scripts/tfrrs/build_legal.py), or hidden when there is none / it isn't loaded yet; the list is then re-sorted and re-ranked.
+   CACHE holds whichever version is on, so every view (lists, conferences, Compare, team pages, athlete views, the AI) follows it. */
+const WEV=new Set(["100 Meters","200 Meters","100 Hurdles","110 Hurdles","Long Jump","Triple Jump"]),WCODE=new Set(["100","200","100H","110H","LJ","TJ"]);
+let WIND=(()=>{const q=new URLSearchParams(location.search).get("wind");if(q)return q==="legal";try{return localStorage.getItem("prWind")==="1"}catch(e){return false}})();
+const RAW={},LEG={},LEGC={};
+const aided=w=>{const x=parseFloat(w);return isFinite(x)&&x>2};
+const wkey=k=>/-outdoor-/.test(k);
+function loadLegal(key){if(LEG[key])return Promise.resolve();
+  const get=u=>fetch(u,{cache:"no-cache"}).then(r=>r.ok?r.json():Promise.reject(r.status));
+  return (LIVE_KEYS.has(key)?get(LIVE_BASE+"legal/"+key+".json").catch(()=>get("/data/legal/"+key+".json")):get("/data/legal/"+key+".json")).then(j=>{LEG[key]=j}).catch(()=>{LEG[key]={}})}
+const ftq=m=>{const i=Math.round(m/0.0254*4)/4,ft=Math.floor(i/12);return `${ft}' ${+(i-ft*12).toFixed(2)}"`};
+function legalOf(key){const D=RAW[key],G=LEG[key];if(!D||D.err||!wkey(key))return D;if(LEGC[key])return LEGC[key];
+  const meets=D.meets.slice(),mi=new Map(meets.map((m,i)=>[m,i]));
+  const lists=D.lists.map(l=>{if(l.champ)return l;const g2={},wh={};
+    for(const g of Object.keys(l.g||{})){g2[g]={};for(const [ev,rows] of Object.entries(l.g[g])){
+      if(!WEV.has(ev)||!rows.some(r=>aided(r[5]))){g2[g][ev]=rows;continue}
+      const e=evLabel(ev).replace(/,/g,""),up=/Jump/.test(ev),out=[];let sw=0,hid=0;
+      for(const r of rows){if(!aided(r[5])){out.push(r);continue}const a=(((G||{})[g]||{})[ev]||{})[r[9]];if(!a){hid++;continue}
+        const r2=r.slice();r2[4]=a[0];r2[5]=a[1];if(!mi.has(a[2])){mi.set(a[2],meets.length);meets.push(a[2])}r2[6]=mi.get(a[2]);r2[7]=a[3];
+        if(up){const v=parseMark(a[0],e);r2[8]=v?ftq(v):""}r2.lg=1;out.push(r2);sw++}
+      const val=r=>{const v=parseMark(r[4],e);return v==null?(up?-1:1e9):v};out.sort((a,b)=>up?val(b)-val(a):val(a)-val(b));
+      let pv=null,pl=0;g2[g][ev]=out.map((r,i)=>{const v=val(r),x=r.slice();x.lg=r.lg;if(v!==pv){pl=i+1;pv=v}x[0]=pl;return x});
+      (wh[g]||(wh[g]={}))[ev]={sw,hid}}}
+    return Object.assign({},l,{g:g2,wh})});
+  return LEGC[key]=Object.assign({},D,{meets,lists})}
+function setWind(on){WIND=on;try{localStorage.setItem("prWind",on?"1":"0")}catch(e){}
+  Promise.all(Object.keys(RAW).filter(k=>on&&wkey(k)).map(loadLegal)).then(()=>{for(const k of Object.keys(RAW))CACHE[k]=on?legalOf(k):RAW[k];R.swap=true;render()});
+  log("wind",{legal:on})}
+const windSw=()=>(R.season||"").endsWith("outdoor")||TM.i!=null||CC.on?`<button type="button" class="cmpsw windsw" data-wind aria-pressed="${WIND}" title="Only wind-legal marks (wind +2.0 or less) in the 100m, 200m, hurdles, long jump and triple jump"><span class="sw" aria-hidden="true"></span>Wind-legal</button>`:"";
+/* the note under a list when the toggle is on */
+const windNote=(L,g,ev)=>{if(!WIND||!WEV.has(ev))return "";const x=((L.wh||{})[g]||{})[ev];return `<p class="wnote">Wind-legal marks only (wind +2.0 or less).${x&&x.sw?` ${x.sw} wind-aided best${x.sw>1?"s":""} replaced by the athlete's legal best.`:""}${x&&x.hid?` ${x.hid} athlete${x.hid>1?"s":""} hidden: no legal mark found yet.`:""}</p>`};
 const DIVINFO={"NCAA D1":"NCAA D1","NCAA D2":"NCAA D2","NCAA D3":"NCAA D3",NAIA:"NAIA",NJCAA:"NJCAA",NCCAA:"NCCAA",NWAC:"NWAC",USCAA:"USCAA"};
 const evLabel=e=>e.replace(/^(\d[\d,]*) Meters$/,"$1m").replace(/^(\d+) Hurdles$/,"$1m Hurdles").replace(/^(\d+) Steeplechase$/,"$1m Steeple").replace(/^4 x (\d+) Relay$/,"4×$1 Relay");
 const years=()=>[...new Set(RIDX.map(x=>x.year))].sort().reverse();
@@ -520,7 +554,7 @@ const WIDE=()=>matchMedia("(min-width:761px)").matches;
 const MULTI=()=>{syncSel();return R.sel.length>1};
 const curKey=()=>{if(MULTI())return null;const x=RIDX.find(x=>x.year+"-"+x.season===R.season&&x.div===R.div)||RIDX.find(x=>x.year+"-"+x.season===R.season);if(x)R.div=x.div;return x&&x.key};
 function load(key,quiet){if(CACHE[key]||LOADING[key])return LOADING[key];
-  LOADING[key]=getRank(key).then(d=>{CACHE[key]=cleanRank(d)}).catch(()=>{CACHE[key]={err:1,lists:[]}})
+  LOADING[key]=getRank(key).then(d=>{RAW[key]=cleanRank(d);return WIND&&wkey(key)?loadLegal(key):0}).then(()=>{CACHE[key]=WIND?legalOf(key):RAW[key]}).catch(()=>{CACHE[key]={err:1,lists:[]}})
     .then(()=>{if(TM.i!=null&&SCH[TM.i]&&key===keyOf(TM.sea,SCH[TM.i].d)&&S.tab==="results"){R.swap=true;render();return}if((key===curKey()||MULTI()&&key.startsWith(R.season+"-")||CC.on&&cmKeys().concat([keyOf(CM.sea,CM.div)],[CM.sa,CM.sb].map(i=>SCH[i]&&keyOf(CM.tsea,SCH[i].d))).includes(key))&&S.tab==="results"&&S.school==null){R.swap=true;render()} if(!quiet) prefetch()});
   return LOADING[key]}
 function prefetch(){const go=()=>RIDX.filter(x=>x.year+"-"+x.season===R.season&&!CACHE[x.key]).forEach(x=>load(x.key,true));(window.requestIdleCallback?requestIdleCallback(go,{timeout:2000}):setTimeout(go,600))}
@@ -733,7 +767,7 @@ function cmTeamPick(k){const i=CM[k],x=SCH[i],id="cms"+k[1];
   return `<button type="button" class="cmteam" data-cmedit="${k}" aria-label="Change team ${k==="sa"?"A":"B"}">${tlogo(x)}<span><b>${esc(x.t||x.n)}</b><small>${esc(x.d)}${x.c&&x.c!==x.d?" · "+esc(x.c):""}</small></span><em>Change</em></button>`}
 function compareView(){cmFix();const t=CM.t,g=CM.g;loadBrand();
   const types=[["years","Years","Same event, two seasons"],["conf","Conferences","Two conferences"],["div","Divisions","D1 vs D2, D3, NAIA"],["schools","Teams","Two teams' athletes"]];
-  const gsel=`<div class="cmp cmgp"><span>Men or women</span><div class="seg cmgs" role="group" aria-label="Men or women"><button type="button" data-cmg="m" aria-pressed="${g==="m"}">Men</button><button type="button" data-cmg="w" aria-pressed="${g==="w"}">Women</button></div></div>`;
+  const gsel=`<div class="cmp cmgp"><span>Men or women</span><div class="seg cmgs" role="group" aria-label="Men or women"><button type="button" data-cmg="m" aria-pressed="${g==="m"}">Men</button><button type="button" data-cmg="w" aria-pressed="${g==="w"}">Women</button></div></div>${windSw()}`;
   let shared="",A="",B="",body="",what="";
   if(t==="schools"){const r=cmTeams();
     shared=`${gsel}${cmPick("te","Event",cmOpts(r.evs.length?r.evs:[CM.te||"400 Meters"],CM.te,evLabel))}${cmPick("tsea","Season",cmOpts(r.ss,CM.tsea,seasonLabel))}<label class="cmp cmmy"><span>Your time (optional)</span><input data-cmmy value="${esc(CM.my||"")}" placeholder="e.g. 49.50" inputmode="decimal" autocomplete="off"></label>`;
@@ -810,7 +844,7 @@ function multiResults(){
   const ready=ks.filter(x=>CACHE[x.key]&&!CACHE[x.key].err);
   const nm=R.sel.length===seasonDivs().length?"Every division":R.sel.map(d=>d.replace(/^NCAA /,"")).join(" + ");
   let o=`<div class="sec"><p class="lede">${CMPV?`${esc(nm)}, side by side.`:`${esc(nm)} in one ranking.`}</p><div class="rcard">${divTabs()}`;
-  const ctl=`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=x==="xc"||RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}`;
+  const ctl=`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=x==="xc"||RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}${windSw()}`;
   if(ready.length<ks.length)return o+ctl+`<span></span><span></span></div></div>`+skeleton()+`</div>`;
   const nat=D=>D.lists.find(l=>l.nat)||D.lists[0];
   const evNames=[...new Set(ready.flatMap(x=>Object.keys((nat(CACHE[x.key]).g||{})[R.g]||{})))];if(!evNames.includes(R.ev))R.ev=evNames[0];
@@ -878,7 +912,7 @@ function tListRows(i,sea,g){const s=SCH[i],k=keyOf(sea,s.d);if(!k)return {rows:[
 /* the season model: events -> best per athlete, and the roster */
 function tModel(i,sea,g){const s=SCH[i],b=tbase(s),F=b&&TDATA[b]&&!TDATA[b].none?TDATA[b]:null,LR=tListRows(i,sea,g);
   if(b&&!TDATA[b]){loadTeam(b);return null}if(!LR&&!F)return null;
-  const yr=sea.split("-")[0],ev={},put=(c,x)=>{const v=tval(x.mk);if(v==null)return;x.v=v;const m=ev[c]||(ev[c]=new Map()),key=trelay(c)?x.mk+"|"+x.meet:(x.n||"").toLowerCase();const o=m.get(key);if(!o||tbetter(c,v,o.v))m.set(key,x)};
+  const yr=sea.split("-")[0],ev={},put=(c,x)=>{const v=tval(x.mk);if(v==null)return;if(WIND&&WCODE.has(c)&&aided(x.w))return;x.v=v;const m=ev[c]||(ev[c]=new Map()),key=trelay(c)?x.mk+"|"+x.meet:(x.n||"").toLowerCase();const o=m.get(key);if(!o||tbetter(c,v,o.v))m.set(key,x)};
   let roster=[];
   if(F){const G=F.g[g]||{},ids=(G.ro||{})[yr]||[];roster=ids.map(ai=>{const a=F.A[ai];return {ai,n:a.n,yr:a.y[yr]||"",path:a.u}});
     F.A.forEach((a,ai)=>{if(a.g!==g||!a.h)return;a.h.forEach(h=>{if(h[0]!==sea)return;put(h[3],{n:trelay(h[3])?"":a.n,ai:trelay(h[3])?null:ai,yr:a.y[yr]||"",mk:h[4],w:h[5],meet:F.M[h[2]],date:h[1],pl:h[6]})})})}
@@ -914,7 +948,7 @@ function teamPage(){const i=TM.i,s=SCH[i];if((s.ng||[]).includes(TM.g))TM.g=TM.g
   if(TM.ath!=null&&M&&M.F)return o+tAthlete(M.F,TM.ath,s)+`</div>`;
   const tabs=`<div class="tptabs" role="tablist"><button type="button" role="tab" data-ttab="results" aria-selected="${TM.tab==="results"}">Results</button><button type="button" role="tab" data-ttab="roster" aria-selected="${TM.tab==="roster"}">Roster${M&&M.roster.length?` <small>${M.roster.length}</small>`:""}</button></div>`;
   o+=`<div class="tpbar">${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} only</p>`:`<div class="seg" role="group" aria-label="Men or women"><button type="button" data-tg="m" aria-pressed="${g==="m"}">Men</button><button type="button" data-tg="w" aria-pressed="${g==="w"}">Women</button></div>`}
-    <label class="cmp"><span>Season</span><select id="tsea">${ss.map(k=>`<option value="${k}" ${k===TM.sea?"selected":""}>${esc(seasonLabel(k))}</option>`).join("")}</select></label></div>${tabs}`;
+    <label class="cmp"><span>Season</span><select id="tsea">${ss.map(k=>`<option value="${k}" ${k===TM.sea?"selected":""}>${esc(seasonLabel(k))}</option>`).join("")}</select></label>${TM.sea.endsWith("outdoor")?windSw():""}</div>${tabs}`;
   if(!M)return o+skeleton()+`</div>`;
   if(TM.tab==="roster")return o+tRoster(M,s)+`</div>`;
   const evs=M.events;
@@ -1015,7 +1049,7 @@ function resultsCollege(){
   const key=curKey(), D=key&&CACHE[key]; if(key&&!D) load(key);
   loadBrand();
   let o=`<div class="sec"><p class="lede">The top marks in college track this season. Pick a level, then an event.</p><div class="rcard">${divTabs()}`;
-  const ctl=(L)=>`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=x==="xc"||RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}
+  const ctl=(L)=>`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=x==="xc"||RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}${windSw()}
     ${L?(()=>{const sts=[...new Set(D.teams.map(teamSt).filter(Boolean))].sort((a,b)=>(ST_NAME[a]||a).localeCompare(ST_NAME[b]||b));return `<label class="sr" for="rs">State</label><select class="in" id="rs"><option value="">All states</option>${sts.map(x=>`<option value="${x}" ${x===R.st?"selected":""}>${esc(ST_NAME[x]||x)}</option>`).join("")}</select>`})():""}
     <div class="search">${MAG}<label class="sr" for="rq">Search a school or athlete</label><input class="in" id="rq" placeholder="Search a school or athlete" value="${esc(R.q)}" autocomplete="off" enterkeyhint="go"><div id="rqd"></div></div></div></div>`;
   if(!D||D.err){o+=ctl(null)+(D&&D.err?`<div class="loading">These results aren't available in the preview.</div>`:skeleton());return o+`</div>`}
@@ -1038,8 +1072,8 @@ function resultsCollege(){
   const st=(i,lab,cls="")=>{const r=all[i];return r?`<div class="st ${cls}"><small>${lab}</small><b>${esc(r[4])}</b><span>${esc(r[1]||D.teams[r[3]])}${r[1]?" · "+esc(D.teams[r[3]]):""}</span></div>`:""};
   const last=all.length-1;
   o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
-  <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${L.nat?"":esc(L.label)+" "}${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(listName)} · ${esc(seasonLabel(R.season))} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools (national rank shown)`:`${all.length} marks`}</span></div>
-  ${tsug}${L.nat?`<div class="stats">${[1,10,25,50].filter(k=>rows[k-1]).map(k=>stR(rows[k-1],k===1?"Best":ord(k)+" best",k===1?"lead":"")).join("")}</div>${curve(rows,R.ev,r=>(r[1]||D.teams[r[3]])+(r[1]?" · "+D.teams[r[3]]:""))}`:""}
+  <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${L.nat?"":esc(L.label)+" "}${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(listName)} · ${esc(seasonLabel(R.season))}${WIND&&WEV.has(R.ev)?" · wind-legal":""} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools (national rank shown)`:`${all.length} marks`}</span></div>
+  ${windNote(L,R.g,R.ev)}${tsug}${L.nat?`<div class="stats">${[1,10,25,50].filter(k=>rows[k-1]).map(k=>stR(rows[k-1],k===1?"Best":ord(k)+" best",k===1?"lead":"")).join("")}</div>${curve(rows,R.ev,r=>(r[1]||D.teams[r[3]])+(r[1]?" · "+D.teams[r[3]]:""))}`:""}
   <div class="grid${L.nat?"":" raw"}"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span>${L.nat?"<span>Meet</span>":""}</div>
   ${rows.slice(0,RCAP(R.n)).map((r,i)=>{const k=all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span>${L.nat?`<span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span>`:""}</div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
   </div>${rwall(rows.length,RCAP(R.n))}${hookRow()}
@@ -1152,7 +1186,7 @@ async function answerV1(raw){
   }
   if(d.e&&/\b(fastest|best|top|leader|leaders|rank|ranked|ranking|rankings|who|longest|highest|farthest)\b/.test(q)){
     const div=d.div||"NCAA D1", x=RIDX.find(r=>r.year==="2026"&&r.season==="outdoor"&&r.div===div); if(!x) return {html:"<p>I don't have that list yet.</p>"};
-    if(!CACHE[x.key]) CACHE[x.key]=await fetch("rank/"+x.key+".json").then(r=>r.json()).catch(()=>({lists:[]}));
+    if(!CACHE[x.key]) await load(x.key,true);
     const D=CACHE[x.key], L=D.lists.find(l=>l.nat)||D.lists[0], rows=L&&L.g[g]&&L.g[g][TF[d.e]];
     if(!rows||!rows.length) return {html:`<p>No ${esc(div)} ${gl(g)} ${esc(d.e)} list in the 2026 outdoor data.</p>`};
     return {html:`<p>Top ${gl(g)} ${esc(d.e)} marks in ${esc(div)}, 2026 outdoor (TFRRS):</p>`+tbl(["#","Athlete","Team","Mark"],rows.slice(0,10).map(r=>[r[0],r[1],D.teams[r[3]],r[4]]),3)+`<p>Full list on College Track Results.</p>`,f:[`Top ${g==="m"?"women's":"men's"} ${d.e} in ${div}`]};
@@ -1565,6 +1599,7 @@ document.addEventListener("click",ev=>{
   if(d.rteam){const [dv,t]=d.rteam.split("|");R.sel=[dv];R.div=dv;R.pend=t;R.q="";R.ath=null;R.list=0;R.conf="";R.swap=true;render();return}
   if("cmore" in d){R.cn=(R.cn||25)+50;render();return}
   if("amore" in d){R.an=(R.an||100)+200;render();return}
+  if(d.wind!==undefined){setWind(!WIND);return}
   if(d.rg){R.g=d.rg;R.team=null;R.ath=null;R.swap=true;render();return}
   if(d.rev){R.ev=d.rev;R.swap=true;render();{const el=evLabel(d.rev);intent(el,R.g);log("results_event",{event:el,g:R.g,division:R.div,state:R.st?ST_NAME[R.st]:undefined})}const a=document.querySelector('.evs [aria-pressed="true"]');if(a)a.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});return}
   if(d.rsea){const y0=R.season.split("-")[0];const y=RIDX.some(r=>r.year===y0&&r.season===d.rsea)?y0:RIDX.filter(r=>r.season===d.rsea).map(r=>r.year).sort().pop();R.season=y+"-"+d.rsea;R.list=0;R.team=null;R.ath=null;R.swap=true;render();return}
