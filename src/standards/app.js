@@ -500,7 +500,7 @@ async function doShare(btn){const L=LASTSUM;if(!L)return;
 document.addEventListener("click",ev=>{const b=ev.target.closest("[data-share]");if(b){ev.preventDefault();doShare(b)}});
 
 /* ---------- Results (TFRRS, organized) ---------- */
-const R={season:"2026-outdoor",div:"NCAA D1",list:0,g:"m",ev:null,q:"",team:null,ath:null,n:9999,swap:true,st:""};
+const R={season:"2026-outdoor",div:"NCAA D1",list:0,g:"m",ev:null,q:"",team:null,ath:null,n:100,swap:true,st:""};
 /* team -> state for the Results state filter (Ryan 2026-10-16: "lets have an option to sort results per state"). TFRRS team names are
    matched to the standards database by name, team name or alias; relay squads "(B)" and "St." are normalised first. */
 const tnorm=x=>String(x||"").toLowerCase().replace(/\s*\([a-z]\)\s*$/,"").replace(/\bst\.(?=\s|$)/g,"state").replace(/[^a-z0-9&]+/g," ").trim();
@@ -557,7 +557,8 @@ function load(key,quiet){if(CACHE[key]||LOADING[key])return LOADING[key];
   LOADING[key]=getRank(key).then(d=>{RAW[key]=cleanRank(d);return WIND&&wkey(key)?loadLegal(key):0}).then(()=>{CACHE[key]=WIND?legalOf(key):RAW[key]}).catch(()=>{CACHE[key]={err:1,lists:[]}})
     .then(()=>{if(TM.i!=null&&SCH[TM.i]&&key===keyOf(TM.sea,SCH[TM.i].d)&&S.tab==="results"){R.swap=true;render();return}if((key===curKey()||MULTI()&&key.startsWith(R.season+"-")||CC.on&&cmKeys().concat([keyOf(CM.sea,CM.div)],[CM.sa,CM.sb].map(i=>SCH[i]&&keyOf(CM.tsea,SCH[i].d))).includes(key))&&S.tab==="results"&&S.school==null){R.swap=true;render()} if(!quiet) prefetch()});
   return LOADING[key]}
-function prefetch(){const go=()=>RIDX.filter(x=>x.year+"-"+x.season===R.season&&!CACHE[x.key]).forEach(x=>load(x.key,true));(window.requestIdleCallback?requestIdleCallback(go,{timeout:2000}):setTimeout(go,600))}
+/* full-depth season files are 1-5 MB each (Ryan 2026-10-22: every athlete back to 2016), so only desktops on a normal connection preload the other divisions */
+function prefetch(){const c=navigator.connection||{};if(!WIDE()||c.saveData||/2g|3g/.test(c.effectiveType||""))return;const go=()=>RIDX.filter(x=>x.year+"-"+x.season===R.season&&!CACHE[x.key]).forEach(x=>load(x.key,true));(window.requestIdleCallback?requestIdleCallback(go,{timeout:2000}):setTimeout(go,600))}
 const yr=y=>({"FR-1":"Freshman","SO-2":"Sophomore","JR-3":"Junior","SR-4":"Senior"}[y]||y||"");
 const higher=(e,m)=>/m$/.test(m)||/thlon/i.test(e);
 const mval=m=>{m=String(m).replace(/[^0-9:.]/g,"");if(!m)return null;const p=m.split(":").map(Number);return p.length===2?p[0]*60+p[1]:p.length===3?p[0]*3600+p[1]*60+p[2]:+p[0]};
@@ -1066,6 +1067,7 @@ function resultsCollege(){
     <div class="grid"><div class="gh"><span>Rank</span><span>Athlete</span><span>Event</span><span style="text-align:right">Mark</span><span>Meet</span></div>
     ${rows.slice(0,RCAP(rows.length)).map(([e,r])=>`<div class="gr"><span class="rkb">${esc(r[0])}</span>${r[1]?`<button class="gnm gath" data-ae="${esc(e)}" data-ai="${E[e].indexOf(r)}">`:'<span class="gnm">'}<b>${esc(r[1]||tn)}</b><small>${esc(yr(r[2]))}</small>${r[1]?"</button>":"</span>"}<span class="gtm" style="cursor:default">${esc(evLabel(e))}</span><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:""}</span><span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span></div>`).join("")}</div>${rwall(rows.length,RCAP(rows.length))}${hookRow()}</div></div>`;
   }
+  {const nk=[key,R.list,R.g,R.ev,R.q,R.st,WIND].join("|");if(R.nk!==nk){R.nk=nk;R.n=100}}
   const all=E[R.ev]||[], q=R.q.trim().toLowerCase(), rows=all.filter(r=>(!q||r[1].toLowerCase().includes(q)||D.teams[r[3]].toLowerCase().includes(q))&&(!R.st||teamSt(D.teams[r[3]])===R.st));
   const tsug="";
   const stR=(r,lab,cls="")=>r?`<div class="st ${cls}"><small>${lab}</small><b>${esc(r[4])}</b><span>${esc(r[1]||D.teams[r[3]])}</span>${r[1]?`<span class="stt">${esc(D.teams[r[3]])}</span>`:""}</div>`:"";   /* name and team on their own lines so neither gets cut (Ryan 2026-10-22) */
@@ -1076,7 +1078,7 @@ function resultsCollege(){
   ${windNote(L,R.g,R.ev)}${tsug}${L.nat?`<div class="stats">${[1,10,25,50].filter(k=>rows[k-1]).map(k=>stR(rows[k-1],k===1?"Best":ord(k)+" best",k===1?"lead":"")).join("")}</div>${curve(rows,R.ev,r=>(r[1]||D.teams[r[3]])+(r[1]?" · "+D.teams[r[3]]:""))}`:""}
   <div class="grid${L.nat?"":" raw"}"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span>${L.nat?"<span>Meet</span>":""}</div>
   ${rows.slice(0,RCAP(R.n)).map((r,i)=>{const k=all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span>${L.nat?`<span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(r[7])}</span>`:""}</div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
-  </div>${rwall(rows.length,RCAP(R.n))}${hookRow()}
+  </div>${rwall(rows.length,RCAP(R.n))}${ACC.member()&&rows.length>R.n?`<p class="rmorew"><button type="button" class="rmoreb" data-rmore>Show ${Math.min(200,rows.length-R.n)} more <small>${R.n.toLocaleString()} of ${rows.length.toLocaleString()}</small></button></p>`:""}${hookRow()}
   <p class="note">Source: TFRRS performance lists. Tap a team to see all of its top marks.</p></div></div>`;
   return o;
 }
@@ -1603,7 +1605,7 @@ document.addEventListener("click",ev=>{
   if(d.rg){R.g=d.rg;R.team=null;R.ath=null;R.swap=true;render();return}
   if(d.rev){R.ev=d.rev;R.swap=true;render();{const el=evLabel(d.rev);intent(el,R.g);log("results_event",{event:el,g:R.g,division:R.div,state:R.st?ST_NAME[R.st]:undefined})}const a=document.querySelector('.evs [aria-pressed="true"]');if(a)a.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});return}
   if(d.rsea){const y0=R.season.split("-")[0];const y=RIDX.some(r=>r.year===y0&&r.season===d.rsea)?y0:RIDX.filter(r=>r.season===d.rsea).map(r=>r.year).sort().pop();R.season=y+"-"+d.rsea;R.list=0;R.team=null;R.ath=null;R.swap=true;render();return}
-  if("rmore" in d){R.n=9999;render();return}
+  if("rmore" in d){R.n+=200;render();return}
   if(d.ai!==undefined){const D=CACHE[curKey()],E=D.lists[R.list].g[R.g],r=E[d.ae||R.ev][+d.ai];R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();log("athlete",{athlete:r[1],team:D.teams[r[3]],event:evLabel(d.ae||R.ev),g:R.g,division:R.div});const c=document.querySelector(".rcard");if(c)scrollTo({top:c.offsetTop-70,behavior:"smooth"});return}
   if("athback" in d){R.ath=null;R.swap=true;render();return}
   if(d.team){if(+d.team>=0){const D=CACHE[curKey()],ti=D&&schOfTeam(D.teams[+d.team],R.div);if(ti>=0){openTeam(ti);return}}R.ath=null;R.team=+d.team<0?null:+d.team;R.swap=true;render();return}

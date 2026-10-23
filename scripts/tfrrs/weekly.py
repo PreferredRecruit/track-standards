@@ -12,13 +12,13 @@ sys.path.insert(0, HERE)
 import scrape_lists, scrape_champs, scrape_xc
 
 year = datetime.date.today().year
-scrape_lists.main([str(year)], fresh=True)
+scrape_lists.main([str(year)], fresh=True, limit=10000)   # full depth: every athlete (Ryan 2026-10-22)
 scrape_champs.main(year, year)
 try: scrape_xc.main([year], fresh=True)   # cross country championships (Sep-Nov), results only
 except Exception as e: print("xc scrape failed:", e)
 tmp = os.path.join(HERE, "rank_tmp")
 subprocess.run([sys.executable, os.path.join(HERE, "build_rank.py")], check=True,
-               env={**os.environ, "TFRRS_LISTS": os.path.join(HERE, "lists"), "TFRRS_CHAMPS": os.path.join(HERE, "champs"), "RANK_OUT": tmp})
+               env={**os.environ, "CONF_CAP": "100", "TFRRS_LISTS": os.path.join(HERE, "lists"), "TFRRS_CHAMPS": os.path.join(HERE, "champs"), "RANK_OUT": tmp})
 idx = [x for x in json.load(open(os.path.join(tmp, "rank_index.json"))) if x["year"] == str(year)]
 for x in idx:
     with open(os.path.join(tmp, x["key"] + ".json"), "rb") as a, gzip.open(os.path.join(OUT, "rank", x["key"] + ".dat"), "wb", compresslevel=9) as b:

@@ -133,6 +133,14 @@ for d in sorted(glob.glob(os.path.join(SRC, "*", "*", "*"))):
             if not L0["nat"] and not L0.get("champ"):
                 for g0 in L0["g"]:
                     for e0 in L0["g"][g0]: L0["g"][g0][e0] = L0["g"][g0][e0][:25]
+    # full-depth lists (Ryan 2026-10-22: "everything ... back until 2016"; scrape_lists.py --full): the national list keeps every
+    # athlete in the division, conference and region lists keep their top CONF_CAP (100) so a season file stays phone-sized
+    cap = int(os.environ.get("CONF_CAP") or 0)
+    if cap:
+        for L0 in lists.values():
+            if not L0["nat"] and not L0.get("champ"):
+                for g0 in L0["g"]:
+                    for e0 in L0["g"][g0]: L0["g"][g0][e0] = L0["g"][g0][e0][:cap]
     key = f"{year}-{season}-{div}"
     order = sorted(lists, key=lambda n: (not lists[n]["nat"], not lists[n].get("champ"), lists[n]["region"], lists[n]["label"]))
     out = {"teams": teams, "meets": meets, "lists": [dict(id=n, **lists[n]) for n in order]}
