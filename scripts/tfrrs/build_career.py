@@ -102,6 +102,9 @@ def main():
                 if v not in group and (len(link[v]) == 1 or not any(seen[v] & seen[w] for w in group)): group.add(v); todo.append(v)
         if any(seen[u] & seen[v] for u in group for v in group if u < v): continue
         canon[t] = max(group, key=lambda u: max(seen[u]))
+    # TFRRS "* previously at <team>" (social/standards/tfrrs/extract_prev.py): prior schools, including ones without list marks
+    pf = os.path.join(SITE, "..", "..", "social", "standards", "tfrrs", "prev_schools.json")
+    PREV = json.load(open(pf)) if os.path.exists(pf) else {}
     buckets = {}
     for aid, a in car.items():
         for x in a["b"].values(): x[5] = RENAME.get(x[5], canon.get(x[5], x[5]))
@@ -113,10 +116,12 @@ def main():
                     if same(t, u): m[t] = m.get(u, u); break
             for x in a["b"].values(): x[5] = m.get(x[5], x[5])
         rows = sorted(a["b"].values(), key=lambda x: (x[0], x[2]), reverse=True)
-        buckets.setdefault(int(aid) % B, {})[aid] = {"n": a["n"], "s": [x[:10] for x in rows]}
+        e = {"n": a["n"], "s": [x[:10] for x in rows]}
+        if aid in PREV: e["p"] = [RENAME.get(t, canon.get(t, t)) for t, _ in PREV[aid]["prev"]]
+        buckets.setdefault(int(aid) % B, {})[aid] = e
     os.makedirs(OUT, exist_ok=True)
     for i, b in buckets.items():
         with open(os.path.join(OUT, f"{i}.dat"), "wb") as fh: fh.write(gzip.compress(json.dumps(b, separators=(",", ":")).encode(), 9))
-    print(len(car), "athletes,", len(buckets), "files,", sum(1 for k, v in canon.items() if k != v), "old team names merged")
+    print(len(car), "athletes,", len(buckets), "files,", sum(1 for k, v in canon.items() if k != v), "old team names merged,", sum(1 for a in car if a in PREV), "with TFRRS 'previously at' schools")
 
 if __name__ == "__main__": main()

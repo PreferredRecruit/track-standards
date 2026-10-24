@@ -62,11 +62,14 @@ export function athleteIndex({ out, RIDX, cleanRank, evLabel, slug, EVENTS }) {
   fs.writeFileSync(path.join(out, "data/athletes-index.json"), JSON.stringify(Object.fromEntries(live.map(a => [a.id, a.url]))));
   /* link for a results row (used by the results and champions pages) */
   const href = r => { if (!r || !r[9]) return null; const a = LIVE.get(String(r[9]).split("/")[0]); return a ? a.url : null; };
-  return { live, all: list, href, today };
+  return { live, all: list, href, today, out };
 }
 
 export function athletePages({ idx, write, page, esc, slug, S, raw, parse, FIELD, EVENTS, sl, evPath, confName, gName }) {
   const { live } = idx; if (!live.length) return 0;
+  /* careers (Ryan 2026-10-24: "integrate this without crowding the pages with too many links"): school per season, one-line path,
+     first-to-latest progression; plain text, no extra links. Data: public/data/career (scripts/tfrrs/build_career.py) */
+  const CB = {}, careerOf = id => { const b = +id % 512; if (!(b in CB)) { try { CB[b] = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(idx.out, "data/career", b + ".dat"))).toString()); } catch { CB[b] = {}; } } return CB[b][id] || null; };
   const order = e => { const i = EVENTS.indexOf(e); return i < 0 ? 99 : i; };
   /* the site's one mark reader handles 10.5, 1:52.3, 7.45m and 24-5.5 (feet-inches) alike; strip only wind/notes in brackets */
   const val = (m, e) => { const v = parse(String(m).replace(/\(.*?\)/g, "").trim(), e); return v == null || isNaN(v) ? null : v; };
@@ -104,8 +107,19 @@ export function athletePages({ idx, write, page, esc, slug, S, raw, parse, FIELD
     const answer = `${a.name} (${a.team}) ${verb(head.e)} ${head.mark} in the ${head.e} in the ${head.y} ${seasonName(head.s)} season${head.nat ? `, #${head.nat} on the ${head.d} national list` : ""}.`
       + (!fh.have ? "" : fh.t === fh.have ? ` That mark ${FIELD.has(head.e) ? "goes past" : "beats"} the top recruiting level at all ${fh.have.toLocaleString()} college programs with ${head.e} standards on this site.`
         : ` That mark meets the Walk-On level at ${fh.w.toLocaleString()} of ${fh.have.toLocaleString()} college programs on this site and the top recruiting level at ${fh.t.toLocaleString()}.`);
-    const table = `<div class="scroll"><table><tr><th>Season</th><th>Event</th><th class="n">Mark</th><th class="n">National rank</th><th>Conference rank</th><th>Meet</th></tr>${rows.map(r =>
-      `<tr><td>${r.y} ${esc(seasonName(r.s))}${r.d !== head.d ? ` <small>(${esc(r.d)})</small>` : ""}</td><td>${esc(r.e)}</td><td class="n">${esc(r.mark)}${r.wind ? ` <small>(${esc(r.wind)})</small>` : ""}</td><td class="n">${r.nat ? "#" + r.nat : "–"}</td><td>${r.conf ? `#${r.conf} ${esc(r.confName)}` : "–"}</td><td>${esc(r.meet)}${r.date ? ` <small>${esc(r.date)}</small>` : ""}</td></tr>`).join("")}</table></div>`;
+    const car = careerOf(String(a.path).split("/")[0]), tmap = new Map((car ? car.s : []).map(x => [`${x[0]}|${x[3]}`, x[5]]));
+    const teamOf = r => tmap.get(`${r.y}-${r.s}|${r.mark}`) || r.team;
+    /* career path: schools in order with their years, TFRRS "previously at" schools first */
+    const segs = []; [...rows].reverse().forEach(r => { const t = teamOf(r), L = segs[segs.length - 1]; if (L && L.t === t) L.y2 = r.y; else segs.push({ t, y1: r.y, y2: r.y }); });
+    const prev = ((car && car.p) || []).filter(t => !segs.some(x => x.t === t));
+    const cpath = segs.length > 1 || prev.length ? `<p class="cpath"><b>Career:</b> ${[...prev.map(esc), ...segs.map(x => `${esc(x.t)} (${x.y1 === x.y2 ? x.y1 : x.y1 + "–" + x.y2})`)].join(" → ")}</p>` : "";
+    /* progression: each event's first and latest season best */
+    const prog = [...new Set(rows.map(r => r.e))].map(e => { const L = rows.filter(r => r.e === e).sort((x, y) => x.y.localeCompare(y.y) || (x.s === "outdoor") - (y.s === "outdoor")); if (L.length < 2) return null;
+      const f = L[0], l = L[L.length - 1], ch = FIELD.has(e) ? (l.v - f.v) / f.v : (f.v - l.v) / f.v; return [e, f, l, ch]; }).filter(Boolean).sort((x, y) => order(x[0]) - order(y[0]));
+    const progT = prog.length ? `<h2>Progression</h2><div class="scroll"><table><tr><th>Event</th><th class="n">First season</th><th class="n">Latest season</th><th class="n">Change</th></tr>${prog.map(([e, f, l, ch]) =>
+      `<tr><td>${esc(e)}</td><td class="n">${esc(f.mark)} <small>(${f.y} ${esc(seasonName(f.s))}${teamOf(f) !== teamOf(l) ? ", " + esc(teamOf(f)) : ""})</small></td><td class="n">${esc(l.mark)} <small>(${l.y} ${esc(seasonName(l.s))}${teamOf(f) !== teamOf(l) ? ", " + esc(teamOf(l)) : ""})</small></td><td class="n">${ch >= 0 ? "+" : ""}${(ch * 100).toFixed(1)}%</td></tr>`).join("")}</table></div>` : "";
+    const table = `<div class="scroll"><table><tr><th>Season</th><th>School</th><th>Event</th><th class="n">Mark</th><th class="n">National rank</th><th>Conference rank</th><th>Meet</th></tr>${rows.map(r =>
+      `<tr><td>${r.y} ${esc(seasonName(r.s))}${r.d !== head.d ? ` <small>(${esc(r.d)})</small>` : ""}</td><td>${esc(teamOf(r))}</td><td>${esc(r.e)}</td><td class="n">${esc(r.mark)}${r.wind ? ` <small>(${esc(r.wind)})</small>` : ""}</td><td class="n">${r.nat ? "#" + r.nat : "–"}</td><td>${r.conf ? `#${r.conf} ${esc(r.confName)}` : "–"}</td><td>${esc(r.meet)}${r.date ? ` <small>${esc(r.date)}</small>` : ""}</td></tr>`).join("")}</table></div>`;
     const cmp = evBest.map(r => { const f = fits(g, r.e, r.v); return f.have ? `<tr><td>${esc(r.e)}</td><td class="n">${esc(r.mark)}</td><td class="n">${f.w.toLocaleString()} of ${f.have.toLocaleString()}</td><td class="n">${f.t.toLocaleString()}</td></tr>` : ""; }).join("");
     const links = [];
     if (school) links.push([sl(school), `${school.n} track and field recruiting standards`]);
@@ -115,7 +129,7 @@ export function athletePages({ idx, write, page, esc, slug, S, raw, parse, FIELD
     links.push(["/athletes.html", "More college athletes"]);
     const faq = [[`What is ${a.name}'s best ${head.e} mark?`, `${evBest.find(r => r.e === head.e).mark}, set in the ${evBest.find(r => r.e === head.e).y} ${seasonName(evBest.find(r => r.e === head.e).s)} season (TFRRS performance lists).`]];
     if (fh.have) faq.push([`How many colleges would a ${head.mark} ${head.e} fit?`, fh.t === fh.have ? `All of them: it ${FIELD.has(head.e) ? "goes past" : "beats"} the top recruiting level at all ${fh.have.toLocaleString()} college programs with ${gName(g).toLowerCase()} ${head.e} standards on this site.` : `It meets the Walk-On level at ${fh.w.toLocaleString()} of ${fh.have.toLocaleString()} college programs with ${gName(g).toLowerCase()} ${head.e} standards on this site, and the top recruiting level at ${fh.t.toLocaleString()}.`]);
-    const body = `<h2>Season bests</h2>${table}
+    const body = `${cpath}<h2>Season bests</h2>${table}${progT}
 ${cmp ? `<h2>How do ${esc(first)}'s marks compare with college recruiting standards?</h2><p>Each best mark against every program's levels on this site (Walk-On is the easiest level, the top level is Target or scholarship level).</p><div class="scroll"><table><tr><th>Event</th><th class="n">Best mark</th><th class="n">Meets Walk-On at</th><th class="n">Meets top level at</th></tr>${cmp}</table></div>` : ""}
 <h2>Common questions</h2>${faq.map(([q, x]) => `<h3>${esc(q)}</h3><p>${esc(x)}</p>`).join("")}
 <div class="claim" style="margin:26px 0;padding:16px 18px;border:1px solid var(--line);border-radius:16px;background:#fff"><b>Is this you?</b> Create a free profile to keep your PRs in one place and see every college your marks fit. <a href="/onboarding">Create your free profile ›</a></div>

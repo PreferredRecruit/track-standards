@@ -1262,3 +1262,23 @@ header .hd .acchd{flex:none;visibility:visible}
 .rmorew{text-align:center;margin:14px 0 0}
 .rmoreb{border:1px solid var(--pr-line);background:var(--pr-card);color:var(--pr-ink);border-radius:999px;padding:10px 18px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .rmoreb small{color:var(--pr-mute);font-weight:500;margin-left:6px}
+/* team results <-> recruiting standards switch, same place on both pages (Ryan 2026-10-24) */
+.tsw{display:inline-flex;margin:12px 0 0;padding:3px;border-radius:999px;background:color-mix(in srgb,var(--sbo,#fff) 14%,transparent);gap:2px}
+.tsw a,.tsw span{display:inline-flex;align-items:center;height:36px;padding:0 16px;border-radius:999px;font-size:14px;font-weight:600;white-space:nowrap;text-decoration:none;color:var(--sbo,#fff)}
+.tsw span{background:var(--pr-card);color:var(--pr-ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.tsw a:hover{background:color-mix(in srgb,var(--sbo,#fff) 22%,transparent)}
+@media (max-width:420px){.tsw a,.tsw span{padding:0 12px;font-size:13px}}
+/* athlete progression charts (Ryan 2026-10-24) */
+.pgw{background:var(--pr-card);border:1px solid var(--pr-line);border-radius:16px;padding:12px 12px 10px;margin-top:8px}
+.pgev{margin-bottom:6px}
+.pgc{width:100%;height:auto;display:block;overflow:visible}
+.pgg{stroke:var(--pr-line);stroke-dasharray:3 4}
+.pgs{stroke:var(--pr-mute);stroke-dasharray:2 4;opacity:.6}
+.pgl{fill:none;stroke:var(--pr-mute);stroke-width:2;opacity:.45}
+.pgt{font-size:12px;fill:var(--pr-mute)}
+.pgn{font-weight:600;fill:var(--pr-ink)}
+.pgv{font-size:12.5px;font-weight:700;fill:var(--pr-ink)}
+.pgcap{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:6px 4px 0;font-size:13px;color:var(--pr-mute)}
+.pgcap i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.pgcap .pgin{background:var(--pr-card);border:2px solid var(--pr-mute);width:7px;height:7px}
+.pgcap b{margin-left:auto;font-weight:700}.pgcap b.up{color:#13865a}.pgcap b.dn{color:#c2410c}
