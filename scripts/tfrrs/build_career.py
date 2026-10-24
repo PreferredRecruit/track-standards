@@ -119,6 +119,17 @@ def main():
         e = {"n": a["n"], "s": [x[:10] for x in rows]}
         if aid in PREV: e["p"] = [RENAME.get(t, canon.get(t, t)) for t, _ in PREV[aid]["prev"]]
         buckets.setdefault(int(aid) % B, {})[aid] = e
+    # name search for every athlete 2016-today (Ryan 2026-10-24: Tibbs ran D2 years ago, so the season on screen didn't have him):
+    # names/<2 letters>.dat, one file per first-two-letters of each name word: [name, id, school, latest season key, division]
+    NB = {}
+    for aid, a in car.items():
+        last = max(a["b"].values(), key=lambda x: (x[0][:4], x[0].endswith("outdoor")))
+        e = [a["n"], aid, RENAME.get(last[5], canon.get(last[5], last[5])), last[0], last[1]]
+        for t in {re.sub(r"[^a-z]", "", w)[:2] for w in a["n"].lower().split()}:
+            if len(t) == 2: NB.setdefault(t, []).append(e)
+    os.makedirs(os.path.join(OUT, "names"), exist_ok=True)
+    for t, L in NB.items():
+        with open(os.path.join(OUT, "names", t + ".dat"), "wb") as fh: fh.write(gzip.compress(json.dumps(L, separators=(",", ":")).encode(), 9))
     os.makedirs(OUT, exist_ok=True)
     for i, b in buckets.items():
         with open(os.path.join(OUT, f"{i}.dat"), "wb") as fh: fh.write(gzip.compress(json.dumps(b, separators=(",", ":")).encode(), 9))

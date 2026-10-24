@@ -1282,3 +1282,5 @@ header .hd .acchd{flex:none;visibility:visible}
 .pgcap i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 .pgcap .pgin{background:var(--pr-card);border:2px solid var(--pr-mute);width:7px;height:7px}
 .pgcap b{margin-left:auto;font-weight:700}.pgcap b.up{color:#13865a}.pgcap b.dn{color:#c2410c}
+.pgev button small{margin-left:6px;font-size:11px;font-weight:700;opacity:.55}
+.pgev{flex-wrap:wrap}

@@ -368,11 +368,18 @@ function athIdx(key){const D=CACHE[key];if(!D||D.err)return null;if(AIDX.has(D))
   const out=[...best.values()];AIDX.set(D,out);return out}
 function athHits(q){const key=curKey();if(!key||q.length<3)return [];const X=athIdx(key);if(!X)return [];const ws=q.toLowerCase().split(/\s+/).filter(Boolean);
   return X.filter(a=>ws.every(w=>a.t.some(t=>t.startsWith(w)))).sort((a,b)=>a.r[0]-b.r[0]).slice(0,8)}
+/* every athlete 2016-today by name (/data/career/names/<2 letters>.dat), for people not in the season on screen */
+const NAMES={},NAMEL={};
+function loadNames(t){if(NAMES[t]||NAMEL[t])return;NAMEL[t]=fetch("/data/career/names/"+t+".dat").then(r=>{if(!r.ok||typeof DecompressionStream==="undefined")throw 0;return unpack(r)}).then(j=>{NAMES[t]=j}).catch(()=>{NAMES[t]=[]}).then(()=>{const i=$("rq");if(i&&document.activeElement===i)teamDrop("rq")})}
+function nameHits(q,skip){const ws=q.toLowerCase().split(/\s+/).map(w=>w.replace(/[^a-z']/g,"")).filter(Boolean);if(!ws.length||q.length<3)return [];const t=ws[ws.length-1].replace(/[^a-z]/g,"").slice(0,2);if(t.length<2)return [];
+  if(!NAMES[t]){loadNames(t);return []}
+  return NAMES[t].filter(e=>!skip.has(e[1])&&ws.every(w=>e[0].toLowerCase().split(/[^a-z0-9']+/).some(x=>x.startsWith(w)))).sort((a,b)=>b[3].localeCompare(a[3])).slice(0,8)}
 function teamDrop(id){const el=$(id+"d"),inp=$(id);if(!el||!inp)return;const q=inp.value.trim();if(id==="tq")TQ.v=inp.value;const h=hits(q.toLowerCase());
-  if(id==="rq"){const A=athHits(q),D=CACHE[curKey()];if(!h.length&&!A.length){el.innerHTML="";return}
+  if(id==="rq"){const A=athHits(q),D=CACHE[curKey()],G=nameHits(q,new Set(A.map(a=>String(a.r[9]).split("/")[0])));if(!h.length&&!A.length&&!G.length){el.innerHTML="";return}
     const ah=A.length?`<p class="dhd">Athletes</p>${A.map(a=>`<button type="button" role="option" data-rath="${a.li}|${a.g}|${esc(a.ev)}|${a.i}"><i class="dlogo dini" aria-hidden="true">${esc(a.r[1].split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase())}</i><em>${esc(a.r[1])}</em><span>${esc(D.teams[a.r[3]])} · ${a.g==="m"?"Men's":"Women's"} ${esc(evLabel(a.ev))} ${esc(a.r[4])}<b>Athlete ›</b></span></button>`).join("")}`:"";
-    if(!h.length){el.innerHTML=`<div class="drop tdrop" role="listbox">${ah}</div>`;return}
-    el.innerHTML=`<div class="drop tdrop" role="listbox"><p class="dhd">Schools</p>${h.map(([x,i],k)=>`<button type="button" role="option" data-tpage="${i}" class="${k===0?"on":""}">${tlogo(x)}<em>${esc(x.n)}</em><span>${esc(x.d.replace("NCAA ",""))}${x.c&&x.c!==x.d?" · "+esc(x.c):""}<b>Team ›</b></span></button>`).join("")}${ah}</div>`;return}
+    const gh=G.length?`<p class="dhd">Other seasons</p>${G.map(e=>`<button type="button" role="option" data-gath="${esc(e[1])}|${esc(e[3])}|${esc(e[4])}"><i class="dlogo dini" aria-hidden="true">${esc(e[0].split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase())}</i><em>${esc(e[0])}</em><span>${esc(tcanon(e[2]))} · ${esc(seasonLabel(e[3]))} · ${esc(e[4].replace("NCAA ",""))}<b>Athlete ›</b></span></button>`).join("")}`:"";
+    if(!h.length){el.innerHTML=`<div class="drop tdrop" role="listbox">${ah}${gh}</div>`;return}
+    el.innerHTML=`<div class="drop tdrop" role="listbox"><p class="dhd">Schools</p>${h.map(([x,i],k)=>`<button type="button" role="option" data-tpage="${i}" class="${k===0?"on":""}">${tlogo(x)}<em>${esc(x.n)}</em><span>${esc(x.d.replace("NCAA ",""))}${x.c&&x.c!==x.d?" · "+esc(x.c):""}<b>Team ›</b></span></button>`).join("")}${ah}${gh}</div>`;return}
   const cmk=/^cms[ab]$/.test(id)?"s"+id[3]:null;
   el.innerHTML=h.length?`<div class="drop tdrop" role="listbox">${id==="rq"?'<p class="dhd">Schools</p>':""}${h.map(([x,i],k)=>`<button type="button" role="option" ${cmk?`data-cmpick="${cmk}|${i}"`:`data-tpage="${i}"`} class="${k===0?"on":""}">${tlogo(x)}<em>${esc(x.n)}</em><span>${esc(x.d.replace("NCAA ",""))}${x.c&&x.c!==x.d?" · "+esc(x.c):""}${cmk?"":"<b>Team ›</b>"}</span></button>`).join("")}</div>`
     :(q.length>1?'<div class="drop"><p class="none">No team matches that. Try the full name or a short name like USC.</p></div>':"")}
@@ -858,9 +865,9 @@ const careerOf=id=>{const b=CAR[+id%512];return b?(b[id]||{n:"",s:[]}):null};
    own colour with a marker where they changed schools; up is always better */
 const PCOL=["#7A45F0","#0EA5A4","#E8762D","#D6336C","#2F80ED","#5B8C2A"];
 const skey=k=>{const [y,t]=k.split("-");return +y*2+(t==="outdoor"?1:0)};
-function progChart(rows,ev){const c=ecode(ev),F=tfield(c),pts=rows.filter(x=>x[2]===ev&&tval(x[3])!=null).sort((a,b)=>skey(a[0])-skey(b[0]));if(pts.length<2)return "";
+function progChart(rows,ev){const c=ecode(ev),F=tfield(c),pts=rows.filter(x=>x[2]===ev&&tval(x[3])!=null).sort((a,b)=>skey(a[0])-skey(b[0]));if(!pts.length)return "";
   const sch=[...new Set(pts.map(x=>tcanon(x[5])))],col=t=>PCOL[sch.indexOf(tcanon(t))%PCOL.length];
-  const W=640,H=230,L=64,Rr=18,T=26,Bt=44,v=pts.map(x=>tval(x[3])),lo=Math.min(...v),hi=Math.max(...v),pad=(hi-lo||Math.abs(hi)*.02||1)*.18;
+  const W=640,H=230,L=pts.length<2?(640-18)/2:64,Rr=pts.length<2?(640-18)/2:18,T=26,Bt=44,v=pts.map(x=>tval(x[3])),lo=Math.min(...v),hi=Math.max(...v),pad=(hi-lo||Math.abs(hi)*.02||1)*.18;
   const y=x=>{const f=(x-(lo-pad))/((hi+pad)-(lo-pad));return T+(F?1-f:f)*(H-T-Bt)},X=i=>L+(pts.length===1?0:i*(W-L-Rr)/(pts.length-1));
   const lab=k=>{const [yy,t]=k.split("-");return `${t==="indoor"?"In":"Out"} ’${yy.slice(2)}`};
   let g=`<svg class="pgc" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(evLabel(ev))} progression">`;
@@ -870,7 +877,13 @@ function progChart(rows,ev){const c=ecode(ev),F=tfield(c),pts=rows.filter(x=>x[2
   pts.forEach((x,i)=>{const ind=/indoor/.test(x[0]);g+=`<circle cx="${X(i)}" cy="${y(v[i])}" r="6" fill="${ind?"var(--pr-card)":col(x[5])}" stroke="${col(x[5])}" stroke-width="2.5"><title>${esc(seasonLabel(x[0]))} · ${esc(tcanon(x[5]))} · ${esc(x[3])}${x[4]?" (wind "+esc(x[4])+")":""}</title></circle>`;
     if(pts.length<=9)g+=`<text x="${X(i)}" y="${y(v[i])-12}" text-anchor="middle" class="pgv">${esc(x[3].replace(/\s*[@#]+/g,""))}</text>`;g+=`<text x="${X(i)}" y="${H-Bt+20}" text-anchor="middle" class="pgt">${lab(x[0])}</text>`});
   const a=v[0],b=v[v.length-1],imp=F?(b-a)/a:(a-b)/a;
-  return g+`</svg><p class="pgcap">${sch.map(t=>`<span><i style="background:${col(t)}"></i>${esc(t)}</span>`).join("")}<span><i class="pgin"></i>indoor</span><b class="${imp>=0?"up":"dn"}">${imp>=0?"+":""}${(imp*100).toFixed(1)}% from first to latest season</b></p>`}
+  return g+`</svg><p class="pgcap">${sch.map(t=>`<span><i style="background:${col(t)}"></i>${esc(t)}</span>`).join("")}<span><i class="pgin"></i>indoor</span>${pts.length<2?`<b>One season of marks in this event so far</b>`:`<b class="${imp>=0?"up":"dn"}">${imp>=0?"+":""}${(imp*100).toFixed(1)}% from first to latest season</b>`}</p>`}
+/* the progression box; switching events redraws only this box, so the page doesn't jump */
+let PGCS=null;
+function progBlock(cs){PGCS=cs;/* every event they've competed in (Ryan 2026-10-24: "toggle to the 200 or click into any other event"); most seasons first */
+    const nS=e=>cs.filter(x=>x[2]===e).length,evs=[...new Set(cs.map(x=>x[2]))].sort((p,q)=>nS(q)-nS(p)||eord(ecode(p))-eord(ecode(q)));if(!evs.length)return "";
+    if(!evs.includes(R.pev))R.pev=evs[0];
+    return `<div class="ah2">Progression</div><div class="pgw">${evs.length>1?`<div class="evs pgev" role="group" aria-label="Event">${evs.map(e=>`<button type="button" data-pev="${esc(e)}" aria-pressed="${e===R.pev}">${esc(evLabel(e))}<small>${nS(e)}</small></button>`).join("")}</div>`:""}${progChart(cs,R.pev)}</div>`}
 function athView(D){
   const a=R.ath, P=ATH&&ATH[a.path]; if(a.path&&!ATH) loadAth(); loadAix();
   const prof=a.path&&AIX&&AIX[String(a.path).split("/")[0]];
@@ -889,9 +902,7 @@ function athView(D){
   <div class="ah2">College bests</div><div class="pbs">${pbs.map(([e,m,w,sub])=>`<div><small>${esc(e)}</small><b>${esc(m)}</b>${w?`<span>wind ${esc(w)}</span>`:""}${sub?`<span>${esc(sub)}</span>`:""}</div>`).join("")}</div>
   <div class="ah2">${esc(seasonLabel(R.season))} rankings</div><div class="grid"><div class="gh agr"><span>Event</span><span class="al">List</span><span>Rank</span><span style="text-align:right">Mark</span></div>
   ${Object.values(best).map(m=>`<div class="gr agr"><span style="font-weight:600">${esc(evLabel(m.e))}</span><span class="al" style="color:var(--pr-mute);font-size:14px">${esc(m.l.nat?(DIVINFO[R.div]||R.div)+" national":m.l.label)}</span><span class="rkb" style="width:auto;padding:0 10px;border-radius:999px">#${esc(m.r[0])}</span><span class="gmk">${esc(m.r[4])}${m.r[8]?`<small>${esc(m.r[8])}</small>`:""}</span></div>`).join("")}</div>
-  ${(()=>{const evs=[...new Set(cs.map(x=>x[2]))].filter(e=>cs.filter(x=>x[2]===e).length>=2).sort((p,q)=>cs.filter(x=>x[2]===q).length-cs.filter(x=>x[2]===p).length);if(!evs.length)return "";
-    if(!evs.includes(R.pev))R.pev=evs[0];
-    return `<div class="ah2">Progression</div><div class="pgw">${evs.length>1?`<div class="evs pgev" role="group" aria-label="Event">${evs.map(e=>`<button type="button" data-pev="${esc(e)}" aria-pressed="${e===R.pev}">${esc(evLabel(e))}</button>`).join("")}</div>`:""}${progChart(cs,R.pev)}</div>`})()}
+  ${progBlock(cs)}
   ${cs.length?`<div class="ah2">Career by season</div><div class="grid"><div class="gh agr"><span>Season</span><span class="al">School · event</span><span>Rank</span><span style="text-align:right">Mark</span></div>
   ${cs.map(x=>`<div class="gr agr"><span style="font-weight:600">${esc(seasonLabel(x[0]))}</span><span class="al" style="font-size:14px">${esc(tcanon(x[5]))} · ${esc(evLabel(x[2]))}<small style="display:block;color:var(--pr-mute)">${esc(x[7])} · ${esc(x[8])}</small></span><span class="rkb" style="width:auto;padding:0 10px;border-radius:999px">${x[6]?"#"+esc(x[6]):"–"}</span><span class="gmk">${esc(x[3])}${x[4]?`<small>wind ${esc(x[4])}${x.lg?" · legal best":WEV.has(x[2])&&aided(x[4])?" · aided":""}</small>`:""}</span></div>`).join("")}</div>${WIND&&cs.some(x=>x.lg||x.ad)?`<p class="wnote">Wind-legal is on: wind-aided season bests are replaced by that season's legal best${cs.some(x=>x.ad)?"; marked aided where no legal mark was found yet":""}.</p>`:""}`:""}
   <div class="ah2">Meet history</div>`;
@@ -1125,6 +1136,8 @@ function resultsCollege(){
   o+=ctl(L)+confBar(D,L,miss);
   const listName=L.nat?`${DIVINFO[R.div]||R.div}`:L.label, gname=R.g==="m"?"Men's":"Women's";
   if(R.pend){const ti=D.teams.indexOf(R.pend);R.pend=null;if(ti>=0)R.team=ti}
+  if(R.pendAth){const id=R.pendAth+"/";R.pendAth=null;let hit=null;for(const l of [...D.lists].sort((a,b)=>(b.nat?1:0)-(a.nat?1:0))){for(const g of ["m","w"])for(const [ev,rows] of Object.entries(l.g[g]||{})){const r=rows.find(r=>String(r[9]).startsWith(id));if(r){hit={g,ev,r};break}}if(hit)break}
+    if(hit){R.g=hit.g;R.ev=hit.ev;R.ath={name:hit.r[1],team:hit.r[3],yr:hit.r[2],path:hit.r[9]||""};loadAth()}}
   if(R.ath) return o+athView(D);
   if(R.team!=null){
     const tn=D.teams[R.team], rows=[];evNames.forEach(e=>(E[e]||[]).forEach(r=>{if(r[3]===R.team)rows.push([e,r])}));
@@ -1668,7 +1681,8 @@ document.addEventListener("click",ev=>{
   if("cmore" in d){R.cn=(R.cn||25)+50;render();return}
   if("amore" in d){R.an=(R.an||100)+200;render();return}
   if(d.wind!==undefined){setWind(!WIND);return}
-  if(d.pev){R.pev=d.pev;R.swap=false;render();return}
+  if(d.pev){R.pev=d.pev;const w=document.querySelector(".pgw");if(w&&PGCS){const t=document.createElement("div");t.innerHTML=progBlock(PGCS);const n=t.querySelector(".pgw");if(n){w.replaceWith(n);return}}R.swap=false;render();return}
+  if(d.gath){const [aid,sk,div]=d.gath.split("|");R.season=sk;R.div=div;R.sel=[div];R.conf="";R.q="";R.team=null;R.ath=null;R.pendAth=aid;R.swap=true;render();{const x=$("rqd"),qi=$("rq");if(x)x.innerHTML="";if(qi)qi.value=""}scrollTo(0,0);log("athlete",{from:"search-all",season:sk,division:div});return}
   if(d.rath){const [li,g,ev,i]=d.rath.split("|"),D=CACHE[curKey()],r=D&&((D.lists[+li].g[g]||{})[ev]||[])[+i];if(!r)return;
     R.conf="";R.g=g;R.ev=ev;R.q="";R.team=null;R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();{const x=$("rqd"),qi=$("rq");if(x)x.innerHTML="";if(qi)qi.value=""}scrollTo(0,0);log("athlete",{athlete:r[1],team:D.teams[r[3]],from:"search"});return}
   if(d.rg){R.g=d.rg;R.team=null;R.ath=null;R.swap=true;render();return}
