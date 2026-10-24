@@ -878,12 +878,39 @@ function progChart(rows,ev){const c=ecode(ev),F=tfield(c),pts=rows.filter(x=>x[2
     if(pts.length<=9)g+=`<text x="${X(i)}" y="${y(v[i])-12}" text-anchor="middle" class="pgv">${esc(x[3].replace(/\s*[@#]+/g,""))}</text>`;g+=`<text x="${X(i)}" y="${H-Bt+20}" text-anchor="middle" class="pgt">${lab(x[0])}</text>`});
   const a=v[0],b=v[v.length-1],imp=F?(b-a)/a:(a-b)/a;
   return g+`</svg><p class="pgcap">${sch.map(t=>`<span><i style="background:${col(t)}"></i>${esc(t)}</span>`).join("")}<span><i class="pgin"></i>indoor</span>${pts.length<2?`<b>One season of marks in this event so far</b>`:`<b class="${imp>=0?"up":"dn"}">${imp>=0?"+":""}${(imp*100).toFixed(1)}% from first to latest season</b>`}</p>`}
+/* within a season (Ryan 2026-10-24: progression "throughout a specific season and across all the years"): every race from the
+   athlete's TFRRS meet history (/data/history/<id % 1024>.dat, scripts/tfrrs/build_history.py), dated on the x axis */
+const HIS={},HISL={};
+function loadHist(id){const b=+id%1024;if(HIS[b]||HISL[b])return;HISL[b]=fetch("/data/history/"+b+".dat").then(r=>{if(!r.ok||typeof DecompressionStream==="undefined")throw 0;return unpack(r)}).then(j=>{HIS[b]=j}).catch(()=>{HIS[b]={}}).then(()=>{const w=document.querySelector(".pgw");if(w&&PGCS){const t=document.createElement("div");t.innerHTML=progBlock(PGCS,PGID);const n=t.querySelector(".pgw");if(n)w.replaceWith(n)}})}
+const histOf=id=>{const b=HIS[+id%1024];return b?(b[id]||[]):null};
+const dnum=d=>{const [y,m,dd]=d.split("-").map(Number);return Date.UTC(y,m-1,dd)/864e5};
+function seasonChart(H,code,sk){const F=tfield(code),pts=H.filter(x=>x[0]===sk&&x[3]===code&&tval(x[4])!=null&&x[1]);if(!pts.length)return `<p class="pgnone">No ${esc(ename(code))} races in ${esc(seasonLabel(sk))}.</p>`;
+  const ok=x=>!(WIND&&WCODE.has(code)&&aided(x[5])),v=pts.map(x=>tval(x[4])),vb=pts.filter(ok).map(x=>tval(x[4])),best=vb.length?(F?Math.max(...vb):Math.min(...vb)):null;
+  const W=640,H2=230,L=26,Rr=26,T=26,Bt=44,lo=Math.min(...v),hi=Math.max(...v),pad=(hi-lo||Math.abs(hi)*.02||1)*.2,d0=dnum(pts[0][1]),d1=dnum(pts[pts.length-1][1]);
+  const y=z=>{const f=(z-(lo-pad))/((hi+pad)-(lo-pad));return T+(F?1-f:f)*(H2-T-Bt)},X=x=>d1===d0?W/2:L+(dnum(x[1])-d0)/(d1-d0)*(W-L-Rr);
+  const fmt=d=>{const [yy,m,dd]=d.split("-");return "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ")[+m-1]+" "+(+dd)};
+  let g=`<svg class="pgc" viewBox="0 0 ${W} ${H2}" role="img" aria-label="${esc(ename(code))} races, ${esc(seasonLabel(sk))}">`;
+  /* one line through each meet day's best mark; every race (prelims, finals) is a dot */
+  const days=[...new Set(pts.map(x=>x[1]))],dayBest=days.map(dd=>{const r=pts.filter(x=>x[1]===dd&&ok(x)).map(x=>tval(x[4]));return r.length?[dd,F?Math.max(...r):Math.min(...r)]:null}).filter(Boolean);
+  g+=`<polyline class="pgl" points="${dayBest.map(([dd,b])=>X([0,dd])+","+y(b)).join(" ")}"/>`;
+  const labelled=new Set();pts.forEach((x,i)=>{const isB=ok(x)&&tval(x[4])===best,ad=!ok(x),cx=X(x),cy=y(v[i]);
+    g+=`<circle cx="${cx}" cy="${cy}" r="${isB?7:5.5}" fill="${ad?"var(--pr-card)":isB?"#13865a":"#7A45F0"}" stroke="${ad?"var(--pr-mute)":isB?"#13865a":"#7A45F0"}" stroke-width="2.5"><title>${esc(fmt(x[1]))} · ${esc(x[2])} · ${esc(x[4])}${x[5]?" (wind "+esc(x[5])+")":""}${x[6]?" · "+esc(x[6]):""}</title></circle>`;
+    const k=x[1]+"|"+x[4];if((pts.length<=12||isB)&&!labelled.has(k)){labelled.add(k);g+=`<text x="${cx}" y="${cy-12}" text-anchor="middle" class="pgv${isB?" pgb":""}">${esc(x[4].replace(/\s*[@#]+/g,""))}${ad?" w":""}</text>`}});
+  const ticks=days.length<=6?days:[days[0],days[Math.floor(days.length/3)],days[Math.floor(2*days.length/3)],days[days.length-1]];
+  ticks.forEach(dd=>{g+=`<text x="${X([0,dd])}" y="${H2-Bt+20}" text-anchor="middle" class="pgt">${fmt(dd)}</text>`});
+  const first=pts.find(ok),bx=pts.find(x=>ok(x)&&tval(x[4])===best),ch=first&&best!=null?(F?(best-tval(first[4]))/tval(first[4]):(tval(first[4])-best)/tval(first[4])):0;
+  return g+`</svg><p class="pgcap"><span><i style="background:#7A45F0"></i>race</span><span><i style="background:#13865a"></i>season best${bx?": "+esc(bx[4])+" at "+esc(bx[2])+", "+esc(fmt(bx[1])):""}</span>${WIND&&WCODE.has(code)?'<span><i class="pgin"></i>wind-aided</span>':""}<b class="${ch>=0?"up":"dn"}">${pts.length} race${pts.length>1?"s":""}${first&&bx&&bx!==first?` · ${ch>=0?"+":""}${(ch*100).toFixed(1)}% from first race to best`:""}</b></p>`}
 /* the progression box; switching events redraws only this box, so the page doesn't jump */
-let PGCS=null;
-function progBlock(cs){PGCS=cs;/* every event they've competed in (Ryan 2026-10-24: "toggle to the 200 or click into any other event"); most seasons first */
+let PGCS=null,PGID="";
+function progBlock(cs,aid){PGCS=cs;PGID=aid||PGID;/* every event they've competed in (Ryan 2026-10-24: "toggle to the 200 or click into any other event"); most seasons first */
     const nS=e=>cs.filter(x=>x[2]===e).length,evs=[...new Set(cs.map(x=>x[2]))].sort((p,q)=>nS(q)-nS(p)||eord(ecode(p))-eord(ecode(q)));if(!evs.length)return "";
     if(!evs.includes(R.pev))R.pev=evs[0];
-    return `<div class="ah2">Progression</div><div class="pgw">${evs.length>1?`<div class="evs pgev" role="group" aria-label="Event">${evs.map(e=>`<button type="button" data-pev="${esc(e)}" aria-pressed="${e===R.pev}">${esc(evLabel(e))}<small>${nS(e)}</small></button>`).join("")}</div>`:""}${progChart(cs,R.pev)}</div>`}
+    const H=PGID?histOf(PGID):null;if(PGID&&H===null)loadHist(PGID);const code=ecode(R.pev);
+    const hs=H?[...new Set(H.filter(x=>x[3]===code).map(x=>x[0]))].sort((a,b)=>skey(b)-skey(a)):[];if(!hs.includes(R.psea))R.psea=hs[0];
+    const mode=`<div class="seg pgmode" role="group" aria-label="View"><button type="button" data-pmode="years" aria-pressed="${R.pmode!=="season"}">Across years</button><button type="button" data-pmode="season" aria-pressed="${R.pmode==="season"}">Within a season</button></div>`;
+    const body=R.pmode==="season"?(H===null?'<p class="pgnone">Loading every race…</p>':!hs.length?`<p class="pgnone">Meet-by-meet marks for this athlete aren't loaded yet. They fill in as the TFRRS scan reaches them; the season bests are under Across years.</p>`
+      :`<div class="evs pgsea" role="group" aria-label="Season">${hs.map(k=>`<button type="button" data-psea="${esc(k)}" aria-pressed="${k===R.psea}">${esc(seasonLabel(k))}</button>`).join("")}</div>${seasonChart(H,code,R.psea)}`):progChart(cs,R.pev);
+    return `<div class="ah2">Progression</div><div class="pgw">${mode}${evs.length>1?`<div class="evs pgev" role="group" aria-label="Event">${evs.map(e=>`<button type="button" data-pev="${esc(e)}" aria-pressed="${e===R.pev}">${esc(evLabel(e))}<small>${nS(e)}</small></button>`).join("")}</div>`:""}${body}</div>`}
 function athView(D){
   const a=R.ath, P=ATH&&ATH[a.path]; if(a.path&&!ATH) loadAth(); loadAix();
   const prof=a.path&&AIX&&AIX[String(a.path).split("/")[0]];
@@ -902,7 +929,7 @@ function athView(D){
   <div class="ah2">College bests</div><div class="pbs">${pbs.map(([e,m,w,sub])=>`<div><small>${esc(e)}</small><b>${esc(m)}</b>${w?`<span>wind ${esc(w)}</span>`:""}${sub?`<span>${esc(sub)}</span>`:""}</div>`).join("")}</div>
   <div class="ah2">${esc(seasonLabel(R.season))} rankings</div><div class="grid"><div class="gh agr"><span>Event</span><span class="al">List</span><span>Rank</span><span style="text-align:right">Mark</span></div>
   ${Object.values(best).map(m=>`<div class="gr agr"><span style="font-weight:600">${esc(evLabel(m.e))}</span><span class="al" style="color:var(--pr-mute);font-size:14px">${esc(m.l.nat?(DIVINFO[R.div]||R.div)+" national":m.l.label)}</span><span class="rkb" style="width:auto;padding:0 10px;border-radius:999px">#${esc(m.r[0])}</span><span class="gmk">${esc(m.r[4])}${m.r[8]?`<small>${esc(m.r[8])}</small>`:""}</span></div>`).join("")}</div>
-  ${progBlock(cs)}
+  ${progBlock(cs,aid)}
   ${cs.length?`<div class="ah2">Career by season</div><div class="grid"><div class="gh agr"><span>Season</span><span class="al">School · event</span><span>Rank</span><span style="text-align:right">Mark</span></div>
   ${cs.map(x=>`<div class="gr agr"><span style="font-weight:600">${esc(seasonLabel(x[0]))}</span><span class="al" style="font-size:14px">${esc(tcanon(x[5]))} · ${esc(evLabel(x[2]))}<small style="display:block;color:var(--pr-mute)">${esc(x[7])} · ${esc(x[8])}</small></span><span class="rkb" style="width:auto;padding:0 10px;border-radius:999px">${x[6]?"#"+esc(x[6]):"–"}</span><span class="gmk">${esc(x[3])}${x[4]?`<small>wind ${esc(x[4])}${x.lg?" · legal best":WEV.has(x[2])&&aided(x[4])?" · aided":""}</small>`:""}</span></div>`).join("")}</div>${WIND&&cs.some(x=>x.lg||x.ad)?`<p class="wnote">Wind-legal is on: wind-aided season bests are replaced by that season's legal best${cs.some(x=>x.ad)?"; marked aided where no legal mark was found yet":""}.</p>`:""}`:""}
   <div class="ah2">Meet history</div>`;
@@ -1681,6 +1708,7 @@ document.addEventListener("click",ev=>{
   if("cmore" in d){R.cn=(R.cn||25)+50;render();return}
   if("amore" in d){R.an=(R.an||100)+200;render();return}
   if(d.wind!==undefined){setWind(!WIND);return}
+  if(d.pmode||d.psea){if(d.pmode)R.pmode=d.pmode;if(d.psea)R.psea=d.psea;const w=document.querySelector(".pgw");if(w&&PGCS){const t=document.createElement("div");t.innerHTML=progBlock(PGCS);const n=t.querySelector(".pgw");if(n){w.replaceWith(n);return}}render();return}
   if(d.pev){R.pev=d.pev;const w=document.querySelector(".pgw");if(w&&PGCS){const t=document.createElement("div");t.innerHTML=progBlock(PGCS);const n=t.querySelector(".pgw");if(n){w.replaceWith(n);return}}R.swap=false;render();return}
   if(d.gath){const [aid,sk,div]=d.gath.split("|");if(TM.i!=null){TM.i=null;TM.ath=null;history.pushState({},"",`/?tab=results&season=${sk}&div=${encodeURIComponent(div)}&athlete=${aid}`)}R.season=sk;R.div=div;R.sel=[div];R.conf="";R.q="";R.team=null;R.ath=null;R.pendAth=aid;R.swap=true;render();{const x=$("rqd"),qi=$("rq");if(x)x.innerHTML="";if(qi)qi.value=""}scrollTo(0,0);log("athlete",{from:"search-all",season:sk,division:div});return}
   if(d.rath){const [li,g,ev,i]=d.rath.split("|"),D=CACHE[curKey()],r=D&&((D.lists[+li].g[g]||{})[ev]||[])[+i];if(!r)return;
