@@ -17,6 +17,7 @@ import { parseMark, cleanRank } from "./markparse.mjs";
 import { fitTitle, fitDesc, tailsFor, levelWords, SEASON } from "./meta.mjs";
 import { schoolPages } from "./schools.mjs";
 import { statePages } from "./states.mjs";
+import { reportPages } from "./reports.mjs";
 import { topicPages, EDITED } from "./topics.mjs";
 import { gapGuides } from "./gap-guides.mjs";
 import { dailyPages } from "./daily.mjs";
@@ -278,6 +279,8 @@ export function generate(root, out) {
   /* 25 SEO + AEO topic guides (Ryan 2026-10-16), then the guides hub is rebuilt to list them */
   const TOPICS = topicPages({ S: S.filter(x => !x.j), CT, write, page, parse, esc, slug, evPath, FIELD, SITE, gName, STATE, statePath, resultPages, DATES, QUIZ });
   /* scholarship + timeline guides fact-checked against NCAA/NAIA sources (social/standards/site/GAP-GUIDES-SOURCES.md) */
+  /* data reports for links and citations (scripts/seo/reports.mjs, outreach 2.1 + 2.2) */
+  try { TOPICS.push(...reportPages({ root, S: S.filter(x => !x.j), CT, std, write, page, esc, sl, SITE, DATES, QUIZ })); } catch (e) { console.warn("reports skipped:", e && e.message); }
   try { TOPICS.push(...gapGuides({ S: S.filter(x => !x.j), CT, write, page, parse, esc, slug, evPath, FIELD, SITE, gName, STATE, statePath, resultPages, DATES, QUIZ })); } catch (e) { console.warn("gap guides skipped:", e && e.message); }
   /* NJCAA marks by event (Ryan 2026-10-16, keyword gap "njcaa track standards"): this site sets no NJCAA levels (national, not
      conference, competition), so the page shows what it took to rank #1/#10/#25/#50/#100 on the newest NJCAA national list (TFRRS). */

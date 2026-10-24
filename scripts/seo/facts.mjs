@@ -16,3 +16,5 @@ export const evl = e => EVL[e] || e;
 export const shortOf = s => (s.t && !/[().]/.test(s.t) && s.t.length < s.n.length ? s.t : s.n).replace(/\s*\(.*?\)\s*/g, " ").trim();
 /* college 1500m -> roughly the high school 1600m */
 export const t1600 = m => { const p = String(m).split(":").map(Number); const v = p.length === 2 ? p[0] * 60 + p[1] : p[0]; if (!isFinite(v) || v < 150) return null; const x = v / 0.9314; return `${Math.floor(x / 60)}:${String((x % 60).toFixed(0)).padStart(2, "0")}`; };
+/* national titles newest first: [year, season, ...]; the outdoor meet comes after indoor in the same year */
+export const newestFirst = C => C.slice().sort((a, b) => (b[0] + (b[1] === "outdoor" ? 1 : 0)).localeCompare(a[0] + (a[1] === "outdoor" ? 1 : 0)));

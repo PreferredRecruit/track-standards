@@ -8,7 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fitTitle, fitDesc, pickDesc, levelWords, SEASON } from "./meta.mjs";
-import { loadFacts, evl, shortOf, t1600 } from "./facts.mjs";
+import { loadFacts, evl, shortOf, t1600, newestFirst } from "./facts.mjs";
 const JG = "/guides/junior-college-track-and-field-recruiting.html";
 
 const divHub = d => `/standards/${String(d).toLowerCase().replace(/[^a-z0-9]+/g, "-")}-track-and-field-recruiting-standards.html`;   /* same path as prerender divPath */
@@ -93,8 +93,8 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, esc
       o += `<h2>How ${nm} develops athletes</h2><ul><li><b>Peaking:</b> ${d.peak}% of ${nm} athletes who raced at the conference championship ran their season best there or later (better than ${d.peak_pct}% of ${d.peers} ${esc(d.division)} programs).</li><li><b>Year over year:</b> returning athletes' season bests improved ${p(d.yoy)} a year (${d.yoy_pct}th percentile in ${esc(d.division)}).</li><li><b>In a season:</b> the typical athlete improved ${p(d.imp)} from their first race to their season best.</li></ul><p style="font-size:13px;color:#4A4A52">2022 to 2026 outdoor and indoor, every event, from ${d.n} athlete-seasons of TFRRS meet results.</p>`;
     }
     if (F.champ && F.champ.length) {
-      const C = F.champ.slice().sort((a, b) => b[0].localeCompare(a[0]) || a[1].localeCompare(b[1]));
-      o += `<h2>National champions from ${nm} since 2016</h2><p>${C.length} individual national title${C.length > 1 ? "s" : ""} at the ${esc(s.d)} championships.</p>` + tbl(["Season", "Event", "Champion", "Mark"], C.slice(0, 30).map(c => [`${c[0]} ${c[1]}`, `${c[3] === "m" ? "Men's" : "Women's"} ${esc(evl(c[4]))}`, esc(c[5]), esc(c[6])]));
+      const C = newestFirst(F.champ);
+      o += `<h2>National champions from ${nm} since 2016</h2><p>${C.length} individual national title${C.length > 1 ? "s" : ""} at the ${esc(s.d)} championships${s.d === "NCAA D1" ? " (the 2016 and 2021 outdoor meets aren't on TFRRS, so titles from those two aren't counted)" : ""}.</p>` + tbl(["Season", "Event", "Champion", "Mark"], C.slice(0, 30).map(c => [`${c[0]} ${c[1]}`, `${c[3] === "m" ? "Men's" : "Women's"} ${esc(evl(c[4]))}`, esc(c[5]), esc(c[6])]));
     }
     return o;
   }
@@ -111,7 +111,7 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, esc
       const fm = F && F.fresh && (F.fresh.m || {})["100 Meters"], fw = F && F.fresh && (F.fresh.w || {})["400 Meters"] || F && F.fresh && (F.fresh.w || {})["100 Meters"];
       if (fm || fw) q.push([`What do ${nm} track freshmen run?`, [fm ? `${nm}'s men's freshmen ran a median ${fm.med} in the 100m in their first college season (best ${fm.best}, ${fm.n} freshmen since 2022).` : "", fw ? `Women's freshmen: a median ${fw.med} in the ${F.fresh.w["400 Meters"] ? "400m" : "100m"}.` : ""].filter(Boolean).join(" ")]);
       if (F && F.dev) q.push([`Is ${nm} good at developing track athletes?`, `From 2022 to 2026, ${F.dev.peak}% of ${nm} athletes who raced at the conference championship ran their season best there or later, better than ${F.dev.peak_pct}% of ${F.dev.division} programs, and returning athletes improved ${F.dev.yoy >= 0 ? "+" : ""}${F.dev.yoy.toFixed(2)}% a year.`]);
-      if (F && F.champ && F.champ.length) q.push([`How many national champions has ${nm} had?`, `${F.champ.length} individual ${s.d} national title${F.champ.length > 1 ? "s" : ""} since 2016, most recently ${F.champ.slice().sort((a, b) => b[0].localeCompare(a[0]))[0][5]} (${F.champ.slice().sort((a, b) => b[0].localeCompare(a[0]))[0][0]}).`]); }
+      if (F && F.champ && F.champ.length) q.push([`How many national champions has ${nm} had?`, `${F.champ.length} individual ${s.d} national title${F.champ.length > 1 ? "s" : ""} since 2016, most recently ${newestFirst(F.champ)[0][5]} (${newestFirst(F.champ)[0][0]}).`]); }
     q.push([`What conference is ${s.n} track and field in?`, `${s.n} competes in ${s.c !== s.d ? `the ${s.c} (${s.d})` : J ? "the NJCAA (junior colleges compete nationally)" : `the ${s.d}`}${s.s ? ` and is based in ${STATE[s.s] || s.s}` : ""}.`]);
     if (B) { const top = g => (B[g] || []).slice(0, 4).map(r => `${r.e} ${r.mk}${parseFloat(r.w) > 2 ? "w" : ""}`); const bm = top("m"), bw = top("w");
       if (bm.length || bw.length) q.push([`What are ${s.n}'s best track and field marks in ${B.y}?`, [bm.length ? `Men: ${bm.join(", ")}.` : "", bw.length ? `Women: ${bw.join(", ")}.` : ""].filter(Boolean).join(" ") + " From TFRRS outdoor lists."]); }
