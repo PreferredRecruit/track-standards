@@ -1364,8 +1364,80 @@ function multiAnswer(g,P){const L=scopeList(),rows=[],per=[];
   if(comb.length)h+=tbl(["College","Division","Best level","Events that fit"],comb.slice(0,12).map(o=>[o.s.n+(o.s.o?" ★":""),o.s.d,TN[o.best],o.evs.join(", ")]),9)+(comb.length>12?`<p>Top 12 of ${comb.length}. Ask for a division, conference or state to narrow it.</p>`:"");
   h+=`<p class="note">Estimates compare your marks with each program's standards on this site. They aren't offers or guarantees; coaches also weigh grades, progression and roster needs.</p>`;
   return {html:h+quizLine,f:[!CX.div?"Only D1":"All divisions","Only schools in Texas",g==="m"?"What about women?":"What about men?"]}}
+/* ---------- athlete progression + comparisons for every athlete 2016-today (Ryan 2026-10-24: "if I ask for Ajay's progression
+   over the years in the 100m, it should pull all that data instantly ... comparing Tibs to Ryan Searl ... generate graphs") ---------- */
+const getNames=t=>{if(NAMES[t])return Promise.resolve(NAMES[t]);loadNames(t);return (NAMEL[t]||Promise.resolve()).then(()=>NAMES[t]||[])};
+const getCareer=id=>{const b=+id%512;if(!CAR[b])loadCareer(id);return (CARL[b]||Promise.resolve()).then(()=>careerOf(id))};
+const getHist=id=>{const b=+id%1024;if(!HIS[b])loadHist(id);return (HISL[b]||Promise.resolve()).then(()=>histOf(id))};
+const ASTOP=new Set("compare comparison versus vs and to with against progression progress progressed improvement improve improved improving over the years year career history trend trends season seasons his her their of in at for show me how did has have what is was were a an running ran times time marks mark chart graph plot".split(" "));
+const lev1=(a,b)=>{if(Math.abs(a.length-b.length)>1)return false;let i=0,j=0,n=0;while(i<a.length&&j<b.length){if(a[i]===b[j]){i++;j++;continue}if(++n>1)return false;if(a.length>b.length)i++;else if(b.length>a.length)j++;else{i++;j++}}return n+(a.length-i)+(b.length-j)<=1};   /* "Tibs" = "Tibbs" */
+async function resolveAthlete(seg){
+  const ws=nq(seg).split(" ").map(w=>w.replace(/[^a-z']/g,"")).filter(w=>w.length>=3&&!ASTOP.has(w)&&!evKey(w));if(!ws.length)return null;
+  const lists=await Promise.all([...new Set(ws.map(w=>w.slice(0,2)))].map(getNames)),seen=new Map();
+  for(const L of lists)for(const e of L){const tk=e[0].toLowerCase().split(/[^a-z']+/).filter(Boolean);let sc=0,fuzzy=0;
+    for(const w of ws){let j=tk.findIndex(t=>t===w||(w.length>=4&&t.startsWith(w))),fz=0;if(j<0&&w.length>=4){j=tk.findIndex(t=>lev1(t,w));fz=1;fuzzy=1}if(j<0){sc=-1;break}sc+=(tk[j]===w?2:1)+(j>0?1:0);
+      if(fz){let k=0;while(k<w.length&&tk[j][k]===w[k])k++;sc+=k*.1}}
+    if(sc>0&&(!seen.has(e[1])||seen.get(e[1]).sc<sc))seen.set(e[1],{e,sc,fuzzy})}
+  let c=[...seen.values()];if(c.some(x=>!x.fuzzy))c=c.filter(x=>!x.fuzzy);   /* "Tibs" means Tibbs; typo matches only when nothing matches directly */
+  c.sort((a,b)=>b.sc-a.sc||b.e[3].localeCompare(a.e[3]));if(!c.length)return {none:ws.join(" ")};
+  const top=c.filter(x=>x.sc===c[0].sc);return top.length===1?{e:top[0].e}:{amb:top.slice(0,6).map(x=>x.e)}}
+const aLink=e=>`/?tab=results&season=${e[3]}&div=${encodeURIComponent(e[4])}&athlete=${e[1]}`;
+const evOf=(rows,want)=>{const evs=[...new Set(rows.map(x=>x[2]))];if(want){const m=evs.find(x=>evLabel(x)===want)||evs.find(x=>evLabel(x).replace(/ \(.*\)/,"")===want);if(m)return m}
+  return evs.sort((a,b)=>rows.filter(x=>x[2]===b).length-rows.filter(x=>x[2]===a).length)[0]};
+const pct=(a,b,F)=>{const c=F?(b-a)/a:(a-b)/a;return `${c>=0?"+":""}${(c*100).toFixed(1)}%`};
+async function athleteProgress(e,want){
+  const C=await getCareer(e[1]);if(!C||!C.s.length)return {html:`<p>I don't have season marks for ${esc(e[0])} yet.</p>`};
+  const ev=evOf(C.s,want),F=tfield(ecode(ev)),pts=C.s.filter(x=>x[2]===ev&&tval(x[3])!=null).sort((a,b)=>skey(a[0])-skey(b[0]));
+  const v=pts.map(x=>tval(x[3])),best=F?Math.max(...v):Math.min(...v),bx=pts[v.indexOf(best)],schools=[...new Set([...(C.p||[]).map(tcanon),...pts.map(x=>tcanon(x[5]))])];
+  let html=`<p><b>${esc(e[0])}</b> · ${esc(schools.join(" → "))} · ${esc(evLabel(ev))}: ${pts.length>1?`from <b>${esc(pts[0][3])}</b> (${esc(seasonLabel(pts[0][0]))}) to <b>${esc(pts[pts.length-1][3])}</b> (${esc(seasonLabel(pts[pts.length-1][0]))}), ${pct(v[0],v[v.length-1],F)}. Best: <b>${esc(bx[3])}</b> in ${esc(seasonLabel(bx[0]))}.`:`one season so far, <b>${esc(pts[0][3])}</b> (${esc(seasonLabel(pts[0][0]))}).`}</p>`;
+  if(pts.length>1)html+=chartSvg({title:`${e[0]} · ${evLabel(ev)} season bests`,type:"line",labels:pts.map(x=>seasonLabel(x[0]).replace("Outdoor","Out").replace("Indoor","In")),series:[{name:e[0],values:v}],value_format:F?"meters":"time",lower_is_better:!F});
+  html+=tbl(["Season","School","Mark","Change","National rank"],pts.map((x,i)=>[seasonLabel(x[0]),tcanon(x[5]),x[3]+(x[4]?` (wind ${x[4]})`:""),i?pct(v[i-1],v[i],F):"–",x[6]?"#"+x[6]:"–"]),2);
+  /* the latest season race by race, when we have their TFRRS history */
+  const H=await getHist(e[1]),code=ecode(ev),last=pts[pts.length-1][0],races=(H||[]).filter(x=>x[0]===last&&x[3]===code&&tval(x[4])!=null);
+  if(races.length>1){const rv=races.map(x=>tval(x[4])),rb=F?Math.max(...rv):Math.min(...rv),bi=rv.indexOf(rb),champ=/championship|conference|ncaa|regional|first round/i.test(races[bi][2]);
+    html+=`<p>${esc(seasonLabel(last))}, race by race: ${races.length} races, from ${esc(races[0][4])} to a season best of <b>${esc(races[bi][4])}</b> at ${esc(races[bi][2])}${champ?" (a championship meet: peaked on time)":""}.</p>`+chartSvg({title:`${e[0]} · ${evLabel(ev)} · ${seasonLabel(last)} races`,type:"line",labels:races.map(x=>{const [,m,dd]=x[1].split("-");return `${+m}/${+dd}`}),series:[{name:e[0],values:rv}],value_format:F?"meters":"time",lower_is_better:!F})}
+  html+=`<p><a href="${aLink(e)}">Open ${esc(e[0])}'s full profile ›</a></p>`;
+  const others=[...new Set(C.s.map(x=>x[2]))].filter(x=>x!==ev).slice(0,2).map(x=>`${e[0]} ${evLabel(x)} progression`);
+  return {html,f:others}}
+async function athleteCompare(e1,e2,want){
+  const [A,B]=await Promise.all([getCareer(e1[1]),getCareer(e2[1])]);if(!A||!B)return {html:"<p>I couldn't load both careers.</p>"};
+  const shared=[...new Set(A.s.map(x=>x[2]))].filter(x=>B.s.some(y=>y[2]===x));
+  let ev=want?shared.find(x=>evLabel(x)===want):null;if(!ev)ev=shared.sort((a,b)=>(B.s.filter(x=>x[2]===b).length+A.s.filter(x=>x[2]===b).length)-(B.s.filter(x=>x[2]===a).length+A.s.filter(x=>x[2]===a).length))[0];
+  if(!ev)return {html:`<p>${esc(e1[0])} and ${esc(e2[0])} haven't run a common event. ${esc(e1[0])}: ${esc([...new Set(A.s.map(x=>evLabel(x[2])))].join(", "))}. ${esc(e2[0])}: ${esc([...new Set(B.s.map(x=>evLabel(x[2])))].join(", "))}.</p>`};
+  const F=tfield(ecode(ev));
+  /* line up by college year (their eras can differ): each year's best, outdoor and indoor together */
+  /* a college year = that spring's indoor + outdoor seasons ("2016-indoor" and "2016-outdoor" are the 2015-16 year) */
+  const byYear=C=>{const r=C.s.filter(x=>x[2]===ev&&tval(x[3])!=null),y0=Math.min(...r.map(x=>+x[0].slice(0,4))),o={};
+    r.forEach(x=>{const k=+x[0].slice(0,4)-y0+1,v=tval(x[3]);if(!o[k]||(F?v>o[k].v:v<o[k].v))o[k]={v,x}});return o};
+  const a=byYear(A),b=byYear(B),n=Math.max(...Object.keys(a).map(Number),...Object.keys(b).map(Number));
+  const labels=[...Array(n)].map((_,i)=>"Year "+(i+1));
+  const best=o=>{const L=Object.values(o);return L.reduce((p,c)=>!p||(F?c.v>p.v:c.v<p.v)?c:p,null)};const ba=best(a),bb=best(b),d=Math.abs(ba.v-bb.v);
+  const lead=(F?ba.v>bb.v:ba.v<bb.v)?e1[0]:e2[0];
+  let html=`<p><b>${esc(e1[0])}</b> (${esc(tcanon(ba.x[5]))}) vs <b>${esc(e2[0])}</b> (${esc(tcanon(bb.x[5]))}) in the ${esc(evLabel(ev))}: career bests ${esc(ba.x[3])} and ${esc(bb.x[3])}. ${esc(lead)} is ahead by ${F?(d>=1?d.toFixed(2)+" m":Math.round(d*100)+" cm"):d.toFixed(2)+" seconds"}. Lined up by college year, since their seasons may not overlap.</p>`;
+  html+=chartSvg({title:`${e1[0]} vs ${e2[0]} · ${evLabel(ev)} by college year`,type:"line",labels,series:[{name:e1[0],values:labels.map((_,i)=>a[i+1]?a[i+1].v:null)},{name:e2[0],values:labels.map((_,i)=>b[i+1]?b[i+1].v:null)}],value_format:F?"meters":"time",lower_is_better:!F});
+  html+=tbl(["College year",e1[0],e2[0]],labels.map((l,i)=>[l,a[i+1]?`${a[i+1].x[3]} (${seasonLabel(a[i+1].x[0])})`:"–",b[i+1]?`${b[i+1].x[3]} (${seasonLabel(b[i+1].x[0])})`:"–"]),1);
+  const imp=o=>{const k=Object.keys(o).map(Number).sort((p,q)=>p-q);return k.length>1?pct(o[k[0]].v,o[k[k.length-1]].v,F):"one season"};
+  html+=`<p>First to latest year: ${esc(e1[0])} ${imp(a)}, ${esc(e2[0])} ${imp(b)}. Profiles: <a href="${aLink(e1)}">${esc(e1[0])}</a> · <a href="${aLink(e2)}">${esc(e2[0])}</a></p>`;
+  return {html,f:shared.filter(x=>x!==ev).slice(0,2).map(x=>`Compare ${e1[0]} and ${e2[0]} ${evLabel(x)}`)}}
+async function athleteQ(raw,d){
+  const q=nq(raw);const cmp=/(compare|comparison|vs\.?|versus|against)\b/.test(q)||/\bcompare\b/.test(q);
+  const prog=/\b(progress|progression|progressed|improv\w*|over the years|career|history|trend|year to year|season to season|peak\w*)\b/.test(q);
+  if(!cmp&&!prog)return null;
+  if(cmp){const body=raw.replace(/^.*?\bcompare\b/i,"");const parts=body.split(/\s+(?:vs\.?|versus|to|and|with|against)\s+/i).map(x=>x.trim()).filter(Boolean);
+    if(parts.length>=2){const [r1,r2]=await Promise.all([resolveAthlete(parts[0]),resolveAthlete(parts[1])]);
+      if(r1&&r2&&r1.e&&r2.e)return athleteCompare(r1.e,r2.e,d.e);
+      if(r1&&r1.amb)return {html:`<p>Which one did you mean?</p>`,f:r1.amb.map(x=>`Compare ${x[0]} to ${r2&&r2.e?r2.e[0]:parts[1]}`)};
+      if(r2&&r2.amb)return {html:`<p>Which one did you mean?</p>`,f:r2.amb.map(x=>`Compare ${r1&&r1.e?r1.e[0]:parts[0]} to ${x[0]}`)};
+      return null}}
+  if(prog){/* an athlete first; "UCSB's 100m progression" (no athlete by that name) falls through to the program answers */
+    const r=await resolveAthlete(raw.replace(/\b(men'?s|women'?s|indoor|outdoor|ncaa|d[123])\b/gi," "));if(!r)return null;if(r.e)return athleteProgress(r.e,d.e);
+    if(r.amb)return {html:`<p>Which athlete did you mean?</p>`,f:r.amb.map(x=>`${x[0]} ${d.e||""} progression (${tcanon(x[2])}, ${seasonLabel(x[3])})`.replace(/\s+/g," "))};
+    if(r.none&&!d.schools.length&&!d.confs.length)return {html:`<p>I couldn't find an athlete called "${esc(r.none)}" in the results since 2016. Try their full name.</p>`}}
+  return null}
 async function answer(raw){
+  raw=raw.replace(/\s*\(([^()]*?),\s*\d{4} (Outdoor|Indoor)\)\s*$/,"");   /* the "(School, 2026 Outdoor)" label on athlete chips */
   const d=detect(raw), q=d.q;
+  {const a=await athleteQ(raw,d);if(a)return a}
   if(/\b(jucos?|njcaa|junior colleges?|community colleges?)\b/i.test(raw))return {html:`<p>This site doesn't set Target, Recruit or Walk-On levels for junior colleges: NJCAA competition is national rather than conference-based, so a program's marks can't be predicted reliably.</p><p>What you can do here: open <b>Results</b> and pick <b>NJCAA</b> to see this season's national list for any event, or search a junior college by name for its season bests, roster and TFRRS links.</p>`,f:["What does Walk-On mean?","Only NAIA","Only NCAA D3"]};
   /* 1. replies to a clarifying question */
   const pending=CX.await; CX.await=null;
