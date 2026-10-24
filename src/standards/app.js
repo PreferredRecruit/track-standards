@@ -848,7 +848,7 @@ function divTabs(){
 }
 function hookRow(){const d=R.div;
   const t=d==="D1"?"Looking at D1 marks? See if you actually qualify.":`Could you compete in ${d}? See where you fit.`;
-  return `<div class="hook solo"><div><b>${t}</b><span>Get a free recruitment evaluation from Preferred Recruit. It takes about a minute.</span></div><a href="${QUIZ}" target="_blank" rel="noopener">Get my recruitment evaluation</a></div>`}
+  return `<div class="hook solo"><div><b>${t}</b><span>Get a free recruitment evaluation from Preferred Recruit. It takes about a minute.</span></div><a href="${esc(quizFor())}" target="_blank" rel="noopener">Get my recruitment evaluation</a></div>`}
 function skeleton(){return `<div class="grid">${Array.from({length:8},(_,i)=>`<div class="sk"><i style="width:30px;height:30px;border-radius:50%"></i><i style="width:${30+((i*17)%30)}%"></i><i style="width:18%;margin-left:auto"></i></div>`).join("")}</div>`}
 let ATH=null,ATHL=null;
 function loadAth(){if(ATH||ATHL)return;ATHL=fetch("/data/athletes.json").then(r=>r.json()).then(d=>{ATH=d}).catch(()=>{ATH={}}).then(()=>{if(R.ath)render()})}
@@ -1229,7 +1229,8 @@ function pairs(raw){let q=nq(raw);const evs=[],mks=[];
   return out}
 const tbl=(h,rows,numFrom=1)=>`<div class="scroll"><table><thead><tr>${h.map((x,i)=>`<th class="${i>=numFrom?"num":""}">${x}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i>=numFrom?"num":""}">${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 const gl=g=>g==="w"?"women's":"men's";
-const quizLine=`<p><a href="${QUIZ}" target="_blank" rel="noopener">Looking to run in college? Get your recruitment evaluation ›</a></p>`;
+/* the AI's evaluation line carries the event + grade like every other button (2026-10-24 UTM audit) */
+const QL=()=>`<p><a href="${esc(quizFor())}" target="_blank" rel="noopener">Looking to run in college? Get your recruitment evaluation ›</a></p>`;
 function spread(list,e,k){const v=list.map(s=>s[k]).filter(x=>parse(x,e)!=null).sort((a,b)=>better(e,parse(a,e),parse(b,e)));if(v.length<4)return null;return [v[Math.floor(v.length*.25)],v[Math.floor(v.length*.75)],v.length]}
 async function answerV1(raw){
   const d=detect(raw), g=d.g||"m", q=d.q;
@@ -1240,7 +1241,7 @@ async function answerV1(raw){
     if(d.e){const rows=ss.map(s=>{const t=s[g][d.e]||[];return [s.n+(s.o?" ★":""),t[0]||"–",t[1]||"–",t[2]||"–"]});
       const lab=["Target","Recruit","Walk-On"],val=(s,j)=>{const t=s[g][d.e];return t?parse(t[j],d.e):null};
       const spec={title:`${gl(g)[0].toUpperCase()+gl(g).slice(1)} ${d.e} standards`,type:"bar",labels:ss.map(s=>s.n.replace(/ \(.*\)/,"")),series:lab.map((l,j)=>({name:l,values:ss.map(s=>val(s,j))})).filter(x=>x.values.some(v=>v!=null)),value_format:FIELD.has(d.e)?"meters":"time",lower_is_better:!FIELD.has(d.e)};
-      return {html:chartSvg(spec)+tbl(["School","Target","Recruit","Walk-On"],rows)+`<p>★ = official standards published by the school. Others are set from 2026 conference results or marked as estimates.</p>`+quizLine,f:[`${ss[0].n} vs ${ss[1].n} ${d.e==="100m"?"400m":"100m"}`]};}
+      return {html:chartSvg(spec)+tbl(["School","Target","Recruit","Walk-On"],rows)+`<p>★ = official standards published by the school. Others are set from 2026 conference results or marked as estimates.</p>`+QL(),f:[`${ss[0].n} vs ${ss[1].n} ${d.e==="100m"?"400m":"100m"}`]};}
     const evs2=EVENTS.filter(e=>ss.some(s=>s[g][e])).slice(0,12);
     return {html:`<p>${gl(g)} Recruit marks side by side (Walk-On where a school has no Recruit level):</p>`+tbl(["Event",...ss.map(s=>s.n.replace(/ \(.*\)/,"")+(s.o?" ★":""))],evs2.map(e=>[e,...ss.map(s=>{const t=s[g][e];return t?(t[1]||t[2]||t[0]||"–"):"–"})]))+`<p>Name an event (like "${ss[0].n} vs ${ss[1].n} 400m") for a chart.</p>`,f:[`${ss[0].n} vs ${ss[1].n} 100m`,`${ss[0].n} vs ${ss[1].n} 1500m`]};
   }
@@ -1279,23 +1280,23 @@ async function answerV1(raw){
   if(/\b(mean|meaning|difference|what is a|what's a)\b/.test(q)&&d.school==null)
     return {html:`<p><b>Walk-On:</b> ${DEF.W}</p><p><b>Recruit:</b> ${DEF.R} Not a guarantee.</p><p><b>Target:</b> ${DEF.T}</p>`,f:["Compare Oregon vs USC 400m","Which D2 schools fit a 5:05 women's 1600m?"]};
   if(/\b(quiz|evaluation|preferred recruit|get recruited|help me|contact coaches|guarantee)\b/.test(q)&&!d.e&&d.school==null)
-    return {html:`<p>Preferred Recruit gets your marks in front of college coaches. Guaranteed genuine interest or a full refund.</p><p>The free recruitment evaluation takes about a minute and shows if you qualify.</p>`+quizLine};
+    return {html:`<p>Preferred Recruit gets your marks in front of college coaches. Guaranteed genuine interest or a full refund.</p><p>The free recruitment evaluation takes about a minute and shows if you qualify.</p>`+QL()};
   if(d.conf&&!d.e&&d.tier){d.e="100m";d.defaulted=1}
   if(d.e&&d.mark){
     const v=parse(d.mark,d.e); if(v==null) return {html:`<p>I couldn't read "${esc(d.mark)}" as a ${esc(d.e)} mark. Try something like ${esc(ph(d.e))}.</p>`};
     let pool=SCH.filter(s=>(!d.div||s.d===d.div)&&(!d.conf||s.c===d.conf)); const hit=pool.map(s=>({s,t:tier(s,g,d.e,v)})).filter(x=>x.t);
     const c=k=>hit.filter(x=>x.t===k).length; hit.sort((a,b)=>"TRW".indexOf(a.t)-"TRW".indexOf(b.t)||a.s.n.localeCompare(b.s.n));
     const scope=[d.div,d.conf].filter(Boolean).join(" · ")||"all divisions";
-    if(!hit.length) return {html:`<p>A ${esc(d.mark)} ${gl(g)} ${esc(d.e)} doesn't meet a listed standard in ${esc(scope)} yet.</p>`+quizLine,f:[`Which D3 schools fit a ${d.mark} ${d.e}?`]};
+    if(!hit.length) return {html:`<p>A ${esc(d.mark)} ${gl(g)} ${esc(d.e)} doesn't meet a listed standard in ${esc(scope)} yet.</p>`+QL(),f:[`Which D3 schools fit a ${d.mark} ${d.e}?`]};
     const cvl=convLine(d.e,g,v);
-    return {html:(cvl?`<p>College equivalent: ${cvl}.</p>`:"")+`<p>A <b>${esc(d.mark)}</b> in the ${gl(g)} ${esc(d.e)} fits <b>${hit.length}</b> colleges (${esc(scope)}): ${c("T")} at Target, ${c("R")} at Recruit and ${c("W")} at Walk-On.</p>`+tbl(["College","Division","Level"],hit.slice(0,10).map(x=>[x.s.n,x.s.d,TN[x.t]]),9)+(hit.length>10?`<p>Showing 10 of ${hit.length}. The full list is on College Track Standards.</p>`:"")+quizLine,
+    return {html:(cvl?`<p>College equivalent: ${cvl}.</p>`:"")+`<p>A <b>${esc(d.mark)}</b> in the ${gl(g)} ${esc(d.e)} fits <b>${hit.length}</b> colleges (${esc(scope)}): ${c("T")} at Target, ${c("R")} at Recruit and ${c("W")} at Walk-On.</p>`+tbl(["College","Division","Level"],hit.slice(0,10).map(x=>[x.s.n,x.s.d,TN[x.t]]),9)+(hit.length>10?`<p>Showing 10 of ${hit.length}. The full list is on College Track Standards.</p>`:"")+QL(),
       f:d.div?[]:[`Only D1 schools for a ${d.mark} ${d.e}`]};
   }
   if(d.school!=null){
     const s=SCH[d.school], st=s[g];
-    if(d.e&&st[d.e]) {const t=st[d.e];return {html:`<p><b>${esc(s.n)}</b> ${gl(g)} ${esc(d.e)}${s.o?" (official standards)":s.est?" (estimate)":" (based on 2026 conference results)"}:</p>`+tbl(["Level","Mark"],[["Target",t[0]||"–"],["Recruit",t[1]||"–"],["Walk-On",t[2]||"–"]])+quizLine}}
+    if(d.e&&st[d.e]) {const t=st[d.e];return {html:`<p><b>${esc(s.n)}</b> ${gl(g)} ${esc(d.e)}${s.o?" (official standards)":s.est?" (estimate)":" (based on 2026 conference results)"}:</p>`+tbl(["Level","Mark"],[["Target",t[0]||"–"],["Recruit",t[1]||"–"],["Walk-On",t[2]||"–"]])+QL()}}
     const ev=EVENTS.filter(e=>st[e]); if(!ev.length) return {html:`<p>${esc(s.n)} doesn't list ${gl(g)} standards yet.</p>`};
-    return {html:`<p><b>${esc(s.n)}</b> · ${s.d} · ${esc(s.c)} · ${gl(g)} standards${s.o?" (official)":" (based on conference results)"}:</p>`+tbl(["Event","Target","Recruit","Walk-On"],ev.map(e=>[e,st[e][0]||"–",st[e][1]||"–",st[e][2]||"–"]))+quizLine,
+    return {html:`<p><b>${esc(s.n)}</b> · ${s.d} · ${esc(s.c)} · ${gl(g)} standards${s.o?" (official)":" (based on conference results)"}:</p>`+tbl(["Event","Target","Recruit","Walk-On"],ev.map(e=>[e,st[e][0]||"–",st[e][1]||"–",st[e][2]||"–"]))+QL(),
       f:[`Show ${s.n} ${g==="m"?"women's":"men's"} standards`]};
   }
   if(d.e&&/\b(fastest|best|top|leader|leaders|rank|ranked|ranking|rankings|who|longest|highest|farthest)\b/.test(q)){
@@ -1309,7 +1310,7 @@ async function answerV1(raw){
     const pool=SCH.filter(s=>s.c===d.conf&&s[g][d.e]); if(!pool.length) return {html:`<p>No ${esc(d.conf)} school lists ${gl(g)} ${esc(d.e)} standards yet.</p>`};
     const k=d.tier?{T:0,R:1,W:2}[d.tier]:null, rows=pool.map(s=>[s.n,...s[g][d.e]]).sort((a,b)=>(parse(a[k==null?2:k+1],d.e)??99)-(parse(b[k==null?2:k+1],d.e)??99));
     const ck0=(SCH.find(s=>s.c===d.conf)||{}).ck, cl0=(((CT[ck0]||{})[g]||{})[d.e]||[])[0], cl=cl0?[null,null,cl0[0]]:null;
-    return {f:d.defaulted?[`${d.conf} 400m walk-on`,`${d.conf} women's 100m walk-on`]:null,html:`<p>${d.defaulted?"Here's the 100m to start. ":""}${esc(d.conf)} ${gl(g)} ${esc(d.e)} standards${d.tier?`, sorted by ${TN[d.tier]}`:""}:</p>`+tbl(["School","Target","Recruit","Walk-On"],rows.map(r=>[r[0],r[1]||"–",r[2]||"–",r[3]||"–"]))+(cl&&cl[2]?`<p>This season the 8th-best ${esc(d.conf)} mark was <b>${esc(cl[2])}</b>, usually the last scoring spot at the conference meet.</p>`:"")+quizLine};
+    return {f:d.defaulted?[`${d.conf} 400m walk-on`,`${d.conf} women's 100m walk-on`]:null,html:`<p>${d.defaulted?"Here's the 100m to start. ":""}${esc(d.conf)} ${gl(g)} ${esc(d.e)} standards${d.tier?`, sorted by ${TN[d.tier]}`:""}:</p>`+tbl(["School","Target","Recruit","Walk-On"],rows.map(r=>[r[0],r[1]||"–",r[2]||"–",r[3]||"–"]))+(cl&&cl[2]?`<p>This season the 8th-best ${esc(d.conf)} mark was <b>${esc(cl[2])}</b>, usually the last scoring spot at the conference meet.</p>`:"")+QL()};
   }
   if(d.conf&&!d.e) return {html:`<p>Which event in the ${esc(d.conf)}? For example: "${esc(d.conf)} ${g==="w"?"women's ":""}400m walk-on".</p>`,f:[`${d.conf} 100m standards`,`${d.conf} 1500m standards`]};
   if(d.e){
@@ -1366,7 +1367,7 @@ function multiAnswer(g,P){const L=scopeList(),rows=[],per=[];
   const cv=per.filter(p=>p.cl);if(cv.length)h+=`<p>College equivalents: ${cv.map(p=>`${esc(p.e)} ${p.cl}`).join(" ")}</p>`;
   if(comb.length)h+=tbl(["College","Division","Best level","Events that fit"],comb.slice(0,12).map(o=>[o.s.n+(o.s.o?" ★":""),o.s.d,TN[o.best],o.evs.join(", ")]),9)+(comb.length>12?`<p>Top 12 of ${comb.length}. Ask for a division, conference or state to narrow it.</p>`:"");
   h+=`<p class="note">Estimates compare your marks with each program's standards on this site. They aren't offers or guarantees; coaches also weigh grades, progression and roster needs.</p>`;
-  return {html:h+quizLine,f:[!CX.div?"Only D1":"All divisions","Only schools in Texas",g==="m"?"What about women?":"What about men?"]}}
+  return {html:h+QL(),f:[!CX.div?"Only D1":"All divisions","Only schools in Texas",g==="m"?"What about women?":"What about men?"]}}
 /* ---------- athlete progression + comparisons for every athlete 2016-today (Ryan 2026-10-24: "if I ask for Ajay's progression
    over the years in the 100m, it should pull all that data instantly ... comparing Tibs to Ryan Searl ... generate graphs") ---------- */
 const getNames=t=>{if(NAMES[t])return Promise.resolve(NAMES[t]);loadNames(t);return (NAMEL[t]||Promise.resolve()).then(()=>NAMES[t]||[])};
@@ -1627,7 +1628,7 @@ async function answerCore(raw){
   const needE=t=>!e?askBack("e",t||"Which event?",evChips(g)):null;
   switch(intent){
     case "define": return {html:`<p><b>Walk-On:</b> ${DEF.W}</p><p><b>Recruit:</b> ${DEF.R} Not a guarantee.</p><p><b>Target:</b> ${DEF.T}</p>`,f:["Which schools fit my mark?","What does it take to walk on in the SEC?"]};
-    case "funnel": return {html:`<p>Preferred Recruit gets athletes' marks in front of college coaches. Guaranteed genuine interest or a full refund.</p><p>The free recruitment evaluation takes about a minute and shows where you stand.</p>`+quizLine};
+    case "funnel": return {html:`<p>Preferred Recruit gets athletes' marks in front of college coaches. Guaranteed genuine interest or a full refund.</p><p>The free recruitment evaluation takes about a minute and shows where you stand.</p>`+QL()};
     case "convert":{const x=needE("Which high school event? (1600m, 3200m, Mile, 300m hurdles or 39-inch 110m hurdles)");if(x)return x;
       if(!CONV[e])return {html:`<p>The ${esc(e)} is the same in high school and college, so there's nothing to convert.</p>`};
       if(!CX.mark)return askBack("mark",`What's the ${esc(e)} mark you want to convert?`);
@@ -1645,16 +1646,16 @@ async function answerCore(raw){
       const all=scopeList().map(({s,i})=>({s,i,t:tier(s,g,e,v)})).filter(z=>z.t);
       all.sort((a,b)=>"TRW".indexOf(a.t)-"TRW".indexOf(b.t)||DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||a.s.n.localeCompare(b.s.n));
       const c=k=>all.filter(z=>z.t===k).length, cl=convLine(e,g,v), by={};all.forEach(z=>by[z.s.d]=(by[z.s.d]||0)+1);
-      if(!all.length)return {html:(cl?`<p>College equivalent: ${cl}.</p>`:"")+`<p>A ${esc(CX.mark)} ${gl(g)} ${esc(e)} doesn't hit a listed standard in ${esc(scopeName())} yet.</p>`+quizLine,f:CX.div?["All divisions"]:["Only NAIA","Only NCAA D3"]};
+      if(!all.length)return {html:(cl?`<p>College equivalent: ${cl}.</p>`:"")+`<p>A ${esc(CX.mark)} ${gl(g)} ${esc(e)} doesn't hit a listed standard in ${esc(scopeName())} yet.</p>`+QL(),f:CX.div?["All divisions"]:["Only NAIA","Only NCAA D3"]};
       const spec={title:`Colleges a ${CX.mark} ${e} fits, by division`,type:"bar",labels:DIVS.filter(z=>by[z]),series:[{name:"Colleges",values:DIVS.filter(z=>by[z]).map(z=>by[z])}],value_format:"number"};
       return {html:(cl?`<p>College equivalent: ${cl}.</p>`:"")+`<p>A <b>${esc(CX.mark)}</b> in the ${gl(g)} ${esc(e)} fits <b>${all.length}</b> colleges (${esc(scopeName())}): ${c("T")} Target, ${c("R")} Recruit, ${c("W")} Walk-On.</p>`+(Object.keys(by).length>1?chartSvg(spec):"")+
-        tbl(["College","Division","Level"],all.slice(0,12).map(z=>[z.s.n+(z.s.o?" ★":""),z.s.d,TN[z.t]]),9)+(all.length>12?`<p>Top 12 of ${all.length}. Ask for a division, conference or state to narrow it.</p>`:"")+quizLine,
+        tbl(["College","Division","Level"],all.slice(0,12).map(z=>[z.s.n+(z.s.o?" ★":""),z.s.d,TN[z.t]]),9)+(all.length>12?`<p>Top 12 of ${all.length}. Ask for a division, conference or state to narrow it.</p>`:"")+QL(),
         f:[!CX.div?"Only D1":"All divisions","Only schools in Texas",g==="m"?"What about women?":"What about men?"]}}
     case "school":{const i=(CX.schools||[])[0];if(i==null)return askBack("school","Which school?");const s=SCH[i],gg=g||"m",sd=s[gg];
       if(e&&sd[e]){const t=sd[e];return {html:`<p><b>${esc(s.n)}</b>${s.o?" ★":""} · ${esc(s.d)} · ${esc(s.c)} · ${gl(gg)} ${esc(e)}:</p>`+tbl(["Level","Mark"],[["Target",t[0]||"–"],["Recruit",t[1]||"–"],["Walk-On",t[2]||"–"]])+`<p>${s.o?"Official standards published by the school.":esc(ruleText(s))}</p>`,f:[gg==="m"?"Women's":"Men's",`Which schools fit my ${e}?`,"Compare with another school"]}}
       if(s.j)return {html:`<p><b>${esc(s.n)}</b> is an NJCAA junior college. This site doesn't set Target, Recruit or Walk-On levels for junior colleges (NJCAA competition is national, not conference-based, so levels can't be predicted reliably). Its page has this season's bests, roster and TFRRS links, and the NJCAA national list is under Results.</p>`,f:["Only NAIA","Only NCAA D3","What does Walk-On mean?"]};
       const ev=EVENTS.filter(z=>sd[z]);if(!ev.length)return {html:`<p>${esc(s.n)} doesn't list ${gl(gg)} standards.</p>`,f:[gg==="m"?"Women's":"Men's"]};
-      return {html:`<p><b>${esc(s.n)}</b>${s.o?" ★":""} · ${esc(s.d)} · ${esc(s.c)} · ${gl(gg)}${s.o?" (official standards)":""}:</p>`+tbl(["Event","Target","Recruit","Walk-On"],ev.map(z=>[z,sd[z][0]||"–",sd[z][1]||"–",sd[z][2]||"–"]))+quizLine,f:[gg==="m"?"Women's":"Men's","Compare with another school"]}}
+      return {html:`<p><b>${esc(s.n)}</b>${s.o?" ★":""} · ${esc(s.d)} · ${esc(s.c)} · ${gl(gg)}${s.o?" (official standards)":""}:</p>`+tbl(["Event","Target","Recruit","Walk-On"],ev.map(z=>[z,sd[z][0]||"–",sd[z][1]||"–",sd[z][2]||"–"]))+QL(),f:[gg==="m"?"Women's":"Men's","Compare with another school"]}}
     case "cmp":{
       if(d.confs.length>=2||(d.confs.length===1&&!d.schools.length&&CX.conf2)){const cs=d.confs.slice(0,5),ee=e||"100m",gg=g||"m",line=c=>{const s0=SCH.find(s=>s.c===c);return (((CT[(s0||{}).ck]||{})[gg]||{})[ee])||null},L=cs.map(line);
         const spec={title:`${cs.join(" vs ")} · ${gl(gg)} ${ee}`,type:"bar",labels:cs,series:[["Target line",0],["Recruit line",1],["Walk-On line",2]].map(([n,j])=>({name:n,values:L.map(z=>z&&z[j]?parse(z[j][0],ee):null)})).filter(s=>s.values.some(v=>v!=null)),value_format:FIELD.has(ee)?"meters":"time",lower_is_better:!FIELD.has(ee)};
@@ -1667,7 +1668,7 @@ async function answerCore(raw){
     case "conf":{let x=needE(`Which event in the ${esc(CX.conf)}?`);if(x)return x;const gg=g||"m";
       const pool=SCH.filter(s=>s.c===CX.conf&&s[gg][e]);if(!pool.length)return {html:`<p>No ${esc(CX.conf)} school lists ${gl(gg)} ${esc(e)} standards.</p>`};
       const k=d.tier?{T:0,R:1,W:2}[d.tier]:2,val=s=>parse(s[gg][e][k],e),rows=pool.slice().sort((a,b)=>{const va=val(a),vb=val(b);if(va==null)return 1;if(vb==null)return -1;return FIELD.has(e)?va-vb:vb-va});
-      return {html:`<p>${esc(CX.conf)} ${gl(gg)} ${esc(e)} standards, most reachable ${TN[["T","R","W"][k]]} first:</p>`+tbl(["School","Target","Recruit","Walk-On"],rows.map(s=>[s.n+(s.o?" ★":""),s[gg][e][0]||"–",s[gg][e][1]||"–",s[gg][e][2]||"–"]))+quizLine,f:[gg==="m"?"Women's":"Men's","Another event",`Compare ${CX.conf} with another conference`]}}
+      return {html:`<p>${esc(CX.conf)} ${gl(gg)} ${esc(e)} standards, most reachable ${TN[["T","R","W"][k]]} first:</p>`+tbl(["School","Target","Recruit","Walk-On"],rows.map(s=>[s.n+(s.o?" ★":""),s[gg][e][0]||"–",s[gg][e][1]||"–",s[gg][e][2]||"–"]))+QL(),f:[gg==="m"?"Women's":"Men's","Another event",`Compare ${CX.conf} with another conference`]}}
     case "superl":{let x=needE();if(x)return x;x=needG();if(x)return x;
       const tierK=d.tier||(/walk/.test(q)?"W":/recruit/.test(q)?"R":/target/.test(q)?"T":"W"),j={T:0,R:1,W:2}[tierK],hard=/\b(hardest|toughest|most competitive|highest)\b/.test(q);
       const L=scopeList().map(({s})=>({s,v:s[g][e]?parse(s[g][e][j],e):null})).filter(z=>z.v!=null);
