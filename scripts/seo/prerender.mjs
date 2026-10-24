@@ -247,7 +247,10 @@ export function generate(root, out) {
   }
   /* college athlete pages (pilot, released 100/day): the index comes first so results/champions names can link to them */
   const AIDX = athleteIndex({ out, RIDX, cleanRank, evLabel, slug, EVENTS });
-  const nameCell = (z, D) => { const h = z[1] && AIDX.href(z); return h ? `<a href="${h}">${esc(z[1])}</a>` : esc(z[1] || D.teams[z[3]]); };
+  /* every athlete name is a link (Ryan 2026-10-24: "unable to click on the individual athlete names"): their page when they have one,
+     otherwise their profile in the app (season of this page, nofollow so crawlers stay on the real pages) */
+  const nameCell = (z, D, x) => { if (!z[1]) return esc(D.teams[z[3]]); const h = AIDX.href(z); if (h) return `<a href="${h}">${esc(z[1])}</a>`;
+    const id = z[9] && String(z[9]).split("/")[0]; return id && x ? `<a href="/?tab=results&amp;season=${x.year}-${x.season}&amp;div=${encodeURIComponent(x.div)}&amp;athlete=${id}" rel="nofollow">${esc(z[1])}</a>` : esc(z[1]); };
   /* champions + results (from the packed TFRRS results) */
   const champPages = [], resultPages = [];
   for (const x of RIDX) {
@@ -257,7 +260,7 @@ export function generate(root, out) {
     const nat = D.lists.find(l => l.nat), champ = XC ? nat : D.lists.find(l => l.champ);   /* XC: the national meet is both */
     if (champ) {
       const p = `/champions/${x.year}-${x.season}-${slug(x.div)}.html`; champPages.push([p, `${x.year} ${seasonName} ${x.div}`]);
-      const rows = g => Object.entries(champ.g[g] || {}).filter(([, r]) => r.length).map(([e, r]) => `<tr><td>${esc(evLabel(e))}</td><td>${nameCell(r[0], D)}</td><td>${esc(D.teams[r[0][3]])}</td><td class="n">${esc(r[0][4])}${r[0][5] ? ` <small>(${esc(r[0][5])})</small>` : ""}</td></tr>`).join("");
+      const rows = g => Object.entries(champ.g[g] || {}).filter(([, r]) => r.length).map(([e, r]) => `<tr><td>${esc(evLabel(e))}</td><td>${nameCell(r[0], D, x)}</td><td>${esc(D.teams[r[0][3]])}</td><td class="n">${esc(r[0][4])}${r[0][5] ? ` <small>(${esc(r[0][5])})</small>` : ""}</td></tr>`).join("");
       write(p, page({ title: XC ? `${x.year} ${x.div} Cross Country National Champions` : `${x.year} ${x.div} ${seasonName} Track & Field National Champions`, desc: XC ? `${x.year} ${x.div} cross country national champions: men's and women's individual winners and team titles from the national championship race, with times.` : `Every ${x.year} ${x.div} ${x.season} track and field national champion, men and women, event by event, with the winning mark, team and wind from the national meet.`,
         pathname: p, crumbs: [["Home", "/"], ["Explore", "/explore.html"], ["National champions", "/explore.html#champions"], [`${x.year} ${seasonName} ${x.div}`, p]], h1: `${x.year} ${esc(x.div)} ${seasonName} National Champions`,
         intro: XC ? `Individual and team winners at the ${x.year} ${esc(x.div)} cross country national championships. Source: TFRRS meet results.` : `Winners of every event at the ${x.year} ${esc(x.div)} ${x.season} track and field national championships. Source: TFRRS meet results.`,
@@ -269,7 +272,7 @@ export function generate(root, out) {
       write(p, page({ title: XC ? `${x.year} ${x.div} ${gName(g)} ${ev} XC Championship Results` : `${x.year} ${x.div} ${gName(g)} ${ev} Rankings (${seasonName})`, desc: XC ? `${x.year} ${x.div} ${gName(g).toLowerCase()} ${ev} cross country championship results: ${/Team/.test(ev) ? "team standings" : "every finisher"}, led by ${r[0][1] || D.teams[r[0][3]]} (${D.teams[r[0][3]]}) in ${r[0][4]}.` : `${x.year} ${x.div} ${gName(g).toLowerCase()} ${ev} rankings: the top ${Math.min(50, r.length)} ${x.season} marks, led by ${r[0][1] || D.teams[r[0][3]]} (${D.teams[r[0][3]]}) at ${r[0][4]}. Class, team and meet for every mark.`,
         pathname: p, crumbs: [["Home", "/"], ["Explore", "/explore.html"], ["Results", "/explore.html#results"], [`${x.year} ${seasonName} ${x.div}`, "/explore.html#r-" + x.key], [`${gName(g)} ${ev}`, p]],
         h1: XC ? `${x.year} ${esc(x.div)} ${gName(g)} ${esc(ev)} Cross Country Championship` : `${x.year} ${esc(x.div)} ${gName(g)} ${esc(ev)}: Top Marks`, intro: XC ? `${/Team/.test(ev) ? "Team standings" : "Individual results"} from the ${x.year} ${esc(x.div)} ${gName(g).toLowerCase()} cross country national championship (${esc(ev.replace(" Team", ""))}). Source: TFRRS.` : `The best ${gName(g).toLowerCase()} ${esc(ev)} marks in ${esc(x.div)} during the ${x.year} ${x.season} season, from the TFRRS national list plus the national championship meet.`,
-        body: `<div class="scroll"><table><tr><th>#</th><th>Athlete</th><th>Class</th><th>Team</th><th class="n">Mark</th><th>Meet</th></tr>${r.slice(0, 50).map((z, i) => `<tr><td>${i + 1}</td><td>${nameCell(z, D)}</td><td>${esc(z[2] || "")}</td><td>${esc(D.teams[z[3]])}</td><td class="n">${esc(z[4])}${z[8] ? ` <small>(${esc(z[8])})</small>` : z[5] ? ` <small>(${esc(z[5])})</small>` : ""}</td><td>${esc(D.meets[z[6]] || "")} <small>${esc(z[7] || "")}</small></td></tr>`).join("")}</table></div>` }));
+        body: `<div class="scroll"><table><tr><th>#</th><th>Athlete</th><th>Class</th><th>Team</th><th class="n">Mark</th><th>Meet</th></tr>${r.slice(0, 50).map((z, i) => `<tr><td>${i + 1}</td><td>${nameCell(z, D, x)}</td><td>${esc(z[2] || "")}</td><td>${esc(D.teams[z[3]])}</td><td class="n">${esc(z[4])}${z[8] ? ` <small>(${esc(z[8])})</small>` : z[5] ? ` <small>(${esc(z[5])})</small>` : ""}</td><td>${esc(D.meets[z[6]] || "")} <small>${esc(z[7] || "")}</small></td></tr>`).join("")}</table></div>` }));
     }
   }
   { const n = athletePages({ idx: AIDX, write, page, esc, slug, S, raw, parse, FIELD, EVENTS, sl, evPath, confName, gName }); console.log(`athlete pages: ${n} live of ${AIDX.all.length} (100/day)`); }

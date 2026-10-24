@@ -1036,7 +1036,7 @@ function teamPage(){const i=TM.i,s=SCH[i];if((s.ng||[]).includes(TM.g))TM.g=TM.g
   const show=TM.ev?evs.filter(([c])=>c===TM.ev):evs;
   o+=`<div class="tpev">${show.map(([c,rows])=>{const all=TM.ev||TM.open[c],cut=all?rows:rows.slice(0,5);
     return `<section class="tpcard"><header><h3>${esc(ename(c))}</h3><span>${rows.length} ${trelay(c)?"mark":"athlete"}${rows.length===1?"":"s"}</span></header>
-    <ol>${cut.map((x,k)=>`<li class="${k<3?"p"+(k+1):""}"><span class="rkb">${k+1}</span>${x.ai!=null&&M.F&&M.F.A[x.ai]?`<button class="tpnm" data-tath="${x.ai}">`:x.path?`<a class="tpnm" href="https://tf.tfrrs.org/athletes/${esc(x.path)}" target="_blank" rel="noopener nofollow">`:'<span class="tpnm">'}<b>${esc(x.n||(trelay(c)?"Relay team":""))}</b><small>${esc([yr(x.yr),x.meet].filter(Boolean).join(" · "))}${x.date?` · ${esc(x.date.replace(/,?\s*\d{4}$/,""))}`:""}</small>${x.ai!=null&&M.F&&M.F.A[x.ai]?"</button>":x.path?"</a>":"</span>"}<b class="tpmk">${esc(x.mk)}${parseFloat(x.w)>2?`<small>wind ${esc(x.w)}</small>`:""}</b></li>`).join("")}</ol>
+    <ol>${cut.map((x,k)=>`<li class="${k<3?"p"+(k+1):""}"><span class="rkb">${k+1}</span>${x.ai!=null&&M.F&&M.F.A[x.ai]?`<button class="tpnm" data-tath="${x.ai}">`:x.path?`<button class="tpnm" data-gath="${esc(String(x.path).split("/")[0])}|${esc(TM.sea)}|${esc(SCH[TM.i].d)}">`:'<span class="tpnm">'}<b>${esc(x.n||(trelay(c)?"Relay team":""))}</b><small>${esc([yr(x.yr),x.meet].filter(Boolean).join(" · "))}${x.date?` · ${esc(x.date.replace(/,?\s*\d{4}$/,""))}`:""}</small>${x.ai!=null&&M.F&&M.F.A[x.ai]?"</button>":x.path?"</button>":"</span>"}<b class="tpmk">${esc(x.mk)}${parseFloat(x.w)>2?`<small>wind ${esc(x.w)}</small>`:""}</b></li>`).join("")}</ol>
     ${!TM.ev&&rows.length>5?`<button type="button" class="tpmore" data-topen="${esc(c)}">${TM.open[c]?"Show top 5":`Show all ${rows.length}`}</button>`:""}</section>`}).join("")}</div>`;
   const part=M.F&&M.roster.some(r=>!M.F.A[r.ai].h);
   o+=`<p class="note">${M.F?`Season bests from each athlete's TFRRS results${part?" (athletes still loading show their best list mark)":""}.`:`Marks from this season's TFRRS conference and national lists, so you see the athletes who made a list.`} Tap an athlete for their meet history.</p>${hookRow()}`;
@@ -1682,7 +1682,7 @@ document.addEventListener("click",ev=>{
   if("amore" in d){R.an=(R.an||100)+200;render();return}
   if(d.wind!==undefined){setWind(!WIND);return}
   if(d.pev){R.pev=d.pev;const w=document.querySelector(".pgw");if(w&&PGCS){const t=document.createElement("div");t.innerHTML=progBlock(PGCS);const n=t.querySelector(".pgw");if(n){w.replaceWith(n);return}}R.swap=false;render();return}
-  if(d.gath){const [aid,sk,div]=d.gath.split("|");R.season=sk;R.div=div;R.sel=[div];R.conf="";R.q="";R.team=null;R.ath=null;R.pendAth=aid;R.swap=true;render();{const x=$("rqd"),qi=$("rq");if(x)x.innerHTML="";if(qi)qi.value=""}scrollTo(0,0);log("athlete",{from:"search-all",season:sk,division:div});return}
+  if(d.gath){const [aid,sk,div]=d.gath.split("|");if(TM.i!=null){TM.i=null;TM.ath=null;history.pushState({},"",`/?tab=results&season=${sk}&div=${encodeURIComponent(div)}&athlete=${aid}`)}R.season=sk;R.div=div;R.sel=[div];R.conf="";R.q="";R.team=null;R.ath=null;R.pendAth=aid;R.swap=true;render();{const x=$("rqd"),qi=$("rq");if(x)x.innerHTML="";if(qi)qi.value=""}scrollTo(0,0);log("athlete",{from:"search-all",season:sk,division:div});return}
   if(d.rath){const [li,g,ev,i]=d.rath.split("|"),D=CACHE[curKey()],r=D&&((D.lists[+li].g[g]||{})[ev]||[])[+i];if(!r)return;
     R.conf="";R.g=g;R.ev=ev;R.q="";R.team=null;R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();{const x=$("rqd"),qi=$("rq");if(x)x.innerHTML="";if(qi)qi.value=""}scrollTo(0,0);log("athlete",{athlete:r[1],team:D.teams[r[3]],from:"search"});return}
   if(d.rg){R.g=d.rg;R.team=null;R.ath=null;R.swap=true;render();return}
@@ -1792,7 +1792,9 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
       { const gq = +q.get("gr"); if (gq >= 9 && gq <= 12 && INT.gr !== gq) { INT.gr = gq; S.gr = gq; saveInt(); log("grade", {}); } }   /* grade from the SEO-page mark checker */
       if (q.get("m") && q.get("e")) { if (!S.run || S.mark !== q.get("m") || S.e !== q.get("e")) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; } }
       else if (S.run) { S.run = false; S.mark = ""; S.f = S.div = S.conf = S.st = ""; }
-      if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); if (q.get("cmp")) ccFromUrl(q.get("cmp")); } }
+      if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); if (q.get("cmp")) ccFromUrl(q.get("cmp"));
+        /* athlete profile links: /?tab=results&season=2026-outdoor&div=NCAA%20D1&athlete=<TFRRS id> (results pages link every name here) */
+        if (/^\d+$/.test(q.get("athlete") || "")) { if (seasons().includes(q.get("season"))) R.season = q.get("season"); R.sel = [R.div]; R.conf = ""; R.q = ""; R.team = null; R.ath = null; TM.i = null; CC.on = false; R.pendAth = q.get("athlete"); } } }
     S.school = null; setMeta("College Track & Field Recruiting Standards & Rankings 2026-27", `Recruiting standards for ${NSTD.toLocaleString()} college track and field programs: walk-on, recruit and scholarship times for NCAA D1, D2, D3 and NAIA, plus results since 2016.`, "/",
       {"@context": "https://schema.org", "@type": "WebSite", name: "Preferred Recruit Track & Field Standards", url: "https://trackandfieldstandards.com/"}); render(); if (S.run) armOffer();
   };
