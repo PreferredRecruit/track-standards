@@ -5,7 +5,7 @@ Each gets a school page: conference levels when its conference has a TFRRS list 
 Shepherd PSAC, the Peach Belt / Gulf South / GNAC schools), otherwise its division's typical levels marked as an estimate (the site's
 existing est/emdiv treatment), only for the genders and events it actually competes in (2026 outdoor national lists).
 Puerto Rico programs and Cheyney are left out until their conference is confirmed. Usage: python3 scripts/data/add_missing_schools.py [--write]"""
-import gzip, json, os, re, statistics, sys
+import datetime, gzip, json, os, re, statistics, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fix_levels import val as fval, fmt as ffmt
 SITE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -76,6 +76,6 @@ def main(write):
         if x and alias not in x["a"]: x["a"] = sorted(set(x["a"]) | {alias, short.lower()}); x["u"] = x.get("u") or f"https://tf.tfrrs.org/teams/tf/{u}.html"; x["t"] = short; added.append(f"{n}: linked to TFRRS '{alias}'")
     d["schools"].sort(key=lambda x: x["n"].lower())
     print("\n".join(added) or "nothing to add")
-    if write: json.dump(d, open(P, "w"), separators=(",", ":"), ensure_ascii=False); print("written", len(added))
+    if write: d["built"] = datetime.date.today().isoformat(); json.dump(d, open(P, "w"), separators=(",", ":"), ensure_ascii=False); print("written", len(added))
 
 if __name__ == "__main__": main("--write" in sys.argv)

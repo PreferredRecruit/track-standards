@@ -16,6 +16,7 @@ import { hsPages } from "./hs.mjs";
 import { parseMark, cleanRank } from "./markparse.mjs";
 import { fitTitle, fitDesc, tailsFor, levelWords, SEASON } from "./meta.mjs";
 import { schoolPages } from "./schools.mjs";
+import { statePages } from "./states.mjs";
 import { topicPages, EDITED } from "./topics.mjs";
 import { gapGuides } from "./gap-guides.mjs";
 import { dailyPages } from "./daily.mjs";
@@ -238,14 +239,8 @@ export function generate(root, out) {
       body, ld: [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: q.map(([a, b]) => ({ "@type": "Question", name: a, acceptedAnswer: { "@type": "Answer", text: b } })) },
         { "@context": "https://schema.org", "@type": "ItemList", name: `${d} track and field programs`, itemListElement: list.map((s, i) => ({ "@type": "ListItem", position: i + 1, url: SITE + sl(s), name: s.n })) }] }));
   }
-  /* states */
-  const byState = new Map(); for (const s of S) if (s.s) { if (!byState.has(s.s)) byState.set(s.s, []); byState.get(s.s).push(s); }
-  for (const [st, list] of byState) {
-    const nm = STATE[st] || st, p = statePath(st);
-    const body = [...DIVS, "NJCAA"].filter(d => list.some(s => s.d === d)).map(d => `<h2>${esc(d)}${d === "NJCAA" ? " junior colleges" : ""} (${list.filter(s => s.d === d).length})</h2><div class="scroll"><table><tr><th>School</th><th>Conference</th></tr>${list.filter(s => s.d === d).sort((a, b) => a.n.localeCompare(b.n)).map(s => `<tr><td><a href="${sl(s)}">${esc(s.n)}</a>${s.o ? ' <span class="star">★ official</span>' : ""}</td><td><a href="${confName.get(s.d + "|" + s.c)}">${esc(s.c)}</a></td></tr>`).join("")}</table></div>`).join("");
-    write(p, page({ title: `${nm} College Track & Field: ${list.length} Programs & Standards`, desc: `Every college track and field program in ${nm}: ${list.filter(s => !s.j).length} NCAA and NAIA schools with ${SEASON} recruiting standards${list.some(s => s.j) ? ` and ${list.filter(s => s.j).length} junior colleges with season results` : ""}, by division and conference.`,
-      pathname: p, crumbs: [["Home", "/"], ["Explore", "/explore.html"], [nm, p]], h1: `College Track &amp; Field Programs in ${esc(nm)}`, intro: `${list.length} college track and field programs in ${esc(nm)}. Open any NCAA or NAIA school for its Target, Recruit and Walk-On standards${list.some(s => s.j) ? "; junior colleges show season results instead of levels" : ""}.`, body }));
-  }
+  /* states (scripts/seo/states.mjs) */
+  const byState = statePages({ root, S, DIVS, STATE, statePath, confName, sl, std, raw, parse, write, page, esc, SITE, SEASON });
   /* college athlete pages (pilot, released 100/day): the index comes first so results/champions names can link to them */
   const AIDX = athleteIndex({ out, RIDX, cleanRank, evLabel, slug, EVENTS });
   /* every athlete name is a link (Ryan 2026-10-24: "unable to click on the individual athlete names"): their page when they have one,
