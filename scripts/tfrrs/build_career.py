@@ -3,7 +3,7 @@
 viewed, so transfers and multi-season athletes looked incomplete. This joins every results file by TFRRS athlete id: each
 athlete's best mark per event per season, at whatever school, with the national rank where the national list has it.
 Output: public/data/career/<id % 512>.dat  gzip JSON {id: {"n": name, "s": [[season key, division, event, mark, wind, team,
-  national rank or 0, meet, date, class], ...]}}   (season key like "2023-outdoor"; newest season first)
+  national rank or 0, meet, date, class, gender m|w], ...]}}   (season key like "2023-outdoor"; newest season first)
 Usage: python3 scripts/tfrrs/build_career.py [out dir] [rank dir ...]   (default public/data/career from public/data/rank; the
 Monday refresh passes its fresh current-season folder after the site's, so this week's marks replace that season's file)"""
 import glob, gzip, json, os, re, sys
@@ -78,7 +78,7 @@ def main():
                         a = car.setdefault(aid, {"n": r[1], "b": {}})
                         sk = (f"{y}-{season}", ev); cur = a["b"].get(sk)
                         nat = r[0] if l.get("nat") else 0
-                        row = [f"{y}-{season}", DIVS.get(div, div), ev, r[4], r[5], d["teams"][r[3]], nat, d["meets"][r[6]], r[7], r[2], v]
+                        row = [f"{y}-{season}", DIVS.get(div, div), ev, r[4], r[5], d["teams"][r[3]], nat, d["meets"][r[6]], r[7], r[2], v, g]
                         if cur is None or (v > cur[10] if hi else v < cur[10]) or (v == cur[10] and nat and not cur[6]): a["b"][sk] = row
     # TFRRS renames ("Wis.-Milwaukee" -> "Milwaukee", "Dixie State" -> "Utah Tech"): two names sharing 3+ athletes that never
     # appear in the same season are one school; a name matching more than one other name ("Carroll") is left alone.
@@ -116,7 +116,7 @@ def main():
                     if same(t, u): m[t] = m.get(u, u); break
             for x in a["b"].values(): x[5] = m.get(x[5], x[5])
         rows = sorted(a["b"].values(), key=lambda x: (x[0], x[2]), reverse=True)
-        e = {"n": a["n"], "s": [x[:10] for x in rows]}
+        e = {"n": a["n"], "s": [x[:10] + [x[11]] for x in rows]}   # [..., class, gender]
         if aid in PREV: e["p"] = [RENAME.get(t, canon.get(t, t)) for t, _ in PREV[aid]["prev"]]
         buckets.setdefault(int(aid) % B, {})[aid] = e
     # name search for every athlete 2016-today (Ryan 2026-10-24: Tibbs ran D2 years ago, so the season on screen didn't have him):

@@ -64,6 +64,48 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, esc
   const byConf = new Map(), byState = new Map();
   for (const x of S) { const k = x.d + "|" + x.c; if (!byConf.has(k)) byConf.set(k, []); byConf.get(k).push(x); if (x.s) { if (!byState.has(x.s)) byState.set(x.s, []); byState.get(x.s).push(x); } }
   const KEY = ["100m", "200m", "400m", "800m", "1500m", "5000m", "110m Hurdles", "100m Hurdles", "Long Jump", "High Jump", "Shot Put"];
+  /* facts nobody else has (Ryan 2026-10-24 "go all-in"): freshmen's first-season marks, national champions, development numbers
+     (scripts/tfrrs/build_schoolfacts.py -> public/data/schoolfacts.json, keyed by TFRRS team name) */
+  let FACTS = {}; try { FACTS = JSON.parse(fs.readFileSync(path.join(root, "public", "data", "schoolfacts.json"), "utf8")); } catch { }
+  const fnorm = x => String(x || "").toLowerCase().replace(/\s*\([a-z]\)\s*$/, "").replace(/\bst\.(?=\s|$)/g, "state").replace(/[^a-z0-9&]+/g, " ").trim();
+  const FIDX = new Map(Object.keys(FACTS).map(k => [fnorm(k), k]));
+  const factsOf = s => { for (const a of [s.t, s.n, ...(s.a || [])]) { const k = FIDX.get(fnorm(a)) || FIDX.get(fnorm(a).replace(/^university of /, "")); if (k) return FACTS[k]; } return null; };
+  const EVL = { "100 Meters": "100m", "200 Meters": "200m", "400 Meters": "400m", "800 Meters": "800m", "1500 Meters": "1500m", "5000 Meters": "5000m", "10,000 Meters": "10,000m", "100 Hurdles": "100m hurdles", "110 Hurdles": "110m hurdles", "400 Hurdles": "400m hurdles", "3000 Steeplechase": "steeplechase" };
+  const evl = e => EVL[e] || e;
+  const shortOf = s => (s.t && !/[().]/.test(s.t) && s.t.length < s.n.length ? s.t : s.n).replace(/\s*\(.*?\)\s*/g, " ").trim();
+  const t1600 = m => { const p = String(m).split(":").map(Number); const v = p.length === 2 ? p[0] * 60 + p[1] : p[0]; if (!isFinite(v) || v < 150) return null; const x = v / 0.9314; return `${Math.floor(x / 60)}:${String((x % 60).toFixed(0)).padStart(2, "0")}`; };
+  /* the answer first, in plain words with real numbers: what it takes, in high school terms where it helps */
+  function answerFirst(s, F) {
+    if (s.j) return "";
+    const lvl = g => { const L = []; for (const e of ["100m", "400m", "1500m"]) { const t = std(s, g, e); if (!t) continue; const m = String(t[1] || t[2] || t[0] || "").replace(/ est\.$/, ""); if (!m) continue; L.push(e === "1500m" && t1600(m) ? `${m} in the 1500m (about ${t1600(m)} for a high school 1600m)` : `${m} in the ${e}`); } return L; };
+    const join = L => L.length > 1 ? L.slice(0, -1).join(", ") + " and " + L[L.length - 1] : L[0];
+    const m = (s.ng || []).includes("m") ? [] : lvl("m"), w = (s.ng || []).includes("w") ? [] : lvl("w");
+    if (!m.length && !w.length) return "";
+    const which = std(s, "m", "100m") || std(s, "w", "100m"), lv = which && which[1] ? "Recruit level" : "recruiting level";
+    const fr = F && F.fresh && (F.fresh.m || {})["100 Meters"] || F && F.fresh && (F.fresh.w || {})["100 Meters"];
+    const frg = F && F.fresh && (F.fresh.m || {})["100 Meters"] ? "men's" : "women's";
+    return `<p class="answer" style="font-size:17px;background:#F4F1FF;border-radius:14px;padding:14px 16px"><b>Quick answer:</b> ${esc(shortOf(s))}'s ${lv} is about ${m.length ? `${join(m)} for men` : ""}${m.length && w.length ? ", and " : ""}${w.length ? `${join(w)} for women` : ""}.${fr ? ` ${esc(shortOf(s))}'s ${frg} freshmen ran a median ${esc(fr.med)} in the 100m in their first college season (${fr.n} freshmen since 2022).` : ""}</p>`;
+  }
+  function factSections(s, F) {
+    if (!F) return "";
+    const nm = esc(shortOf(s)); let o = "";
+    if (F.fresh) {
+      const ORD = ["100 Meters", "200 Meters", "400 Meters", "800 Meters", "1500 Meters", "5000 Meters", "10,000 Meters", "100 Hurdles", "110 Hurdles", "400 Hurdles", "3000 Steeplechase", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Hammer", "Javelin"];
+      const rows = g => Object.entries(F.fresh[g] || {}).sort((a, b) => ORD.indexOf(a[0]) - ORD.indexOf(b[0]));
+      const T = g => rows(g).length && !(s.ng || []).includes(g) ? `<h3>${gName(g)}</h3>` + tbl(["Event", "Typical freshman", "Middle half", "Best freshman", "Freshmen"], rows(g).map(([e, x]) => [esc(evl(e)), esc(x.med), `${esc(x.lo)} to ${esc(x.hi)}`, esc(x.best), x.n])) : "";
+      const body = T("m") + T("w");
+      if (body) o += `<h2>What ${nm} freshmen actually ran</h2><p>Marks from ${nm} athletes' first college outdoor season (2022 to 2026, TFRRS lists): the realistic level of the athletes the program actually brings in, not a chart.</p>${body}`;
+    }
+    if (F.dev) {
+      const d = F.dev, p = v => v == null ? "–" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
+      o += `<h2>How ${nm} develops athletes</h2><ul><li><b>Peaking:</b> ${d.peak}% of ${nm} athletes who raced at the conference championship ran their season best there or later (better than ${d.peak_pct}% of ${d.peers} ${esc(d.division)} programs).</li><li><b>Year over year:</b> returning athletes' season bests improved ${p(d.yoy)} a year (${d.yoy_pct}th percentile in ${esc(d.division)}).</li><li><b>In a season:</b> the typical athlete improved ${p(d.imp)} from their first race to their season best.</li></ul><p style="font-size:13px;color:#4A4A52">2022 to 2026 outdoor and indoor, every event, from ${d.n} athlete-seasons of TFRRS meet results.</p>`;
+    }
+    if (F.champ && F.champ.length) {
+      const C = F.champ.slice().sort((a, b) => b[0].localeCompare(a[0]) || a[1].localeCompare(b[1]));
+      o += `<h2>National champions from ${nm} since 2016</h2><p>${C.length} individual national title${C.length > 1 ? "s" : ""} at the ${esc(s.d)} championships.</p>` + tbl(["Season", "Event", "Champion", "Mark"], C.slice(0, 30).map(c => [`${c[0]} ${c[1]}`, `${c[3] === "m" ? "Men's" : "Women's"} ${esc(evl(c[4]))}`, esc(c[5]), esc(c[6])]));
+    }
+    return o;
+  }
   /* common questions, answered from the school's own standards (also sent as FAQPage structured data) */
   function faq(s, B) {
     const one = (s.ng || [])[0], MW = one ? (one === "m" ? "women's" : "men's") : "men's and women's", MAW = one ? (one === "m" ? "women" : "men") : "men and women";
@@ -72,6 +114,12 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, esc
     const m = marks("m"), w = marks("w");
     q.push([`What are the ${s.n} track and field recruiting standards?`, `${s.n} is ${/^[AEIOUN]/.test(s.d) ? "an" : "a"} ${s.d} program${s.c !== s.d ? ` in the ${s.c}` : ""}. ${J ? "This site doesn't set Target, Recruit or Walk-On levels for junior colleges, because NJCAA competition is national rather than conference-based and a program's marks can't be predicted reliably. Its season bests are on this page, and the full NJCAA national list is in Results." : `${s.o ? `Its standards come from the school's own published chart${s.yr ? ` (${s.yr})` : ""}.${s.o && !s.cv && +s.yr && +s.yr <= 2024 ? ` These are the most recent standards the program has published (${s.yr}). Current requirements may differ, so confirm with the coaching staff.` : ""}` : s.est ? "Its levels are estimates: the typical marks across its division, because the school doesn't publish standards and its conference has no championship results to set them from." : "Its Target, Recruit and Walk-On levels are set from 2026 conference results."} The full table for ${MAW} is on this page.`}`]);
     if (!J && (m.length || w.length)) q.push([`What times do you need to walk on at ${s.n}?`, [m.length ? `Men's ${lvl}: ${m.join(", ")}.` : "", w.length ? `Women's ${lvl}: ${w.join(", ")}.` : ""].filter(Boolean).join(" ")]);
+    { const F = factsOf(s), nm = shortOf(s), P4 = (CT[s.ck] || {}).rule === "p4" && !s.o;
+      if (!J && P4) q.push([`Does ${nm} track and field take walk-ons?`, `This site sets no Walk-On level for ${nm}: it's in the ${s.c}, a Power 4 conference, where roster limits leave little room for walk-ons. The bar to aim for is the Recruit level, set from the middle of the conference's 15th to 25th best marks.`]);
+      const fm = F && F.fresh && (F.fresh.m || {})["100 Meters"], fw = F && F.fresh && (F.fresh.w || {})["400 Meters"] || F && F.fresh && (F.fresh.w || {})["100 Meters"];
+      if (fm || fw) q.push([`What do ${nm} track freshmen run?`, [fm ? `${nm}'s men's freshmen ran a median ${fm.med} in the 100m in their first college season (best ${fm.best}, ${fm.n} freshmen since 2022).` : "", fw ? `Women's freshmen: a median ${fw.med} in the ${F.fresh.w["400 Meters"] ? "400m" : "100m"}.` : ""].filter(Boolean).join(" ")]);
+      if (F && F.dev) q.push([`Is ${nm} good at developing track athletes?`, `From 2022 to 2026, ${F.dev.peak}% of ${nm} athletes who raced at the conference championship ran their season best there or later, better than ${F.dev.peak_pct}% of ${F.dev.division} programs, and returning athletes improved ${F.dev.yoy >= 0 ? "+" : ""}${F.dev.yoy.toFixed(2)}% a year.`]);
+      if (F && F.champ && F.champ.length) q.push([`How many national champions has ${nm} had?`, `${F.champ.length} individual ${s.d} national title${F.champ.length > 1 ? "s" : ""} since 2016, most recently ${F.champ.slice().sort((a, b) => b[0].localeCompare(a[0]))[0][5]} (${F.champ.slice().sort((a, b) => b[0].localeCompare(a[0]))[0][0]}).`]); }
     q.push([`What conference is ${s.n} track and field in?`, `${s.n} competes in ${s.c !== s.d ? `the ${s.c} (${s.d})` : J ? "the NJCAA (junior colleges compete nationally)" : `the ${s.d}`}${s.s ? ` and is based in ${STATE[s.s] || s.s}` : ""}.`]);
     if (B) { const top = g => (B[g] || []).slice(0, 4).map(r => `${r.e} ${r.mk}${parseFloat(r.w) > 2 ? "w" : ""}`); const bm = top("m"), bw = top("w");
       if (bm.length || bw.length) q.push([`What are ${s.n}'s best track and field marks in ${B.y}?`, [bm.length ? `Men: ${bm.join(", ")}.` : "", bw.length ? `Women: ${bw.join(", ")}.` : ""].filter(Boolean).join(" ") + " From TFRRS outdoor lists."]); }
@@ -122,10 +170,11 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, esc
     const links = [[s.src && s.o, s.src, "Official standards source"], [s.rs, s.rs, "Roster"], [s.cu, s.cu, "Coaching staff"], [s.ws, s.ws, "Athletics website"], [s.u, s.u, "Team on TFRRS"]].filter(x => x[0]);
     const body = `<main style="max-width:960px;margin:0 auto;padding:28px 20px 60px;font:16px/1.55 -apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;color:#0B0B0F">
 <nav style="font-size:13px"><a href="/">Track Standards</a> › ${J ? "" : `<a href="${divHub(s.d)}">${esc(s.d)}</a> › `}<a href="${confUrl(s)}">${esc(s.c)}</a>${s.s ? ` › <a href="${statePath(s.s)}">${esc(STATE[s.s] || s.s)}</a>` : ""}</nav>
-<h1>${esc(s.n)} Track &amp; Field${J ? " (NJCAA)" : " Standards"}${s.o ? " ★" : ""}</h1>${s.cv ? `<p style="display:inline-block;background:#E5F5EE;color:#12805C;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:650">✓ Verified by the ${esc(s.n)} coaching staff (${esc(s.cv)})</p>` : ""}
+<h1>${esc(s.n)} Track &amp; Field${J ? " (NJCAA)" : " Standards"}${s.o ? " ★" : ""}</h1>${answerFirst(s, factsOf(s))}${s.cv ? `<p style="display:inline-block;background:#E5F5EE;color:#12805C;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:650">✓ Verified by the ${esc(s.n)} coaching staff (${esc(s.cv)})</p>` : ""}
 <p>${esc(s.n)} is ${/^[AEIOUN]/.test(s.d) ? "an" : "a"} ${esc(s.d)}${J ? " junior college" : ""} track and field program${s.c !== s.d ? ` in the ${esc(s.c)}` : ""}${s.s ? `, based in ${esc(STATE[s.s] || s.s)}` : ""}. ${J ? `Junior colleges compete nationally rather than in conferences, so this site shows ${esc(s.n)}'s season results instead of predicted recruiting levels.` : `Below are the marks it takes to be a Target recruit, a Recruit or a Walk-On for ${MAW} in every event${s.o ? `, from the school's own published standards${!s.cv && +s.yr && +s.yr <= 2024 ? ` (the most recent the program has published, ${s.yr}; current requirements may differ)` : ""}` : s.est ? " (estimates: typical marks for its division, since there is no published chart or conference championship)" : ", set from its 2026 conference results"}.`}</p>
 ${J ? `<h2>No recruiting levels for junior colleges</h2><p>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: there's no reliable way to predict a junior college's marks. ${B ? `Below are ${esc(s.n)}'s best marks this season. ` : ""}The full NJCAA national list, by event, is in <a href="/?tab=results&div=NJCAA">Results</a>, and the <a href="${JG}">junior college recruiting guide</a> explains how NJCAA track works.</p>` : `${(s.ng || []).includes("m") ? "" : `<h2>Men's standards</h2>${side("m")}`}${(s.ng || []).includes("w") ? "" : `<h2>Women's standards</h2>${side("w")}`}`}
 ${B ? `<h2>${B.y} season bests</h2><p>${esc(s.n)}'s best mark in each event this outdoor season on TFRRS${B.conf ? `, with its rank in the ${esc(B.conf)} list` : ""}. A w marks a wind-aided mark.</p>${bestTbl("m")}${bestTbl("w")}` : ""}
+${factSections(s, factsOf(s))}
 ${vidHtml((VID.schools || {})[s.n])}
 ${(() => { const q = faq(s, B); return `<h2>Common questions</h2>${q.map(([qq, aa]) => `<h3>${esc(qq)}</h3><p>${esc(aa)}</p>`).join("")}`; })()}
 ${(() => { const [c, st] = related(s); return (c.length ? `<h2>More ${esc(s.c)} programs</h2><ul style="columns:3 200px">${c.map(x => `<li><a href="/schools/${schoolSlug(x)}">${esc(x.n)}</a></li>`).join("")}</ul>` : "") + (st.length ? `<h2>More college programs in ${esc(STATE[s.s] || s.s)}</h2><ul style="columns:3 200px">${st.map(x => `<li><a href="/schools/${schoolSlug(x)}">${esc(x.n)}</a> <small>${esc(x.d)}</small></li>`).join("")}</ul>` : ""); })()}
