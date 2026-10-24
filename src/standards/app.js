@@ -726,7 +726,8 @@ const seaOf=(div)=>seasons().filter(k=>RIDX.some(r=>r.year+"-"+r.season===k&&r.d
 const keyOf=(sea,div)=>{const x=RIDX.find(r=>r.year+"-"+r.season===sea&&r.div===div);return x&&x.key};
 function cmSides(){const t=CM.t;
   if(t==="years")return [{sea:CM.a,div:CM.div,l:CM.conf||"nat",name:seasonLabel(CM.a)},{sea:CM.b,div:CM.div,l:CM.conf||"nat",name:seasonLabel(CM.b)}];
-  if(t==="conf")return [{sea:CM.sea,div:CM.div,l:CM.a,name:CM.a},{sea:CM.sea,div:CM.div,l:CM.b,name:CM.b}];
+  /* each side has its own division (Ryan 2026-10-24: "compare d1 and d2 conferences to each other") */
+  if(t==="conf"){const da=CM.da||CM.div,db=CM.db||CM.div,x=da!==db;return [{sea:CM.sea,div:da,l:CM.a,name:CM.a+(x?` (${DIVINFO[da]||da})`:"")},{sea:CM.sea,div:db,l:CM.b,name:CM.b+(x?` (${DIVINFO[db]||db})`:"")}]}
   return [{sea:CM.sea,div:CM.a,l:"nat",name:(DIVINFO[CM.a]||CM.a)},{sea:CM.sea,div:CM.b,l:"nat",name:(DIVINFO[CM.b]||CM.b)}]}
 const cmKeys=()=>CM.t==="schools"?[]:cmSides().map(x=>keyOf(x.sea,x.div)).filter(Boolean);
 function cmData(x){const k=keyOf(x.sea,x.div);if(!k)return {err:1};const D=CACHE[k];if(!D){load(k,true);return null}if(D.err)return {err:1};
@@ -735,8 +736,10 @@ function cmFix(){const all=seasons();
   if(!CM.sea||!all.includes(CM.sea))CM.sea=R.season;
   if(CM.t==="years"){const ss=seaOf(CM.div);if(!ss.includes(CM.a))CM.a=ss.includes(R.season)?R.season:ss[0];const typ=CM.a.split("-")[1];if(!ss.includes(CM.b)||CM.b===CM.a)CM.b=ss.find(k=>k<CM.a&&k.endsWith("-"+typ))||ss.find(k=>k!==CM.a)||CM.a}
   if(CM.t==="div"){const ds=RIDX.filter(r=>r.year+"-"+r.season===CM.sea).map(r=>r.div).sort((a,b)=>Object.keys(DIVINFO).indexOf(a)-Object.keys(DIVINFO).indexOf(b));if(!ds.includes(CM.a))CM.a=ds[0];if(!ds.includes(CM.b)||CM.b===CM.a)CM.b=ds.find(d=>d!==CM.a)||CM.a}
-  if(CM.t==="conf"){const x=cmData({sea:CM.sea,div:CM.div,l:"nat"});if(x&&!x.err){const cs=x.D.lists.filter(z=>!z.nat&&!z.champ&&!NCL.test(z.label)).map(z=>z.label).sort();
-    if(!cs.includes(CM.a))CM.a=cs.includes("SEC")?"SEC":cs[0];if(!cs.includes(CM.b)||CM.b===CM.a)CM.b=cs.includes("Big Ten")&&CM.a!=="Big Ten"?"Big Ten":cs.find(c=>c!==CM.a)}}}
+  if(CM.t==="conf"){CM.da=CM.da||CM.div;CM.db=CM.db||CM.div;const both=seaOf(CM.da).filter(k=>seaOf(CM.db).includes(k));if(both.length&&!both.includes(CM.sea))CM.sea=both[0];
+    const ca=cmConfs(CM.da),cb=cmConfs(CM.db);
+    if(ca&&!ca.includes(CM.a))CM.a=ca.includes("SEC")?"SEC":ca[0];if(cb&&(!cb.includes(CM.b)||(CM.b===CM.a&&CM.da===CM.db)))CM.b=cb.includes("Big Ten")&&!(CM.a==="Big Ten"&&CM.da===CM.db)?"Big Ten":cb.find(c=>!(c===CM.a&&CM.da===CM.db))}}
+const cmConfs=div=>{const x=cmData({sea:CM.sea,div,l:"nat"});return x&&!x.err?x.D.lists.filter(z=>!z.nat&&!z.champ&&!NCL.test(z.label)).map(z=>z.label).sort():null};
 const cmOpts=(list,cur,lab=x=>x)=>list.map(v=>`<option value="${esc(v)}" ${v===cur?"selected":""}>${esc(lab(v))}</option>`).join("");
 const cmPick=(id,label,inner,cls="")=>`<label class="cmp ${cls}"><span>${label}</span><select data-cm="${id}">${inner}</select></label>`;
 function cmVerdict(e,va,vb,na,nb,what){if(va==null||vb==null)return "";const hi=rhigh(e),d=hi?va-vb:vb-va,m=what==="10"?"10th-best mark":"best mark";
@@ -811,9 +814,9 @@ function compareView(){cmFix();const t=CM.t,g=CM.g;loadBrand();
     if(t==="years"){const ss=seaOf(CM.div),x=cmData({sea:CM.a,div:CM.div,l:"nat"}),cs=x&&!x.err?confsOf(x.D):[];if(CM.conf&&!cs.includes(CM.conf)&&cs.length)cs.unshift(CM.conf);
       shared=`${gsel}${ev}${cmPick("div","Division",cmOpts(divsAll,CM.div))}${cmPick("conf","Conference",`<option value="">All of ${esc(CM.div)}</option>`+cmOpts(cs,CM.conf))}`;
       A=cmPick("a","Year",cmOpts(ss,CM.a,seasonLabel));B=cmPick("b","Year",cmOpts(ss,CM.b,seasonLabel));what="two seasons"}
-    else if(t==="conf"){const x=cmData({sea:CM.sea,div:CM.div,l:"nat"}),cs=x&&!x.err?x.D.lists.filter(z=>!z.nat&&!z.champ&&!NCL.test(z.label)).map(z=>z.label).sort():[CM.a,CM.b].filter(Boolean);
-      shared=`${gsel}${ev}${cmPick("sea","Season",cmOpts(seaOf(CM.div),CM.sea,seasonLabel))}${cmPick("div","Division",cmOpts(divsAll,CM.div))}`;
-      A=cmPick("a","Conference",cmOpts(cs,CM.a));B=cmPick("b","Conference",cmOpts(cs,CM.b));what="two conferences"}
+    else if(t==="conf"){const ca=cmConfs(CM.da)||[CM.a].filter(Boolean),cb=cmConfs(CM.db)||[CM.b].filter(Boolean),both=seaOf(CM.da).filter(k=>seaOf(CM.db).includes(k));
+      shared=`${gsel}${ev}${cmPick("sea","Season",cmOpts(both,CM.sea,seasonLabel))}`;
+      A=cmPick("da","Division",cmOpts(divsAll,CM.da,d=>DIVINFO[d]||d))+cmPick("a","Conference",cmOpts(ca,CM.a));B=cmPick("db","Division",cmOpts(divsAll,CM.db,d=>DIVINFO[d]||d))+cmPick("b","Conference",cmOpts(cb,CM.b));what="two conferences (any divisions)"}
     else{const ds=RIDX.filter(r=>r.year+"-"+r.season===CM.sea).map(r=>r.div).sort((a,b)=>Object.keys(DIVINFO).indexOf(a)-Object.keys(DIVINFO).indexOf(b));
       shared=`${gsel}${ev}${cmPick("sea","Season",cmOpts(seasons().filter(k=>!k.endsWith("-xc")),CM.sea,seasonLabel))}`;
       A=cmPick("a","Division",cmOpts(ds,CM.a,d=>DIVINFO[d]||d));B=cmPick("b","Division",cmOpts(ds,CM.b,d=>DIVINFO[d]||d));what="two divisions"}
@@ -1740,7 +1743,7 @@ document.addEventListener("change",ev=>{const t=ev.target;
   if(t.dataset&&t.dataset.cc){const c=CC.cols[+t.dataset.i];if(c){const k=t.dataset.cc,v=t.value.trim();
     if(k==="s")c.s=v;else if(k==="div"){c.div=v;c.l="nat";c.t="";if(c.s&&!RIDX.some(r=>r.year+"-"+r.season===c.s&&r.div===v))c.s=""}else if(k==="l")c.l=v;else if(k==="g")c.g=v;else if(k==="e")c.e=v;else if(k==="t"){c.t=v;if(!v&&c.e==="*")c.e=R.ev||"100 Meters"}
     ccSync();R.swap=false;render()}return}
-  if(t.dataset&&t.dataset.cm){const k=t.dataset.cm;CM[k]=t.value;if(k==="div")CM.conf="";if(k==="div"||k==="sea"){if(CM.t!=="div")CM.a=CM.b=""}R.swap=true;render();return}
+  if(t.dataset&&t.dataset.cm){const k=t.dataset.cm;CM[k]=t.value;if(k==="div")CM.conf="";if(k==="da")CM.a="";if(k==="db")CM.b="";if(k==="div"||k==="sea"){if(CM.t!=="div")CM.a=CM.b=""}R.swap=true;render();return}
   if(t.dataset&&"cmmy" in t.dataset){CM.my=t.value.trim();R.swap=true;render();return}
   if(t.dataset&&t.dataset.cmsch){const v=t.value.trim().toLowerCase();let i=SCH.findIndex(x=>!x.j&&(x.n.toLowerCase()===v||(x.t||"").toLowerCase()===v));if(i<0&&v)i=SCH.findIndex(x=>!x.j&&(x.n.toLowerCase().includes(v)||(x.t||"").toLowerCase().includes(v)));if(i>=0){CM[t.dataset.cmsch]=i;R.swap=true;render()}return}
   if(t.id==="cse"){CS.e=t.value;render();return}
