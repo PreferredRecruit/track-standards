@@ -1434,9 +1434,57 @@ async function athleteQ(raw,d){
     if(r.amb)return {html:`<p>Which athlete did you mean?</p>`,f:r.amb.map(x=>`${x[0]} ${d.e||""} progression (${tcanon(x[2])}, ${seasonLabel(x[3])})`.replace(/\s+/g," "))};
     if(r.none&&!d.schools.length&&!d.confs.length)return {html:`<p>I couldn't find an athlete called "${esc(r.none)}" in the results since 2016. Try their full name.</p>`}}
   return null}
+/* ---------- program analytics (Ryan 2026-10-24: "average seasonal progression for 100m runners at UCSB over the last 10 years? Are
+   athletes peaking at the right time? When did most athletes run their fastest times ... wind-legal ... how well a coach peaks").
+   /data/teamstats/<slug>.json from scripts/tfrrs/build_teamstats.py (race-by-race TFRRS histories x the school each season) ---------- */
+const TS={},TSL={};const tsk=t=>String(t).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const getTS=k=>{if(!TSL[k])TSL[k]=fetch("/data/teamstats/"+k+".json").then(r=>r.ok?r.json():null).catch(()=>null).then(j=>TS[k]=j);return TSL[k]};
+const PGRP={sprints:/sprint/,hurdles:/hurdl/,distance:/distance|mid.?distance|\b(runners?|milers?)\b(?!.*\b(100|200|400)\b)/,jumps:/jump(?!.*high|.*long|.*triple)|jumpers/,throws:/throw/};
+const pctS=v=>v==null?"–":`${v>=0?"+":""}${v.toFixed(2)}%`;
+async function programQ(raw,d){
+  const q=nq(raw);
+  const rankQ=/\b(rank|ranking|best|top|which (schools?|programs?|coaches?|teams?))\b/.test(q)&&/\b(peak\w*|develop\w*|improv\w*|progress\w*|coach\w*)\b/.test(q)&&d.schools.length===0;
+  if(rankQ){const R=await fetch("/data/teamstats/_rank.json").then(r=>r.json()).catch(()=>[]);const div=d.div||(/\bnaia\b/.test(q)?"NAIA":null);
+    const conf=d.confs[0],inConf=conf?new Set(SCH.filter(x=>x.c===conf).map(x=>tsk(x.t||x.n))):null;
+    const by=/develop|improv|progress/.test(q)&&!/peak/.test(q)?"yoy":"peak";
+    const L=R.filter(x=>(!div||x.division===div)&&(!inConf||inConf.has(x.slug))&&(by==="peak"?x.peak_n>=30:x.yoy_n>=30)).sort((a,b)=>b[by]-a[by]).slice(0,12);
+    if(!L.length)return {html:"<p>Not enough race data for that group yet.</p>"};
+    const what=by==="peak"?"peaking at the conference championship (share of athletes who ran their season best there or later)":"developing returning athletes (median change in season best from one year to the next at the same school)";
+    return {html:`<p>Best programs at ${what}, ${esc(conf||div||"all divisions")}, seasons 2022 to 2026, every event pooled.</p>`+chartSvg({title:`${by==="peak"?"Peaking":"Year-over-year development"} · ${conf||div||"all divisions"}`,type:"bar",labels:L.map(x=>x.team),series:[{name:by==="peak"?"% peaked":"median % better",values:L.map(x=>x[by])}],value_format:"number",lower_is_better:false})
+      +tbl(["Program","Division","Peaked at conference","Missed by (median)","Year-over-year","Athlete-seasons"],L.map(x=>[x.team,x.division.replace("NCAA ",""),x.peak+"% of "+x.peak_n,pctS(x.gap),pctS(x.yoy)+" ("+x.yoy_n+")",x.n]),2)
+      +`<p>How to read it: "peaked" counts athletes who raced their event at the school's conference championship and ran their season best there or later (regionals, NCAA). From TFRRS meet histories; programs need 30+ such athletes.</p>`,f:["Rank D1 programs at developing athletes","Rank SEC programs at peaking"]}}
+  if(!d.schools.length)return null;
+  if(!/\b(progress\w*|improv\w*|peak\w*|develop\w*|coach\w*|fastest|when did|timing|season bests?|wind|trend|over the (last|past)|years?)\b/.test(q))return null;
+  const s=SCH[d.schools[0]],k=tsk(s.t||s.n);const T=await getTS(k);
+  if(!T)return {html:`<p>I don't have race-by-race data for ${esc(s.n)} yet. It fills in as the TFRRS scan reaches their athletes.</p>`};
+  /* site event name -> TFRRS code ("100m" -> 100, "110m Hurdles" -> 110H, "10000m" -> 10,000, "High Jump" -> HJ) */
+  const ev=d.e?(ECODE[d.e]||d.e.replace(/^(\d+)m Hurdles.*$/,"$1H").replace(/^(\d+)m Steeplechase$/,"$1S").replace(/^10000m$/,"10,000").replace(/^(\d+)m$/,"$1")):null;
+  const grp=Object.keys(PGRP).find(g=>PGRP[g].test(q));const key=ev||(grp?"g:"+grp:"g:all");
+  const indoor=/\bindoor\b/.test(q),yrs=+((q.match(/\b(?:last|past)\s+(\d+)\s+years?\b/)||[])[1]||0),y1=new Date().getFullYear()-(yrs||11)+1;
+  const S=Object.entries(T.seasons).filter(([sk,E])=>sk.endsWith(indoor?"indoor":"outdoor")&&+sk.slice(0,4)>=y1&&E[key]&&E[key].n).sort((a,b)=>a[0].localeCompare(b[0]));
+  const label=ev?d.e:grp||"all events";
+  if(!S.length)return {html:`<p>No ${esc(label)} race data for ${esc(s.n)} in those seasons.</p>`};
+  const X=S.map(([sk,E])=>({sk,...E[key]})),sum=(f)=>{const L=X.filter(x=>x[f]!=null);return L.length?L.reduce((a,x)=>a+x[f]*x.n,0)/L.reduce((a,x)=>a+x.n,0):null};
+  const pk=X.reduce((a,x)=>a+(x.peak!=null?x.peak*x.peak_n:0),0),pkn=X.reduce((a,x)=>a+(x.peak_n||0),0);
+  const months={};X.forEach(x=>Object.entries(x.month||{}).forEach(([m,n])=>months[m]=(months[m]||0)+n));const mk=Object.keys(months).map(Number).sort((a,b)=>a-b),MN="Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
+  const top=mk.reduce((a,m)=>months[m]>(months[a]||0)?m:a,mk[0]);const totM=mk.reduce((a,m)=>a+months[m],0);
+  const R=await fetch("/data/teamstats/_rank.json").then(r=>r.json()).catch(()=>[]),me=R.find(x=>x.slug===k),peers=R.filter(x=>x.division===(me||{}).division);
+  const pctile=(f)=>me&&peers.length?Math.round(100*peers.filter(x=>x[f]<=me[f]).length/peers.length):null;
+  let html=`<p><b>${esc(s.n)}</b> · ${esc(label)} · ${indoor?"indoor":"outdoor"} ${esc(S[0][0].slice(0,4))} to ${esc(S[S.length-1][0].slice(0,4))} (men and women, ${X.reduce((a,x)=>a+x.n,0)} athlete-seasons with 2+ races):</p><ul>
+    <li><b>In-season progression:</b> the typical athlete improved <b>${pctS(sum("imp"))}</b> from their first race to their season best.</li>
+    <li><b>Peaking:</b> ${pkn?`<b>${Math.round(pk/pkn)}%</b> of the ${pkn} who raced at the conference championship ran their season best there or later`:"no conference-meet races in this data"}${me&&pctile("peak")!=null?` (all events, 2022 to 2026: ${me.peak}%, better than ${pctile("peak")}% of ${esc(me.division)} programs)`:""}.</li>
+    <li><b>Year over year:</b> returning athletes' season bests changed <b>${pctS(sum("yoy"))}</b> a year at ${esc(s.t||s.n)}${me&&pctile("yoy")!=null?` (all events, 2022 to 2026: ${pctS(me.yoy)}, ${pctile("yoy")}th percentile in ${esc(me.division)})`:""}.</li>
+    <li><b>When they ran their fastest:</b> ${totM?`most season bests came in <b>${MN[top-1]}</b> (${Math.round(100*months[top]/totM)}%)`:"–"}.</li>
+    ${X.some(x=>x.legal_n)?`<li><b>Wind:</b> in wind events, the wind-legal season best was a median <b>${pctS(sum("legal"))}</b> slower than the all-conditions best.</li>`:""}</ul>`;
+  html+=chartSvg({title:`${s.t||s.n} · ${label} · in-season improvement by season`,type:"line",labels:X.map(x=>x.sk.slice(0,4)),series:[{name:"median first race to season best (%)",values:X.map(x=>x.imp)}],value_format:"number",lower_is_better:false});
+  if(totM)html+=chartSvg({title:`When season bests were set (${label})`,type:"bar",labels:mk.map(m=>MN[m-1]),series:[{name:"season bests",values:mk.map(m=>months[m])}],value_format:"number",lower_is_better:false});
+  html+=tbl(["Season","Athletes","First race → best","Peaked at conference","Missed by (median)","Year over year"],X.map(x=>[seasonLabel(x.sk),x.n,pctS(x.imp),x.peak!=null?x.peak+"% of "+x.peak_n:"–",pctS(x.gap),x.yoy_n?pctS(x.yoy)+" ("+x.yoy_n+")":"–"]),1);
+  html+=`<p>Conference meet used: ${esc(((T.conf_meet||{})[S[S.length-1][0]]||[""])[0])}. From TFRRS meet histories of athletes whose pages we've collected; every number shows its sample size.</p>`;
+  return {html,f:[`${s.t||s.n} ${indoor?"outdoor":"indoor"} progression`,`Rank ${esc(s.c)} programs at peaking`,`${s.t||s.n} distance progression`]}}
 async function answer(raw){
   raw=raw.replace(/\s*\(([^()]*?),\s*\d{4} (Outdoor|Indoor)\)\s*$/,"");   /* the "(School, 2026 Outdoor)" label on athlete chips */
   const d=detect(raw), q=d.q;
+  {const a=await programQ(raw,d);if(a)return a}
   {const a=await athleteQ(raw,d);if(a)return a}
   if(/\b(jucos?|njcaa|junior colleges?|community colleges?)\b/i.test(raw))return {html:`<p>This site doesn't set Target, Recruit or Walk-On levels for junior colleges: NJCAA competition is national rather than conference-based, so a program's marks can't be predicted reliably.</p><p>What you can do here: open <b>Results</b> and pick <b>NJCAA</b> to see this season's national list for any event, or search a junior college by name for its season bests, roster and TFRRS links.</p>`,f:["What does Walk-On mean?","Only NAIA","Only NCAA D3"]};
   /* 1. replies to a clarifying question */
