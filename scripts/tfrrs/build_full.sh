@@ -19,4 +19,5 @@ json.dump(out, open(sys.argv[1], "w")); print(len(nk), "new keys,", len(new), "r
 PY
 python3 "$SITE/scripts/tfrrs/build_legal.py" | tail -1
 python3 "$SITE/scripts/tfrrs/build_career.py"
+python3 "$SITE/scripts/tfrrs/build_trend.py"
 rm -rf "$TMP"

@@ -1193,14 +1193,14 @@ function resultsCollege(){
 }
 /* ---------- Recruiting AI ---------- */
 const CHAT={msgs:[],busy:false,draft:""};
-const SUGG=[["Which D2 schools fit a 5:05 women's 1600m?","Your mark, every school"],["Compare Oregon vs USC 400m","Side by side + chart"],["SEC vs Big Ten 800m","Conference compare"],["Top D1 women's long jump 2025","Rankings by year"]];
+const SUGG=[["Which D2 schools fit a 5:05 women's 1600m?","Your mark, every school"],["Kanyinsola Ajayi 100m progression","Any athlete since 2016"],["Is Auburn peaking at the right time?","Program analytics"],["How has the D1 men's 100m changed since 2016?","Trends by year"]];
 const EVP=[["110m Hurdles",/110\s*(m|meters?)?\s*(h\b|hurdles?)/],["100m Hurdles",/100\s*(m|meters?)?\s*(h\b|hurdles?)/],["400m Hurdles",/400\s*(m|meters?)?\s*(h\b|ih\b|hurdles?)/],["110m Hurdles (39\")",/39\s*("|in\b|inch)/],["300m Hurdles",/300\s*(m|meters?)?\s*(h\b|ih\b|hurdles?)/],["3000m Steeplechase",/steeple/],["10000m",/(?<![\d:.])10,?000(?!\d)|\b10k\b/],["5000m",/(?<![\d:.])5,?000(?!\d)|\b5k\b/],["3200m",/(?<![\d:.])3,?200(?!\d)|two.?mile/],["3000m",/(?<![\d:.])3,?000(?!\d)|\b3k\b/],["1500m",/(?<![\d:.])1500(?!\d)/],["1600m",/(?<![\d:.])1600(?!\d)/],["Mile",/\bmile\b/],["800m",/(?<![\d:.])800(?!\d)/],["400m",/(?<![\d:.])400(?!\d)/],["200m",/(?<![\d:.])200(?!\d)/],["100m",/(?<![\d:.])100(?!\d)/],["High Jump",/high jump|\bhj\b/],["Pole Vault",/pole vault|\bpv\b/],["Long Jump",/long jump|\blj\b/],["Triple Jump",/triple jump|\btj\b/],["Shot Put",/shot/],["Discus",/discus/],["Hammer",/hammer/],["Javelin",/javelin|\bjav\b/]];
 const ALIAS=SCH.map((s,i)=>{const n=s.n.toLowerCase();const a=new Set([...s.a,s.t.toLowerCase(),n,n.replace(/^university of /,""),n.replace(/^the /,""),n.replace(/ university$/,""),n.replace(/ college$/,"")]);return [...a].filter(x=>x.length>=3).map(x=>[x,i])}).flat().sort((a,b)=>b[0].length-a[0].length);
 const CONFS=[...new Set(SCH.map(s=>s.c))].filter(c=>c.length>=3).sort((a,b)=>b.length-a.length);
 const nq=q=>" "+q.toLowerCase().replace(/[’]/g,"'").replace(/'s\b/g,"").replace(/[^a-z0-9:.'" &-]/g," ").replace(/\s+/g," ")+" ";
 function detect(raw){
   const q=nq(raw), out={q};
-  out.g=/\b(women|womens|woman|girls?|female|ladies)\b/.test(q)?"w":/\b(men|mens|boys?|male|guys?)\b/.test(q)?"m":null;
+  out.g=/\b(women|womens|woman|girls?|female|ladies|daughters?|she|her|hers)\b/.test(q)?"w":/\b(men|mens|boys?|male|guys?|sons?|he|him|his)\b/.test(q)?"m":null;
   let rest=q; for(const [e,re] of EVP){const m=q.match(re);if(m){out.e=e;rest=q.replace(m[0]," ");break}}
   const mk=rest.match(/(\d{1,2}:\d{2}(?:\.\d+)?)|(\d{1,2}'\s?\d{1,2}(?:\.\d+)?"?)|(\d{1,3}\.\d{1,2})\s*m?\b/); if(mk) out.mark=mk[0].trim();
   {let rq=q;out.schools=[];for(const [a2,i] of ALIAS){if(rq.includes(" "+a2+" ")&&!out.schools.includes(i)){out.schools.push(i);rq=rq.replace(" "+a2+" "," | ")}}out.school=out.schools.length?out.schools[0]:undefined;}
@@ -1382,14 +1382,20 @@ async function resolveAthlete(seg){
   c.sort((a,b)=>b.sc-a.sc||b.e[3].localeCompare(a.e[3]));if(!c.length)return {none:ws.join(" ")};
   const top=c.filter(x=>x.sc===c[0].sc);return top.length===1?{e:top[0].e}:{amb:top.slice(0,6).map(x=>x.e)}}
 const aLink=e=>`/?tab=results&season=${e[3]}&div=${encodeURIComponent(e[4])}&athlete=${e[1]}`;
-const evOf=(rows,want)=>{const evs=[...new Set(rows.map(x=>x[2]))];if(want){const m=evs.find(x=>evLabel(x)===want)||evs.find(x=>evLabel(x).replace(/ \(.*\)/,"")===want);if(m)return m}
+const evOf=(rows,want)=>{const evs=[...new Set(rows.map(x=>x[2]))];if(want){const m=evs.find(x=>evLabel(x)===want||x===TF[want])||evs.find(x=>evLabel(x).replace(/ \(.*\)/,"")===want);if(m)return m}
   return evs.sort((a,b)=>rows.filter(x=>x[2]===b).length-rows.filter(x=>x[2]===a).length)[0]};
 const pct=(a,b,F)=>{const c=F?(b-a)/a:(a-b)/a;return `${c>=0?"+":""}${(c*100).toFixed(1)}%`};
-async function athleteProgress(e,want){
+async function athleteProgress(e,want,q=""){
   const C=await getCareer(e[1]);if(!C||!C.s.length)return {html:`<p>I don't have season marks for ${esc(e[0])} yet.</p>`};
-  const ev=evOf(C.s,want),F=tfield(ecode(ev)),pts=C.s.filter(x=>x[2]===ev&&tval(x[3])!=null).sort((a,b)=>skey(a[0])-skey(b[0]));
+  const ev=evOf(C.s,want),miss=want&&evLabel(ev)!==want&&(TF[want]||want)!==ev,F=tfield(ecode(ev)),pts=C.s.filter(x=>x[2]===ev&&tval(x[3])!=null).sort((a,b)=>skey(a[0])-skey(b[0]));
   const v=pts.map(x=>tval(x[3])),best=F?Math.max(...v):Math.min(...v),bx=pts[v.indexOf(best)],schools=[...new Set([...(C.p||[]).map(tcanon),...pts.map(x=>tcanon(x[5]))])];
-  let html=`<p><b>${esc(e[0])}</b> · ${esc(schools.join(" → "))} · ${esc(evLabel(ev))}: ${pts.length>1?`from <b>${esc(pts[0][3])}</b> (${esc(seasonLabel(pts[0][0]))}) to <b>${esc(pts[pts.length-1][3])}</b> (${esc(seasonLabel(pts[pts.length-1][0]))}), ${pct(v[0],v[v.length-1],F)}. Best: <b>${esc(bx[3])}</b> in ${esc(seasonLabel(bx[0]))}.`:`one season so far, <b>${esc(pts[0][3])}</b> (${esc(seasonLabel(pts[0][0]))}).`}</p>`;
+  /* answer the question asked first: schools ("where did ... go before"), or a missing event */
+  const allSch=[...new Set([...(C.p||[]).map(tcanon),...C.s.slice().sort((a,b)=>skey(a[0])-skey(b[0])).map(x=>tcanon(x[5]))])],yrs=C.s.map(x=>+x[0].slice(0,4));
+  let lead="";
+  if(/\b(before|previous\w*|transfer\w*|which (schools?|colleges?)|where did|where does|what (school|college)|go to school|schools? did)\b/.test(q))
+    lead=allSch.length>1?`<p><b>${esc(e[0])}</b> has competed for ${allSch.map(x=>`<b>${esc(x)}</b>`).join(" → ")}.</p>`:`<p><b>${esc(e[0])}</b> has only competed for <b>${esc(allSch[0])}</b> on TFRRS (${Math.min(...yrs)} to ${Math.max(...yrs)}), no earlier school listed.</p>`;
+  if(miss)lead+=`<p>I don't have ${esc(want)} marks for ${esc(e[0])} on the lists. ${esc(e[0].split(" ")[0])}'s events: ${esc([...new Set(C.s.map(x=>evLabel(x[2])))].join(", "))}. Here's the ${esc(evLabel(ev))}:</p>`;
+  let html=lead+`<p><b>${esc(e[0])}</b> · ${esc(schools.join(" → "))} · ${esc(evLabel(ev))}: ${pts.length>1?`from <b>${esc(pts[0][3])}</b> (${esc(seasonLabel(pts[0][0]))}) to <b>${esc(pts[pts.length-1][3])}</b> (${esc(seasonLabel(pts[pts.length-1][0]))}), ${pct(v[0],v[v.length-1],F)}. Best: <b>${esc(bx[3])}</b> in ${esc(seasonLabel(bx[0]))}.`:`one season so far, <b>${esc(pts[0][3])}</b> (${esc(seasonLabel(pts[0][0]))}).`}</p>`;
   if(pts.length>1)html+=chartSvg({title:`${e[0]} · ${evLabel(ev)} season bests`,type:"line",labels:pts.map(x=>seasonLabel(x[0]).replace("Outdoor","Out").replace("Indoor","In")),series:[{name:e[0],values:v}],value_format:F?"meters":"time",lower_is_better:!F});
   html+=tbl(["Season","School","Mark","Change","National rank"],pts.map((x,i)=>[seasonLabel(x[0]),tcanon(x[5]),x[3]+(x[4]?` (wind ${x[4]})`:""),i?pct(v[i-1],v[i],F):"–",x[6]?"#"+x[6]:"–"]),2);
   /* the latest season race by race, when we have their TFRRS history */
@@ -1424,6 +1430,7 @@ async function athleteQ(raw,d){
   const prog=/\b(progress|progression|progressed|improv\w*|over the years|career|history|trend|year to year|season to season|peak\w*)\b/.test(q);
   if(!cmp&&!prog)return null;
   if(cmp){const body=raw.replace(/^.*?\bcompare\b/i,"");const parts=body.split(/\s+(?:vs\.?|versus|to|and|with|against)\s+/i).map(x=>x.trim()).filter(Boolean);
+    if(parts.length>=2&&(d.schools.length>=2||d.confs.length>=2||parts.slice(0,2).some(isSchoolText)))return null;   /* "compare Oregon and Stanford" = schools */
     if(parts.length>=2){const [r1,r2]=await Promise.all([resolveAthlete(parts[0]),resolveAthlete(parts[1])]);
       if(r1&&r2&&r1.e&&r2.e)return athleteCompare(r1.e,r2.e,d.e);
       if(r1&&r1.amb)return {html:`<p>Which one did you mean?</p>`,f:r1.amb.map(x=>`Compare ${x[0]} to ${r2&&r2.e?r2.e[0]:parts[1]}`)};
@@ -1454,7 +1461,15 @@ async function programQ(raw,d){
       +tbl(["Program","Division","Peaked at conference","Missed by (median)","Year-over-year","Athlete-seasons"],L.map(x=>[x.team,x.division.replace("NCAA ",""),x.peak+"% of "+x.peak_n,pctS(x.gap),pctS(x.yoy)+" ("+x.yoy_n+")",x.n]),2)
       +`<p>How to read it: "peaked" counts athletes who raced their event at the school's conference championship and ran their season best there or later (regionals, NCAA). From TFRRS meet histories; programs need 30+ such athletes.</p>`,f:["Rank D1 programs at developing athletes","Rank SEC programs at peaking"]}}
   if(!d.schools.length)return null;
-  if(!/\b(progress\w*|improv\w*|peak\w*|develop\w*|coach\w*|fastest|when did|timing|season bests?|wind|trend|over the (last|past)|years?)\b/.test(q))return null;
+  if(!/\b(progress\w*|improv\w*|peak\w*|develop\w*|coach\w*|when did|timing|season bests? (come|came|happen)|wind|trend|over the (last|past))\b/.test(q))return null;
+  if(d.schools.length>=2){/* "compare Auburn and Arkansas peaking": programs side by side, 2022-2026, every event */
+    const R=await fetch("/data/teamstats/_rank.json").then(r=>r.json()).catch(()=>[]);const P=d.schools.slice(0,4).map(i=>({s:SCH[i],x:R.find(r=>r.slug===tsk(SCH[i].t||SCH[i].n))})).filter(p=>p.x);
+    if(P.length<2)return {html:"<p>I don't have enough race data for both programs yet.</p>"};
+    const pr=(f,v)=>{const peers=R.filter(r=>r.division===P[0].x.division);return Math.round(100*peers.filter(r=>r[f]<=v).length/peers.length)};
+    return {html:`<p>${P.map(p=>`<b>${esc(p.s.t||p.s.n)}</b>`).join(" vs ")}, 2022 to 2026, every event pooled:</p>`
+      +chartSvg({title:"Peaked at the conference championship (%)",type:"bar",labels:P.map(p=>p.s.t||p.s.n),series:[{name:"% peaked",values:P.map(p=>p.x.peak)}],value_format:"number",lower_is_better:false})
+      +tbl(["Program","Peaked at conference","Missed by (median)","In-season progression","Year over year","Athlete-seasons"],P.map(p=>[p.s.t||p.s.n,`${p.x.peak}% of ${p.x.peak_n} (${pr("peak",p.x.peak)}th pct)`,pctS(p.x.gap),pctS(p.x.imp),`${pctS(p.x.yoy)} (${pr("yoy",p.x.yoy)}th pct)`,p.x.n]),1)
+      +`<p>Percentiles are against every ${esc(P[0].x.division)} program. Ask about one program for its season-by-season numbers.</p>`,f:P.map(p=>`Is ${p.s.t||p.s.n} peaking at the right time?`).slice(0,2)}}
   const s=SCH[d.schools[0]],k=tsk(s.t||s.n);const T=await getTS(k);
   if(!T)return {html:`<p>I don't have race-by-race data for ${esc(s.n)} yet. It fills in as the TFRRS scan reaches their athletes.</p>`};
   /* site event name -> TFRRS code ("100m" -> 100, "110m Hurdles" -> 110H, "10000m" -> 10,000, "High Jump" -> HJ) */
@@ -1481,9 +1496,84 @@ async function programQ(raw,d){
   html+=tbl(["Season","Athletes","First race → best","Peaked at conference","Missed by (median)","Year over year"],X.map(x=>[seasonLabel(x.sk),x.n,pctS(x.imp),x.peak!=null?x.peak+"% of "+x.peak_n:"–",pctS(x.gap),x.yoy_n?pctS(x.yoy)+" ("+x.yoy_n+")":"–"]),1);
   html+=`<p>Conference meet used: ${esc(((T.conf_meet||{})[S[S.length-1][0]]||[""])[0])}. From TFRRS meet histories of athletes whose pages we've collected; every number shows its sample size.</p>`;
   return {html,f:[`${s.t||s.n} ${indoor?"outdoor":"indoor"} progression`,`Rank ${esc(s.c)} programs at peaking`,`${s.t||s.n} distance progression`]}}
-async function answer(raw){
+/* ---------- smarter routing without an outside AI (Ryan 2026-10-24: "make it really good without an anthropic key") ---------- */
+const QSTOP=new Set(("a an the and or but of in on at to for from by with about is are was were be been being do does did done has have had what whats what's which who whom whose when where why how much many "+
+  "can could would should will shall may might must i me my mine you your he him his she her they them their we us our it its this that these those there here than then also just only very really "+
+  "show tell give list find get compare vs versus against best top fastest quickest slowest longest highest farthest record records time times mark marks pr prs pb run ran running runs race races raced "+
+  "jump jumped jumping throw threw throwing season seasons year years career progression progress improvement improve improved history stats statistics standard standards recruit recruiting recruited "+
+  "walk walkon on college colleges school schools team teams program programs coach coaches athlete athletes runner runners sprinter sprinters men women mens womens men's women's boys girls guys "+
+  "indoor outdoor ncaa division d1 d2 d3 naia njcaa conference conferences national nationals rank ranked ranking rankings meet meets go went before after transfer transferred previously now currently ever all time").split(" "));
+let TREND=null;
+const DIVRX=[["NCAA D1",/\b(d1|di|division (1|i))\b/],["NCAA D2",/\b(d2|dii|division (2|ii))\b/],["NCAA D3",/\b(d3|diii|division (3|iii))\b/],["NAIA",/\bnaia\b/],["NJCAA",/\b(njcaa|juco)\b/]];
+const BETTER=/\b(under|sub|below|faster than|quicker than|less than|over|above|farther than|further than|higher than|longer than|more than|better than)\b/;
+const isSchoolText=t=>{const x=nq(t).trim();return !!x&&(ALIAS.some(([a])=>a===x)||hits(x).some(([s])=>(s.t||s.n).toLowerCase()===x||s.n.toLowerCase()===x))};
+const lastKey=(div,season)=>{const L=RIDX.filter(r=>r.div===div&&r.season===(season||"outdoor")).sort((a,b)=>b.year.localeCompare(a.year));return L[0]};
+const listEv=(D,g,e)=>{const L=D.lists.find(l=>l.nat)||D.lists[0],E=(L&&L.g[g])||{},want=TF[e]||e;const k=Object.keys(E).find(k=>k===want)||Object.keys(E).find(k=>evLabel(k)===e);return k?{rows:E[k],key:k}:null};
+async function smartQ(raw,d){
+  const q=nq(raw);const divs=DIVRX.filter(([,re])=>re.test(q)).map(([k])=>k);
+  const indoor=/\bindoor\b/.test(q)||/\b(60m|mile|weight throw|pentathlon)\b/.test(q),season=indoor?"indoor":"outdoor",g=d.g||CX.g||"m";
+  /* 1. "how many D1 men ran under 10.2 in the 100m in 2026" -> count athletes on the national list */
+  if(/\bhow many\b/.test(q)&&BETTER.test(q)&&d.e&&d.mark){const div=divs[0]||"NCAA D1",x=d.year?RIDX.find(r=>r.div===div&&r.year===d.year&&r.season===season):lastKey(div,season);if(!x)return {html:`<p>No ${esc(div)} ${season} list for ${esc(d.year||"that year")}.</p>`};
+    await load(x.key,true);const D=CACHE[x.key],L=listEv(D,g,d.e);if(!L)return {html:`<p>No ${gl(g)} ${esc(d.e)} on the ${esc(div)} ${x.year} ${season} list.</p>`};
+    const F=FIELD.has(d.e),lim=parse(d.mark,d.e),hit=L.rows.filter(r=>{const v=parse(String(r[4]).replace(/\s*[@#]+/g,""),d.e);return v!=null&&(F?v>lim:v<lim)});
+    return {html:`<p><b>${hit.length}</b> ${gl(g)} athletes ${F?"went past":"ran faster than"} <b>${esc(d.mark)}</b> in the ${esc(d.e)} on the ${esc(div)} ${x.year} ${season} national list${WIND&&WEV.has(L.key)?" (wind-legal marks only)":" (all wind conditions)"}.</p>`+(hit.length?tbl(["#","Athlete","Team","Mark"],hit.slice(0,15).map(r=>[r[0],r[1],D.teams[r[3]],r[4]+(r[5]?` (${r[5]})`:"")]),3):"")+(hit.length>15?`<p>Plus ${hit.length-15} more on the Results tab.</p>`:""),f:[`How many ${div.replace("NCAA ","")} ${g==="w"?"women":"men"} ran under ${d.mark} in ${(+x.year)-1}?`]}}
+  /* 1b. "who ran 9.72 in the 100m?" -> athletes with that exact mark (this season's lists first, then earlier years) */
+  if(/\bwho\b/.test(q)&&/\b(ran|run|runs|jumped|threw|has|have|had|did)\b/.test(q)&&d.mark&&d.e){const want=parse(d.mark,d.e),hit=[];
+    const keys=RIDX.filter(r=>(!divs.length||divs.includes(r.div))&&r.season===season&&(!d.year||r.year===d.year)).sort((a,b)=>b.year.localeCompare(a.year)||Object.keys(DIVINFO).indexOf(a.div)-Object.keys(DIVINFO).indexOf(b.div));
+    for(const x of keys.slice(0,d.year?8:24)){await load(x.key,true);const D=CACHE[x.key],L=listEv(D,g,d.e);if(!L)continue;
+      for(const r of L.rows){const v=parse(String(r[4]).replace(/\s*[@#]+/g,""),d.e);if(v!=null&&Math.abs(v-want)<.005)hit.push([x.year,x.div,r])}if(hit.length>=12)break}
+    if(!hit.length)return {html:`<p>Nobody on the ${gl(g)} ${esc(d.e)} lists I checked has exactly ${esc(d.mark)}. Try a year or division.</p>`};
+    return {html:`<p>${hit.length>=12?"At least ":""}<b>${hit.length}</b> ${gl(g)} ${esc(d.e)} season best${hit.length>1?"s":""} of exactly ${esc(d.mark)}:</p>`+tbl(["Season","Division","Athlete","Team","Mark","National rank"],hit.map(([y,dv,r])=>[`${y} ${season}`,dv.replace("NCAA ",""),r[1],"",r[4]+(r[5]?` (${r[5]})`:""),"#"+r[0]]).map((row,i)=>{row[3]=CACHE[keys.find(k=>k.year===hit[i][0]&&k.div===hit[i][1]).key].teams[hit[i][2][3]];return row}),4),f:hit.length===1?[`${hit[0][2][1]} progression`]:[]}}
+  /* 2. two divisions: "difference between D1 and D2 in the 400m" */
+  if(divs.length>=2&&d.e){const g2=g,out=[];for(const div of divs.slice(0,3)){const x=d.year?RIDX.find(r=>r.div===div&&r.year===d.year&&r.season===season):lastKey(div,season);if(!x)continue;await load(x.key,true);const L=listEv(CACHE[x.key],g2,d.e);if(L)out.push({div,yr:x.year,rows:L.rows})}
+    if(out.length<2)return null;const P=[1,10,25,50,100],F=FIELD.has(d.e),val=r=>parse(String(r[4]).replace(/\s*[@#]+/g,""),d.e);
+    const med=(div,j)=>{const V=SCH.filter(s=>s.d===div&&s[g2][d.e]&&s[g2][d.e][j]).map(s=>parse(s[g2][d.e][j],d.e)).filter(v=>v!=null).sort((a,b)=>a-b);return V.length?V[Math.floor(V.length/2)]:null};
+    const fm=v=>v==null?"–":F?v.toFixed(2)+"m":fmtT(v);
+    return {html:`<p>${gl(g2)[0].toUpperCase()+gl(g2).slice(1)} ${esc(d.e)}, ${out.map(o=>`${esc(o.div)} ${o.yr}`).join(" vs ")} ${season}: the marks it took to rank at each place on the national list, and each division's median recruiting levels.</p>`
+      +chartSvg({title:`${gl(g2)} ${d.e} · national list by place`,type:"line",labels:P.map(p=>p===1?"1st":ord(p)),series:out.map(o=>({name:o.div.replace("NCAA ",""),values:P.map(p=>o.rows[p-1]?val(o.rows[p-1]):null)})),value_format:F?"meters":"time",lower_is_better:!F})
+      +tbl(["Place",...out.map(o=>o.div.replace("NCAA ",""))],P.map(p=>[p===1?"1st":ord(p),...out.map(o=>o.rows[p-1]?o.rows[p-1][4]:"–")]),1)
+      +tbl(["Median level",...out.map(o=>o.div.replace("NCAA ",""))],[["Target",0],["Recruit",1],["Walk-On",2]].map(([n,j])=>[n,...out.map(o=>fm(med(o.div,j)))]),1),f:[`Which D2 schools fit a ${d.e} like the D1 50th best?`]}}
+  /* 2b. year-by-year trend: "how has the D1 men's 100m changed since 2016?" */
+  if(d.e&&d.school==null&&/\b(changed?|changing|trend\w*|over the years|since (19|20)\d\d|year by year|each year|every year|history of|getting (faster|slower|better)|over time)\b/.test(q)&&!/\b(progress\w*|peak\w*)\b/.test(q)){
+    const T=TREND||(TREND=await fetch("/data/rank_trend.json").then(r=>r.json()).catch(()=>({}))),div=divs[0]||"NCAA D1",dk=Object.keys(DIVKEY).find(k=>k===div)?DIVKEY[div]:"d1";
+    const ser=T[`${dk}|${season}|${g}|${TF[d.e]||d.e}`];if(!ser)return {html:`<p>No ${esc(div)} ${gl(g)} ${esc(d.e)} lists to compare.</p>`};
+    const since=+((q.match(/since ((19|20)\d\d)/)||[])[1]||0),Y=Object.keys(ser).filter(y=>+y>=since).sort(),F=FIELD.has(d.e),v=m=>m==null?null:parse(String(m).replace(/\s*[@#]+/g,""),d.e);
+    const P=[["Winner",1],["10th",2],["50th",4],["100th",5]],first=ser[Y[0]],last=ser[Y[Y.length-1]],ch=(a,b)=>a!=null&&b!=null?pct(v(a),v(b),F):"–";
+    return {html:`<p>${esc(div)} ${gl(g)} ${esc(d.e)}, ${season} ${Y[0]} to ${Y[Y.length-1]}: the 10th-best mark went from <b>${esc(first[2]||"–")}</b> to <b>${esc(last[2]||"–")}</b> (${ch(first[2],last[2])}), the 50th from ${esc(first[4]||"–")} to ${esc(last[4]||"–")} (${ch(first[4],last[4])}). ${+Y[0]<2022?"Lists before 2022 are shallower on TFRRS, so deep places start later.":""}</p>`
+      +chartSvg({title:`${div} ${gl(g)} ${d.e} by year`,type:"line",labels:Y,series:P.map(([n,j])=>({name:n,values:Y.map(y=>v(ser[y][j]))})),value_format:F?"meters":"time",lower_is_better:!F})
+      +tbl(["Year","Winner","10th","50th","100th","Athletes listed"],Y.map(y=>[y,ser[y][1]||"–",ser[y][2]||"–",ser[y][4]||"–",ser[y][5]||"–",ser[y][0]]),1),f:[`How has the ${div.replace("NCAA ","")} ${g==="m"?"women's":"men's"} ${d.e} changed?`]}}
+  /* 2c. "what's a good 400 time for D2?" -> the division's typical levels (a fresh question: no schools carried over) */
+  if(divs.length===1&&d.e&&d.school==null&&!d.mark&&!/\b(easiest|hardest|toughest|lowest|highest|slowest|which|list|schools|colleges|programs)\b/.test(q)&&/\b(good|need|average|typical|what time|how fast|how far|how high|standards?|walk.?on|recruit\w*|scholarship)\b/.test(q)){
+    CX.schools=[];const div=divs[0],L=SCH.filter(x=>x.d===div&&x[g][d.e]),F=FIELD.has(d.e);if(!L.length)return null;
+    const q3=j=>{const V=L.map(x=>x[g][d.e][j]).filter(Boolean).map(m=>parse(m,d.e)).filter(v=>v!=null).sort((a,b)=>a-b);if(!V.length)return null;const at=p=>V[Math.min(V.length-1,Math.floor(p*V.length))];return [at(.25),at(.5),at(.75)]};
+    const fm=v=>v==null?"–":F?v.toFixed(2)+"m":fmtT(v),R=[["Target",0],["Recruit",1],["Walk-On",2]].map(([n,j])=>[n,q3(j)]).filter(x=>x[1]);
+    const mid=R.find(x=>x[0]==="Recruit")||R[0];
+    return {html:`<p>A good ${gl(g)} ${esc(d.e)} for ${esc(div)}: the typical program's Recruit level is <b>${fm(mid[1][1])}</b>${R.find(x=>x[0]==="Walk-On")?`, Walk-On <b>${fm(R.find(x=>x[0]==="Walk-On")[1][1])}</b>`:""}${R.find(x=>x[0]==="Target")?`, Target <b>${fm(R.find(x=>x[0]==="Target")[1][1])}</b>`:""} (medians across ${L.length} programs).</p>`
+      +tbl(["Level","Typical program","Middle half of programs"],R.map(([n,v])=>[n,fm(v[1]),F?`${fm(v[0])} to ${fm(v[2])}`:`${fm(v[0])} to ${fm(v[2])}`]),1),f:[`Which ${div.replace("NCAA ","")} schools fit a ${fm(mid[1][1])} ${d.e}?`,`Easiest ${div.replace("NCAA ","")} schools to walk on in the ${d.e}`]}}
+  /* 3. "fastest 100m runner at UCSB" -> the team's athletes in that event */
+  if(d.school!=null&&d.e&&!d.mark&&/\b(fastest|quickest|best|top|who (is|are|was|were)|leaders?|longest|highest|farthest|team|roster|athletes|runners|sprinters|jumpers|throwers)\b/.test(q)&&!/\b(standards?|walk|recruit|need|progress\w*|peak\w*|develop\w*)\b/.test(q)){
+    const s=SCH[d.school],x=d.year?RIDX.find(r=>r.div===s.d&&r.year===d.year&&r.season===season):lastKey(s.d,season);if(!x)return null;await load(x.key,true);const D=CACHE[x.key];
+    const want=new Set(tkey(s)),tis=new Set(D.teams.map((t,j)=>want.has(tnorm(t))?j:-1).filter(j=>j>=0)),L=listEv(D,g,d.e);
+    const rows=L?L.rows.filter(r=>tis.has(r[3])):[];if(!rows.length)return {html:`<p>${esc(s.n)} had no ${gl(g)} ${esc(d.e)} marks on the ${x.year} ${season} ${esc(s.d)} list.</p>`,f:[`${s.t||s.n} ${g==="m"?"women's":"men's"} fastest ${d.e}`]};
+    return {html:`<p>${esc(s.t||s.n)}'s ${gl(g)} ${esc(d.e)}, ${x.year} ${season}: <b>${esc(rows[0][1])}</b> leads at <b>${esc(rows[0][4])}</b> (#${rows[0][0]} in ${esc(s.d)}).</p>`+tbl(["Team rank","Athlete","Class","Mark","National rank"],rows.slice(0,12).map((r,i)=>[i+1,r[1],yr(r[2]),r[4]+(r[5]?` (${r[5]})`:""),"#"+r[0]]),3)+`<p><a href="/teams/${tslug(d.school)}">Full ${esc(s.t||s.n)} team results ›</a></p>`,f:[`${s.t||s.n} ${d.e} progression`,`${rows[0][1]} progression`]}}
+  /* 4. "how fast to walk on at LSU in the 200" -> that school's levels for the event */
+  if(d.school!=null&&d.e&&!d.mark&&/\b(walk|walk-on|walkon|recruit\w*|need|standards?|how fast|what time|how far|how high|scholarship)\b/.test(q)&&!/\b(progress|peak|improv|develop)\w*/.test(q)){
+    const s=SCH[d.school],t=s[g][d.e];if(!t)return {html:`<p>${esc(s.n)} has no ${gl(g)} ${esc(d.e)} level on this site.</p>`};
+    const p4=isP4(s)&&!s.o,wo=/walk/.test(q);
+    return {html:`<p><b>${esc(s.n)}</b> · ${gl(g)} ${esc(d.e)}${s.o?" (official standards ★)":""}: ${wo&&!t[2]?`there's no Walk-On level here${p4?` (${esc(s.c)} is a Power 4 conference)`:""}, so the bar to get in is the Recruit mark, <b>${esc(t[1]||t[0])}</b>.`:wo?`Walk-On <b>${esc(t[2])}</b>.`:`Recruit <b>${esc(t[1]||"–")}</b>, Target <b>${esc(t[0]||"–")}</b>.`}</p>`+tbl(["Level","Mark"],[["Target",t[0]||"–"],["Recruit",t[1]||"–"],...(p4?[]:[["Walk-On",t[2]||"–"]])],1)+`<p>${ruleText(s)}</p>`,f:[`Which schools fit a ${t[1]||t[0]} ${d.e}?`,`${s.t||s.n} fastest ${d.e}`]}}
+  /* 5. an athlete's full name anywhere ("Where did Kanyinsola Ajayi go before Auburn?", "Ajayi best 200m") */
+  if(!/\b(compare|vs|versus|against)\b/.test(q)){
+    const words=q.split(" ").map(w=>w.replace(/[^a-z']/g,"")).filter(w=>w.length>=3&&!QSTOP.has(w)&&!evKey(w)&&!/^\d/.test(w)&&!CONFS.some(c=>c.toLowerCase()===w)&&!ALIAS.some(([a])=>a===w));
+    if(words.length>=2){const r=await resolveAthlete(words.join(" "));if(r&&r.e)return athleteProgress(r.e,d.e,q);if(r&&r.amb&&words.length>=2)return {html:`<p>Which athlete did you mean?</p>`,f:r.amb.map(x=>`${x[0]} ${d.e||""} progression (${tcanon(x[2])}, ${seasonLabel(x[3])})`.replace(/\s+/g," "))}}}
+  return null}
+let GDEF=false;
+async function answer(raw){const a=await answerCore(raw);
+  if(GDEF&&a&&a.html&&!/Men's or women's\?/.test(a.html)){a.html=`<p class="gnote">Showing men's. Tap Women's for the women's version.</p>`+a.html;a.f=["Women's",...(a.f||[]).filter(x=>x!=="Women's")].slice(0,4)}
+  GDEF=false;return a}
+async function answerCore(raw){
   raw=raw.replace(/\s*\(([^()]*?),\s*\d{4} (Outdoor|Indoor)\)\s*$/,"");   /* the "(School, 2026 Outdoor)" label on athlete chips */
   const d=detect(raw), q=d.q;
+  {const a=await smartQ(raw,d);if(a)return a}
   {const a=await programQ(raw,d);if(a)return a}
   {const a=await athleteQ(raw,d);if(a)return a}
   if(/\b(jucos?|njcaa|junior colleges?|community colleges?)\b/i.test(raw))return {html:`<p>This site doesn't set Target, Recruit or Walk-On levels for junior colleges: NJCAA competition is national rather than conference-based, so a program's marks can't be predicted reliably.</p><p>What you can do here: open <b>Results</b> and pick <b>NJCAA</b> to see this season's national list for any event, or search a junior college by name for its season bests, roster and TFRRS links.</p>`,f:["What does Walk-On mean?","Only NAIA","Only NCAA D3"]};
@@ -1516,12 +1606,19 @@ async function answer(raw){
   if(d.mark&&d.e&&!FIELD.has(d.e))d.mark=d.mark.replace(/\s*m$/,"");
   if(d.g)CX.g=d.g; if(d.e){if(CX.e&&CX.e!==d.e&&!d.mark)CX.mark=null;CX.e=d.e} if(d.mark)CX.mark=d.mark;
   if(d.div)CX.div=d.div; if(d.year)CX.year=d.year; if(d.season)CX.season=d.season;
+  if(!followup&&!pending){if(!d.div)CX.div=null;if(!d.year)CX.year=null}   /* a new full question starts from all divisions, latest season */
+  if(RX.cmp.test(q)&&!d.e&&d.schools.length>=2)CX.e=null;
+  CX.lastIntent=intent;
   if(/\b(all divisions|any division|every division)\b/.test(q))CX.div=null;
   if(d.confs.length)CX.conf=d.confs[0]; else if(!followup&&!pending&&intent!=="conf")CX.conf=null;
   const st=stateOf(q); if(st)CX.state=st; else if(!followup&&!pending)CX.state=null;
   if(d.schools.length)CX.schools=d.schools.slice(0,4);
   if(d.schools.length===1&&pending!=="school"){const amb=ambiguousSchools(q);if(amb){CX.intent=intent||"school";return askBack("school","Which one did you mean?",amb.slice(0,4).map(i=>SCH[i].n))}}
   if(intent)CX.intent=intent;
+  /* no gender given: men's by default (no stop-and-ask), flagged on every answer until they pick one */
+  if(d.g)CX.gdef=false;
+  if(!CX.g&&CX.e&&["fit","superl","rank","champ","conf","cmp","school","multi"].includes(intent)){CX.g="m";CX.gdef=true}
+  if(CX.gdef&&!d.g&&["fit","superl","rank","champ","conf","cmp","school","multi"].includes(intent))GDEF=true;
   const g=CX.g, e=CX.e;
   const needG=t=>!g?askBack("g",t||"Men's or women's?",gChips):null;
   const needE=t=>!e?askBack("e",t||"Which event?",evChips(g)):null;
