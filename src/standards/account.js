@@ -13,7 +13,7 @@ const GPA = [["3_5_plus","3.5 or higher"],["3_0_to_3_49","3.0 to 3.49"],["2_3_to
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
 const SEEN = new Set();
-let KIDS = [], MINE = [], RESENT = 0;
+let KIDS = [], MINE = [], RESENT = 0, CLS = null;
 let CFG = {}, SES = null, PRO = null, VIEW = "signup", MSG = "", BUSY = false, WHY = "";
 import * as ONB from "./onboard.js";
 const store = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v){ try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
@@ -72,9 +72,11 @@ async function restore() {
   await fresh(true);
 }
 async function loadProfile() {
-  if (!(await fresh())) { PRO = null; return null; }
+  if (!(await fresh())) { PRO = null; cacheRank(); return null; }
   const rows = await api("/rest/v1/profiles?select=*&id=eq." + SES.user.id).catch(() => []);
   PRO = rows && rows[0] || null; KIDS = []; MINE = [];
+  CLS = null; if (PRO) { const cr = await api("/rest/v1/account_classes?select=class&user_id=eq." + SES.user.id).catch(() => []); CLS = cr && cr[0] ? cr[0].class : null; }
+  cacheRank();
   if (PRO && PRO.role === "athlete") { const ms = await api("/rest/v1/marks?select=event,mark&user_id=eq." + SES.user.id + "&athlete_id=is.null").catch(() => []); MINE = (ms || []).map(m => ({ e: m.event, v: +m.mark })); }
   if (PRO && PRO.role === "parent") {
     const [ks, ms] = await Promise.all([api("/rest/v1/athletes?select=id,first_name,gender,grad_year,grade,gpa,tier,dream_schools&parent_id=eq." + SES.user.id + "&order=created_at").catch(() => []), api("/rest/v1/marks?select=event,mark,athlete_id&user_id=eq." + SES.user.id).catch(() => [])]);
@@ -87,6 +89,13 @@ async function loadProfile() {
 export const signedIn = () => !!SES;
 export const member = () => !!(SES && PRO && PRO.finished_at);
 export const tier = () => member() ? PRO.tier : null;
+/* account class S / M (parents) for lead tracking; "standard" accounts carry the tier only */
+export const cls = () => member() && (CLS === "S" || CLS === "M") ? CLS : null;
+/* rank tag added to utm_term on every evaluation link (index.html click handler); no personal data, only tier + class */
+export const rankTag = () => member() ? ["t" + PRO.tier, cls() ? "c" + cls() : ""].filter(Boolean).join(" ") : "";
+if (typeof window !== "undefined") window.prRank = () => rankTag();
+/* static SEO pages have no account code: they read this cached tag (tier + class only) */
+function cacheRank() { try { const r = rankTag(); if (r) localStorage.setItem("prRank", r); else localStorage.removeItem("prRank"); } catch (e) {} }
 export const profile = () => PRO;
 export const kids = () => KIDS;
 /* the signed-in athlete's own PRs ({e, v}), for "where would you fit" in Compare */
@@ -289,7 +298,7 @@ async function fromHash() {
   if (h.get("type") === "recovery") open("reset"); else if (!member()) ONB.go("/onboarding"); else if (ONB.isPage()) ONB.show();
 }
 
-function signOut() { api("/auth/v1/logout", { method: "POST" }).catch(() => {}); keep(null); PRO = null; for (const k in FORM) delete FORM[k]; changed(); }
+function signOut() { api("/auth/v1/logout", { method: "POST" }).catch(() => {}); keep(null); PRO = null; cacheRank(); for (const k in FORM) delete FORM[k]; changed(); }
 /* re-engagement bars (Ryan 2026-10-21: "on-site pop-up reminders for when they return"). Once per visit each, bottom of the screen:
    - signed up, email never confirmed (remembered in this browser): confirm reminder + "Send it again"
    - signed-in member missing PRs / GPA / class (or a parent with no athlete yet): finish-profile reminder
