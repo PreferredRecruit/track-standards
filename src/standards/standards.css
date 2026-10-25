@@ -1300,3 +1300,9 @@ header .hd .acchd{flex:none;visibility:visible}
 
 /* previous-years charts (2026-10-25) */
 .arch-h{margin:16px 0 4px;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+
+/* parent capture card (2026-10-25) */
+.pcard{margin:14px 0 6px;border:1px solid var(--pr-line);border-radius:18px;background:var(--pr-card);padding:16px 18px;display:grid;gap:12px}
+.pcard .pct{display:grid;gap:3px}.pcard .pct b{font-size:15.5px;letter-spacing:-.01em}.pcard .pct span{font-size:14px;color:var(--ink-2,#3A3A44);line-height:1.45}
+.pcard .pcf{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.pcard .pca{display:flex;align-items:center;gap:14px}.pcard .pcm{margin:0;font-size:13px;color:#B42318}
+@media (max-width:560px){.pcard .pcf{grid-template-columns:1fr}}

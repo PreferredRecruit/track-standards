@@ -296,6 +296,8 @@ function evalOut(){const el=$("eval");el.classList.remove("on");el.setAttribute(
   if(S.school==null)$("evpill").hidden=false}
 document.addEventListener("click",ev=>{
   const q=ev.target.closest("[data-evq]");if(q){INT.rs=q.dataset.evq;saveInt();log("feedback",{detail:"status-"+q.dataset.evq,event:INT.e});
+    /* signed-in answers go on the profile too (2026-10-25: 116 profiles had no recruiting stage), so sales sees where each family is */
+    {const st={none:"getting_started",some:"talking",offers:"offers"}[q.dataset.evq],u=ACC.signedIn()&&ACC.core.ses()&&ACC.core.ses().user;if(st&&u)ACC.core.api("/rest/v1/profiles?id=eq."+u.id,{method:"PATCH",body:{recruiting_stage:st},prefer:"return=minimal"}).catch(()=>{})}
     $("evp").textContent=evBody();$("eva").href=quizFor();$("evq").hidden=true;$("evs").hidden=false;return}
   if(ev.target.closest("#evlater")){evalOut();return}
   if(ev.target.id==="evbg"){evalOut();return}
@@ -339,6 +341,7 @@ function standards(){
     const cl=convLine(S.e,S.g,v), c=k=>all.filter(x=>x.t===k).length;LASTSUM={mark:S.mark,e:S.e,g:S.g,n:all.length,T:c("T"),R:c("R"),W:c("W")};
     o+=`<div class="mhead"><p class="sum">${esc(S.mark)} in the ${S.g==="m"?"men's":"women's"} ${esc(hsName(S.e,S.g))} fits <b>${all.length}</b> colleges${CONV[S.e]?cinfo(S.e,cl):S.g==="m"&&IMPL[S.e]?iinfo(S.e):""}</p>
       <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p>${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}${`<div class="hlp" id="hlp"><span>Were these results helpful?</span><button type="button" class="hbtn" data-hlp="up">Yes</button><button type="button" class="hbtn" data-hlp="down">No</button></div>`}</div>
+    ${parentCard()}
     <section class="mtab" aria-label="Your college matches">
       <div class="mbar"><h3>Your college matches</h3><div class="dds">
         ${dd("fd","All divisions",S.div,DIVS.filter(d=>opts("d",x=>x.s.d).includes(d)))}
@@ -499,6 +502,22 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   /* the "how these are set" / official-source box goes to the bottom (Ryan 2026-10-16: "just put it at the bottom") */
   const vm=o.match(/<div class="verify">[\s\S]*?<\/div>/),vf=vm?vm[0]:"";if(vf)o=o.replace(vf,"");
   return o+`<div id="sfacts"></div><div id="tbest"></div><div id="svid"></div>`+schoolArch(s)+schoolAbout(s,vf)+schoolExtra(s)+schoolMore(s)+brandNote(s,B)+`</div>`}
+/* parent capture (Ryan 2026-10-25, enterprise value: parents buy, but 71 of 100 athlete accounts had no parent contact).
+   Signed-in athletes without a parent on file see one card under their results until they add one or close it.
+   Saves parent name / email / phone to their own profile (RLS: owner only). No SMS consent is taken here: a parent's
+   phone can only be texted with the parent's own consent. */
+const PCK="prParentCard";
+function parentCard(){const P=ACC.member()&&ACC.profile();if(!P||P.role!=="athlete"||P.parent_email||P.parent_phone)return "";try{if(localStorage.getItem(PCK))return ""}catch(e){}
+  return `<form class="pcard" id="pcard"><div class="pct"><b>Add a parent to your account</b><span>Most families decide on recruiting together. Add a parent so we can share your college list and next steps with them.</span></div>
+  <div class="pcf"><input class="in" name="pn" placeholder="Parent name" autocomplete="off" maxlength="80" required><input class="in" name="pe" type="email" placeholder="Parent email" autocomplete="off" required><input class="in" name="pp" type="tel" placeholder="Parent phone (optional)" autocomplete="off" maxlength="30"></div>
+  <div class="pca"><button class="go" type="submit">Add parent</button><button class="lnk" type="button" data-pcx>Not now</button></div><p class="pcm" hidden></p></form>`}
+document.addEventListener("submit",async ev=>{const f=ev.target.closest&&ev.target.closest("#pcard");if(!f)return;ev.preventDefault();
+  const u=ACC.core.ses()&&ACC.core.ses().user,m=f.querySelector(".pcm"),b=f.querySelector("button[type=submit]");if(!u)return;
+  const body={parent_name:f.pn.value.trim()||null,parent_email:f.pe.value.trim()||null,parent_phone:f.pp.value.trim()||null};
+  b.disabled=true;try{await ACC.core.api("/rest/v1/profiles?id=eq."+u.id,{method:"PATCH",body,prefer:"return=minimal"});await ACC.core.loadProfile();
+    f.innerHTML=`<div class="pct"><b>Parent added</b><span>Thanks. ${esc(body.parent_name||"Your parent")} is on your account now.</span></div>`;log("account",{detail:"parent-added"});
+    try{localStorage.setItem(PCK,"1")}catch(e){}}catch(e){b.disabled=false;m.hidden=false;m.textContent="That didn't save. Check the email and try again."}});
+document.addEventListener("click",ev=>{const x=ev.target.closest&&ev.target.closest("[data-pcx]");if(!x)return;try{localStorage.setItem(PCK,"1")}catch(e){};const f=document.getElementById("pcard");if(f)f.remove();log("account",{detail:"parent-card-dismissed"})});
 /* program facts (Ryan 2026-10-25: beat Runcruit/NCSA): head coach (school's own coaches page), roster by class + transfers (TFRRS),
    cross country levels from the team's own runners at its NCAA regional / conference meet. Built by scripts/data/fetch_coaches.py,
    scripts/tfrrs/build_programfacts.py and build_xc_standards.py; loaded once, only when a school opens. */
