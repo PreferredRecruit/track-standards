@@ -12,7 +12,7 @@ CACHE = os.path.join(SITE, "..", "..", "social", "standards", "coaches_cache"); 
 OUT = os.path.join(SITE, "public", "data", "coaches.json")
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36"
 HEAD = re.compile(r"\bhead\b[^|]{0,40}\b(coach|track|cross)|director of (track|cross|men's and women's track)|director of (men's |women's )?(track|cross)", re.I)
-NOT = re.compile(r"assistant|associate|graduate|volunteer|athletic trainer|strength|operations|recruiting coordinator|director of athletics|athletic director", re.I)
+NOT = re.compile(r"assistant|associate|graduate|volunteer|athletic trainer|strength|operations|recruiting coordinator|director of athletics|athletic director|football|basketball|soccer|swim|volleyball|baseball|softball|golf|tennis|lacrosse|wrestling|hockey|rowing|field hockey", re.I)
 NAME = re.compile(r"^[A-Z][A-Za-z.'’-]+(?: [A-Z][A-Za-z.'’-]+){1,3}$")
 
 def get(url):
