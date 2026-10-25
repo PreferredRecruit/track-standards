@@ -11,7 +11,7 @@ SITE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 CACHE = os.path.join(SITE, "..", "..", "social", "standards", "coaches_cache"); os.makedirs(CACHE, exist_ok=True)
 OUT = os.path.join(SITE, "public", "data", "coaches.json")
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36"
-HEAD = re.compile(r"\bhead\b[^|]{0,40}\b(coach|track|cross)|director of (track|cross|men's and women's track)|director of (men's |women's )?(track|cross)", re.I)
+HEAD = re.compile(r"\bhead\b[^|]{0,40}\b(coach|track|cross)|director of (track|cross|men's and women's track)|director of (men's |women's )?(track|cross)|(track|cross country)[^,/]{0,30}\bdirector\b|\bhead coach\b", re.I)
 NOT = re.compile(r"assistant|associate|graduate|volunteer|athletic trainer|strength|operations|recruiting coordinator|director of athletics|athletic director|football|basketball|soccer|swim|volleyball|baseball|softball|golf|tennis|lacrosse|wrestling|hockey|rowing|field hockey", re.I)
 NAME = re.compile(r"^[A-Z][A-Za-z.'’-]+(?: [A-Z][A-Za-z.'’-]+){1,3}$")
 
@@ -30,27 +30,50 @@ def heads(h):
     out = []
     for row in re.findall(r"<tr[^>]*>(.*?)</tr>", h, re.S):
         cells = [clean(c) for c in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", row, re.S)]
-        title = next((c for c in cells if HEAD.search(c) and not NOT.search(c)), None)
-        name = next((c for c in cells if NAME.match(c) and not HEAD.search(c)), None)
+        title = next((c for c in cells if accept(c)), None)
+        name = next((c for c in cells if NAME.match(c) and not HEAD.search(c) and not BADNAME.search(c)), None)
         if title and name: out.append([name, title])
-    if not out:   # card layouts: a name element followed closely by a title element
+    if not out:   # card layouts: a title element with the person's name in one of the few elements just before it
         txt = [t for t in (clean(x) for x in re.split(r"<(?:/?div|/?h\d|/?p|/?span|/?a|br)[^>]*>", h)) if t]
-        for i, t in enumerate(txt[:-1]):
-            for j in (i + 1, i + 2):
-                if j < len(txt) and NAME.match(t) and HEAD.search(txt[j]) and not NOT.search(txt[j]) and len(txt[j]) < 90:
-                    out.append([t, txt[j]]); break
+        for j, t in enumerate(txt):
+            if len(t) < 120 and accept(t):
+                nm = next((txt[k] for k in range(j - 1, max(-1, j - 5), -1) if NAME.match(txt[k]) and not BADNAME.search(txt[k]) and not accept(txt[k])), None)
+                if nm: out.append([nm, t])
     seen, res = set(), []
     for n, t in out:
         if n.lower() not in seen: seen.add(n.lower()); res.append([n, t])
+    res.sort(key=rank)
     return res[:3]
+
+MARK = re.compile(r"\bdirector of (men's |women's |men's and women's |women's and men's )?(track|cross)|(track|cross country)[^,]{0,30}\bdirector\b|\bhead\b.{0,90}?\b(coach|track|cross)", re.I)
+NOTW = re.compile(r"assistant|ass?oc?s?c?iate|graduate|volunteer|athletic trainer|strength|operations|recruiting coordinator|director of athletics|athletic director|football|basketball|soccer|swim|volleyball|baseball|softball|golf|tennis|lacrosse|wrestling|hockey|rowing", re.I)
+BADNAME = re.compile(r"\b(staff|roster|videos?|all|coaches|coaching|directory|schedule|news|interview|more|view|full|bio|email|phone)\b", re.I)
+
+def accept(t):
+    """a head coach or director of track / cross country: a head marker that comes before any assistant / other-sport wording"""
+    if not t or len(t) > 140 or re.search(r"postgame|interview|video|\s[–—]\s", t, re.I): return False
+    if re.search(r"operations|external|internal|communications|compliance officer|equipment|nutrition", t, re.I) and not re.search(r"\bcoach\b", t, re.I): return False
+    o, tr = re.search(r"football|basketball|soccer|swim|volleyball|baseball|softball|golf|tennis|lacrosse|wrestling|hockey|rowing", t, re.I), re.search(r"track|cross|\bxc\b|t&f", t, re.I)
+    if o and (not tr or o.start() < tr.start()): return False   # another sport's head coach, even if track is mentioned later
+    m = MARK.search(t)
+    if not m: return False
+    n = NOTW.search(t)
+    return not n or n.start() > m.start()
+
+def rank(c):
+    t = c[1]
+    xc_only = bool(re.search(r"cross country|\bxc\b", t, re.I)) and not re.search(r"track", t, re.I)
+    return (xc_only, 0 if re.search(r"director", t, re.I) else 1 if not re.search(r"\b(men's|women's|women|men)\b", t, re.I) else 2)
+
+SPORTS = ("track-and-field", "mens-track-and-field", "womens-track-and-field", "xctrack", "track", "track-field", "xc-track", "mtrack", "wtrack", "m-track", "w-track", "mens-track", "womens-track", "cross-country-track-and-field")
 
 def urls(s):
     U = []
     rs, ws = s.get("rs") or "", (s.get("ws") or "").rstrip("/")
     if re.search(r"/roster/?$", rs): U.append(re.sub(r"/roster/?$", "/coaches", rs))
     if ws:
-        for sp in ("track-and-field", "mens-track-and-field", "womens-track-and-field", "xctrack", "track"):
-            U.append(f"{ws}/sports/{sp}/coaches")
+        for sp in SPORTS: U.append(f"{ws}/sports/{sp}/coaches")
+    if rs: U.append(rs)                                      # many roster pages carry the coaching staff too
     return list(dict.fromkeys(U))
 
 def one(s):
@@ -59,6 +82,12 @@ def one(s):
         if h:
             c = heads(h)
             if c: return s["n"], {"url": u, "coaches": c, "checked": datetime.date.today().isoformat()}
+            # a page that links to its coaching staff (roster pages, sport home pages)
+            for l in dict.fromkeys(re.findall(r'href="([^"]*/(?:coaches|coaching-staff|staff)(?:/|\.aspx)?)"', h)):
+                if not re.search(r"track|cross|xc", l, re.I): continue
+                lu = l if l.startswith("http") else re.match(r"https?://[^/]+", u).group(0) + (l if l.startswith("/") else "/" + l)
+                hc = get(lu); c = heads(hc) if hc else []
+                if c: return s["n"], {"url": lu, "coaches": c, "checked": datetime.date.today().isoformat()}
     return s["n"], None
 
 def main():

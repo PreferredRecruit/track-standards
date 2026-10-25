@@ -16,7 +16,24 @@ export function fitTitle(t) {
     x => x.replace(" Table for High School Athletes", "").replace(" Conversion", ""),
     x => x.replace(/\(NJCAA\): \d{4} Results/, "(NJCAA): Results"), x => x.replace(" Results & Roster", " Results"),
     x => x.replace(" Stats & Rankings", " Stats"), x => x.replace(/ \(([^)]+)\) Track Stats$/, " Track Stats, $1"), x => x.replace(/ Track Stats, (.+)$/, ", $1 Track"),   /* athlete pages */
-    x => x.replace(" for Athletes, Parents and Coaches", "")];   /* junior college titles */
+    x => x.replace(" for Athletes, Parents and Coaches", ""),
+    /* 2026-10-25 audit: every title inside Google's ~60-character display, search phrase kept at the front */
+    x => x.replace(": Every Program's Standards", ": College Standards"),                                   /* state x event pages */
+    x => x.replace(/^What Colleges Can I (?:Compete|Run|Jump|Throw|Vault) For With an? /, "What Colleges Fit a "),   /* colleges-for pages */
+    x => x.replace(" Need to Vault in the Pole Vault ", " Need to Pole Vault ").replace(" Need to Run the ", " Need to Run ").replace(" Need to Jump in the ", " Need to Jump the ").replace(" Need to Throw the ", " Need to Throw "),
+    x => GUIDE_SHORT[x] || x,
+    x => x.replace(/^(.+?) Track for (Boys|Girls) /, "$1 $2 "),                                            /* "Missouri Boys 110m Hurdles (39"): College Standards" */
+    x => x.replace(/ Need to Jump the (Long|High|Triple) Jump /, " Need to $1 Jump "),
+    x => x.replace(/ Hurdles \(39"\) in College\?/, " Hurdles in College?")];
+const GUIDE_SHORT = {
+  "College Track and Field Coaches by State: Programs and Staff Pages": "College Track and Field Coaches by State (Staff Pages)",
+  "High School Long Jump Recruiting Marks for D1 (and Every Division)": "Long Jump Recruiting Marks for D1 and Every Division",
+  "How to Build a Track and Field Recruiting Profile Coaches Read": "How to Build a Track Recruiting Profile Coaches Read",
+  "How to Get Recruited for Track and Field in High School (Step by Step)": "How to Get Recruited for Track and Field (Step by Step)",
+  "MileSplit vs FloTrack for Track Recruiting: What Each One Is For": "MileSplit vs FloTrack for Track Recruiting",
+  "NCAA Track and Field Recruiting Rules for High School Athletes": "NCAA Track and Field Recruiting Rules for High Schoolers",
+  "Track and Field Recruiting Questionnaires by Conference (NCAA D1)": "Track Recruiting Questionnaires by Conference (NCAA D1)",
+  "Track and Field Recruiting Standards 2026: Every Division and Event": "Track and Field Recruiting Standards 2026, Every Division" };   /* junior college titles */
   let cur = t;
   for (const f of steps) { cur = f(cur); if (`${cur} | ${BRAND}`.length <= 60) return `${cur} | ${BRAND}`; if (cur.length <= 60) return cur; }
   return cur;

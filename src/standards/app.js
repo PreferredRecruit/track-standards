@@ -502,7 +502,7 @@ let SFX=null;
 const fmtXC=x=>x==null?"–":Math.floor(x/60)+":"+String((x%60).toFixed(1)).padStart(4,"0");
 function schoolFacts(i){if(i==null)return;const fill=()=>{const el=document.getElementById("sfacts");if(!el||S.school!==i)return;const s=SCH[i],g=S.g,[C,P,X]=SFX;
     const c=C[s.n],p=(P[s.n]||{})[g],x=((X.schools||{})[s.n]||{})[g],st=[];
-    if(c&&c.coaches.length)st.push(`<div class="gs gcoach"><span>Head coach</span><b>${c.coaches.slice(0,2).map(([n])=>esc(n)).join(" · ")}</b></div>`);
+    if(c&&c.coaches.length)st.push(`<div class="gs gcoach"><span>${/cross country|\bxc\b/i.test(c.coaches[0][1])&&!/track|t&f/i.test(c.coaches[0][1])?"Cross country coach":"Head coach"}</span><b>${esc(c.coaches[0][0])}</b></div>`);
     if(p)st.push(`<div class="gs"><span>Roster</span><b>${p.roster}</b></div>`,`<div class="gs"><span>Freshmen</span><b>${p.fr}</b></div>`,`<div class="gs"><span>Transfers</span><b>${p.transfers}</b></div>`);
     if(!st.length&&!x){el.innerHTML="";return}
     const p4=isP4(s),d3=s.d==="NCAA D3"||s.d==="NAIA",cols=[0,1,2].filter(k=>!(k===1&&d3)&&!(k===2&&p4)),lab=["Target","Recruit","Walk‑On"];
@@ -2075,7 +2075,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
       if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); if (q.get("cmp")) ccFromUrl(q.get("cmp"));
         /* athlete profile links: /?tab=results&season=2026-outdoor&div=NCAA%20D1&athlete=<TFRRS id> (results pages link every name here) */
         if (/^\d+$/.test(q.get("athlete") || "")) { if (seasons().includes(q.get("season"))) R.season = q.get("season"); R.sel = [R.div]; R.conf = ""; R.q = ""; R.team = null; R.ath = null; TM.i = null; CC.on = false; R.pendAth = q.get("athlete"); } } }
-    S.school = null; setMeta("College Track & Field Recruiting Standards & Rankings 2026-27", `Recruiting standards for ${NSTD.toLocaleString()} college track and field programs: walk-on, recruit and scholarship times for NCAA D1, D2, D3 and NAIA, plus results since 2016.`, "/",
+    S.school = null; setMeta("College Track & Field Recruiting Standards & Rankings", `Recruiting standards for ${NSTD.toLocaleString()} college track and field programs: walk-on, recruit and scholarship times for NCAA D1, D2, D3 and NAIA, plus results since 2016.`, "/",
       {"@context": "https://schema.org", "@type": "WebSite", name: "Preferred Recruit Track & Field Standards", url: "https://trackandfieldstandards.com/"}); render(); if (S.run) armOffer();
   };
   window.__prStandardsRoute = route;

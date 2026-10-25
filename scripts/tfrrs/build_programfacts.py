@@ -57,6 +57,8 @@ def main():
                 if not a: return False
                 teams = [x[5] for x in sorted(a["s"], key=lambda x: x[0])]
                 return bool(a.get("p")) or (len(set(teams)) > 1 and teams[-1] != teams[0])
+            # a near-empty or class-less TFRRS roster is an incomplete page, not a real team size: show nothing rather than a wrong number
+            if len(R) < 5 or (cls["FR"] + cls["SO"] + cls["JR"] + cls["SR"]) < 0.6 * len(R): continue
             F[g] = {"roster": len(R), "fr": cls["FR"], "so": cls["SO"], "jr": cls["JR"], "sr": cls["SR"],
                     "transfers": sum(1 for aid, _ in R if moved(aid)), "season": sea}
         if F: out[s["n"]] = F; n += 1

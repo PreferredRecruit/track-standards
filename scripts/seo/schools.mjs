@@ -71,9 +71,10 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, esc
      school's own coaches page (scripts/data/fetch_coaches.py), cross country levels from NCAA regionals (build_xc_standards.py) */
   const J0 = f => { try { return JSON.parse(fs.readFileSync(path.join(root, "public", "data", f), "utf8")); } catch { return {}; } };
   const PF = J0("programfacts.json"), CO = J0("coaches.json"), XC = J0("xc_standards.json").schools || {};
+  const xcOnly = C => C.coaches.every(([, t]) => /cross country|\bxc\b/i.test(t) && !/track|t&f/i.test(t));
   const glance = s => {
     const P = PF[s.n] || {}, C = CO[s.n], X = XC[s.n] || {}, rows = [];
-    if (C && C.coaches.length) rows.push(["Head coach" + (C.coaches.length > 1 ? "es" : ""), C.coaches.map(([n, t]) => `${esc(n)} <small>(${esc(t)})</small>`).join("<br>") + ` <small><a href="${esc(C.url)}" rel="noopener">source</a></small>`]);
+    if (C && C.coaches.length) rows.push([(xcOnly(C) ? "Cross country coach" : "Head coach") + (C.coaches.length > 1 ? "es" : ""), C.coaches.map(([n, t]) => `${esc(n)} <small>(${esc(t)})</small>`).join("<br>") + ` <small><a href="${esc(C.url)}" rel="noopener">source</a></small>`]);
     for (const g of ["m", "w"]) { const r = P[g]; if (!r) continue;
       rows.push([`${gName(g)} roster`, `${r.roster} athletes on the ${esc(r.season)} TFRRS roster: ${r.fr} freshmen, ${r.so} sophomores, ${r.jr} juniors, ${r.sr} seniors${r.transfers ? `; ${r.transfers} competed for another college first (transfers)` : ""}`]); }
     if (X.m || X.w) rows.push(["Cross country", ["m", "w"].filter(g => X[g]).map(g => `${gName(g)} ${X[g].d}`).join(" · ") + ` <small>(<a href="#cross-country">levels below</a>)</small>`]);
@@ -140,7 +141,7 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, esc
       if (F && F.dev) q.push([`Is ${nm} good at developing track athletes?`, `From 2022 to 2026, ${F.dev.peak}% of ${nm} athletes who raced at the conference championship ran their season best there or later, better than ${F.dev.peak_pct}% of ${F.dev.division} programs, and returning athletes improved ${F.dev.yoy >= 0 ? "+" : ""}${F.dev.yoy.toFixed(2)}% a year.`]);
       if (F && F.champ && F.champ.length) q.push([`How many national champions has ${nm} had?`, `${F.champ.length} individual ${s.d} national title${F.champ.length > 1 ? "s" : ""} since 2016, most recently ${newestFirst(F.champ)[0][5]} (${newestFirst(F.champ)[0][0]}).`]); }
     if (!J) { const nm = shortOf(s), C = CO[s.n], P = PF[s.n] || {}, X = XC[s.n];
-      if (C && C.coaches.length) q.push([`Who is the head coach of ${nm} track and field?`, `${C.coaches.map(([n, t]) => `${n} (${t})`).join(" and ")}, per ${nm}'s athletics website.`]);
+      if (C && C.coaches.length && !xcOnly(C)) q.push([`Who is the head coach of ${nm} track and field?`, `${C.coaches.map(([n, t]) => `${n} (${t})`).join(" and ")}, per ${nm}'s athletics website.`]);
       const rs = ["m", "w"].filter(g => P[g]).map(g => `${P[g].roster} ${g === "m" ? "men" : "women"} (${P[g].fr} freshmen${P[g].transfers ? `, ${P[g].transfers} transfers` : ""})`);
       if (rs.length) q.push([`How many athletes are on the ${nm} track and field roster?`, `${rs.join(" and ")} on the ${(P.m || P.w).season} TFRRS roster.`]);
       if (X) { const p4 = (CT[s.ck] || {}).rule === "p4" && !s.o, i = p4 || !X[Object.keys(X)[0]].lv[2] ? 1 : 2;
