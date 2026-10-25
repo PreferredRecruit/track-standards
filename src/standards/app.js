@@ -14,6 +14,7 @@ async function getRank(key){
   throw new Error("browser too old to unpack results");
 }
 import * as ACC from "./account.js";
+import * as READY from "./readiness.js";
 const slugOf = n => n.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim() + "-track-standards";
 export async function mount(opts = {}) {
   if (window.__prStandardsMounted) { window.__prStandardsRoute && window.__prStandardsRoute(opts.slug); return; }
@@ -239,8 +240,32 @@ try{EV.dismissed=sessionStorage.getItem("prEvalDismissed")==="1"}catch(e){}
 /* v = copy variant, logged with shown/clicked so the admin report compares conversion per copy, event group and grade */
 const TIERB={gpa:"Your grades already help you with coaches. A free evaluation shows which programs fit your marks now and how close you are to being recruited.",
   grow:"Coaches look at your grades and your marks together. A free evaluation shows which programs fit you today and what to work on next."};
+/* level copy for qualified accounts: their best mark against the levels they picked (all four when none picked), the grade they're in,
+   and how much a scholarship matters. Facts only: counts from this site's standards and NCAA contact timing. human-copy rules. */
+const DMAP={D1:"NCAA D1",D2:"NCAA D2",D3:"NCAA D3",NAIA:"NAIA"};
+function qualCopy(){if(!ACC.member()||!["A+","A"].includes(ACC.tier()))return null;const P=ACC.profile()||{},kid=pickKid(),g=kid?kid.gender:P.gender,marks=kid?kid.marks:ACC.myMarks();if(!g||!marks||!marks.length)return null;
+  const want=(P.target_divisions||[]).map(d=>DMAP[d]).filter(Boolean),pool=want.length?want:DIVS;let best=null;
+  for(const m of marks){if(m.v==null||isNaN(m.v))continue;let T=0,R=0;SCH.forEach(x=>{if(x.j||!pool.includes(x.d))return;const t=tier(x,g,m.e,m.v);if(t==="T")T++;else if(t==="R")R++});if(!best||T+R>best.n)best={m,n:T+R,T}}
+  if(!best||!best.n)return null;const who=kid?`${kid.first_name}'s`:"Your",mk=FIELD.has(best.m.e)?best.m.v.toFixed(2)+"m":fmtT(best.m.v),gr=String(kid?kid.grade:P.grade||"");
+  const where=pool.length===1?` ${pool[0]}`:"",t=`${who} ${mk} ${hsName(best.m.e,g)} is a Recruit mark${best.T?" or better":""} at ${best.n}${where} programs.`;
+  const gl=gr==="11"?"College coaches can start contacting athletes after sophomore year, so junior year is when their lists get built. ":gr==="12"?"Senior year moves fast. ":"";
+  const cost=P.scholarship_priority==="need"?" and which could help with cost":"",b=`${gl}A free evaluation shows which of those coaches to contact first${cost}.`;
+  return {t,b,bs:{none:`Those coaches recruit the athletes they know about. A free evaluation shows which ones to contact first${cost}.`,some:"Interest is a good start. A free evaluation shows how to turn it into an offer.",offers:"Offers mean options. A free evaluation shows which programs fit best before you sign."}}}
+/* behavior (Ryan 2026-10-25: "looking at school standards more than 5 times ... trigger specific outreach loops"): distinct schools viewed
+   on this browser; a signed-in account also counts server-side (record_school_view stamps high_intent_at at 5). The 5th school opens
+   one prompt (unless the visitor already closed one this visit); nothing is sent anywhere else. */
+function schoolIntent(i){const s=SCH[i];if(!s)return;let seen=[];try{seen=JSON.parse(localStorage.getItem("prSeen")||"[]")}catch(e){}
+  if(seen.includes(s.n))return;seen.push(s.n);try{localStorage.setItem("prSeen",JSON.stringify(seen.slice(-60)))}catch(e){}
+  if(ACC.signedIn())ACC.core.api("/rest/v1/rpc/record_school_view",{method:"POST",body:{}}).catch(()=>{});
+  if(seen.length!==5)return;log("school",{detail:"high-intent-5",school:s.n});
+  if(EV.dismissed||s.j)return;EV.shown=false;EV.force=true;evalIn("You've compared five college programs.","A free evaluation shows which of them would want you and which coaches to contact first.",1800,"high-intent-5","high-intent")}
+/* readiness entry under the search results, until the check is done on this browser */
+const readyLink=()=>{try{if(localStorage.getItem("prReadyDone"))return ""}catch(e){}return `<button type="button" class="rqlink" data-ready>How ready are you for recruiting? Take the 2-minute check ›</button>`};
+document.addEventListener("click",ev=>{if(ev.target.closest&&ev.target.closest("[data-ready]")){log("feedback",{detail:"readiness-link"});READY.go()}});
 function evalIn(title,body,delay,v,trig,bs){
   if(EV.shown||EV.dismissed||ACC.tier()==="C"||ACC.isOpen()||document.getElementById("prnudge")||document.documentElement.classList.contains("onbon")||(ACC.signedIn()&&!ACC.member())) return; clearTimeout(EV.t);
+  /* qualified accounts (Tier A/A+) hear about their own level (Ryan 2026-10-25: "copy that resonates with their specific recruitment level") */
+  {const qc=(S.school==null||trig==="high-intent")&&!/^dream/.test(v||"")?qualCopy():null;if(qc){title=qc.t;body=qc.b;bs=qc.bs;v="qual-"+(v||"generic")}}
   /* Tier B (GPA 2.3 to 2.99, or 3.0+ without a PR-standard mark yet): same headline, softer body (draft for Ryan's approval) */
   {const P=ACC.member()&&ACC.profile(),kid=pickKid();
    if(kid){const n=kid.first_name;title=title.replace(/^Your /,`${n}'s `).replace(/\byour\b/,`${n}'s`).replace(/^You're /,`${n} is `).replace(/^You /,`${n} `);
@@ -341,7 +366,7 @@ function standards(){
     const cl=convLine(S.e,S.g,v), c=k=>all.filter(x=>x.t===k).length;LASTSUM={mark:S.mark,e:S.e,g:S.g,n:all.length,T:c("T"),R:c("R"),W:c("W")};
     o+=`<div class="mhead"><p class="sum">${esc(S.mark)} in the ${S.g==="m"?"men's":"women's"} ${esc(hsName(S.e,S.g))} fits <b>${all.length}</b> colleges${CONV[S.e]?cinfo(S.e,cl):S.g==="m"&&IMPL[S.e]?iinfo(S.e):""}</p>
       <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p>${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}${`<div class="hlp" id="hlp"><span>Were these results helpful?</span><button type="button" class="hbtn" data-hlp="up">Yes</button><button type="button" class="hbtn" data-hlp="down">No</button></div>`}</div>
-    ${parentCard()}
+    ${readyLink()}${parentCard()}
     <section class="mtab" aria-label="Your college matches">
       <div class="mbar"><h3>Your college matches</h3><div class="dds">
         ${dd("fd","All divisions",S.div,DIVS.filter(d=>opts("d",x=>x.s.d).includes(d)))}
@@ -499,6 +524,7 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   setTimeout(()=>schoolVids(S.school),0);
   setTimeout(()=>armSchoolOffer(S.school),0);
   setTimeout(()=>schoolFacts(S.school),0);
+  setTimeout(()=>schoolIntent(S.school),0);
   /* the "how these are set" / official-source box goes to the bottom (Ryan 2026-10-16: "just put it at the bottom") */
   const vm=o.match(/<div class="verify">[\s\S]*?<\/div>/),vf=vm?vm[0]:"";if(vf)o=o.replace(vf,"");
   return o+`<div id="sfacts"></div><div id="tbest"></div><div id="svid"></div>`+schoolArch(s)+schoolAbout(s,vf)+schoolExtra(s)+schoolMore(s)+brandNote(s,B)+`</div>`}
@@ -2111,7 +2137,12 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     const kid=pickKid(),gr=kid?kid.grade:P.grade;if(/^\d+$/.test(gr||"")){INT.gr=+gr;S.gr=+gr}
     const rs={getting_started:"none",talking:"some",real_interest:"some",offers:"offers"}[P.recruiting_stage];if(rs)INT.rs=rs;
     if(P.gender&&!INT.g)INT.g=P.gender;saveInt()};
-  ACC.init({schools:(()=>{let L=null;return ()=>L||(L=SCH.filter(x=>!x.j).map(x=>x.n).sort())})(),onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,nstd:NSTD,fits:(e,g,v)=>SCH.filter(s=>tier(s,g,e,v)).length,fmt:(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v),stats:(e,g,v)=>{const L=[];SCH.forEach((s,i)=>{const t=tier(s,g,e,v);if(t)L.push({s,i,t})});const c=k=>L.filter(x=>x.t===k).length;
+  READY.bind();
+  ACC.init({divfit:(e,g,v)=>{const o={};SCH.forEach(s=>{if(s.j)return;const t=tier(s,g,e,v);if(!t)return;const d=o[s.d]||(o[s.d]={T:0,R:0,W:0});d[t]++});return o},
+    /* the readiness result's link carries the quiz's own answers, not the last search (account tier/class tags kept) */
+    quiz:o=>{const u=new URL(quizFor()),keep=(u.searchParams.get("utm_term")||"").split(" ").filter(t=>/^[tc](A\+|[ABCSM])$/.test(t));u.searchParams.set("utm_content","readiness");
+      u.searchParams.set("utm_term",[o.e,o.grade?"g"+o.grade:"","readiness-"+o.score,...keep].filter(Boolean).join(" "));
+      for(const [k,v] of [["pr_grade",o.grade],["pr_mark",o.m],["pr_status",o.stage]])if(v)u.searchParams.set(k,v);else u.searchParams.delete(k);return u.toString()},schools:(()=>{let L=null;return ()=>L||(L=SCH.filter(x=>!x.j).map(x=>x.n).sort())})(),onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,nstd:NSTD,fits:(e,g,v)=>SCH.filter(s=>tier(s,g,e,v)).length,fmt:(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v),stats:(e,g,v)=>{const L=[];SCH.forEach((s,i)=>{const t=tier(s,g,e,v);if(t)L.push({s,i,t})});const c=k=>L.filter(x=>x.t===k).length;
     const top=["T","R","W"].map(k=>L.filter(x=>x.t===k&&DIVS.includes(x.s.d)).sort((a,b)=>DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||(b.s.o?1:0)-(a.s.o?1:0)||a.s.n.localeCompare(b.s.n))[0]).filter(Boolean).map(x=>({n:x.s.t||x.s.n,d:x.s.d,lv:TN[x.t],slug:SLUG[x.i]}));
-    const nm=nearMiss(g,e,v);return {n:L.length,T:c("T"),R:c("R"),W:c("W"),near:nm.n?{n:nm.n,lv:TN[nm.lvl],gap:nm.gap}:null,top}},intent:INT,sid:SID,log,onChange:()=>{fromProfile();render()}}).then(()=>{fromProfile();render()});
+    const nm=nearMiss(g,e,v);return {n:L.length,T:c("T"),R:c("R"),W:c("W"),near:nm.n?{n:nm.n,lv:TN[nm.lvl],gap:nm.gap}:null,top}},intent:INT,sid:SID,log,onChange:()=>{fromProfile();render()}}).then(()=>{fromProfile();render();if(READY.isPage())READY.show()});
 }

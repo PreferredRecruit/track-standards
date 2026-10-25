@@ -17,6 +17,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/readiness",
+      "destination": "/index.html"
+    },
+    {
       "source": "/account",
       "destination": "/index.html"
     }

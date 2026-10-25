@@ -34,11 +34,16 @@ function stepsFor() {
   if (QUICK()) return [MODE.slice(2)];
   if (!D.role) return ["who"];
   if (par() && (MODE === "addkid" || MODE === "editkid")) return ["about", "events", "gpa"];
-  if (par()) return MODE === "edit" ? ["who", "you"] : ["who", "you", "about", "events", "gpa"];
-  if (D.role === "athlete") return ["who", "about", "events", "gpa"];
+  if (par()) return MODE === "edit" ? ["who", "you"] : ["who", "you", "about", "events", "goals", "gpa"];
+  if (D.role === "athlete") return ["who", "about", "events", "goals", "gpa"];
   return ["who", "you"];
 }
-const STEP_NAME = { who: "Start", you: "About you", about: "Athlete", events: "Events and PRs", gpa: "GPA" };
+const STEP_NAME = { who: "Start", you: "About you", about: "Athlete", events: "Events and PRs", goals: "Goals", gpa: "GPA" };
+/* Goals (Ryan 2026-10-25: "conditional logic ... 'Are you looking for D1, D2, or JUCO scholarships?'"): target levels, then the
+   scholarship question only when a level that gives athletic scholarships is picked (D3 gives none). Feeds the lead score. */
+const DIVS_GOAL = [["D1", "NCAA D1"], ["D2", "NCAA D2"], ["D3", "NCAA D3"], ["NAIA", "NAIA"], ["JUCO", "Junior college"], ["not_sure", "Not sure yet"]];
+const SCHOL = [["need", "We need one", "Cost decides where"], ["helps", "It would help", "A big plus"], ["not_needed", "Not needed", "Fit matters more"], ["not_sure", "Not sure yet", ""]];
+const scholDivs = d => (d || []).some(x => ["D1", "D2", "NAIA", "JUCO"].includes(x));
 
 const fmtM = (e, v) => core.cfg().fmt ? core.cfg().fmt(e, +v) : String(v);
 function blankKid() { const I = core.cfg().intent || {}; return { id: null, first: "", last: "", gender: I.g || "", year: I.gr ? SENIOR + (12 - +I.gr) : "", state: D && D.state || "", school: "", gpa: "", email: "", phone: "", dream: [], marks: [[I.e || "", I.m || ""]], avatar: null, banner: null, theme: null }; }
@@ -47,6 +52,7 @@ function selfDraft() {
   return { id: null, role: p.role || "", first: p.first_name || "", last: p.last_name || "", phone: p.phone || "", sms: !!p.sms_consent,
     gender: p.gender || I.g || "", year: p.grad_year || (I.gr ? SENIOR + (12 - +I.gr) : ""), state: p.state || "", school: p.high_school || "", gpa: p.gpa != null ? String(p.gpa) : "",
     pname: p.parent_name || "", pemail: p.parent_email || "", pphone: p.parent_phone || "", age: !!p.age_13_plus,
+    divs: p.target_divisions || [], schol: p.scholarship_priority || "",
     avatar: p.avatar_path || null, banner: p.banner_path || null, theme: p.banner_theme || null, marks: [], dream: p.dream_schools || [] };
 }
 async function loadAll() {
@@ -119,6 +125,11 @@ function stepBody(k) {
       <div class="onbmk">${sub.marks.map((m, i) => { const f = fitsFor(sub, m[0], m[1]); return `<div class="onbmr">${sel(m[0], i)}<input class="in" data-mk="m" data-i="${i}" value="${esc(m[1])}" placeholder="${esc(m[0] && C.ph ? C.ph(m[0]) : "Best mark")}" inputmode="decimal" autocomplete="off" aria-label="Best mark"><span class="onbfit${f ? " on" : ""}" data-fit="${i}">${f != null ? `<b>${f.toLocaleString()}</b> programs` : ""}</span>${sub.marks.length > 1 ? `<button type="button" class="onbrm" data-onb="rm" data-i="${i}" aria-label="Remove event">×</button>` : ""}</div>`; }).join("")}</div>
       ${sub.marks.length < 6 ? `<button type="button" class="onbadd" data-onb="add">+ Add another event</button>` : ""}`;
   }
+  if (k === "goals") { const who = p ? esc(sub.first || "your athlete") : "you", only3 = D.divs.length && D.divs.every(x => x === "D3");
+    return `<h1>Where ${p ? "does " + who + " want" : "do you want"} to compete?</h1><p class="onbsub">Pick every level ${p ? "they'd" : "you'd"} be happy at. We use it to show the right programs first.</p>
+    <div class="onbopt c3 multi" role="group" aria-label="Levels">${DIVS_GOAL.map(([v, l]) => `<button type="button" role="checkbox" data-tog="divs" data-v="${v}" aria-checked="${D.divs.includes(v)}"><b>${l}</b></button>`).join("")}</div>
+    ${scholDivs(D.divs) ? `<div class="onbq"><span>How important is an athletic scholarship?</span><div class="onbopt c2" role="radiogroup">${SCHOL.map(([v, l, d]) => `<button type="button" role="radio" data-goal="schol" data-v="${v}" aria-checked="${D.schol === v}"><b>${l}</b>${d ? `<small>${d}</small>` : ""}</button>`).join("")}</div></div>`
+      : only3 ? `<p class="onbsub" style="margin-top:14px">NCAA D3 programs don't give athletic scholarships, but most offer academic and need-based aid, and coaches can help with admissions.</p>` : ""}`; }
   if (k === "gpa") return `<h1>${QUICK() ? (p ? "Update " + esc(sub.first) + "'s GPA" : "Update your GPA") : "GPA"}</h1><p class="onbsub">Coaches check grades before they recruit. A strong GPA can open more programs than a faster time.</p>
     <div class="onbgpa">${inp("gpa", "Cumulative high school GPA", sub.gpa, 'inputmode="decimal" placeholder="e.g. 3.4" maxlength="4"', "All of high school, on the scale your school uses.")}</div>
     ${D.role === "athlete" ? `<div class="onbsec"><b>A parent's contact</b><small>Optional. Recruiting help goes to a parent, never to an athlete directly.</small>
@@ -321,6 +332,7 @@ function check(k) {
     for (const [e, m] of ok) if (!e || !m || C.parse(m, e) == null) return `Check the mark for ${e ? (C.evName ? C.evName(e, sub.gender) : e) : "the event"}${e && C.ph ? " (for example " + C.ph(e) + ")" : ""}.`;
     if (new Set(ok.map(m => m[0])).size < ok.length) return "Each event only once, please.";
   }
+  if (k === "goals" && !D.divs.length) return "Pick at least one level, or Not sure yet.";
   if (k === "gpa") {
     const g = +sub.gpa; if (sub.gpa !== "" && sub.gpa != null && (isNaN(g) || g < 0 || g > 5)) return "Enter a GPA between 0.0 and 5.0, like 3.4, or leave it blank for now.";
     if (D.role === "athlete") {
@@ -341,6 +353,8 @@ async function save(k, finish) {
   if (k === "gpa" && !kid) Object.assign(prof, { gpa, parent_name: D.pname || null, parent_email: D.pemail || null, parent_phone: D.pphone || null, age_13_plus: true });
   if (finish && (MODE === "onboard" || MODE === "edit")) prof.finished_at = (core.profile() && core.profile().finished_at) || new Date().toISOString();
   if (!kidOnly()) await core.api("/rest/v1/profiles?on_conflict=id", { method: "POST", body: prof, prefer: "resolution=merge-duplicates,return=minimal" });
+  /* goals go in their own request: if the database doesn't have these fields yet (migration 008), the step still saves */
+  if (k === "goals" && !kidOnly()) await core.api("/rest/v1/profiles?id=eq." + uid, { method: "PATCH", body: { target_divisions: D.divs.length ? D.divs : null, scholarship_priority: scholDivs(D.divs) ? (D.schol || null) : null }, prefer: "return=minimal" }).catch(() => {});
   if (kid && (k === "about" || k === "gpa")) {
     const row = k === "about" ? { first_name: sub.first, last_name: sub.last || null, grad_year: yr, grade: yr ? gradeOf(yr) : null, gender: sub.gender || null, state: sub.state || null, high_school: sub.school || null,
       email: sub.email || null, phone: sub.phone || null, dream_schools: (sub.dream || []).length ? sub.dream : null } : { gpa };
@@ -397,6 +411,12 @@ export function bind() {
   addEventListener("popstate", () => { if (isPage()) show(); else if (core.ses() && !core.member()) go("/onboarding"); else hide(); });
   document.addEventListener("click", e => {
     const el = document.getElementById("onb"); if (!el || el.hidden || !el.contains(e.target)) return;
+    const tg = e.target.closest("[data-tog]");
+    if (tg) { read(); const v = tg.dataset.v; MSG = "";
+      D.divs = v === "not_sure" ? (D.divs.includes(v) ? [] : [v]) : D.divs.includes(v) ? D.divs.filter(x => x !== v) : [...D.divs.filter(x => x !== "not_sure"), v];
+      return render(); }
+    const gl = e.target.closest("[data-goal]");
+    if (gl) { read(); D.schol = gl.dataset.v; MSG = ""; return render(); }
     const s = e.target.closest("[data-set]");
     if (s) { read(); const k = s.dataset.set, v = s.dataset.v; MSG = "";
       if (k === "role") { D.role = v; STEP = 1; if (par() && !K) K = blankKid(); return render(); }
