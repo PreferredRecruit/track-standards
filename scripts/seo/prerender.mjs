@@ -106,7 +106,6 @@ header nav a.cta .s{display:none}
 <h1>${h1}</h1>${intro ? `<p class="intro">${intro}</p>` : ""}${body}
 <div class="cta"><b>Looking to run in college?</b> Preferred Recruit gets athletes' marks in front of college coaches. <a href="${QUIZ}">Get your free recruitment evaluation ›</a></div></main>
 <footer><div><a href="/explore.html">Explore every school, conference and result</a> · <a href="/privacy.html">Privacy</a><span>Standards updated ${DATES.db} · Results updated ${DATES.data} · © ${new Date().getFullYear()} Preferred Recruit</span></div></footer>
-<div class="sbar" id="sbar" hidden role="complementary" aria-label="Free recruitment evaluation"><p><b>Want college coaches to see these marks?</b> <span>Get a free recruitment evaluation from Preferred Recruit.</span></p><a href="${QUIZ}" target="_blank" rel="noopener">Get my evaluation</a><button type="button" aria-label="Close" id="sbx">×</button></div>
 <script>/* SEO-page bottom bar (Ryan 2026-10-17): shows after 50% scroll or 12 s (5 s from the 2nd page), once per visit, never on arrival; shares the app pop-up's dismiss flag.
    Search intent (Ryan 2026-10-16): the copy names the athlete's event (this page's event, else the last one they looked at on the site,
    from localStorage prIntent), the funnel link carries event + grade, and the page view goes to the anonymous insights log. */
@@ -118,21 +117,8 @@ window.prLog=function(k,x){try{var ct;try{ct=localStorage.getItem("pr_coach")||u
 var m=location.pathname.match(/(?:^|[\/-])(boys|girls|mens|womens)-([a-z0-9-]+?)(?:-track-standards)?(?:\.html)?$/),ev=null,g=null;
 if(m){ev=m[2].replace(/-39$/,"").replace(/-/g," ");g=/^(boys|mens)$/.test(m[1])?"m":"w";I.e=ev;I.grp=grp(ev);I.g=g;I.c=I.c||{};I.c[I.grp]=(I.c[I.grp]||0)+1;try{localStorage.setItem("prIntent",JSON.stringify(I))}catch(e){}}
 prLog("seo_page",{event:ev||undefined,g:g||undefined});
-var b=document.getElementById("sbar"),say=I.e?String(I.e).toLowerCase():"";
-if(say){b.querySelector("b").textContent="If you want to get recruited for the "+say+",";b.querySelector("span").textContent=" let college coaches see your marks. Get a free recruitment evaluation from Preferred Recruit.";}
-try{var u=new URL(b.querySelector("a").href);if(I.e)u.searchParams.set("utm_term",I.e);if(I.grp)u.searchParams.set("pr_group",I.grp);if(I.gr)u.searchParams.set("pr_grade",I.gr);b.querySelector("a").href=u.toString()}catch(e){}
-var K="prEvalDismissed";try{if(sessionStorage.getItem(K)==="1"||sessionStorage.getItem("prBarShown")==="1")return}catch(e){}
-function show(t){if(!b.hidden)return;TRIG=t||"timer";b.hidden=false;try{sessionStorage.setItem("prBarShown","1")}catch(e){}removeEventListener("scroll",sc);prLog("popup_shown",{placement:"seo-bar",event:I.e||undefined,variant:say?"bar-event":"bar-generic",trig:TRIG})}
-window.prBarTrig=function(){return TRIG};
-function sc(){var h=document.documentElement;if((scrollY+innerHeight)/h.scrollHeight>.5)show("scroll-50")}
-addEventListener("scroll",sc,{passive:true});
-/* timing from e-commerce benchmarks (Wisepops, 1B displays): 11 to 15 s converts best, 21 to 30 s worst; 2nd pageview converts best */
-var pv=1;try{pv=(+sessionStorage.getItem("prPV")||0)+1;sessionStorage.setItem("prPV",pv)}catch(e){}
-setTimeout(function(){show(pv>=2?"pageview-2":"timer-12s")},pv>=2?5000:12000);
-/* leaving? show the bar early: desktop mouse to the tab bar, phone fast scroll back up (after 8 s on the page) */
-document.addEventListener("mouseout",function(e){if(!e.relatedTarget&&e.clientY<=0&&Date.now()-T0>8000)show("exit-desktop")});
-var ly=scrollY,lt=Date.now();addEventListener("scroll",function(){var n=Date.now(),dy=scrollY-ly,dt=Math.max(n-lt,1);ly=scrollY;lt=n;if(innerWidth<700&&scrollY>400&&Date.now()-T0>8000&&dy/dt*1000<-2500)show("exit-scrollup")},{passive:true});
-document.getElementById("sbx").onclick=function(){b.hidden=true;try{sessionStorage.setItem(K,"1")}catch(e){}}})();</script></body></html>`;
+/* bottom bar removed (2026-10-25: 0.2% click rate on 3,881 views, and Ryan wants landing pages clean); the page view + intent above stay */
+})();</script></body></html>`;
 }
 
 export function generate(root, out) {

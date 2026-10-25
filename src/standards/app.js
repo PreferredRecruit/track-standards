@@ -52,7 +52,7 @@ const evSay=e=>String(e).replace(/ \(39"\)/,"").replace(/^3000m Steeplechase$/,"
 const INT=(()=>{try{return JSON.parse(localStorage.getItem("prIntent"))||{}}catch(e){return {}}})();
 const SID=(()=>{try{let v=localStorage.getItem("prSid");if(!v){v=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36));localStorage.setItem("prSid",v)}return v}catch(e){return "anon-"+Math.random().toString(36).slice(2,12)}})();
 /* A/B bucket per browser: 0 = data-driven copy (near-miss, school), 1 = plain intent copy (control) */
-const BUCKET=[...SID].reduce((a,c)=>a+c.charCodeAt(0),0)%2;
+const BUCKET=0;   /* A/B test closed 2026-10-25: data-driven copy (dream 11.5%, near-miss 5.6%) beat plain intent copy; everyone gets it */
 const saveInt=()=>{try{localStorage.setItem("prIntent",JSON.stringify(INT))}catch(e){}};
 function intent(e,g,mark){if(!e)return;const grp=GRP(e);INT.e=e;INT.grp=grp;if(g)INT.g=g;if(mark)INT.m=mark;INT.c=INT.c||{};INT.c[grp]=(INT.c[grp]||0)+1;INT.t=Date.now();saveInt()}
 const topGrp=()=>{const c=INT.c||{};return Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||INT.grp};
@@ -191,10 +191,18 @@ const hookLine=()=>{if(!S.run||!S.mark)return "";const mk=S.mark.trim(),es=evSay
    problem.", the junior/senior window. human-copy rules; official claims only; numbers only from the site's data. */
 const clock=()=>+S.gr===12?"Senior year moves fast. Coaches are finishing their classes now.":+S.gr===11?"Junior year is the most important year of your recruiting timeline.":S.gr?"Starting early is how you compete for the best spots.":"";
 const EVAL="A free evaluation shows";
+/* grade tag on every variant (Ryan 2026-10-25: "sophomores are still a fit"): 9 alone, 10 with the sales grades */
+const gsfx=()=>+S.gr>=11?"-11-12":+S.gr===10?"-10":+S.gr===9?"-9":"";
+/* readiness offer: freshmen and marks not on any chart yet get the free 2-minute readiness check instead of the evaluation
+   (nofit clicked 1 to 1.6%; the check gives them a plan and puts their answers on file for when they are a fit) */
+function readyOffer(n,sfx){let done=false;try{done=!!localStorage.getItem("prReadyDone")}catch(e){}
+  if(done)return n?null:{n,v:"nofit"+sfx,t:"Not on the chart yet? You are not the problem.",b:`Coaches recruit the athletes they know about. ${EVAL} which programs fit you today.`};
+  return {n,v:"ready-"+(n?"early":"nofit")+sfx,ready:true,t:n?"You're early, and that's an advantage.":"Not on the chart yet? You are not the problem.",
+    b:n?`Your ${S.mark.trim()} already meets the standard at ${n.toLocaleString()} programs. The 2-minute readiness check shows what to work on before coaches start calling.`:"The 2-minute readiness check shows where you stand today and what to work on next."}}
 function offerCopy(){const v=parse(S.mark,S.e);if(v==null)return null;
   const all=SCH.filter(s=>tier(s,S.g,S.e,v)),n=all.length,T=all.filter(s=>tier(s,S.g,S.e,v)==="T").length,Rr=all.filter(s=>tier(s,S.g,S.e,v)==="R").length;
-  const mk=S.mark.trim(), late=+S.gr>=11, sfx=late?"-11-12":S.gr?"-9-10":"", N=n.toLocaleString();
-  if(!n) return {n,v:"nofit"+sfx,t:"Not on the chart yet? You are not the problem.",b:`Coaches recruit the athletes they know about. ${EVAL} which programs fit you today.`};
+  const mk=S.mark.trim(), sfx=gsfx(), N=n.toLocaleString();
+  if(!n||+S.gr===9){const r=readyOffer(n,sfx);if(r)return r}
   const nm=nearMiss(S.g,S.e,v), ls=(()=>{const x=INT.sch&&SCH.find(y=>y.n===INT.sch);return x&&tier(x,S.g,S.e,v)?x:null})();
   const bs={none:`Coaches recruit the athletes they know about. ${EVAL} which of these programs would want you.`,
     some:`Interest is a good start. ${EVAL} how to turn it into offers.`,
@@ -208,7 +216,7 @@ function offerCopy(){const v=parse(S.mark,S.e);if(v==null)return null;
 let ARM=null;
 /* polls the live results list (it is re-rendered after a search, so an observer on one node goes stale) */
 function armOffer(){const o=offerCopy();if(!o||EV.shown||EV.dismissed)return;if(ARM)clearInterval(ARM.iv),clearTimeout(ARM.t);ARM={since:0};
-  const fire=trig=>{if(!ARM)return;clearInterval(ARM.iv);clearTimeout(ARM.t);ARM=null;evalIn(o.t,o.b,0,o.v,trig,o.bs)};
+  const fire=trig=>{if(!ARM)return;clearInterval(ARM.iv);clearTimeout(ARM.t);ARM=null;evalIn(o.t,o.b,0,o.v,trig,o.ready?null:o.bs)};
   if(!o.n){ARM.t=setTimeout(()=>fire("nofit"),3000);return}
   ARM.t=setTimeout(()=>fire("results-timer"),12000);   /* fallback if they never scroll to the list */
   ARM.iv=setInterval(()=>{if(!ARM)return;if(!S.run||S.school!=null){clearInterval(ARM.iv);clearTimeout(ARM.t);ARM=null;return}
@@ -218,7 +226,9 @@ function armOffer(){const o=offerCopy();if(!o||EV.shown||EV.dismissed)return;if(
    Desktop: the mouse heads for the tab bar. Phones: a fast scroll back up or 45 s idle on the results. Once per visit, never if an
    offer was already shown or dismissed, never in the first 20 s unless they searched. */
 const EXIT={idle:null,lastY:scrollY,lastT:Date.now()};
-function exitOffer(trig){if(EV.shown||EV.dismissed)return;if(S.school!=null){const s=SCH[S.school];if(!s||s.j)return;const nm=s.t||s.n;EV.force=true;evalIn(`Does ${nm} know your name?`,`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,0,"school-exit",trig,null);return}if(!S.run&&Date.now()-T0<20000)return;
+function exitOffer(trig){if(EV.shown||EV.dismissed)return;if(S.school!=null){const s=SCH[S.school];if(!s||s.j)return;const nm=s.t||s.n;EV.force=true;
+    const dv=INT.e&&INT.m?parse(INT.m,INT.e):null,d=dv!=null?dreamCopy(s,INT.g||S.g,INT.e,dv):null;
+    if(d)evalIn(d.t,d.b,0,"school-exit-dream-"+d.k+gsfx(),trig,dreamBs(d));else evalIn(`Does ${nm} know your name?`,`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,0,"school-exit"+gsfx(),trig,null);return}if(!S.run&&Date.now()-T0<20000)return;
   const o=S.run?offerCopy():null;
   /* no search yet: speak to the high school athlete about their own event when we know it (Ryan 2026-10-17: simpler, ICP-specific) */
   const ie=INT.e?evSay(INT.e):"";
@@ -273,7 +283,7 @@ function evalIn(title,body,delay,v,trig,bs){
      body=sw(body);if(bs)bs=Object.fromEntries(Object.entries(bs).map(([k,v])=>[k,sw(v)]))}
    else if(P&&P.role!=="parent"&&P.first_name&&/^Your /.test(title))title=`${P.first_name}, your ${title.slice(5)}`}
   if(ACC.tier()==="B"){const r=(ACC.profile()||{}).tier_reason||"";body=/^GPA 3\.0/.test(r)?TIERB.gpa:TIERB.grow;bs=null;v=(v||"generic")+"-b"}
-  EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||(S.school!=null&&!EV.force)) return; EV.force=false; EV.v=v||"generic"; EV.trig=trig||"timer"; EV.title=title; EV.body=body; EV.bs=bs||null; openEval(true)},delay||0);
+  EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||(S.school!=null&&!EV.force)) return; EV.force=false; EV.v=v||"generic"; EV.ready=/^ready-/.test(EV.v); EV.trig=trig||"timer"; EV.title=title; EV.body=body; EV.bs=bs||null; openEval(true)},delay||0);
 }
 /* centre modal (Ryan 2026-10-16, e-commerce benchmarks: centre 6.84% vs bottom-corner 2.88%; multi-step +12%; click-triggered
    54%). Step 1 = one-tap "have coaches reached out?" (skipped once answered on this browser), step 2 = the tailored offer.
@@ -309,9 +319,10 @@ function eyebrow(){if(S.school!=null){const s=SCH[S.school];return s?`${s.t||s.n
   return "Free recruitment evaluation"}
 function openEval(log1){const el=$("eval");if(document.documentElement.classList.contains("onbon"))return;
   $("eve").textContent=eyebrow();$("evm").textContent=EV.title||"Talent gets you the offer. Visibility gets you in the room.";
-  $("evp").textContent=evBody();$("eva").href=quizFor();
-  const ck=S.run||S.school!=null?clock():"";$("evk").textContent=ck;$("evk").hidden=!ck;
-  const ask=!INT.rs;$("evq").hidden=!ask;$("evs").hidden=ask;
+  $("evp").textContent=evBody();const a=$("eva");a.href=EV.ready?"/readiness":quizFor();a.textContent=EV.ready?"Take the 2-minute readiness check":"Get my free evaluation";
+  if(EV.ready)a.removeAttribute("target");else a.target="_blank";{const g=document.querySelector("#evs small");if(g)g.style.display=EV.ready?"none":""}
+  const ck=S.run||S.school!=null?clock():"";$("evk").textContent=ck;$("evk").hidden=!ck||!!EV.ready;
+  const ask=!INT.rs&&!EV.ready;$("evq").hidden=!ask;$("evs").hidden=ask;
   {const kid=pickKid(),ql=document.querySelector("#evq .evql"),o3=document.querySelector('[data-evq="offers"]');if(ql)ql.textContent=kid?`Have college coaches contacted ${kid.first_name} yet?`:"Have college coaches contacted you yet?";if(o3)o3.textContent=kid?"Offers already":"I have offers"}
   el.classList.add("on");el.setAttribute("aria-hidden","false");$("evbg").hidden=false;requestAnimationFrame(()=>$("evbg").classList.add("on"));$("evpill").hidden=true;EV.shown=true;
   if(log1)log("popup_shown",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig});
@@ -324,12 +335,15 @@ document.addEventListener("click",ev=>{
     /* signed-in answers go on the profile too (2026-10-25: 116 profiles had no recruiting stage), so sales sees where each family is */
     {const st={none:"getting_started",some:"talking",offers:"offers"}[q.dataset.evq],u=ACC.signedIn()&&ACC.core.ses()&&ACC.core.ses().user;if(st&&u)ACC.core.api("/rest/v1/profiles?id=eq."+u.id,{method:"PATCH",body:{recruiting_stage:st},prefer:"return=minimal"}).catch(()=>{})}
     $("evp").textContent=evBody();$("eva").href=quizFor();$("evq").hidden=true;$("evs").hidden=false;return}
+  if(EV.ready&&ev.target.closest("#eva")){ev.preventDefault();log("popup_click",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig});evalOut();READY.go();return}
   if(ev.target.closest("#evlater")){evalOut();return}
   if(ev.target.id==="evbg"){evalOut();return}
   if(ev.target.closest("#evpill")){EV.v=(EV.v||"generic").replace(/^pill-/,"");EV.v="pill-"+EV.v;EV.trig="pill-click";openEval(true)}});
 let scrolled=0,lastY=scrollY;
 addEventListener("scroll",()=>{scrolled+=Math.abs(scrollY-lastY);lastY=scrollY;
-  if(S.tab==="results"&&S.school==null&&scrolled>1400) {const gp=GRP(evLabel(R.ev||""))||topGrp();evalIn("Coaches recruit from lists like this one.",`${EVAL} where your marks fit and which programs would want you.`,0,gp?"results-"+gp:"results")}},{passive:true});
+  if(S.tab==="results"&&S.school==null&&scrolled>1400) {const gp=GRP(evLabel(R.ev||""))||topGrp();{let done=false;try{done=!!localStorage.getItem("prReadyDone")}catch(e){}
+    if(done)evalIn("Coaches recruit from lists like this one.",`${EVAL} where your marks fit and which programs would want you.`,0,gp?"results-"+gp:"results");
+    else evalIn("Could you make a list like this one?","The 2-minute readiness check shows where you stand for college track and what to work on next.",0,"ready-results"+(gp?"-"+gp:"")+gsfx(),"results-scroll")}}},{passive:true});
 
 /* ---------- Standards (the current site's flow, rebranded) ---------- */
 const DEF={W:"The minimum mark required to earn a spot on the team.",R:"The range where coaches typically start recruiting conversations and scholarship discussions begin.",T:"The marks that typically grant a full-ride scholarship, depending on school funding."};
@@ -491,8 +505,8 @@ function armSchoolOffer(i){clearInterval(SARM);const s=SCH[i];if(!s||s.j||EV.sho
     const t=document.querySelector(".simple .scroll"),r=t&&t.getBoundingClientRect();if(!r)return;
     if(r.bottom<innerHeight*.6){if(!since)since=Date.now();else if(Date.now()-since>1200){clearInterval(SARM);EV.force=true;
       const dv=INT.e&&INT.m?parse(INT.m,INT.e):null,d=dv!=null&&!BUCKET?dreamCopy(s,INT.g||S.g,INT.e,dv):null;
-      if(d)evalIn(d.t,d.b,0,"school-dream-"+d.k+(+S.gr>=11?"-11-12":S.gr?"-9-10":""),"school-scroll",dreamBs(d));
-      else evalIn(`Does ${nm} know your name?`,`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,0,"school-page"+(+S.gr>=11?"-11-12":S.gr?"-9-10":""),"school-scroll",bs)}}else since=0},300)}
+      if(d)evalIn(d.t,d.b,0,"school-dream-"+d.k+gsfx(),"school-scroll",dreamBs(d));
+      else evalIn(`Does ${nm} know your name?`,`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,0,"school-page"+gsfx(),"school-scroll",bs)}}else since=0},300)}
 function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m"?"w":"m";const g=S.g,src=(CT[s.ck]||{}).src,B=brandOf(s);
   /* simple layout (Ryan 2026-10-16: "make it less cluttered and simple"): band (logo + name as the H1) → checker → table.
      Description, links and the evaluation card move to "About" at the bottom (still on the page for search engines).
@@ -2065,7 +2079,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     const vv=parse(mk,SCK.e),fitN=SCH.filter(x=>tier(x,S.g,SCK.e,vv)).length.toLocaleString(),hit=!!SCK.res.t;
     const ask=hit?`Find out whether ${nm}'s coaches would want your ${mk}.`:`Your ${mk} still fits ${fitN} colleges. Find out which of their coaches would want you.`;
     const bs={none:`Coaches can't recruit an athlete they've never heard of. ${ask}`,some:`A few emails is a start, but it isn't an offer. ${hit?`Find out how to turn that interest into an offer from ${nm}.`:"Find out how to turn that interest into real offers."}`,offers:`Offers give you leverage. ${hit?`Find out whether ${nm} would want your ${mk} before you sign.`:`Find out who else would want your ${mk} before you sign.`}`};
-    EV.hook=hk;setTimeout(()=>{EV.shown=false;EV.dismissed=false;EV.force=true;evalIn(t,ask,0,"school-check"+(+S.gr>=11?"-11-12":S.gr?"-9-10":""),"school-check",bs)},900);return}
+    EV.hook=hk;setTimeout(()=>{EV.shown=false;EV.dismissed=false;EV.force=true;evalIn(t,ask,0,"school-check"+gsfx(),"school-check",bs)},900);return}
   if(ev.target.id==="cf"){send($("ct").value);return}
   if(parse(S.mark,S.e)==null){$("hint").textContent=`Enter a mark like ${ph(S.e)}`;return}
   if(!S.gr){$("hint").textContent="Pick your grade to see your colleges.";const gs=document.querySelector(".gseg");if(gs){gs.classList.remove("need");void gs.offsetWidth;gs.classList.add("need");gs.querySelector("button").focus()}return}
@@ -2078,7 +2092,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
 
   /* return visit (new session, last search 30+ min ago): remind them of their own mark once, 15 s in, unless they search again */
   try{const first=!sessionStorage.getItem("prSeen");sessionStorage.setItem("prSeen","1");
-    if(first&&INT.e&&INT.m&&INT.t&&Date.now()-INT.t>18e5) setTimeout(()=>{if(!S.run)evalIn(`Do coaches know about your ${INT.m} ${evSay(INT.e)} yet?`,`If they don't, they can't recruit you. ${EVAL} who would.`,0,"return"+(+INT.gr>=11?"-11-12":"-9-10"))},15000)}catch(e){}
+    if(first&&INT.e&&INT.m&&INT.t&&Date.now()-INT.t>18e5) setTimeout(()=>{if(!S.run)evalIn(`Do coaches know about your ${INT.m} ${evSay(INT.e)} yet?`,`If they don't, they can't recruit you. ${EVAL} who would.`,0,"return"+(+INT.gr>=11?"-11-12":+INT.gr===10?"-10":+INT.gr===9?"-9":""))},15000)}catch(e){}
   /* ---- routing: /schools/<slug> opens that school; keeps the old site's URLs working ---- */
   const SLUG = SCH.map(s => (s.os && s.os[0]) || slugOf(s.n));   // old trackandfieldstandards.com URL first, so Google keeps its rankings
   const ALT = new Map(); SCH.forEach((s, i) => { ALT.set(slugOf(s.n), i); (s.os || []).forEach(x => ALT.set(x, i)); });

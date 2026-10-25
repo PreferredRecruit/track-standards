@@ -27,6 +27,12 @@ def text_of(u):
     code = meta.split(" ")[0] if meta else "?"
     if not code.startswith("2"): return None, code
     head = open(f, "rb").read(5)
+    if head[:2] == b"PK":   # .docx: the text lives in word/document.xml
+        import zipfile
+        try:
+            x = zipfile.ZipFile(f).read("word/document.xml").decode("utf8", "ignore")
+            return html.unescape(re.sub(r"<[^>]+>", " ", x.replace("</w:p>", "\n").replace("</w:tc>", " | "))), "docx"
+        except Exception: return None, "docx-bad"
     if head == b"%PDF-":
         t = subprocess.run(["pdftotext", "-layout", f, "-"], capture_output=True, text=True).stdout
         return t, "pdf" if t.strip() else "pdf-image"
@@ -58,11 +64,12 @@ def main():
     O = [s for s in d["schools"] if s.get("o")]
     rows = []
     for s in O:
-        srcs = re.findall(r"https?://\S+", str(s.get("src") or ""))
-        # "... + ..._Womens_..." shorthand in src: expand from the first URL
-        if "+ ..." in str(s.get("src") or "") and srcs:
-            tail = re.search(r"\+ \.\.\.(\S+)", s["src"])
-            if tail: srcs.append(re.sub(r"_[A-Za-z]+_Standards.*$", "", srcs[0]) + tail.group(1).replace("_Womens_...", "_Womens_Standards_2025-2026.pdf") if "_Womens_..." in tail.group(1) else srcs[0])
+        raw = str(s.get("src") or ""); srcs = re.findall(r"https?://[^\s;()]+", raw)
+        if srcs:   # shorthand second files: "+ .../Women_s_X.pdf", "(+ W_T_F_X.pdf)", "+ womens_X.pdf", "; .../X.pdf"
+            base = srcs[0].rsplit("/", 1)[0] + "/"
+            for t in re.findall(r"(?:\+|\(\+|;)\s*(?:\.\.\./)?([A-Za-z0-9_\-.]+\.(?:pdf|docx))", raw):
+                if not t.startswith("http") and "..." not in t: srcs.append(base + t)
+            srcs = [u for u in dict.fromkeys(srcs) if "..." not in u]
         if not srcs: rows.append((s["n"], "manual", "no source URL", s.get("yr"))); continue
         if any(re.search(r"instagram|tiktok|\.png|\.jpe?g", u, re.I) for u in srcs):
             rows.append((s["n"], "manual", "image/social source", s.get("yr"))); continue
