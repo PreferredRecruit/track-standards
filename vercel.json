@@ -306,6 +306,16 @@
       "source": "/colleges-for/womens-javelin-90-0.html",
       "destination": "/colleges-for/womens-javelin-88-0.html",
       "permanent": true
+    },
+    {
+      "source": "/conferences/west-coast-conference-track-standards",
+      "destination": "/conferences/wcc-track-standards.html",
+      "permanent": true
+    },
+    {
+      "source": "/conferences/west-coast-conference-track-standards.html",
+      "destination": "/conferences/wcc-track-standards.html",
+      "permanent": true
     }
   ]
 }

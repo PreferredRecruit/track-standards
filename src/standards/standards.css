@@ -1286,3 +1286,10 @@ header .hd .acchd{flex:none;visibility:visible}
 .pgev{flex-wrap:wrap}
 .pgmode{margin-bottom:8px}.pgsea{margin:2px 0 6px}
 .pgb{fill:#13865a}.pgnone{margin:14px 6px;color:var(--pr-mute);font-size:14px}
+
+/* school "at a glance" chips (program facts, 2026-10-25) */
+.glance{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+.glance span{display:flex;flex-direction:column;background:var(--soft,#F3F2F7);border-radius:12px;padding:8px 12px;font-size:15px;font-weight:600;min-width:0}
+.glance span b{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute,#55555E);font-weight:650}
+.glance small{font-weight:500;color:var(--mute,#55555E)}
+.gsrc{font-size:12px;color:var(--mute,#55555E);margin:2px 0 8px}

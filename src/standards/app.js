@@ -491,9 +491,24 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   setTimeout(()=>teamBest(S.school),0);
   setTimeout(()=>schoolVids(S.school),0);
   setTimeout(()=>armSchoolOffer(S.school),0);
+  setTimeout(()=>schoolFacts(S.school),0);
   /* the "how these are set" / official-source box goes to the bottom (Ryan 2026-10-16: "just put it at the bottom") */
   const vm=o.match(/<div class="verify">[\s\S]*?<\/div>/),vf=vm?vm[0]:"";if(vf)o=o.replace(vf,"");
-  return o+`<div id="tbest"></div><div id="svid"></div>`+schoolAbout(s,vf)+schoolExtra(s)+schoolMore(s)+brandNote(s,B)+`</div>`}
+  return o+`<div id="sfacts"></div><div id="tbest"></div><div id="svid"></div>`+schoolAbout(s,vf)+schoolExtra(s)+schoolMore(s)+brandNote(s,B)+`</div>`}
+/* program facts (Ryan 2026-10-25: beat Runcruit/NCSA): head coach (school's own coaches page), roster by class + transfers (TFRRS),
+   cross country levels from the team's own runners at its NCAA regional / conference meet. Built by scripts/data/fetch_coaches.py,
+   scripts/tfrrs/build_programfacts.py and build_xc_standards.py; loaded once, only when a school opens. */
+let SFX=null;
+const fmtXC=x=>x==null?"–":Math.floor(x/60)+":"+String((x%60).toFixed(1)).padStart(4,"0");
+function schoolFacts(i){if(i==null)return;const fill=()=>{const el=document.getElementById("sfacts");if(!el||S.school!==i)return;const s=SCH[i],g=S.g,[C,P,X]=SFX;
+    const c=C[s.n],p=(P[s.n]||{})[g],x=((X.schools||{})[s.n]||{})[g],chips=[];
+    if(c&&c.coaches.length)chips.push(`<span><b>Head coach</b>${c.coaches.map(([n,t])=>esc(n)+(/head coach$/i.test(t)?"":` <small>${esc(t)}</small>`)).join(", ")}</span>`);
+    if(p)chips.push(`<span><b>Roster</b>${p.roster} athletes</span>`,`<span><b>Freshmen</b>${p.fr}</span>`,`<span><b>Transfers in</b>${p.transfers}</span>`);
+    if(!chips.length&&!x){el.innerHTML="";return}
+    const p4=isP4(s),d3=s.d==="NCAA D3"||s.d==="NAIA",cols=[0,1,2].filter(k=>!(k===1&&d3)&&!(k===2&&p4)),lab=["Target","Recruit","Walk‑On"];
+    el.innerHTML=(chips.length?`<div class="glance">${chips.join("")}</div>${p?`<p class="gsrc">${esc(p.season)} TFRRS roster${c?` · coach from <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(s.n.replace(/\s*\(.*?\)\s*/g," ").trim())} athletics</a>`:""}</p>`:""}`:"")
+      +(x?`<details class="fold"><summary>Cross country standards<small>${esc(x.d)}</small></summary><p class="tbp">What ${esc(s.n)}'s own runners ran at ${esc(x.meet.replace(/ Cross Country Championships$/,""))} (2024 and 2025): Target is the team's 3rd runner, Recruit the 5th, Walk‑On the 7th. The second row is the same fitness in a high school 5K. Courses differ, so these are estimates.</p><div class="scroll"><table><thead><tr><th></th>${cols.map(k=>`<th class="num">${lab[k]}</th>`).join("")}</tr></thead><tbody><tr><td>${esc(x.d)}</td>${cols.map(k=>`<td class="num">${fmtXC(x.lv[k])}</td>`).join("")}</tr><tr><td>High school 5K</td>${cols.map(k=>`<td class="num">${fmtXC(x.hs[k])}</td>`).join("")}</tr></tbody></table></div></details>`:"")};
+  if(SFX)return fill();Promise.all(["coaches","programfacts","xc_standards"].map(f=>fetch("/data/"+f+".json").then(r=>r.ok?r.json():{}).catch(()=>({})))).then(d=>{SFX=d;fill()})}
 /* Ryan's videos about this school (YouTube + Instagram reels), /data/videos.json written at build */
 let VIDS=null;
 /* videos live in a collapsed row (Ryan 2026-10-17: not visible up front); the links and the VideoObject data in the page head stay for search engines */
