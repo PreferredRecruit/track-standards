@@ -276,7 +276,7 @@ footer{text-align:center;font-size:13px;color:var(--pr-mute);padding:10px 22px 3
 .pbs div{border-radius:18px;background:var(--pr-card);box-shadow:var(--pr-rim);padding:14px 16px}
 .pbs small{display:block;font-size:12px;font-weight:600;color:var(--pr-mute)}
 .pbs b{display:block;font-size:26px;letter-spacing:-.03em;margin-top:4px;font-variant-numeric:tabular-nums}
-.pbs span{font-size:12px;color:var(--pr-mute)}
+.pbs span{display:block;font-size:12px;line-height:1.45;color:var(--pr-mute)}
 .meets{display:flex;flex-direction:column;gap:10px}
 .mt1{border-radius:20px;background:var(--pr-card);box-shadow:var(--pr-rim);overflow:hidden}
 .mt1 .mh{border-bottom:1px solid var(--pr-line);padding:13px 18px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -290,7 +290,7 @@ footer{text-align:center;font-size:13px;color:var(--pr-mute);padding:10px 22px 3
 .soon a{color:var(--pr-accent);font-weight:600}
 .agr{grid-template-columns:minmax(0,1.2fr) minmax(0,1.4fr) 70px 110px!important;grid-template-areas:none!important}
 @media (max-width:700px){.levels .lg3{grid-template-columns:1fr}.ahead a{margin-left:0}.mr{grid-template-columns:minmax(0,1fr) auto}.mr .plc{grid-column:1/-1;justify-self:start}
-  .agr{grid-template-columns:minmax(0,1fr) auto!important}.agr .al{display:none}.agr .rkb{display:none}}
+  .agr{grid-template-columns:minmax(0,1fr) auto!important}.agr .al{display:block;grid-column:1/-1;order:3;margin-top:2px;font-size:13px!important;line-height:1.4}.agr .rkb{display:none}.agr.gh .al{display:none}}
 
 /* ---- v10 ---- */
 .star{color:#7A45F0;margin-left:6px;font-size:.85em}
@@ -678,10 +678,10 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .simple .fold>summary{font-size:16px;font-weight:600;letter-spacing:-.01em;transition:color .15s}
 .simple .fold>summary:hover{color:var(--sbi)}
 .simple .fold>summary::after{transition:transform .3s var(--spring)}
-@supports selector(::details-content){
-  .simple .fold{interpolate-size:allow-keywords}
-  .simple .fold::details-content{block-size:0;overflow:hidden;transition:block-size .32s var(--spring),content-visibility .32s allow-discrete}
-  .simple .fold[open]::details-content{block-size:auto}}
+/* folds open with a fade-and-rise on their content (2026-10-25 audit: the ::details-content height animation could stop at the
+   closed height in some Chromium builds and clip the content); works in every browser, no layout tricks */
+@keyframes foldIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:no-preference){.simple .fold[open]>*:not(summary){animation:foldIn .28s var(--spring,ease-out) both}}
 .back{transition:opacity .15s}.back:hover{opacity:.7}
 @media (max-width:560px){.simple .sband .sname{font-size:21px}.simple .sband{padding:16px;gap:14px;border-radius:20px}}
 @media (prefers-reduced-motion:reduce){.eval,.eval.on,.evbg,.simple .fold::details-content{transition:none!important}}

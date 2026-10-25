@@ -130,6 +130,40 @@ def main():
     os.makedirs(os.path.join(OUT, "names"), exist_ok=True)
     for t, L in NB.items():
         with open(os.path.join(OUT, "names", t + ".dat"), "wb") as fh: fh.write(gzip.compress(json.dumps(L, separators=(",", ":")).encode(), 9))
+    # dates (Ryan 2026-10-25 audit: "06/10-13/26", "Feb 26, 2026" and a wrong "May 5, 2024" for a June NCAA final): the athlete's
+    # own race history (public/data/history, from their TFRRS page) holds the true date of every race; a list row takes it when the
+    # season, event and mark match. Every other date is rewritten to ISO (YYYY-MM-DD, first day of a multi-day meet).
+    MON = {m: i for i, m in enumerate("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(), 1)}
+    def iso(d):
+        d = str(d or "").strip()
+        m = re.match(r"^(\d{1,2})/(\d{1,2})(?:-\d{1,2})?/(\d{2,4})$", d)
+        if m: y = int(m.group(3)); return f"{y + 2000 if y < 100 else y}-{int(m.group(1)):02d}-{int(m.group(2)):02d}"
+        m = re.match(r"^([A-Z][a-z]{2})[a-z]*\.?\s+(\d{1,2})(?:\s*-\s*(?:[A-Z][a-z]{2}\s*)?\d{1,2})?,\s*(\d{4})$", d)
+        if m and m.group(1) in MON: return f"{m.group(3)}-{MON[m.group(1)]:02d}-{int(m.group(2)):02d}"
+        return d
+    HC = {"High Jump": "HJ", "Pole Vault": "PV", "Long Jump": "LJ", "Triple Jump": "TJ", "Shot Put": "SP", "Weight Throw": "WT", "Discus": "DT", "Hammer": "HT", "Javelin": "JT", "Heptathlon": "Hep", "Decathlon": "Dec", "Pentathlon": "Pent"}
+    code = lambda e: HC.get(e) or re.sub(r"^(\d[\d,]*) Meters$", r"\1", re.sub(r"^(\d+) Hurdles$", r"\1H", re.sub(r"^(\d+) Steeplechase$", r"\1S", e)))
+    clean = lambda m: re.sub(r"[^0-9:.]", "", str(m or ""))
+    HD = os.path.join(SITE, "public", "data", "history"); fixed = 0
+    HCACHE = {}
+    def hist(aid):
+        k = int(aid) % 1024
+        if k not in HCACHE:
+            f = os.path.join(HD, f"{k}.dat")
+            try: HCACHE[k] = json.loads(gzip.decompress(open(f, "rb").read())) if os.path.exists(f) else {}
+            except Exception: HCACHE[k] = {}
+        return HCACHE[k].get(aid) or []
+    for i, b in buckets.items():
+        for aid, e in b.items():
+            races = hist(aid)
+            for x in e["s"]:
+                if len(x) < 9: continue
+                hit = next((r for r in races if r[0] == x[0] and r[3] == code(x[2]) and clean(r[4]) == clean(x[3]) and r[1]), None)
+                if hit:
+                    if hit[1] != iso(x[8]): fixed += 1
+                    x[8] = hit[1]; x[7] = hit[2]
+                else: x[8] = iso(x[8])
+    print(fixed, "career dates corrected from meet histories")
     os.makedirs(OUT, exist_ok=True)
     for i, b in buckets.items():
         with open(os.path.join(OUT, f"{i}.dat"), "wb") as fh: fh.write(gzip.compress(json.dumps(b, separators=(",", ":")).encode(), 9))

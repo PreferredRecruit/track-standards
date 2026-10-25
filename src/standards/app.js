@@ -887,9 +887,11 @@ const careerOf=id=>{const b=CAR[+id%512];return b?(b[id]||{n:"",s:[]}):null};
    own colour with a marker where they changed schools; up is always better */
 const PCOL=["#7A45F0","#0EA5A4","#E8762D","#D6336C","#2F80ED","#5B8C2A"];
 const skey=k=>{const [y,t]=k.split("-");return +y*2+(t==="outdoor"?1:0)};
+/* charts are drawn at the width they are shown (2026-10-25 audit: a 640-wide chart shrunk onto a phone made its labels ~6px) */
+const CW=()=>Math.min(640,Math.max(340,(typeof innerWidth==="number"?innerWidth:640)-36));
 function progChart(rows,ev){const c=ecode(ev),F=tfield(c),pts=rows.filter(x=>x[2]===ev&&tval(x[3])!=null).sort((a,b)=>skey(a[0])-skey(b[0]));if(!pts.length)return "";
   const sch=[...new Set(pts.map(x=>tcanon(x[5])))],col=t=>PCOL[sch.indexOf(tcanon(t))%PCOL.length];
-  const W=640,H=230,L=pts.length<2?(640-18)/2:64,Rr=pts.length<2?(640-18)/2:18,T=26,Bt=44,v=pts.map(x=>tval(x[3])),lo=Math.min(...v),hi=Math.max(...v),pad=(hi-lo||Math.abs(hi)*.02||1)*.18;
+  const W=CW(),H=230,L=pts.length<2?(W-18)/2:(W<500?46:64),Rr=pts.length<2?(W-18)/2:18,T=26,Bt=44,v=pts.map(x=>tval(x[3])),lo=Math.min(...v),hi=Math.max(...v),pad=(hi-lo||Math.abs(hi)*.02||1)*.18;
   const y=x=>{const f=(x-(lo-pad))/((hi+pad)-(lo-pad));return T+(F?1-f:f)*(H-T-Bt)},X=i=>L+(pts.length===1?0:i*(W-L-Rr)/(pts.length-1));
   const lab=k=>{const [yy,t]=k.split("-");return `${t==="indoor"?"In":"Out"} ’${yy.slice(2)}`};
   let g=`<svg class="pgc" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(evLabel(ev))} progression">`;
@@ -906,18 +908,26 @@ const HIS={},HISL={};
 function loadHist(id){const b=+id%1024;if(HIS[b]||HISL[b])return;HISL[b]=fetch("/data/history/"+b+".dat").then(r=>{if(!r.ok||typeof DecompressionStream==="undefined")throw 0;return unpack(r)}).then(j=>{HIS[b]=j}).catch(()=>{HIS[b]={}}).then(()=>{const w=document.querySelector(".pgw");if(w&&PGCS){const t=document.createElement("div");t.innerHTML=progBlock(PGCS,PGID);const n=t.querySelector(".pgw");if(n)w.replaceWith(n)}})}
 const histOf=id=>{const b=HIS[+id%1024];return b?(b[id]||[]):null};
 const dnum=d=>{const [y,m,dd]=d.split("-").map(Number);return Date.UTC(y,m-1,dd)/864e5};
+/* one date style everywhere (2026-10-25 audit): ISO and TFRRS list dates -> "Jun 5, 2024" */
+const MO="Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
+const fmtD=d=>{d=String(d||"");let m=d.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(m)return `${MO[+m[2]-1]} ${+m[3]}, ${m[1]}`;m=d.match(/^(\d{1,2})\/(\d{1,2})(?:-\d{1,2})?\/(\d{2})$/);if(m)return `${MO[+m[1]-1]} ${+m[2]}, 20${m[3]}`;return d.replace(/\s*-\s*\d{1,2},/,",")};
+const fmtW=w=>{const n=parseFloat(w);return isNaN(n)?String(w):(n>0?"+":"")+n.toFixed(1)};
 function seasonChart(H,code,sk){const F=tfield(code),pts=H.filter(x=>x[0]===sk&&x[3]===code&&tval(x[4])!=null&&x[1]);if(!pts.length)return `<p class="pgnone">No ${esc(ename(code))} races in ${esc(seasonLabel(sk))}.</p>`;
   const ok=x=>!(WIND&&WCODE.has(code)&&aided(x[5])),v=pts.map(x=>tval(x[4])),vb=pts.filter(ok).map(x=>tval(x[4])),best=vb.length?(F?Math.max(...vb):Math.min(...vb)):null;
-  const W=640,H2=230,L=26,Rr=26,T=26,Bt=44,lo=Math.min(...v),hi=Math.max(...v),pad=(hi-lo||Math.abs(hi)*.02||1)*.2,d0=dnum(pts[0][1]),d1=dnum(pts[pts.length-1][1]);
+  const W=CW(),H2=230,L=26,Rr=26,T=26,Bt=44,lo=Math.min(...v),hi=Math.max(...v),pad=(hi-lo||Math.abs(hi)*.02||1)*.2,d0=dnum(pts[0][1]),d1=dnum(pts[pts.length-1][1]);
   const y=z=>{const f=(z-(lo-pad))/((hi+pad)-(lo-pad));return T+(F?1-f:f)*(H2-T-Bt)},X=x=>d1===d0?W/2:L+(dnum(x[1])-d0)/(d1-d0)*(W-L-Rr);
   const fmt=d=>{const [yy,m,dd]=d.split("-");return "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ")[+m-1]+" "+(+dd)};
   let g=`<svg class="pgc" viewBox="0 0 ${W} ${H2}" role="img" aria-label="${esc(ename(code))} races, ${esc(seasonLabel(sk))}">`;
   /* one line through each meet day's best mark; every race (prelims, finals) is a dot */
   const days=[...new Set(pts.map(x=>x[1]))],dayBest=days.map(dd=>{const r=pts.filter(x=>x[1]===dd&&ok(x)).map(x=>tval(x[4]));return r.length?[dd,F?Math.max(...r):Math.min(...r)]:null}).filter(Boolean);
   g+=`<polyline class="pgl" points="${dayBest.map(([dd,b])=>X([0,dd])+","+y(b)).join(" ")}"/>`;
-  const labelled=new Set();pts.forEach((x,i)=>{const isB=ok(x)&&tval(x[4])===best,ad=!ok(x),cx=X(x),cy=y(v[i]);
+  const labelled=new Set(),LB=[];pts.slice().sort((p,q)=>(ok(q)&&tval(q[4])===best)-(ok(p)&&tval(p[4])===best)).forEach(x=>{const i=pts.indexOf(x);let isB=ok(x)&&tval(x[4])===best,ad=!ok(x),cx=X(x),cy=y(v[i]);
     g+=`<circle cx="${cx}" cy="${cy}" r="${isB?7:5.5}" fill="${ad?"var(--pr-card)":isB?"#13865a":"#7A45F0"}" stroke="${ad?"var(--pr-mute)":isB?"#13865a":"#7A45F0"}" stroke-width="2.5"><title>${esc(fmt(x[1]))} · ${esc(x[2])} · ${esc(x[4])}${x[5]?" (wind "+esc(x[5])+")":""}${x[6]?" · "+esc(x[6]):""}</title></circle>`;
-    const k=x[1]+"|"+x[4];if((pts.length<=12||isB)&&!labelled.has(k)){labelled.add(k);g+=`<text x="${cx}" y="${cy-12}" text-anchor="middle" class="pgv${isB?" pgb":""}">${esc(x[4].replace(/\s*[@#]+/g,""))}${ad?" w":""}</text>`}});
+    /* labels (2026-10-25 audit: "6.54" over "6.55"): the season best and each meet day's best only, never two labels touching */
+    const db=dayBest.find(([dd])=>dd===x[1]),isDay=ok(x)&&db&&tval(x[4])===db[1],k=x[1];
+    if(isB&&LB.bestDone&&!isDay)return;if(isB&&LB.bestDone){isB=false}
+    if((isB||isDay)&&!labelled.has(k)){if(isB)LB.bestDone=1;const tx=x[4].replace(/\s*[@#]+/g,""),w2=tx.length*4.2+6;
+      let ly=cy-13;const hit=yy=>LB.some(b=>Math.abs(b[0]-cx)<w2+b[2]&&Math.abs(b[1]-yy)<15);if(hit(ly))ly=cy+22;if(isB||!hit(ly)){labelled.add(k);LB.push([cx,ly,w2]);g+=`<text x="${cx}" y="${ly}" text-anchor="middle" class="pgv${isB?" pgb":""}">${esc(tx)}</text>`}}});
   const ticks=days.length<=6?days:[days[0],days[Math.floor(days.length/3)],days[Math.floor(2*days.length/3)],days[days.length-1]];
   ticks.forEach(dd=>{g+=`<text x="${X([0,dd])}" y="${H2-Bt+20}" text-anchor="middle" class="pgt">${fmt(dd)}</text>`});
   const first=pts.find(ok),bx=pts.find(x=>ok(x)&&tval(x[4])===best),ch=first&&best!=null?(F?(best-tval(first[4]))/tval(first[4]):(tval(first[4])-best)/tval(first[4])):0;
@@ -948,12 +958,12 @@ function athView(D){
   const schools=[...new Set([...((C&&C.p)||[]).map(tcanon),...cs.slice().reverse().map(x=>tcanon(x[5]))])];   /* TFRRS "previously at" first */
   let o=`<div class="rbody${R.swap?" swap":""}"><p style="margin:14px 2px 0"><button class="lnk" data-athback>‹ Back to rankings</button></p>
   <div class="ahead"><div class="avt" aria-hidden="true">${esc(init)}</div><div><h3>${esc(a.name)}</h3><p>${esc([yr(a.yr),schools.length>1?schools.join(" → "):D.teams[a.team],DIVINFO[R.div]||R.div].filter(Boolean).join(" · "))}</p></div>${prof?`<a href="${prof}">Full profile ›</a>`:tlink?`<a href="${tlink}" target="_blank" rel="noopener">Full profile on TFRRS ›</a>`:""}</div>
-  <div class="ah2">College bests</div><div class="pbs">${pbs.map(([e,m,w,sub])=>`<div><small>${esc(e)}</small><b>${esc(m)}</b>${w?`<span>wind ${esc(w)}</span>`:""}${sub?`<span>${esc(sub)}</span>`:""}</div>`).join("")}</div>
+  <div class="ah2">College bests</div><div class="pbs">${pbs.map(([e,m,w,sub])=>{const ad=w&&parseFloat(w)>2;return `<div><small>${esc(e)}</small><b>${esc(m)}${ad?"w":""}</b>${sub?`<span>${esc(sub)}</span>`:""}${w?`<span>wind ${esc(fmtW(w))}${ad?" · aided":""}</span>`:""}</div>`}).join("")}</div>
   <div class="ah2">${esc(seasonLabel(R.season))} rankings</div><div class="grid"><div class="gh agr"><span>Event</span><span class="al">List</span><span>Rank</span><span style="text-align:right">Mark</span></div>
   ${Object.values(best).map(m=>`<div class="gr agr"><span style="font-weight:600">${esc(evLabel(m.e))}</span><span class="al" style="color:var(--pr-mute);font-size:14px">${esc(m.l.nat?(DIVINFO[R.div]||R.div)+" national":m.l.label)}</span><span class="rkb" style="width:auto;padding:0 10px;border-radius:999px">#${esc(m.r[0])}</span><span class="gmk">${esc(m.r[4])}${m.r[8]?`<small>${esc(m.r[8])}</small>`:""}</span></div>`).join("")}</div>
   ${progBlock(cs,aid)}
   ${cs.length?`<div class="ah2">Career by season</div><div class="grid"><div class="gh agr"><span>Season</span><span class="al">School · event</span><span>Rank</span><span style="text-align:right">Mark</span></div>
-  ${cs.map(x=>`<div class="gr agr"><span style="font-weight:600">${esc(seasonLabel(x[0]))}</span><span class="al" style="font-size:14px">${esc(tcanon(x[5]))} · ${esc(evLabel(x[2]))}<small style="display:block;color:var(--pr-mute)">${esc(x[7])} · ${esc(x[8])}</small></span><span class="rkb" style="width:auto;padding:0 10px;border-radius:999px">${x[6]?"#"+esc(x[6]):"–"}</span><span class="gmk">${esc(x[3])}${x[4]?`<small>wind ${esc(x[4])}${x.lg?" · legal best":WEV.has(x[2])&&aided(x[4])?" · aided":""}</small>`:""}</span></div>`).join("")}</div>${WIND&&cs.some(x=>x.lg||x.ad)?`<p class="wnote">Wind-legal is on: wind-aided season bests are replaced by that season's legal best${cs.some(x=>x.ad)?"; marked aided where no legal mark was found yet":""}.</p>`:""}`:""}
+  ${cs.map(x=>`<div class="gr agr"><span style="font-weight:600">${esc(seasonLabel(x[0]))}</span><span class="al" style="font-size:14px">${esc(tcanon(x[5]))} · ${esc(evLabel(x[2]))}<small style="display:block;color:var(--pr-mute)">${esc(x[7])}${x[8]?" · "+esc(fmtD(x[8])):""}</small></span>${x[6]?`<span class="rkb" style="width:auto;padding:0 10px;border-radius:999px">#${esc(x[6])}</span>`:"<span></span>"}<span class="gmk">${esc(x[3])}${WEV.has(x[2])&&aided(x[4])&&!x.lg?"w":""}${x[4]?`<small>wind ${esc(fmtW(x[4]))}${x.lg?" · legal best":WEV.has(x[2])&&aided(x[4])?" · aided":""}</small>`:""}</span></div>`).join("")}</div>${WIND&&cs.some(x=>x.lg||x.ad)?`<p class="wnote">Wind-legal is on: wind-aided season bests are replaced by that season's legal best${cs.some(x=>x.ad)?"; marked aided where no legal mark was found yet":""}.</p>`:""}`:""}
   <div class="ah2">Meet history</div>`;
   if(a.path&&!ATH) o+=skeleton();
   else if(P&&P.meets&&P.meets.length) o+=`<div class="meets">${P.meets.map(m=>`<article class="mt1"><div class="mh"><b>${esc(m.meet)}</b><span>${esc(m.date)}</span></div>${m.rows.map(r=>`<div class="mr"><span>${esc(evName(r[0]))}</span><b>${esc(r[1])}${r[2]?`<small>wind ${esc(r[2])}</small>`:""}</b>${r[3]?`<span class="plc ${/^1st/.test(r[3])?"w1":""}">${esc(r[3].replace(/\s*\(P\)/," · Prelim").replace(/\s*\(F\)/," · Final"))}</span>`:"<span></span>"}</div>`).join("")}</article>`).join("")}</div>`;
@@ -1421,7 +1431,7 @@ async function athleteProgress(e,want,q=""){
   /* the latest season race by race, when we have their TFRRS history */
   const H=await getHist(e[1]),code=ecode(ev),last=pts[pts.length-1][0],races=(H||[]).filter(x=>x[0]===last&&x[3]===code&&tval(x[4])!=null);
   if(races.length>1){const rv=races.map(x=>tval(x[4])),rb=F?Math.max(...rv):Math.min(...rv),bi=rv.indexOf(rb),champ=/championship|conference|ncaa|regional|first round/i.test(races[bi][2]);
-    html+=`<p>${esc(seasonLabel(last))}, race by race: ${races.length} races, from ${esc(races[0][4])} to a season best of <b>${esc(races[bi][4])}</b> at ${esc(races[bi][2])}${champ?" (a championship meet: peaked on time)":""}.</p>`+chartSvg({title:`${e[0]} · ${evLabel(ev)} · ${seasonLabel(last)} races`,type:"line",labels:races.map(x=>{const [,m,dd]=x[1].split("-");return `${+m}/${+dd}`}),series:[{name:e[0],values:rv}],value_format:F?"meters":"time",lower_is_better:!F})}
+    html+=`<p>${esc(seasonLabel(last))}, race by race: ${races.length} races, from ${esc(races[0][4])} to a season best of <b>${esc(races[bi][4])}</b> at ${esc(races[bi][2])}${champ?" (a championship meet: peaked on time)":""}.</p>`+chartSvg({title:`${e[0]} · ${evLabel(ev)} · ${seasonLabel(last)} races`,type:"line",labels:races.map(x=>{const [,m,dd]=x[1].split("-");return `${MO[+m-1]} ${+dd}`}),series:[{name:e[0],values:rv}],value_format:F?"meters":"time",lower_is_better:!F})}
   html+=`<p><a href="${aLink(e)}">Open ${esc(e[0])}'s full profile ›</a></p>`;
   const others=[...new Set(C.s.map(x=>x[2]))].filter(x=>x!==ev).slice(0,2).map(x=>`${e[0]} ${evLabel(x)} progression`);
   return {html,f:others}}
@@ -1819,13 +1829,15 @@ function chartSvg(sp){
   const S2=(sp.series||[]).filter(s=>Array.isArray(s.values)),labels=sp.labels||[];if(!S2.length||!labels.length)return "";
   const all=S2.flatMap(s=>s.values).filter(v=>typeof v==="number"&&isFinite(v));if(!all.length)return "";
   const COLORS=["#7A45F0","#16794A","#9A5200","#0A5FB4","#B0306A"];const legend=S2.length>1?`<div class="lg">${S2.map((s,k)=>`<span><i style="background:${COLORS[k%5]}"></i>${esc(s.name)}</span>`).join("")}</div>`:"";
-  if(sp.type==="line"){const W=640,H=240,P=52,lo=Math.min(...all),hi=Math.max(...all),pad=(hi-lo)*.12||1,a=lo-pad,b=hi+pad;
+  if(sp.type==="line"){const W=CW(),H=240,P=52,lo=Math.min(...all),hi=Math.max(...all),pad=(hi-lo)*.12||1,a=lo-pad,b=hi+pad;
     const X=i=>P+(labels.length<2?0:i*(W-P-14)/(labels.length-1)),Y=v=>{const t=(v-a)/(b-a);return 12+(sp.lower_is_better?t:1-t)*(H-44)};
-    let g=[0,.5,1].map(f=>{const v=a+(b-a)*f;return `<line x1="${P}" x2="${W-14}" y1="${Y(v)}" y2="${Y(v)}" stroke="currentColor" opacity=".12"/><text x="${P-6}" y="${Y(v)+4}" text-anchor="end">${esc(fmt(v))}</text>`}).join("");
+    /* round gridlines (2026-10-25 audit: 9.66 / 9.96 / 10.27 read as noise): a 1-2-2.5-5 step, 3 to 5 lines inside the range */
+    const step=(()=>{const raw=(b-a)/4,p=Math.pow(10,Math.floor(Math.log10(raw)));return [1,2,2.5,5,10].map(k=>k*p).find(k=>k>=raw)})(),ticks=[];for(let v=Math.ceil(a/step)*step;v<=b+1e-9;v+=step)ticks.push(+v.toFixed(6));
+    let g=ticks.map(v=>{return `<line x1="${P}" x2="${W-14}" y1="${Y(v)}" y2="${Y(v)}" stroke="currentColor" opacity=".12"/><text x="${P-6}" y="${Y(v)+4}" text-anchor="end">${esc(fmt(v))}</text>`}).join("");
     g+=labels.map((l,i)=>`<text x="${X(i)}" y="${H-12}" text-anchor="middle">${esc(String(l).slice(0,12))}</text>`).join("");
     g+=S2.map((s,k)=>{const pts=s.values.map((v,i)=>typeof v==="number"?[X(i),Y(v),i]:null).filter(Boolean);return `<polyline fill="none" stroke="${COLORS[k%5]}" stroke-width="2.5" stroke-linejoin="round" points="${pts.map(p=>p[0]+","+p[1]).join(" ")}"/>`+pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="${COLORS[k%5]}"><title>${esc(labels[p[2]])}: ${esc(fmt(s.values[p[2]]))}</title></circle>`).join("")}).join("");
     return `<figure class="chart"><figcaption>${esc(sp.title)}</figcaption>${legend}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(sp.title)}">${g}</svg></figure>`}
-  const lo=Math.min(...all),hi=Math.max(...all),W=640,LW=170,multi=S2.length>1,rowH=multi?14*S2.length+10:28,H=labels.length*rowH+8;
+  const lo=Math.min(...all),hi=Math.max(...all),W=CW(),LW=W<500?120:170,multi=S2.length>1,rowH=multi?14*S2.length+10:28,H=labels.length*rowH+8;
   const span=(hi-lo)||Math.abs(hi)||1,floor=sp.lower_is_better?hi+span*.25:Math.max(0,lo-span*.25);
   const len=v=>Math.max(6,(sp.lower_is_better?(floor-v):(v-floor))/((sp.lower_is_better?floor-lo:hi-floor)||1)*(W-LW-86));
   const rows=labels.map((l,i)=>`<text x="${LW-8}" y="${i*rowH+rowH/2+6}" text-anchor="end">${esc(String(l).slice(0,24))}</text>`+S2.map((s,k)=>{const v=s.values[i];if(typeof v!=="number")return "";const y=i*rowH+6+(multi?k*14:2);

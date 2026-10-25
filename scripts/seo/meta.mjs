@@ -14,9 +14,11 @@ export function fitTitle(t) {
   const steps = [x => x, x => x.replace(/: Every School$/, ""), x => x.replace(" Track & Field ", " Track "), x => x.replace(/ \d{4}-\d{2}\b/, ""),
     x => x.replace(/^(.*?) (University|College)( of [A-Z][\w.&' -]*)?(?= Track)/, (m, a, u, o) => o ? `${u}${o}` : a),
     x => x.replace(" Table for High School Athletes", "").replace(" Conversion", ""),
-    x => x.replace(/\(NJCAA\): \d{4} Results/, "(NJCAA): Results"), x => x.replace(" Results & Roster", " Results")];   /* junior college titles */
+    x => x.replace(/\(NJCAA\): \d{4} Results/, "(NJCAA): Results"), x => x.replace(" Results & Roster", " Results"),
+    x => x.replace(" Stats & Rankings", " Stats"), x => x.replace(/ \(([^)]+)\) Track Stats$/, " Track Stats, $1"), x => x.replace(/ Track Stats, (.+)$/, ", $1 Track"),   /* athlete pages */
+    x => x.replace(" for Athletes, Parents and Coaches", "")];   /* junior college titles */
   let cur = t;
-  for (const f of steps) { cur = f(cur); if (`${cur} | ${BRAND}`.length <= 62) return `${cur} | ${BRAND}`; if (cur.length <= 60) return cur; }
+  for (const f of steps) { cur = f(cur); if (`${cur} | ${BRAND}`.length <= 60) return `${cur} | ${BRAND}`; if (cur.length <= 60) return cur; }
   return cur;
 }
 

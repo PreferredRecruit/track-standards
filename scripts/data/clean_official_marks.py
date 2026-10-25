@@ -10,7 +10,7 @@ import json, os, re, sys
 SITE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 P = os.path.join(SITE, "public", "data", "db.json")
 FR = {"½": ".5", "¼": ".25", "¾": ".75"}
-FIELD = re.compile(r"jump|vault|put|shot|discus|hammer|javelin|weight|throw", re.I)
+FIELD = re.compile(r"jump|vault|put|shot|discus|hammer|javelin|weight|throw|\b(HJ|LJ|TJ|PV|SP|DT|HT|JT|WT)\b", re.I)
 
 def fmt_in(x):
     s = f"{x:.2f}".rstrip("0").rstrip(".")
@@ -52,11 +52,17 @@ def clean(c):
         return typo, False
     return (f"{out} ({metres:.2f}m)" if metres is not None else out), True
 
+TYPO = lambda x: x.replace("’", "'").replace("‘", "'").replace("”", '"').replace("“", '"').replace("″", '"').replace("′", "'") if isinstance(x, str) else x
+
 def main(write):
     d = json.load(open(P)); n = bad = 0; left = []
     for s in d["schools"]:
         for g, o in (s.get("off") or {}).items():
             for r in o.get("rows", []):
+                # every cell: straight quote marks; an em dash "no mark" becomes the site's en dash
+                for i in range(len(r)):
+                    v = TYPO(r[i]); v = "–" if isinstance(v, str) and v.strip() in ("—", "-", "--") else v
+                    if v != r[i]: r[i] = v; n += 1
                 if not FIELD.search(str(r[0])): continue
                 for i in range(1, len(r)):
                     v, ok = clean(r[i])
