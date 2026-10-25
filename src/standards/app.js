@@ -404,6 +404,10 @@ const confUrl=s=>{const dup=SCH.some(x=>x.c===s.c&&x.d!==s.d);return `/conferenc
 const stateUrl=st=>`/states/${slugx(ST_NAME[st]||st)}-college-track-and-field.html`;
 /* common questions + related programs (same text the pre-built page and its FAQ structured data carry) */
 const FAQ_EV=["100m","200m","400m","800m","1500m","5000m","110m Hurdles","100m Hurdles","Long Jump","High Jump","Shot Put"];
+/* previous years (Ryan 2026-10-25): the school's older published charts, one collapsed row; never the current levels */
+function schoolArch(s){const A=s.arch||[];if(!A.length)return "";const g=S.g;
+  const t=e=>e[g]?`<div class="scroll" style="margin-top:8px"><table><thead><tr><th>Event</th>${e[g].tiers.map(x=>`<th class="num">${esc(String(x).replace(/^(men's|women's|men|women)\s+/i,"").replace(/\s+standards?$/i,""))}</th>`).join("")}</tr></thead><tbody>${e[g].rows.map(r=>`<tr><td>${esc(r[0])}</td>${e[g].tiers.map((_,i)=>`<td class="num">${esc(r[i+1]||"–")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`:`<p class="tbp">No ${g==="m"?"men's":"women's"} chart in this one.</p>`;
+  return `<details class="fold"><summary>Previous years<small>${A.map(e=>esc(e.yr)).join(" · ")}</small></summary><p class="tbp">Charts ${esc(s.t||s.n)} published on its own site before 2024, checked mark for mark. For comparison only: the levels above are current.</p>${A.map(e=>`<h4 class="arch-h">${e.yr==="Undated"?"Undated chart":esc(e.yr)+" chart"}</h4>${t(e)}${e.src?`<p class="gsrc"><a href="${esc(e.src)}" target="_blank" rel="noopener">Source: ${esc(s.t||s.n)} athletics</a></p>`:""}`).join("")}</details>`}
 function schoolExtra(s){const lvl="Walk-On",i=SCH.indexOf(s);
   const mk=g=>FAQ_EV.map(e=>{const t=s[g][e];return t&&t[2]?`${e} ${t[2]}`:null}).filter(Boolean).slice(0,6),m=mk("m"),w=mk("w");
   const q=[[`What are the ${s.n} track and field recruiting standards?`,s.j?`${s.n} is an NJCAA junior college program${s.s?` in ${ST_NAME[s.s]||s.s}`:""}. This site doesn't set Target, Recruit or Walk-On levels for junior colleges, because NJCAA competition is national rather than conference-based and a program's marks can't be predicted reliably. Its season bests are above, and the full NJCAA national list is in Results.`:`${s.n} is ${/^[AEIOUN]/.test(s.d)?"an":"a"} ${s.d} program${s.c!==s.d?` in the ${s.c}`:""}. ${s.o?`Its standards come from the school's own published chart${s.yr?` (${s.yr})`:""}.${OLDNOTE(s)}`:s.est?"Its levels are estimates: the typical marks across its division, because the school doesn't publish standards and its conference has no championship results to set them from.":"Its Target, Recruit and Walk-On levels are set from 2026 conference results."} The full table for men and women is above.`]];
@@ -494,7 +498,7 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   setTimeout(()=>schoolFacts(S.school),0);
   /* the "how these are set" / official-source box goes to the bottom (Ryan 2026-10-16: "just put it at the bottom") */
   const vm=o.match(/<div class="verify">[\s\S]*?<\/div>/),vf=vm?vm[0]:"";if(vf)o=o.replace(vf,"");
-  return o+`<div id="sfacts"></div><div id="tbest"></div><div id="svid"></div>`+schoolAbout(s,vf)+schoolExtra(s)+schoolMore(s)+brandNote(s,B)+`</div>`}
+  return o+`<div id="sfacts"></div><div id="tbest"></div><div id="svid"></div>`+schoolArch(s)+schoolAbout(s,vf)+schoolExtra(s)+schoolMore(s)+brandNote(s,B)+`</div>`}
 /* program facts (Ryan 2026-10-25: beat Runcruit/NCSA): head coach (school's own coaches page), roster by class + transfers (TFRRS),
    cross country levels from the team's own runners at its NCAA regional / conference meet. Built by scripts/data/fetch_coaches.py,
    scripts/tfrrs/build_programfacts.py and build_xc_standards.py; loaded once, only when a school opens. */
