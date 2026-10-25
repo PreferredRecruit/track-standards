@@ -447,7 +447,7 @@ let BRQ=false;   /* the re-render after brand data arrives skips the entrance fa
 if(/^\/schools\//.test(location.pathname))loadBrand();
 function brandOf(s){if(BR===null){loadBrand();return null}
   const b=BR[(s.os&&s.os[0])||slugOf(s.n)];return b&&b.primary?b:null}
-const schoolAbout=(s,vf="")=>`<section class="sabout"><details class="fold"><summary>About ${esc(s.n)}</summary><p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)}${s.j?" junior college":""} track and field program${s.c!==s.d?` in the ${esc(s.c)}`:""}${s.s?`, based in ${esc(ST_NAME[s.s]||s.s)}`:""}. ${s.j?"Junior colleges compete nationally rather than in conferences, so this site shows its season results instead of predicted recruiting levels.":`These are the marks it takes to be a Target recruit, a Recruit or a Walk-On for ${(s.ng||[])[0]?((s.ng[0]==="m")?"women":"men"):"men and women"} in every event${s.o?", taken from the school's own published standards":""}.`}</p>${vf}${schoolLinks(s)}</details></section>`;
+const schoolAbout=(s,vf="")=>`<section class="sabout"><details class="fold"><summary>About ${esc(s.n)}</summary><p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)}${s.j?" junior college":""} track and field program${s.c!==s.d?` in the ${esc(s.c)}`:""}${s.s?`, based in ${esc(ST_NAME[s.s]||s.s)}`:""}. ${s.j?"Junior colleges compete nationally rather than in conferences, so this site shows its season results instead of predicted recruiting levels.":`These are the marks it takes to be a Target recruit, a Recruit or a Walk-On for ${(s.ng||[])[0]?((s.ng[0]==="m")?"women":"men"):"men and women"} in every event${s.o?", taken from the school's own published standards":""}.`}</p>${vf}</details></section>`;   /* link-button row removed (Ryan 2026-10-25: "not clogging the website with ... visible links"); the static page keeps them */
 const brandNote=(s,B)=>B?`<p class="bnote">School names, logos and colours belong to their institutions and are used only to identify the program. Preferred Recruit is not affiliated with or endorsed by ${esc(s.n)}.</p>`:"";
 /* school-page offer (Ryan 2026-10-17: "use a pop-up for that content", keep the page surface clean). Opens once the visitor has
    scrolled past the standards table (held 1.2 s), once per visit, same modal + rules as everywhere else. */
@@ -501,12 +501,13 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
 let SFX=null;
 const fmtXC=x=>x==null?"–":Math.floor(x/60)+":"+String((x%60).toFixed(1)).padStart(4,"0");
 function schoolFacts(i){if(i==null)return;const fill=()=>{const el=document.getElementById("sfacts");if(!el||S.school!==i)return;const s=SCH[i],g=S.g,[C,P,X]=SFX;
-    const c=C[s.n],p=(P[s.n]||{})[g],x=((X.schools||{})[s.n]||{})[g],chips=[];
-    if(c&&c.coaches.length)chips.push(`<span><b>Head coach</b>${c.coaches.map(([n,t])=>esc(n)+(/head coach$/i.test(t)?"":` <small>${esc(t)}</small>`)).join(", ")}</span>`);
-    if(p)chips.push(`<span><b>Roster</b>${p.roster} athletes</span>`,`<span><b>Freshmen</b>${p.fr}</span>`,`<span><b>Transfers in</b>${p.transfers}</span>`);
-    if(!chips.length&&!x){el.innerHTML="";return}
+    const c=C[s.n],p=(P[s.n]||{})[g],x=((X.schools||{})[s.n]||{})[g],st=[];
+    if(c&&c.coaches.length)st.push(`<div class="gs gcoach"><span>Head coach</span><b>${c.coaches.slice(0,2).map(([n])=>esc(n)).join(" · ")}</b></div>`);
+    if(p)st.push(`<div class="gs"><span>Roster</span><b>${p.roster}</b></div>`,`<div class="gs"><span>Freshmen</span><b>${p.fr}</b></div>`,`<div class="gs"><span>Transfers</span><b>${p.transfers}</b></div>`);
+    if(!st.length&&!x){el.innerHTML="";return}
     const p4=isP4(s),d3=s.d==="NCAA D3"||s.d==="NAIA",cols=[0,1,2].filter(k=>!(k===1&&d3)&&!(k===2&&p4)),lab=["Target","Recruit","Walk‑On"];
-    el.innerHTML=(chips.length?`<div class="glance">${chips.join("")}</div>${p?`<p class="gsrc">${esc(p.season)} TFRRS roster${c?` · coach from <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(s.n.replace(/\s*\(.*?\)\s*/g," ").trim())} athletics</a>`:""}</p>`:""}`:"")
+    const src=[p?`${esc(p.season.toLowerCase())} roster on TFRRS`:"",c?`coach from <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(s.t||s.n)} athletics</a>`:""].filter(Boolean).join(" · ");
+    el.innerHTML=(st.length?`<div class="glance">${st.join("")}${src?`<p class="gsrc">${src.charAt(0).toUpperCase()+src.slice(1)}</p>`:""}</div>`:"")
       +(x?`<details class="fold"><summary>Cross country standards<small>${esc(x.d)}</small></summary><p class="tbp">What ${esc(s.n)}'s own runners ran at ${esc(x.meet.replace(/ Cross Country Championships$/,""))} (2024 and 2025): Target is the team's 3rd runner, Recruit the 5th, Walk‑On the 7th. The second row is the same fitness in a high school 5K. Courses differ, so these are estimates.</p><div class="scroll"><table><thead><tr><th></th>${cols.map(k=>`<th class="num">${lab[k]}</th>`).join("")}</tr></thead><tbody><tr><td>${esc(x.d)}</td>${cols.map(k=>`<td class="num">${fmtXC(x.lv[k])}</td>`).join("")}</tr><tr><td>High school 5K</td>${cols.map(k=>`<td class="num">${fmtXC(x.hs[k])}</td>`).join("")}</tr></tbody></table></div></details>`:"")};
   if(SFX)return fill();Promise.all(["coaches","programfacts","xc_standards"].map(f=>fetch("/data/"+f+".json").then(r=>r.ok?r.json():{}).catch(()=>({})))).then(d=>{SFX=d;fill()})}
 /* Ryan's videos about this school (YouTube + Instagram reels), /data/videos.json written at build */

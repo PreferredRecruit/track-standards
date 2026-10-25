@@ -1287,9 +1287,13 @@ header .hd .acchd{flex:none;visibility:visible}
 .pgmode{margin-bottom:8px}.pgsea{margin:2px 0 6px}
 .pgb{fill:#13865a}.pgnone{margin:14px 6px;color:var(--pr-mute);font-size:14px}
 
-/* school "at a glance" chips (program facts, 2026-10-25) */
-.glance{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
-.glance span{display:flex;flex-direction:column;background:var(--soft,#F3F2F7);border-radius:12px;padding:8px 12px;font-size:15px;font-weight:600;min-width:0}
-.glance span b{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute,#55555E);font-weight:650}
-.glance small{font-weight:500;color:var(--mute,#55555E)}
-.gsrc{font-size:12px;color:var(--mute,#55555E);margin:2px 0 8px}
+/* program facts card (2026-10-25): same surface as the standards table; numbers lead, labels whisper */
+.glance{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin:14px 0 6px;border:1px solid var(--pr-line);border-radius:18px;background:var(--pr-card);overflow:hidden}
+.glance .gs{display:flex;flex-direction:column;gap:4px;padding:16px 18px;border-right:1px solid var(--pr-line);min-width:0}
+.glance .gs:last-of-type{border-right:0}
+.glance .gs span{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.glance .gs b{font-size:24px;line-height:1.15;font-weight:650;letter-spacing:-.02em;color:var(--ink-1);font-variant-numeric:tabular-nums}
+.glance .gcoach{grid-column:span 2}
+.glance .gcoach b{font-size:17px;letter-spacing:-.01em;line-height:1.3;padding-top:4px}
+.glance .gsrc{grid-column:1/-1;margin:0;padding:9px 18px;border-top:1px solid var(--pr-line);font-size:12px;color:var(--ink-3)}
+@media (max-width:560px){.glance{grid-template-columns:repeat(3,1fr)}.glance .gcoach{grid-column:1/-1;border-right:0;border-bottom:1px solid var(--pr-line)}.glance .gs{padding:14px}.glance .gs b{font-size:21px}}
