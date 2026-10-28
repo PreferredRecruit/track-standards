@@ -19,6 +19,7 @@
 
 - Target: marks that typically earn the strongest scholarship interest, depending on school funding.
 - Recruit: where coaches typically start recruiting conversations and scholarship discussions. Not a guarantee.
+- No athletic scholarships: Ivy League schools (Brown, Columbia, Cornell, Dartmouth, Harvard, Penn, Princeton, Yale) and every NCAA Division III school give no athletic scholarships; their aid is need-based or academic. At those schools the levels show what it takes to make the team, not athletic money.
 - Walk-On: the minimum mark to earn a roster spot.
 - Schools marked official publish their own standards (2024 or newer, verified mark for mark). Others are set from that conference's 2026 results: NCAA D1/D2 Target = 8th, Recruit = 15th, Walk-On = 25th best mark; NCAA D3/NAIA Target = top 8, Walk-On = 40th.
 - Results come from TFRRS performance lists and national championship meet results, refreshed every Monday.
