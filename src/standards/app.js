@@ -53,7 +53,7 @@ const INT=(()=>{try{return JSON.parse(localStorage.getItem("prIntent"))||{}}catc
 const SID=(()=>{try{let v=localStorage.getItem("prSid");if(!v){v=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36));localStorage.setItem("prSid",v)}return v}catch(e){return "anon-"+Math.random().toString(36).slice(2,12)}})();
 /* A/B bucket per browser: 0 = data-driven copy (near-miss, school), 1 = plain intent copy (control) */
 const BUCKET=0;   /* A/B test closed 2026-10-25: data-driven copy (dream 11.5%, near-miss 5.6%) beat plain intent copy; everyone gets it */
-const saveInt=()=>{try{localStorage.setItem("prIntent",JSON.stringify(INT))}catch(e){}};
+const saveInt=()=>{try{localStorage.setItem("prIntent",JSON.stringify(INT))}catch(e){}try{keepQ()}catch(e){}};
 function intent(e,g,mark){if(!e)return;const grp=GRP(e);INT.e=e;INT.grp=grp;if(g)INT.g=g;if(mark)INT.m=mark;INT.c=INT.c||{};INT.c[grp]=(INT.c[grp]||0)+1;INT.t=Date.now();saveInt()}
 const topGrp=()=>{const c=INT.c||{};return Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||INT.grp};
 window.prLog=(k,x)=>log(k,Object.assign({event:INT.e||undefined,variant:x&&x.placement==="popup"&&EV.v||undefined,trig:x&&x.placement==="popup"&&EV.trig||undefined},x));
@@ -66,7 +66,7 @@ const UTM=(()=>{try{const u=new URLSearchParams(location.search).get("utm_source
 function log(kind,x){try{let ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}const b=Object.assign({sid:SID,kind,coach:ct,secs:Math.round((Date.now()-T0)/1000),scroll_pct:scrollPct(),hour:new Date().getHours(),grade:INT.gr||undefined,path:location.pathname+location.search,mobile:innerWidth<700,utm_source:UTM},x||{});
   if(b.event&&!b.grp)b.grp=GRP(b.event);fetch(TRACK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(()=>{})}catch(e){}}
 /* the funnel link carries the intent too, so the evaluation and CRM know the event and grade (utm_term = event, pr_grade = grade) */
-function quizFor(){try{const u=new URL(QUIZ);/* Close keeps utm_term inside Lead Source but drops pr_* params, so the term also carries grade + account tier (Ryan 2026-10-21: route Tier A juniors/seniors first) */const tr=ACC.member()&&ACC.tier()?ACC.tier():"",cl=ACC.cls?ACC.cls():null;const term=[INT.e,INT.gr?"g"+INT.gr:"",tr?"t"+tr:"",cl?"c"+cl:""].filter(Boolean).join(" ");if(term)u.searchParams.set("utm_term",term);if(INT.grp)u.searchParams.set("pr_group",INT.grp);if(INT.gr)u.searchParams.set("pr_grade",INT.gr);if(INT.m)u.searchParams.set("pr_mark",INT.m);if(INT.rs)u.searchParams.set("pr_status",INT.rs);if(ACC.member()){u.searchParams.set("pr_account","1");if(ACC.tier())u.searchParams.set("pr_tier",ACC.tier())}return u.toString()}catch(e){return QUIZ}}
+function quizFor(){try{const u=new URL(QUIZ);/* Close keeps utm_term inside Lead Source but drops pr_* params, so the term also carries grade + account tier (Ryan 2026-10-21: route Tier A juniors/seniors first) */const tr=ACC.member()&&ACC.tier()?ACC.tier():"",cl=ACC.cls?ACC.cls():null;const term=[INT.e,INT.gr?"g"+INT.gr:"",tr?"t"+tr:"",cl?"c"+cl:"",qTag()].filter(Boolean).join(" ");if(term)u.searchParams.set("utm_term",term);if(INT.grp)u.searchParams.set("pr_group",INT.grp);if(INT.gr)u.searchParams.set("pr_grade",INT.gr);if(INT.m)u.searchParams.set("pr_mark",INT.m);if(INT.rs)u.searchParams.set("pr_status",INT.rs);if(ACC.member()){u.searchParams.set("pr_account","1");if(ACC.tier())u.searchParams.set("pr_tier",ACC.tier())}return u.toString()}catch(e){return QUIZ}}
 /* account limits (Ryan 2026-10-19): logged out = top 10 per results list, first 15 colleges, 5 AI questions */
 const RCAP=n=>ACC.member()?n:Math.min(n,ACC.LIMITS.results);
 const rwall=(len,shown)=>!ACC.member()&&len>shown?ACC.wall("results"):"";
@@ -193,6 +193,26 @@ const clock=()=>+S.gr===12?"Senior year moves fast. Coaches are finishing their 
 const EVAL="A free evaluation shows";
 /* grade tag on every variant (Ryan 2026-10-25: "sophomores are still a fit"): 9 alone, 10 with the sales grades */
 const gsfx=()=>+S.gr>=11?"-11-12":+S.gr===10?"-10":+S.gr===9?"-9":"";
+/* likely Tier A before sign-up (Ryan 2026-10-28: "the pop ups have to be better at targeting a+ and a leads"): a 10th-12th grader whose
+   own searched mark meets the PR outreach standard (brand/context/tpr-standards.pdf, same table as supabase/accounts pr_standards).
+   Tier A also needs GPA 3.0+, so these visitors get one extra tap ("GPA 3.0 or higher?") and the funnel link carries qA (mark + GPA,
+   the Tier A rule) or qM (mark only) in utm_term, so setters can call them first. Signed-in accounts keep their real tier instead. */
+const PRSTD={m:{"100m":11.49,"200m":23.5,"400m":52.5,"800m":128,"1600m":284,"3200m":624,"5000m":1019,"110m Hurdles":15.99,"300m Hurdles":41.5,"400m Hurdles":61,
+    "High Jump":1.78,"Pole Vault":3.35,"Long Jump":6.1,"Triple Jump":12.5,"Shot Put":12.8,"Discus":39.62,"Hammer":42.67,"Javelin":39.62},
+  w:{"100m":13.24,"200m":27.49,"400m":61.5,"800m":148,"1600m":360,"3200m":780,"5000m":1380,"100m Hurdles":16.99,"300m Hurdles":49.5,"400m Hurdles":71,
+    "High Jump":1.47,"Pole Vault":2.74,"Long Jump":5.03,"Triple Jump":10.06,"Shot Put":9.14,"Discus":32,"Hammer":36.58,"Javelin":32}};
+function likelyA(){if(ACC.member())return null;const run=S.run&&S.mark,e=run?S.e:INT.e,g=run?S.g:INT.g,mk=run?S.mark:INT.m,gr=+(S.gr||INT.gr);
+  if(!e||!g||!mk||!(gr>=10&&gr<=12))return null;const std=PRSTD[g]&&PRSTD[g][String(e).replace(/ \(39"\)$/,"")],v=parse(mk,e);
+  if(std==null||v==null)return null;return (FIELD.has(e)?v>=std:v<=std)?{e,g,mk:String(mk).trim(),gr}:null}
+const qTag=()=>likelyA()?(INT.gpa==="yes"?"qA":"qM"):"";
+const keepQ=()=>{try{const q=qTag();if(q)localStorage.setItem("prQ",q);else localStorage.removeItem("prQ")}catch(e){}};
+/* likely-A copy: their mark, how many programs it fits and where their grade sits on the recruiting clock. Facts only; human-copy rules. */
+function aCopy(n){const a=likelyA();if(!a)return null;const N=n?` at ${n.toLocaleString()} programs`:"",ev=evSay(a.e);
+  /* the grade line only when no search is on screen (with a search, the clock line under the body already says it) */
+  const gl=S.run?"":a.gr===11?"College coaches can start contacting athletes after sophomore year, so junior year is when their lists get built. ":
+    a.gr===12?"Senior year moves fast. Coaches are filling their last spots now. ":"College coaches can start contacting athletes after sophomore year. Getting on their lists early puts you first in line. ";
+  return {t:`Your ${a.mk} ${ev} meets the standard${N}.`,b:`${gl}A free evaluation shows which of those coaches to contact first.`,
+    bs:{none:`${gl}Coaches recruit the athletes they know about. A free evaluation shows which ones to contact first.`,some:`Interest is a good start. With a ${a.mk} ${ev}, a free evaluation shows how to turn it into offers.`,offers:`Offers mean options. A free evaluation shows who else would want a ${a.mk} ${ev} before you sign.`}}}
 /* readiness offer: freshmen and marks not on any chart yet get the free 2-minute readiness check instead of the evaluation
    (nofit clicked 1 to 1.6%; the check gives them a plan and puts their answers on file for when they are a fit) */
 function readyOffer(n,sfx){let done=false;try{done=!!localStorage.getItem("prReadyDone")}catch(e){}
@@ -218,7 +238,7 @@ let ARM=null;
 function armOffer(){const o=offerCopy();if(!o||EV.shown||EV.dismissed)return;if(ARM)clearInterval(ARM.iv),clearTimeout(ARM.t);ARM={since:0};
   const fire=trig=>{if(!ARM)return;clearInterval(ARM.iv);clearTimeout(ARM.t);ARM=null;evalIn(o.t,o.b,0,o.v,trig,o.ready?null:o.bs)};
   if(!o.n){ARM.t=setTimeout(()=>fire("nofit"),3000);return}
-  ARM.t=setTimeout(()=>fire("results-timer"),12000);   /* fallback if they never scroll to the list */
+  ARM.t=setTimeout(()=>fire("results-timer"),likelyA()?6000:12000);   /* fallback if they never scroll to the list */
   ARM.iv=setInterval(()=>{if(!ARM)return;if(!S.run||S.school!=null){clearInterval(ARM.iv);clearTimeout(ARM.t);ARM=null;return}
     const el=document.querySelector(".mtab"),r=el&&el.getBoundingClientRect(),inView=r&&r.top<innerHeight*0.55&&r.bottom>innerHeight*0.2;
     if(inView){if(!ARM.since)ARM.since=Date.now();else if(Date.now()-ARM.since>=1500)fire("results-seen")}else ARM.since=0},250)}
@@ -226,7 +246,10 @@ function armOffer(){const o=offerCopy();if(!o||EV.shown||EV.dismissed)return;if(
    Desktop: the mouse heads for the tab bar. Phones: a fast scroll back up or 45 s idle on the results. Once per visit, never if an
    offer was already shown or dismissed, never in the first 20 s unless they searched. */
 const EXIT={idle:null,lastY:scrollY,lastT:Date.now()};
-function exitOffer(trig){if(EV.shown||EV.dismissed)return;if(S.school!=null){const s=SCH[S.school];if(!s||s.j)return;const nm=s.t||s.n;EV.force=true;
+function exitOffer(trig){
+  if(EV.dismissed&&likelyA()){let used=true;try{used=sessionStorage.getItem("prA2")==="1"}catch(e){}
+    if(!used&&EV.outAt&&Date.now()-EV.outAt>60000){try{sessionStorage.setItem("prA2","1")}catch(e){}EV.dismissed=false;EV.shown=false}}
+  if(EV.shown||EV.dismissed)return;if(S.school!=null){const s=SCH[S.school];if(!s||s.j)return;const nm=s.t||s.n;EV.force=true;
     const dv=INT.e&&INT.m?parse(INT.m,INT.e):null,d=dv!=null?dreamCopy(s,INT.g||S.g,INT.e,dv):null;
     if(d)evalIn(d.t,d.b,0,"school-exit-dream-"+d.k+gsfx(),trig,dreamBs(d));else evalIn(`Does ${nm} know your name?`,`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,0,"school-exit"+gsfx(),trig,null);return}if(!S.run&&Date.now()-T0<20000)return;
   const o=S.run?offerCopy():null;
@@ -276,6 +299,7 @@ function evalIn(title,body,delay,v,trig,bs){
   if(EV.shown||EV.dismissed||ACC.tier()==="C"||ACC.isOpen()||document.getElementById("prnudge")||document.documentElement.classList.contains("onbon")||(ACC.signedIn()&&!ACC.member())) return; clearTimeout(EV.t);
   /* qualified accounts (Tier A/A+) hear about their own level (Ryan 2026-10-25: "copy that resonates with their specific recruitment level") */
   {const qc=(S.school==null||trig==="high-intent")&&!/^dream/.test(v||"")?qualCopy():null;if(qc){title=qc.t;body=qc.b;bs=qc.bs;v="qual-"+(v||"generic")}}
+  {const ac=S.school==null&&!/^(dream|ready-|school)/.test(v||"")&&!/^qual-/.test(v||"")?aCopy(S.run?(offerCopy()||{}).n:0):null;if(ac){title=ac.t;body=ac.b;bs=ac.bs;v="a-"+(v||"generic")}}
   /* Tier B (GPA 2.3 to 2.99, or 3.0+ without a PR-standard mark yet): same headline, softer body (draft for Ryan's approval) */
   {const P=ACC.member()&&ACC.profile(),kid=pickKid();
    if(kid){const n=kid.first_name;title=title.replace(/^Your /,`${n}'s `).replace(/\byour\b/,`${n}'s`).replace(/^You're /,`${n} is `).replace(/^You /,`${n} `);
@@ -324,16 +348,26 @@ function openEval(log1){const el=$("eval");if(document.documentElement.classList
   const ck=S.run||S.school!=null?clock():"";$("evk").textContent=ck;$("evk").hidden=!ck||!!EV.ready;
   const ask=!INT.rs&&!EV.ready;$("evq").hidden=!ask;$("evs").hidden=ask;
   {const kid=pickKid(),ql=document.querySelector("#evq .evql"),o3=document.querySelector('[data-evq="offers"]');if(ql)ql.textContent=kid?`Have college coaches contacted ${kid.first_name} yet?`:"Have college coaches contacted you yet?";if(o3)o3.textContent=kid?"Offers already":"I have offers"}
+  if(!ask&&!EV.ready&&likelyA()&&!INT.gpa)askGpa();
   el.classList.add("on");el.setAttribute("aria-hidden","false");$("evbg").hidden=false;requestAnimationFrame(()=>$("evbg").classList.add("on"));$("evpill").hidden=true;EV.shown=true;
   if(log1)log("popup_shown",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig});
   setTimeout(()=>{try{el.focus({preventScroll:true})}catch(e){}},350)}
+/* likely-A visitors: one tap for GPA (the other half of the Tier A rule), shown in the same question slot */
+function askGpa(){const ql=document.querySelector("#evq .evql"),o=document.querySelector("#evq .evo");if(!ql||!o)return;if(!EV.gq)EV.gq=o.innerHTML;
+  ql.textContent=pickKid()?"Is their GPA 3.0 or higher?":"Is your GPA 3.0 or higher?";
+  o.innerHTML='<button type="button" data-evgpa="yes">Yes</button><button type="button" data-evgpa="no">Not yet</button><button type="button" data-evgpa="unsure">Not sure</button>';
+  $("evq").hidden=false;$("evs").hidden=true}
 function evalOut(){const el=$("eval");el.classList.remove("on");el.setAttribute("aria-hidden","true");$("evbg").classList.remove("on");setTimeout(()=>{if(!$("eval").classList.contains("on"))$("evbg").hidden=true},300);
-  EV.dismissed=true;try{sessionStorage.setItem("prEvalDismissed","1")}catch(e){}
+  EV.dismissed=true;EV.outAt=Date.now();try{sessionStorage.setItem("prEvalDismissed","1")}catch(e){}
   if(S.school==null)$("evpill").hidden=false}
 document.addEventListener("click",ev=>{
   const q=ev.target.closest("[data-evq]");if(q){INT.rs=q.dataset.evq;saveInt();log("feedback",{detail:"status-"+q.dataset.evq,event:INT.e});
     /* signed-in answers go on the profile too (2026-10-25: 116 profiles had no recruiting stage), so sales sees where each family is */
     {const st={none:"getting_started",some:"talking",offers:"offers"}[q.dataset.evq],u=ACC.signedIn()&&ACC.core.ses()&&ACC.core.ses().user;if(st&&u)ACC.core.api("/rest/v1/profiles?id=eq."+u.id,{method:"PATCH",body:{recruiting_stage:st},prefer:"return=minimal"}).catch(()=>{})}
+    if(likelyA()&&!INT.gpa){askGpa();return}
+    $("evp").textContent=evBody();$("eva").href=quizFor();$("evq").hidden=true;$("evs").hidden=false;return}
+  const gq=ev.target.closest("[data-evgpa]");if(gq){INT.gpa=gq.dataset.evgpa;saveInt();keepQ();log("feedback",{detail:"gpa-"+INT.gpa,event:INT.e});
+    const o=document.querySelector("#evq .evo");if(EV.gq){o.innerHTML=EV.gq;EV.gq=null}
     $("evp").textContent=evBody();$("eva").href=quizFor();$("evq").hidden=true;$("evs").hidden=false;return}
   if(EV.ready&&ev.target.closest("#eva")){ev.preventDefault();log("popup_click",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig});evalOut();READY.go();return}
   if(ev.target.closest("#evlater")){evalOut();return}
