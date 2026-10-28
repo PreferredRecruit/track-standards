@@ -201,9 +201,14 @@ const PRSTD={m:{"100m":11.49,"200m":23.5,"400m":52.5,"800m":128,"1600m":284,"320
     "High Jump":1.78,"Pole Vault":3.35,"Long Jump":6.1,"Triple Jump":12.5,"Shot Put":12.8,"Discus":39.62,"Hammer":42.67,"Javelin":39.62},
   w:{"100m":13.24,"200m":27.49,"400m":61.5,"800m":148,"1600m":360,"3200m":780,"5000m":1380,"100m Hurdles":16.99,"300m Hurdles":49.5,"400m Hurdles":71,
     "High Jump":1.47,"Pole Vault":2.74,"Long Jump":5.03,"Triple Jump":10.06,"Shot Put":9.14,"Discus":32,"Hammer":36.58,"Javelin":32}};
-function likelyA(){if(ACC.member())return null;const run=S.run&&S.mark,e=run?S.e:INT.e,g=run?S.g:INT.g,mk=run?S.mark:INT.m,gr=+(S.gr||INT.gr);
+function stdCheck(){if(ACC.member())return null;const run=S.run&&S.mark,e=run?S.e:INT.e,g=run?S.g:INT.g,mk=run?S.mark:INT.m,gr=+(S.gr||INT.gr);
   if(!e||!g||!mk||!(gr>=10&&gr<=12))return null;const std=PRSTD[g]&&PRSTD[g][String(e).replace(/ \(39"\)$/,"")],v=parse(mk,e);
-  if(std==null||v==null)return null;return (FIELD.has(e)?v>=std:v<=std)?{e,g,mk:String(mk).trim(),gr}:null}
+  if(std==null||v==null)return null;return {e,g,mk:String(mk).trim(),gr,met:FIELD.has(e)?v>=std:v<=std}}
+const likelyA=()=>{const c=stdCheck();return c&&c.met?c:null};
+/* below the PR outreach standard (Ryan 2026-10-28 "bet send it": fewer low-fit leads for setters): evaluation offers become the free
+   2-minute readiness check, which still sends anyone it qualifies to the evaluation. Skipped once the check is done on this browser,
+   and for the chat (they asked for a person). Header and hero buttons stay the evaluation: those are their own choice. */
+function lowFit(){const c=stdCheck();if(!c||c.met)return null;try{if(localStorage.getItem("prReadyDone"))return null}catch(e){}return c}
 const qTag=()=>likelyA()?(INT.gpa==="yes"?"qA":"qM"):"";
 const keepQ=()=>{try{const q=qTag();if(q)localStorage.setItem("prQ",q);else localStorage.removeItem("prQ")}catch(e){}};
 /* likely-A copy: their mark, how many programs it fits and where their grade sits on the recruiting clock. Facts only; human-copy rules. */
@@ -300,6 +305,8 @@ function evalIn(title,body,delay,v,trig,bs){
   /* qualified accounts (Tier A/A+) hear about their own level (Ryan 2026-10-25: "copy that resonates with their specific recruitment level") */
   {const qc=(S.school==null||trig==="high-intent")&&!/^dream/.test(v||"")?qualCopy():null;if(qc){title=qc.t;body=qc.b;bs=qc.bs;v="qual-"+(v||"generic")}}
   {const ac=S.school==null&&!/^(dream|ready-|school)/.test(v||"")&&!/^qual-/.test(v||"")?aCopy(S.run?(offerCopy()||{}).n:0):null;if(ac){title=ac.t;body=ac.b;bs=ac.bs;v="a-"+(v||"generic")}}
+  {const lf=!/^(ready-|chat)/.test(v||"")?lowFit():null;if(lf){const ev=evSay(lf.e);title=`Where does your ${lf.mk} ${ev} stand for college?`;
+    body="The 2-minute readiness check shows where you stand for college track and what to work on next.";bs=null;v="ready-low-"+(v||"generic")}}
   /* Tier B (GPA 2.3 to 2.99, or 3.0+ without a PR-standard mark yet): same headline, softer body (draft for Ryan's approval) */
   {const P=ACC.member()&&ACC.profile(),kid=pickKid();
    if(kid){const n=kid.first_name;title=title.replace(/^Your /,`${n}'s `).replace(/\byour\b/,`${n}'s`).replace(/^You're /,`${n} is `).replace(/^You /,`${n} `);
