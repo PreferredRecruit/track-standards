@@ -73,16 +73,29 @@ export function hsPages({ S, CT, write, writeRaw, page, parse, esc, slug, school
     const name = `${HS(g)} ${e}`, p = hsPath(g, e), cv = CONV[e];
     const span = r => fmt(e, r[0]) === fmt(e, r[2]) ? fmt(e, r[0]) : `${fmt(e, r[0])} to ${fmt(e, r[2])}`;
     const ans = rows.filter(([, cl]) => cl[2]).map(([d, cl]) => `${d} walk-on marks: ${span(cl[2])}`).join("; ") + ".";
+    /* answer first (2026-10-29 AEO check: Perplexity and ChatGPT cited Runcruit/Trackbeast, whose pages open with the number, for
+       "what 400m time do you need for D1"; ours opened with an explanation and showed numbers only after the checker). One sentence per
+       division with the walk-on and recruit ranges, then a visible FAQ per division that matches how people ask it. */
+    const rowOf = d => (rows.find(([x]) => x === d) || [])[1];
+    const d1 = rowOf("NCAA D1"), lead = d1 && (d1[2] || d1[1]) ? `${HS(g)} need about ${span(d1[2] || d1[1])} in the ${e} to ${d1[2] ? "walk on" : "be recruited"} at a typical NCAA D1 program${d1[2] && d1[1] ? `, and ${span(d1[1])} to get recruited` : ""}. ` : "";
+    const rest = rows.filter(([d]) => d !== "NCAA D1").map(([d, cl]) => cl[2] ? `${d} walk-on: ${span(cl[2])}` : cl[1] ? `${d} recruit: ${span(cl[1])}` : null).filter(Boolean).join(", ");
+    const lead2 = rest ? `${rest}.` : "";
+    const divQ = rows.map(([d, cl]) => { const sh = d.replace(/^NCAA /, ""), w = cl[2] && span(cl[2]), r = cl[1] && span(cl[1]), t = cl[0] && span(cl[0]);
+      const parts = [w ? `To walk on at a typical ${d} program: ${w}.` : "", r ? `To get recruited: ${r}.` : "", t ? `Target recruits: ${t}.` : ""].filter(Boolean).join(" ");
+      const aid = d === "NCAA D3" ? " Division III gives no athletic scholarships; aid is need-based or academic." : r ? " Recruit is where coaches typically start recruiting and scholarship conversations, not a guarantee." : "";
+      return parts ? [`What ${e} ${isF(c) ? "mark" : "time"} do you need for ${sh} ${gName(g).toLowerCase()} track?`, parts + aid] : null; }).filter(Boolean);
     write(p, page({ title: `${howAsk(e, true).replace(/^h/, "H")} in College? (${HS(g)}) | Preferred Recruit`,
       desc: `${name} marks it takes to walk on, get recruited or be a target recruit in NCAA D1, D2, D3 and NAIA, from ${S.length.toLocaleString()} college programs.${cv ? ` High school ${e} converted to the college ${cv.to}.` : ""}`,
       pathname: p, crumbs: [["Home", "/"], ["How fast?", "/how-fast.html"], [name, p]], h1: `${esc(howAsk(e).replace(/^h/, "H"))} in college? (${HS(g)})`,
-      intro: `The ${isF(c) ? "marks" : "times"} college programs list for ${esc(gName(g).toLowerCase())} ${esc(c)}, by division. Each range is the middle half of programs (25th to 75th percentile); a dash means too few programs list that level (NCAA D3 and NAIA use Target and Walk-On).${g === "m" && IMPL[e] ? ` <b>${esc(IMPL[e])}</b>` : ""}${cv ? ` Colleges run the ${esc(cv.to)}, so these are converted back to the high school ${esc(e)}: ${esc(cv.how)}.` : ""}`,
+      intro: `${lead ? `<b>${esc(lead)}</b>` : ""}${esc(lead2)} The ${isF(c) ? "marks" : "times"} college programs list for ${esc(gName(g).toLowerCase())} ${esc(c)}, by division. Each range is the middle half of programs (25th to 75th percentile); a dash means too few programs list that level (NCAA D3 and NAIA use Target and Walk-On).${g === "m" && IMPL[e] ? ` <b>${esc(IMPL[e])}</b>` : ""}${cv ? ` Colleges run the ${esc(cv.to)}, so these are converted back to the high school ${esc(e)}: ${esc(cv.how)}.` : ""}`,
       body: `<div class="scroll"><table><tr><th>Division</th><th class="n">Walk-On</th><th class="n">Recruit</th><th class="n">Target</th></tr>${rows.map(([d, cl]) => `<tr><td>${esc(d)}</td>${[2, 1, 0].map(j => `<td class="n">${cl[j] ? esc(span(cl[j])) : "–"}</td>`).join("")}</tr>`).join("")}</table></div>
 <p><b>Walk-On:</b> ${DEF.W} <b>Recruit:</b> ${DEF.R} <b>Target:</b> ${DEF.T}</p>
 <h2>What colleges can I ${isF(c) ? "compete" : "run"} for?</h2><p>Pick the mark closest to yours, or <a href="/">enter your exact mark</a>.</p><div class="links">${ladder.map(v => `<a href="${fitPath(g, e, v)}">${esc(nice(e, v))} ${esc(e)}</a>`).join("")}</div>
 <h2>Every school's ${esc(c)} standards</h2><div class="links">${DIVS.map(d => `<a href="${evPath(d, g, c)}">${esc(d)} ${esc(gName(g))} ${esc(c)}</a>`).join("")}</div>
-${cv ? `<p><a href="/convert.html">High school to college conversion tables ›</a></p>` : ""}`,
-      ld: [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: [{ "@type": "Question", name: `${howAsk(e).replace(/^h/, "H")} to compete in college (${HS(g)})?`, acceptedAnswer: { "@type": "Answer", text: ans } }] }] }));
+${cv ? `<p><a href="/convert.html">High school to college conversion tables ›</a></p>` : ""}
+<h2>${esc(e)} questions by division</h2>${divQ.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join("")}`,
+      ld: [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: [{ "@type": "Question", name: `${howAsk(e).replace(/^h/, "H")} to compete in college (${HS(g)})?`, acceptedAnswer: { "@type": "Answer", text: (lead + lead2).trim() || ans } },
+        ...divQ.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } }))] }] }));
   }
 
   /* 2. what colleges can I run for with <mark> */

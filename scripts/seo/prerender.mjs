@@ -435,7 +435,8 @@ ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter((
   const base = u => EDITED[u] || DAILY.dates.get(u) || AREL.get(u) || (/^\/(results|champions)\//.test(u) ? resultsDate(u) : u === "/" || u.startsWith("/schools/") ? DATES.max : DATES.db);
   /* copy edits that change what a page says move its date too (2026-10-28: Ivy + D3 scholarship answer, feet on field-event pages) */
   const COPY = [[new Set(S.filter(s => !s.j && (s.c === "Ivy League" || s.d === "NCAA D3")).map(sl)), "2026-10-28"],
-    [new Set(files.filter(u => /^\/standards\/.*(jump|vault|shot-put|discus|hammer|javelin)/.test(u))), "2026-10-28"]];
+    [new Set(files.filter(u => /^\/standards\/.*(jump|vault|shot-put|discus|hammer|javelin)/.test(u))), "2026-10-28"],
+    [new Set(files.filter(u => u.startsWith("/how-fast/"))), "2026-10-29"]];   /* answer-first + FAQ per division */
   const lastmod = u => COPY.reduce((d, [set, day]) => set.has(u) && day > d ? day : d, base(u));
   const groups = { schools: schoolUrls, results: files.filter(u => /^\/(results|champions)\//.test(u)).sort(),
     standards: ["/", ...files.filter(u => /^\/(standards|conferences|states)\//.test(u) || u === "/explore.html").sort()] };
