@@ -128,7 +128,8 @@ prLog("seo_page",{event:ev||undefined,g:g||undefined});
    flag, not on coach pages. Copy names this page's event (else the last one they looked at); 9th graders get the free readiness check
    (same rule as the app); the funnel link carries event, grade and the rank/likely-A tag (prRank / prQ). */
 (function(){var path=location.pathname;if(/^[/](for-coaches|coaches|admin|embed|onboarding|privacy)([.]html|[/]|$)/.test(path))return;
-try{if(sessionStorage.getItem("prEvalDismissed")==="1"||sessionStorage.getItem("prSeoPop")==="1")return}catch(e){}
+try{if(sessionStorage.getItem("prEvalDismissed")==="1"||sessionStorage.getItem("prSeoPop")==="1")return;
+  if(/(^| )tC( |$)/.test(localStorage.getItem("prRank")||""))return}catch(e){}   /* Tier C accounts get no sales offer (same rule as the app) */
 var e=I.e||"",gr=+I.gr||0,mk=I.m&&I.me&&String(I.me).toLowerCase()===String(e).toLowerCase()&&I.mg===I.g?String(I.m):"",nine=gr===9,who=I.g==="w"?"Girls":I.g==="m"?"Boys":"",evs=String(e).toLowerCase();
 var t=mk?"Where does your "+mk+" "+evs+" fit?":e?"Which colleges would want your "+evs+"?":"Talent gets you the offer. Visibility gets you in the room.";
 var b=nine?"The free 2-minute readiness check shows where you stand for college track and what to work on before coaches start calling.":"A free evaluation from Preferred Recruit shows which college programs would want you and which coaches to contact first. It takes about a minute.";
