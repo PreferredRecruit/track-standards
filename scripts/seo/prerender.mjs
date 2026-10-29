@@ -126,7 +126,7 @@ prLog("seo_page",{event:ev||undefined,g:g||undefined});
    (same rule as the app); the funnel link carries event, grade and the rank/likely-A tag (prRank / prQ). */
 (function(){var path=location.pathname;if(/for-coaches|coaches|admin|embed|onboarding|privacy/.test(path))return;
 try{if(sessionStorage.getItem("prEvalDismissed")==="1"||sessionStorage.getItem("prSeoPop")==="1")return}catch(e){}
-var e=I.e||"",gr=+I.gr||0,mk=I.m?String(I.m):"",nine=gr===9,who=I.g==="w"?"Girls":I.g==="m"?"Boys":"",evs=e;
+var e=I.e||"",gr=+I.gr||0,mk=I.m&&I.me&&I.me===String(e).toLowerCase()?String(I.m):"",nine=gr===9,who=I.g==="w"?"Girls":I.g==="m"?"Boys":"",evs=e;
 var t=mk?"Where does your "+mk+" "+evs+" fit?":e?"Which colleges would want your "+evs+"?":"Talent gets you the offer. Visibility gets you in the room.";
 var b=nine?"The free 2-minute readiness check shows where you stand for college track and what to work on before coaches start calling.":"A free evaluation from Preferred Recruit shows which college programs would want you and which coaches to contact first. It takes about a minute.";
 var Q="https://app.thepreferredrecruit.com/parentfunnel/?utm_source=website&utm_medium=standards&utm_campaign=PRstandards",href=Q;

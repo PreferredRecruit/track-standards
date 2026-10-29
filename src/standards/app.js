@@ -54,7 +54,7 @@ const SID=(()=>{try{let v=localStorage.getItem("prSid");if(!v){v=(crypto.randomU
 /* A/B bucket per browser: 0 = data-driven copy (near-miss, school), 1 = plain intent copy (control) */
 const BUCKET=0;   /* A/B test closed 2026-10-25: data-driven copy (dream 11.5%, near-miss 5.6%) beat plain intent copy; everyone gets it */
 const saveInt=()=>{try{localStorage.setItem("prIntent",JSON.stringify(INT))}catch(e){}try{keepQ()}catch(e){}};
-function intent(e,g,mark){if(!e)return;const grp=GRP(e);INT.e=e;INT.grp=grp;if(g)INT.g=g;if(mark)INT.m=mark;INT.c=INT.c||{};INT.c[grp]=(INT.c[grp]||0)+1;INT.t=Date.now();saveInt()}
+function intent(e,g,mark){if(!e)return;const grp=GRP(e);INT.e=e;INT.grp=grp;if(g)INT.g=g;if(mark){INT.m=mark;INT.me=String(e).toLowerCase()}   /* me = the mark's own event (SEO pages only reuse a mark for that event) */INT.c=INT.c||{};INT.c[grp]=(INT.c[grp]||0)+1;INT.t=Date.now();saveInt()}
 const topGrp=()=>{const c=INT.c||{};return Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||INT.grp};
 window.prLog=(k,x)=>log(k,Object.assign({event:INT.e||undefined,variant:x&&x.placement==="popup"&&EV.v||undefined,trig:x&&x.placement==="popup"&&EV.trig||undefined},x));
 /* a signed-in coach (coach portal token on this origin) is verified server-side, so coach views are tagged with their school */
@@ -201,7 +201,7 @@ const PRSTD={m:{"100m":11.49,"200m":23.5,"400m":52.5,"800m":128,"1600m":284,"320
     "High Jump":1.78,"Pole Vault":3.35,"Long Jump":6.1,"Triple Jump":12.5,"Shot Put":12.8,"Discus":39.62,"Hammer":42.67,"Javelin":39.62},
   w:{"100m":13.24,"200m":27.49,"400m":61.5,"800m":148,"1600m":360,"3200m":780,"5000m":1380,"100m Hurdles":16.99,"300m Hurdles":49.5,"400m Hurdles":71,
     "High Jump":1.47,"Pole Vault":2.74,"Long Jump":5.03,"Triple Jump":10.06,"Shot Put":9.14,"Discus":32,"Hammer":36.58,"Javelin":32}};
-function stdCheck(){if(ACC.member())return null;const run=S.run&&S.mark,e=run?S.e:INT.e,g=run?S.g:INT.g,mk=run?S.mark:INT.m,gr=+(S.gr||INT.gr);
+function stdCheck(){if(ACC.member())return null;const run=S.run&&S.mark,e=run?S.e:INT.e,g=run?S.g:INT.g,mk=run?S.mark:INT.me===String(INT.e||"").toLowerCase()?INT.m:null,gr=+(S.gr||INT.gr);
   if(!e||!g||!mk||!(gr>=10&&gr<=12))return null;const std=PRSTD[g]&&PRSTD[g][String(e).replace(/ \(39"\)$/,"")],v=parse(mk,e);
   if(std==null||v==null)return null;return {e,g,mk:String(mk).trim(),gr,met:FIELD.has(e)?v>=std:v<=std}}
 const likelyA=()=>{const c=stdCheck();return c&&c.met?c:null};
