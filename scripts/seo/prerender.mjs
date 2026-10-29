@@ -272,7 +272,10 @@ export function generate(root, out) {
     const XD = ((XCS.div || {})[d]) || {}, XT = ["Top", "Mid", "Low"];
     const xcTbl = Object.keys(XD).length ? `<h2>${esc(d)} cross country standards by tier</h2><p>From every ${esc(d)} team's own runners at the NCAA ${d === "NAIA" ? "conference and national meets" : "regionals"}, 2024 and 2025: programs split into thirds by their 5th runner. Cells show the ${d === "NCAA D3" || d === "NAIA" ? "7th runner (the varsity line)" : "5th runner (the last scorer)"}, then the same fitness in a high school 5K.</p><div class="scroll"><table><tr><th>Race</th>${XT.map(t => `<th class="n">${t} tier</th>`).join("")}</tr>${["m", "w"].filter(g => XD[g]).map(g => { const i = XD[g].tiers.Top[1] ? 1 : 2; return `<tr><td>${gName(g)} ${XD[g].d}</td>${XT.map(t => `<td class="n">${fmtXC(XD[g].tiers[t][i])}</td>`).join("")}</tr><tr><td><small>High school 5K, about</small></td>${XT.map(t => `<td class="n"><small>${fmtXC(XD[g].hs[t][i])}</small></td>`).join("")}</tr>`; }).join("")}</table></div>` : "";
     const tierNote = `<p>Each cell is the median ${esc(d)} program in that tier at the ${lvWord} level, in the events you run in high school (1600m from the college 1500m, 3200m from the 5000m, 300m hurdles from the 400m hurdles${d === "NCAA D1" ? "; Power 4 programs have no Walk-On level, so their Recruit level is used" : ""}). Tiers: ${TIERS.map(([t, keys]) => `<b>${t}</b>: ${keys.map(k => `<a href="${confName.get(k)}">${esc(k.split("|")[1])}</a>`).join(", ")}`).join(". ")}.</p>`;
+    let lead = "";   /* answer first (2026-10-29 AEO check): the tier answer opens the page, before the checker */
     { const m16 = TV.m.find(r => r[0] === "1600m"), m1 = TV.m.find(r => r[0] === "100m"), w16 = TV.w.find(r => r[0] === "1600m");
+      if (m16 && m1) { const w1 = TV.w.find(r => r[0] === "100m"), mid = TIERS.length > 1 ? 1 : 0;
+        lead = `At a typical ${d === "NCAA D1" ? "mid-major " : "mid-tier "}${d} program, boys need about ${m1[1][mid]} in the 100m and ${m16[1][mid]} in the 1600m${w1 && w16 ? `, and girls about ${w1[1][mid]} and ${w16[1][mid]}` : ""}, to ${TJ === 1 ? "get recruited" : "make the team"}.${d === "NCAA D3" ? " Division III gives no athletic scholarships; aid is need-based or academic." : ""} `; }
       if (m16 && m1) q.unshift([`What times do you need to run ${d} track in high school?`, `${TIERS.map(([t], i) => `${t}: about ${m1[1][i]} in the 100m and ${m16[1][i]} in the 1600m for boys${w16 ? `, ${w16[1][i]} in the 1600m for girls` : ""}`).join("; ")}. These are the ${TJ === 1 ? "Recruit" : "Walk-On"} levels of the median program in each tier, converted to high school events.`]);
       if (XD.m) { const i = XD.m.tiers.Top[1] ? 1 : 2; q.splice(1, 0, [`What cross country times do you need for ${d}?`, `${XT.map(t => `${t} tier: about ${fmtXC(XD.m.hs[t][i])} for boys${XD.w ? ` and ${fmtXC(XD.w.hs[t][i])} for girls` : ""} in a high school 5K`).join("; ")}, from ${d} teams' own runners in 2024 and 2025.`]); } }
     const body = tierTbl("m") + tierTbl("w") + tierNote + xcTbl + tbl("m") + tbl("w") + `<p>Each value is the median across ${list.length} ${esc(d)} programs. Tap an event for every school's marks, most reachable first.</p>`
@@ -283,7 +286,7 @@ export function generate(root, out) {
     write(p, page({ title: `${d} Track & Field Recruiting Standards ${SEASON}`,
       desc: `${d} track and field recruiting standards ${SEASON}: the typical ${levelWords(d)} mark in every event, men and women, from all ${list.length} ${d} programs.`,
       pathname: p, crumbs: [["Home", "/"], ["Explore", "/explore.html"], [d, p]], h1: `${esc(d)} Track &amp; Field Recruiting Standards ${SEASON}`,
-      intro: `What it takes to run, jump or throw in ${esc(d)} track and field: the median Target, Recruit and Walk-On mark in every event across all ${list.length} ${esc(d)} programs. ${nOff} programs publish official standards (★).`,
+      intro: `${lead ? `<b>${esc(lead.trim())}</b> ` : ""}What it takes to run, jump or throw in ${esc(d)} track and field: the median Target, Recruit and Walk-On mark in every event across all ${list.length} ${esc(d)} programs. ${nOff} programs publish official standards (★).`,
       body, ld: [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: q.map(([a, b]) => ({ "@type": "Question", name: a, acceptedAnswer: { "@type": "Answer", text: b } })) },
         { "@context": "https://schema.org", "@type": "ItemList", name: `${d} track and field programs`, itemListElement: list.map((s, i) => ({ "@type": "ListItem", position: i + 1, url: SITE + sl(s), name: s.n })) }] }));
   }
@@ -436,7 +439,7 @@ ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter((
   /* copy edits that change what a page says move its date too (2026-10-28: Ivy + D3 scholarship answer, feet on field-event pages) */
   const COPY = [[new Set(S.filter(s => !s.j && (s.c === "Ivy League" || s.d === "NCAA D3")).map(sl)), "2026-10-28"],
     [new Set(files.filter(u => /^\/standards\/.*(jump|vault|shot-put|discus|hammer|javelin)/.test(u))), "2026-10-28"],
-    [new Set(files.filter(u => u.startsWith("/how-fast/"))), "2026-10-29"]];   /* answer-first + FAQ per division */
+    [new Set(files.filter(u => u.startsWith("/how-fast/") || /^\/standards\/(ncaa-d[123]|naia)-track-and-field-recruiting-standards\.html$/.test(u))), "2026-10-29"]];   /* answer-first (how-fast + division hubs) */
   const lastmod = u => COPY.reduce((d, [set, day]) => set.has(u) && day > d ? day : d, base(u));
   const groups = { schools: schoolUrls, results: files.filter(u => /^\/(results|champions)\//.test(u)).sort(),
     standards: ["/", ...files.filter(u => /^\/(standards|conferences|states)\//.test(u) || u === "/explore.html").sort()] };
