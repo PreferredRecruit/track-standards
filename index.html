@@ -75,7 +75,7 @@ window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};
 document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest('a[href*="thepreferredrecruit.com/parentfunnel"]');if(!a)return;
 var p=a.closest(".pill,header nav")?"header":a.closest(".inl")?"hero":a.closest("#eval,.eval")?"popup":a.closest(".coach")?"school-page":a.closest(".hook")?"results":a.closest(".chat,.ask,.msgs,.msg,.ans")?"chat":a.closest(".cta")?"seo-page":"other";
 var path=location.pathname,kind=path==="/"?"home":path.indexOf("/schools/")===0?"school":path.split("/")[1].replace(".html","")||"home";
-try{var u=new URL(a.href);u.searchParams.set("utm_content",p);var rk=window.prRank?window.prRank():"";try{var q=localStorage.getItem("prQ");if(q&&!rk)rk=q}catch(z){}if(rk){var tm=(u.searchParams.get("utm_term")||"").replace(/(^| )([tc](A\+|[ABCSM])|q[AM])(?= |$)/g,"").trim();u.searchParams.set("utm_term",(tm?tm+" ":"")+rk)}a.href=u.toString()}catch(x){}
+try{var u=new URL(a.href);u.searchParams.set("utm_content",p);var rk=window.prRank?window.prRank():"";try{var q=window.prQ?window.prQ():localStorage.getItem("prQ");if(q&&!rk)rk=q}catch(z){}if(rk){var tm=(u.searchParams.get("utm_term")||"").replace(/(^| )([tc](A\+|[ABCSM])|q[AM])(?= |$)/g,"").trim();u.searchParams.set("utm_term",(tm?tm+" ":"")+rk)}a.href=u.toString()}catch(x){}
 window.va("event",{name:"Evaluation click",data:{placement:p,page:kind,path:path.slice(0,120)}});if(window.prLog)window.prLog("popup_click",{placement:p})},true);</script>
 </head>
 

@@ -27,6 +27,8 @@ const SITE = "https://trackandfieldstandards.com";
 const QUIZ = "https://app.thepreferredrecruit.com/parentfunnel/?utm_source=website&utm_medium=standards&utm_campaign=PRstandards";
 const EVENTS = ["100m", "200m", "400m", "800m", "1500m", "1600m", "Mile", "3000m", "3200m", "5000m", "10000m", "100m Hurdles", "110m Hurdles",
   "300m Hurdles", "400m Hurdles", "3000m Steeplechase", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Hammer", "Javelin"];
+/* URL slug -> event name for the SEO-page script, longest first (2026-10-29: /colleges-for/mens-100m-10-3 read as event "100m 10 3") */
+const SEO_EVS = JSON.stringify(Object.fromEntries([...EVENTS, '110m Hurdles (39")'].map(e => [e.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""), e]).sort((a, b) => b[0].length - a[0].length)));
 const FIELD = new Set(["High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Hammer", "Javelin"]);
 /* metres -> feet and inches to the quarter inch, how US high school field marks are written (2026-10-28: "d1 long jump standards" ranked #18; families search in feet) */
 const ftIn = m => { const q = Math.round(m / 0.0254 * 4) / 4, ft = Math.floor(q / 12), i = q - ft * 12; return `${ft}'${String(i).replace(/\.0+$/, "")}"`; };
@@ -117,16 +119,17 @@ try{I=JSON.parse(localStorage.getItem("prIntent"))||{};sid=localStorage.getItem(
 function grp(e){e=String(e||"");return /hurdle/i.test(e)?"hurdles":/thlon/i.test(e)?"multis":/jump|vault/i.test(e)?"jumps":/shot|discus|hammer|javelin|weight|throw/i.test(e)?"throws":/relay/i.test(e)?(/800|1600|mile|medley/i.test(e)?"distance":"sprints"):/^(55|60|100|200|400)(m|$)/i.test(e)?"sprints":"distance"}
 window.prLog=function(k,x){try{var ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}var hh=document.documentElement,b={sid:sid,kind:k,coach:ct,secs:Math.round((Date.now()-T0)/1000),scroll_pct:Math.min(100,Math.round((scrollY+innerHeight)/Math.max(hh.scrollHeight,1)*100)),hour:new Date().getHours(),grade:I.gr||undefined,path:location.pathname,mobile:innerWidth<700,utm_source:UTM};for(var q in x||{})b[q]=x[q];if(b.event&&!b.grp)b.grp=grp(b.event);fetch(T,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(function(){})}catch(e){}};
 var m=location.pathname.match(/(?:^|[\/-])(boys|girls|mens|womens)-([a-z0-9-]+?)(?:-track-standards)?(?:\.html)?$/),ev=null,g=null;
-if(m){ev=m[2].replace(/-39$/,"").replace(/-/g," ");g=/^(boys|mens)$/.test(m[1])?"m":"w";if(String(I.e||"").toLowerCase()!==ev||I.g!==g){I.m=undefined}I.e=ev;I.grp=grp(ev);I.g=g;I.c=I.c||{};I.c[I.grp]=(I.c[I.grp]||0)+1;try{localStorage.setItem("prIntent",JSON.stringify(I))}catch(e){}}
+if(m){var EVS=${SEO_EVS};for(var k in EVS){if(m[2]===k||m[2].indexOf(k+"-")===0){ev=EVS[k];break}}}
+if(ev){g=/^(boys|mens)$/.test(m[1])?"m":"w";I.e=ev;I.grp=grp(ev);I.g=g;I.c=I.c||{};I.c[I.grp]=(I.c[I.grp]||0)+1;try{localStorage.setItem("prIntent",JSON.stringify(I))}catch(e){}}
 prLog("seo_page",{event:ev||undefined,g:g||undefined});
 /* bottom bar removed (2026-10-25: 0.2% click rate on 3,881 views, and Ryan wants landing pages clean); the page view + intent above stay */
 /* SEO-page pop-up (Ryan 2026-10-29: "yeah we need more pop ups"; 3 days: ~1,039 SEO-page visits, ~210 ever saw an offer). Same centre
    format as the app (6.4% vs the old bar's 0.2%): after 50% scroll or 25 s, once per visit, never on arrival, shares the app's dismiss
    flag, not on coach pages. Copy names this page's event (else the last one they looked at); 9th graders get the free readiness check
    (same rule as the app); the funnel link carries event, grade and the rank/likely-A tag (prRank / prQ). */
-(function(){var path=location.pathname;if(/for-coaches|coaches|admin|embed|onboarding|privacy/.test(path))return;
+(function(){var path=location.pathname;if(/^[/](for-coaches|coaches|admin|embed|onboarding|privacy)([.]html|[/]|$)/.test(path))return;
 try{if(sessionStorage.getItem("prEvalDismissed")==="1"||sessionStorage.getItem("prSeoPop")==="1")return}catch(e){}
-var e=I.e||"",gr=+I.gr||0,mk=I.m&&I.me&&I.me===String(e).toLowerCase()?String(I.m):"",nine=gr===9,who=I.g==="w"?"Girls":I.g==="m"?"Boys":"",evs=e;
+var e=I.e||"",gr=+I.gr||0,mk=I.m&&I.me&&String(I.me).toLowerCase()===String(e).toLowerCase()&&I.mg===I.g?String(I.m):"",nine=gr===9,who=I.g==="w"?"Girls":I.g==="m"?"Boys":"",evs=String(e).toLowerCase();
 var t=mk?"Where does your "+mk+" "+evs+" fit?":e?"Which colleges would want your "+evs+"?":"Talent gets you the offer. Visibility gets you in the room.";
 var b=nine?"The free 2-minute readiness check shows where you stand for college track and what to work on before coaches start calling.":"A free evaluation from Preferred Recruit shows which college programs would want you and which coaches to contact first. It takes about a minute.";
 var Q="https://app.thepreferredrecruit.com/parentfunnel/?utm_source=website&utm_medium=standards&utm_campaign=PRstandards",href=Q;
@@ -140,7 +143,7 @@ var shown=false;function show(trig){if(shown)return;shown=true;try{sessionStorag
   document.body.appendChild(bg);document.body.appendChild(d);requestAnimationFrame(function(){bg.classList.add("on");d.classList.add("on")});
   var v=(nine?"seo-ready":mk?"seo-mark":e?"seo-event":"seo-generic");prLog("popup_shown",{placement:"seo-pop",variant:v,trig:trig,event:e||undefined});
   if(nine)a.addEventListener("click",function(){prLog("popup_click",{placement:"seo-pop",variant:v,trig:trig,event:e||undefined})});
-  function close(){d.classList.remove("on");bg.classList.remove("on");setTimeout(function(){d.remove();bg.remove()},350);try{sessionStorage.setItem("prEvalDismissed","1")}catch(z){}document.removeEventListener("keydown",esc)}
+  function close(){d.classList.remove("on");bg.classList.remove("on");setTimeout(function(){d.remove();bg.remove()},350);try{sessionStorage.setItem("prEvalDismissed","1");sessionStorage.setItem("prEvalOutAt",String(Date.now()))}catch(z){}document.removeEventListener("keydown",esc)}
   function esc(k){if(k.key==="Escape")close()}document.addEventListener("keydown",esc);bg.addEventListener("click",close);d.querySelector(".x").addEventListener("click",close);d.querySelector(".later").addEventListener("click",close);
   setTimeout(function(){try{a.focus({preventScroll:true})}catch(z){}},360)}
 var tm=setTimeout(function(){show("timer-25s")},25000);
@@ -458,6 +461,13 @@ ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter((
     }
   } catch (e) { console.warn("home page content skipped:", e && e.message); }
   if (DAILY.finalize) console.log(`daily pages: ${DAILY.finalize()} inbound link blocks`);
+  /* link check (2026-10-29 bug sweep: athlete pages and explore linked heptathlon/decathlon standards and some 10000m results pages
+     that are never built): an internal link to a page that doesn't exist becomes plain text, so no page ships a dead link */
+  { let fixed = 0; const has = u => fs.existsSync(path.join(out, u));
+    for (const p of files) { const f = path.join(out, p), h = fs.readFileSync(f, "utf8");
+      const n = h.replace(/<a href="(\/(?:standards|results|champions|colleges|colleges-for|states|conferences|how-fast|athletes|guides)\/[^"#?]+\.html)"[^>]*>([\s\S]*?)<\/a>/g, (m, u, inner) => has(u) ? m : (fixed++, inner));
+      if (n !== h) fs.writeFileSync(f, n); }
+    if (fixed) console.log(`link check: ${fixed} links to missing pages unlinked`); }
   /* sitemap index + one sitemap per section, each URL dated by the data it shows (so Google can trust lastmod) */
   const schoolUrls = [...new Set(S.map(sl))].sort();
   const AREL = new Map(AIDX.live.map(x => [x.url, x.release > DATES.max ? x.release : DATES.max]));   /* athlete pages: release day (data changes move it via DATES.max) */
@@ -467,6 +477,9 @@ ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter((
     [new Set(files.filter(u => /^\/standards\/.*(jump|vault|shot-put|discus|hammer|javelin)/.test(u))), "2026-10-28"],
     [new Set(files.filter(u => u.startsWith("/how-fast/") || /^\/standards\/(ncaa-d[123]|naia)-track-and-field-recruiting-standards\.html$/.test(u))), "2026-10-29"]];   /* answer-first (how-fast + division hubs) */
   const lastmod = u => COPY.reduce((d, [set, day]) => set.has(u) && day > d ? day : d, base(u));
+  /* each page's own dateModified follows the same copy-edit dates, so the page and the sitemap agree */
+  for (const [set, day] of COPY) for (const u of set) { const f = path.join(out, u.endsWith(".html") ? u : u + ".html"); if (!fs.existsSync(f)) continue;
+    const h = fs.readFileSync(f, "utf8"), n = h.replace(/"dateModified":"(\d{4}-\d{2}-\d{2})"/g, (m, d) => d < day ? `"dateModified":"${day}"` : m); if (n !== h) fs.writeFileSync(f, n); }
   const groups = { schools: schoolUrls, results: files.filter(u => /^\/(results|champions)\//.test(u)).sort(),
     standards: ["/", ...files.filter(u => /^\/(standards|conferences|states)\//.test(u) || u === "/explore.html").sort()] };
   groups.colleges = files.filter(u => u === "/colleges.html" || u.startsWith("/colleges/")).sort();

@@ -54,7 +54,7 @@ const SID=(()=>{try{let v=localStorage.getItem("prSid");if(!v){v=(crypto.randomU
 /* A/B bucket per browser: 0 = data-driven copy (near-miss, school), 1 = plain intent copy (control) */
 const BUCKET=0;   /* A/B test closed 2026-10-25: data-driven copy (dream 11.5%, near-miss 5.6%) beat plain intent copy; everyone gets it */
 const saveInt=()=>{try{localStorage.setItem("prIntent",JSON.stringify(INT))}catch(e){}try{keepQ()}catch(e){}};
-function intent(e,g,mark){if(!e)return;const grp=GRP(e);INT.e=e;INT.grp=grp;if(g)INT.g=g;if(mark){INT.m=mark;INT.me=String(e).toLowerCase()}   /* me = the mark's own event (SEO pages only reuse a mark for that event) */INT.c=INT.c||{};INT.c[grp]=(INT.c[grp]||0)+1;INT.t=Date.now();saveInt()}
+function intent(e,g,mark){if(!e)return;const grp=GRP(e);INT.e=e;INT.grp=grp;if(g)INT.g=g;if(mark){INT.m=mark;INT.me=e;INT.mg=g||INT.g}   /* the mark's own event + gender: SEO pages and likely-A checks only reuse a mark for those */INT.c=INT.c||{};INT.c[grp]=(INT.c[grp]||0)+1;INT.t=Date.now();saveInt()}
 const topGrp=()=>{const c=INT.c||{};return Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||INT.grp};
 window.prLog=(k,x)=>log(k,Object.assign({event:INT.e||undefined,variant:x&&x.placement==="popup"&&EV.v||undefined,trig:x&&x.placement==="popup"&&EV.trig||undefined},x));
 /* a signed-in coach (coach portal token on this origin) is verified server-side, so coach views are tagged with their school */
@@ -201,7 +201,8 @@ const PRSTD={m:{"100m":11.49,"200m":23.5,"400m":52.5,"800m":128,"1600m":284,"320
     "High Jump":1.78,"Pole Vault":3.35,"Long Jump":6.1,"Triple Jump":12.5,"Shot Put":12.8,"Discus":39.62,"Hammer":42.67,"Javelin":39.62},
   w:{"100m":13.24,"200m":27.49,"400m":61.5,"800m":148,"1600m":360,"3200m":780,"5000m":1380,"100m Hurdles":16.99,"300m Hurdles":49.5,"400m Hurdles":71,
     "High Jump":1.47,"Pole Vault":2.74,"Long Jump":5.03,"Triple Jump":10.06,"Shot Put":9.14,"Discus":32,"Hammer":36.58,"Javelin":32}};
-function stdCheck(){if(ACC.member())return null;const run=S.run&&S.mark,e=run?S.e:INT.e,g=run?S.g:INT.g,mk=run?S.mark:INT.me===String(INT.e||"").toLowerCase()?INT.m:null,gr=+(S.gr||INT.gr);
+const canonEv=e=>{const l=String(e||"").toLowerCase();return EVENTS.find(x=>x.toLowerCase()===l)||e};   /* SEO pages store lowercase names */
+function stdCheck(){if(ACC.member())return null;const run=S.run&&S.mark,e=canonEv(run?S.e:INT.me),g=run?S.g:INT.mg,mk=run?S.mark:INT.m,gr=+(S.gr||INT.gr);
   if(!e||!g||!mk||!(gr>=10&&gr<=12))return null;const std=PRSTD[g]&&PRSTD[g][String(e).replace(/ \(39"\)$/,"")],v=parse(mk,e);
   if(std==null||v==null)return null;return {e,g,mk:String(mk).trim(),gr,met:FIELD.has(e)?v>=std:v<=std}}
 const likelyA=()=>{const c=stdCheck();return c&&c.met?c:null};
@@ -210,7 +211,9 @@ const likelyA=()=>{const c=stdCheck();return c&&c.met?c:null};
    and for the chat (they asked for a person). Header and hero buttons stay the evaluation: those are their own choice. */
 function lowFit(){const c=stdCheck();if(!c||c.met)return null;try{if(localStorage.getItem("prReadyDone"))return null}catch(e){}return c}
 const qTag=()=>likelyA()?(INT.gpa==="yes"?"qA":"qM"):"";
+window.prQ=()=>{try{return qTag()}catch(e){return ""}};
 const keepQ=()=>{try{const q=qTag();if(q)localStorage.setItem("prQ",q);else localStorage.removeItem("prQ")}catch(e){}};
+setTimeout(keepQ,0);   /* refresh the cached tag on every app load, so SEO pages carry it for returning visitors */
 /* likely-A copy: their mark, how many programs it fits and where their grade sits on the recruiting clock. Facts only; human-copy rules. */
 function aCopy(n){const a=likelyA();if(!a)return null;const N=n?` at ${n.toLocaleString()} programs`:"",ev=evSay(a.e);
   /* the grade line only when no search is on screen (with a search, the clock line under the body already says it) */
@@ -252,8 +255,9 @@ function armOffer(){const o=offerCopy();if(!o||EV.shown||EV.dismissed)return;if(
    offer was already shown or dismissed, never in the first 20 s unless they searched. */
 const EXIT={idle:null,lastY:scrollY,lastT:Date.now()};
 function exitOffer(trig){
-  if(EV.dismissed&&likelyA()){let used=true;try{used=sessionStorage.getItem("prA2")==="1"}catch(e){}
-    if(!used&&EV.outAt&&Date.now()-EV.outAt>60000){try{sessionStorage.setItem("prA2","1")}catch(e){}EV.dismissed=false;EV.shown=false}}
+  if(EV.dismissed&&likelyA()){let used=true,out=0;try{used=sessionStorage.getItem("prA2")==="1";out=+sessionStorage.getItem("prEvalOutAt")||0}catch(e){}
+    const blocked=ACC.tier()==="C"||ACC.isOpen()||document.getElementById("prnudge")||document.documentElement.classList.contains("onbon")||(ACC.signedIn()&&!ACC.member())||(S.school!=null&&(!SCH[S.school]||SCH[S.school].j));
+    if(!used&&!blocked&&out&&Date.now()-out>60000){try{sessionStorage.setItem("prA2","1")}catch(e){}EV.dismissed=false;EV.shown=false}}
   if(EV.shown||EV.dismissed)return;if(S.school!=null){const s=SCH[S.school];if(!s||s.j)return;const nm=s.t||s.n;EV.force=true;
     const dv=INT.e&&INT.m?parse(INT.m,INT.e):null,d=dv!=null?dreamCopy(s,INT.g||S.g,INT.e,dv):null;
     if(d)evalIn(d.t,d.b,0,"school-exit-dream-"+d.k+gsfx(),trig,dreamBs(d));else evalIn(`Does ${nm} know your name?`,`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,0,"school-exit"+gsfx(),trig,null);return}if(!S.run&&Date.now()-T0<20000)return;
@@ -304,7 +308,7 @@ function evalIn(title,body,delay,v,trig,bs){
   if(EV.shown||EV.dismissed||ACC.tier()==="C"||ACC.isOpen()||document.getElementById("prnudge")||document.documentElement.classList.contains("onbon")||(ACC.signedIn()&&!ACC.member())) return; clearTimeout(EV.t);
   /* qualified accounts (Tier A/A+) hear about their own level (Ryan 2026-10-25: "copy that resonates with their specific recruitment level") */
   {const qc=(S.school==null||trig==="high-intent")&&!/^dream/.test(v||"")?qualCopy():null;if(qc){title=qc.t;body=qc.b;bs=qc.bs;v="qual-"+(v||"generic")}}
-  {const ac=S.school==null&&!/^(dream|ready-|school)/.test(v||"")&&!/^qual-/.test(v||"")?aCopy(S.run?(offerCopy()||{}).n:0):null;if(ac){title=ac.t;body=ac.b;bs=ac.bs;v="a-"+(v||"generic")}}
+  {const ac=S.school==null&&!/^(dream|ready-|school|chat)/.test(v||"")&&!/^qual-/.test(v||"")?aCopy(S.run?(offerCopy()||{}).n:0):null;if(ac){title=ac.t;body=ac.b;bs=ac.bs;v="a-"+(v||"generic")}}
   {const lf=!/^(ready-|chat)/.test(v||"")?lowFit():null;if(lf){const ev=evSay(lf.e);title=`Where does your ${lf.mk} ${ev} stand for college?`;
     body="The 2-minute readiness check shows where you stand for college track and what to work on next.";bs=null;v="ready-low-"+(v||"generic")}}
   /* Tier B (GPA 2.3 to 2.99, or 3.0+ without a PR-standard mark yet): same headline, softer body (draft for Ryan's approval) */
@@ -365,7 +369,7 @@ function askGpa(){const ql=document.querySelector("#evq .evql"),o=document.query
   o.innerHTML='<button type="button" data-evgpa="yes">Yes</button><button type="button" data-evgpa="no">Not yet</button><button type="button" data-evgpa="unsure">Not sure</button>';
   $("evq").hidden=false;$("evs").hidden=true}
 function evalOut(){const el=$("eval");el.classList.remove("on");el.setAttribute("aria-hidden","true");$("evbg").classList.remove("on");setTimeout(()=>{if(!$("eval").classList.contains("on"))$("evbg").hidden=true},300);
-  EV.dismissed=true;EV.outAt=Date.now();try{sessionStorage.setItem("prEvalDismissed","1")}catch(e){}
+  EV.dismissed=true;try{sessionStorage.setItem("prEvalDismissed","1");sessionStorage.setItem("prEvalOutAt",String(Date.now()))}catch(e){}
   if(S.school==null)$("evpill").hidden=false}
 document.addEventListener("click",ev=>{
   const q=ev.target.closest("[data-evq]");if(q){INT.rs=q.dataset.evq;saveInt();log("feedback",{detail:"status-"+q.dataset.evq,event:INT.e});
@@ -383,7 +387,7 @@ document.addEventListener("click",ev=>{
 let scrolled=0,lastY=scrollY;
 addEventListener("scroll",()=>{scrolled+=Math.abs(scrollY-lastY);lastY=scrollY;
   if(S.tab==="results"&&S.school==null&&scrolled>1400) {const gp=GRP(evLabel(R.ev||""))||topGrp();{let done=false;try{done=!!localStorage.getItem("prReadyDone")}catch(e){}
-    if(done)evalIn("Coaches recruit from lists like this one.",`${EVAL} where your marks fit and which programs would want you.`,0,gp?"results-"+gp:"results");
+    if(done||likelyA())evalIn("Coaches recruit from lists like this one.",`${EVAL} where your marks fit and which programs would want you.`,0,gp?"results-"+gp:"results");
     else evalIn("Could you make a list like this one?","The 2-minute readiness check shows where you stand for college track and what to work on next.",0,"ready-results"+(gp?"-"+gp:"")+gsfx(),"results-scroll")}}},{passive:true});
 
 /* ---------- Standards (the current site's flow, rebranded) ---------- */
