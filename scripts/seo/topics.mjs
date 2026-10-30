@@ -15,7 +15,7 @@ const NFHS = "https://www.nfhs.org/";
 
 export const TOPIC_DATE = "2026-10-16";
 /* per-guide content edits: dateModified + "Updated" follow the real edit date (2026-10-21: two #7-ranked guides rebuilt with data) */
-export const EDITED = { "/guides/how-to-get-recruited-for-track-and-field.html": "2026-10-21", "/guides/how-to-email-college-track-coaches.html": "2026-10-21" };
+export const EDITED = { "/guides/how-to-get-recruited-for-track-and-field.html": "2026-10-21", "/guides/how-to-email-college-track-coaches.html": "2026-10-21", "/guides/d1-track-and-field-scholarship-times.html": "2026-10-30" };
 
 export function topicPages({ S, CT, write, page, parse, esc, slug, evPath, FIELD, SITE, gName, STATE, statePath, resultPages, DATES, QUIZ }) {
   const raw = (s, g, e) => { const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? v[0] : "")) : null; };
@@ -75,7 +75,7 @@ export function topicPages({ S, CT, write, page, parse, esc, slug, evPath, FIELD
 
   /* 2 */
   art({ p: GP("d1-track-and-field-scholarship-times"), crumb: "D1 scholarship times",
-    title: "D1 Track and Field Scholarship Times for Every Event (2026)", h1: "D1 track and field scholarship times",
+    title: "D1 Track and Field Scholarship Standards and Times (2026)", h1: "D1 track and field scholarship times",
     desc: `What times and marks get D1 track and field scholarship interest? Typical NCAA D1 Target and Recruit marks for every men's and women's event, from ${n("NCAA D1")} programs.`,
     answer: `At a typical NCAA D1 program, scholarship conversations start around ${m("NCAA D1", "m", "100m", 1)} in the men's 100m and ${m("NCAA D1", "w", "100m", 1)} in the women's 100m (the Recruit level). The strongest scholarship interest usually starts near ${m("NCAA D1", "m", "100m", 0)} for men and ${m("NCAA D1", "w", "100m", 0)} for women (the Target level).`,
     sections: [["Men's D1 scholarship marks", tbl(["Event", "Target (strongest interest)", "Recruit (conversations start)"], RUN.concat(JMP, THR).map(e => [`<a href="${evPath("NCAA D1", "m", e)}">${esc(e)}</a>`, esc(m("NCAA D1", "m", e, 0)), esc(m("NCAA D1", "m", e, 1))]))],

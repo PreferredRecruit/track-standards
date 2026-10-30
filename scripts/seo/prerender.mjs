@@ -21,6 +21,7 @@ import { reportPages } from "./reports.mjs";
 import { hsLevel, hsRows, fmtXC, fmtHS } from "./hsconv.mjs";
 import { topicPages, EDITED } from "./topics.mjs";
 import { gapGuides } from "./gap-guides.mjs";
+import { morePages } from "./more-pages.mjs";
 import { dailyPages } from "./daily.mjs";
 import { athleteIndex, athletePages } from "./athletes.mjs";
 const SITE = "https://trackandfieldstandards.com";
@@ -318,7 +319,7 @@ export function generate(root, out) {
         lead = `At a typical ${d === "NCAA D1" ? "mid-major " : "mid-tier "}${d} program, boys need about ${m1[1][mid]} in the 100m and ${m16[1][mid]} in the 1600m${mi(m16[1][mid])}${w1 && w16 ? `, and girls about ${w1[1][mid]} and ${w16[1][mid]}${mi(w16[1][mid])}` : ""}, to ${TJ === 1 ? "get recruited" : "make the team"}.${d === "NCAA D3" ? " Division III gives no athletic scholarships; aid is need-based or academic." : ""} `; }
       if (m16 && m1) q.unshift([`What times do you need to run ${d} track in high school?`, `${TIERS.map(([t], i) => `${t}: about ${m1[1][i]} in the 100m and ${m16[1][i]} in the 1600m for boys${w16 ? `, ${w16[1][i]} in the 1600m for girls` : ""}`).join("; ")}. These are the ${TJ === 1 ? "Recruit" : "Walk-On"} levels of the median program in each tier, converted to high school events.`]);
       if (XD.m) { const i = XD.m.tiers.Top[1] ? 1 : 2; q.splice(1, 0, [`What cross country times do you need for ${d}?`, `${XT.map(t => `${t} tier: about ${fmtXC(XD.m.hs[t][i])} for boys${XD.w ? ` and ${fmtXC(XD.w.hs[t][i])} for girls` : ""} in a high school 5K`).join("; ")}, from ${d} teams' own runners in 2024 and 2025.`]); } }
-    const body = tierTbl("m") + tierTbl("w") + tierNote + xcTbl + tbl("m") + tbl("w") + `<p>Each value is the median across ${list.length} ${esc(d)} programs. Tap an event for every school's marks, most reachable first.</p>`
+    const body = tierTbl("m") + tierTbl("w") + tierNote + xcTbl + `<p><a href="/guides/college-cross-country-recruiting-times.html">Cross country times for every division ›</a> · <a href="/guides/printable-track-and-field-recruiting-standards.html">Printable standards sheet (PDF) ›</a> · <a href="/guides/best-colleges-for-track-and-field.html">Best colleges for track and field ›</a></p>` + tbl("m") + tbl("w") + `<p>Each value is the median across ${list.length} ${esc(d)} programs. Tap an event for every school's marks, most reachable first.</p>`
       + `<h2>Common questions</h2><div class="qa">${q.map(([a, b]) => `<h3>${esc(a)}</h3><p>${esc(b)}</p>`).join("")}</div>`
       + `<h2>${esc(d)} conferences (${confKeys.length})</h2>${groupLinks(confKeys.map(k => [confName.get(k), k.split("|")[1]]))}`
       + `<h2>Other divisions</h2>${groupLinks(DIVS.filter(x => x !== d).map(x => [divPath(x), `${x} track and field recruiting standards`]).concat([["/how-fast.html", "How fast do you need to run in college?"], ["/guides/ncaa-d1-vs-d2-vs-d3-vs-naia-track-and-field.html", "D1 vs D2 vs D3 vs NAIA"]]))}`
@@ -372,6 +373,8 @@ export function generate(root, out) {
   /* data reports for links and citations (scripts/seo/reports.mjs, outreach 2.1 + 2.2) */
   try { TOPICS.push(...reportPages({ root, S: S.filter(x => !x.j), CT, std, write, page, esc, sl, SITE, DATES, QUIZ })); } catch (e) { console.warn("reports skipped:", e && e.message); }
   try { TOPICS.push(...gapGuides({ S: S.filter(x => !x.j), CT, write, page, parse, esc, slug, evPath, FIELD, SITE, gName, STATE, statePath, resultPages, DATES, QUIZ })); } catch (e) { console.warn("gap guides skipped:", e && e.message); }
+  /* missing pages found in Search Console 2026-10-30: XC times, best colleges, printable sheet (scripts/seo/more-pages.mjs) */
+  try { TOPICS.push(...morePages({ root, out, S: S.filter(x => !x.j), CT, write, page, parse, esc, sl, evPath, FIELD, SITE, gName, QUIZ, fmtXC })); } catch (e) { console.warn("more pages skipped:", e && e.message); }
   /* NJCAA marks by event (Ryan 2026-10-16, keyword gap "njcaa track standards"): this site sets no NJCAA levels (national, not
      conference, competition), so the page shows what it took to rank #1/#10/#25/#50/#100 on the newest NJCAA national list (TFRRS). */
   try {
