@@ -13,7 +13,7 @@ export function fitTitle(t) {
   /* shorten in steps until it fits Google's ~60-character display; brand only when there's room */
   const steps = [x => x, x => x.replace(/: Every School$/, ""), x => x.replace(" Track & Field ", " Track "), x => x.replace(/ \d{4}-\d{2}\b/, ""),
     x => x.replace(/^(.*?) (University|College)( of [A-Z][\w.&' -]*)?(?= Track)/, (m, a, u, o) => o ? `${u}${o}` : a),
-    x => x.replace(" Table for High School Athletes", "").replace(" Conversion", ""),
+    x => x.replace(" Table for High School Athletes", ""), x => x.replace(" Conversion", ""),
     x => x.replace(/\(NJCAA\): \d{4} Results/, "(NJCAA): Results"), x => x.replace(" Results & Roster", " Results"),
     x => x.replace(" Stats & Rankings", " Stats"), x => x.replace(/ \(([^)]+)\) Track Stats$/, " Track Stats, $1"), x => x.replace(/ Track Stats, (.+)$/, ", $1 Track"),   /* athlete pages */
     x => x.replace(" for Athletes, Parents and Coaches", ""),

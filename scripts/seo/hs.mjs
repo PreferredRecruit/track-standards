@@ -116,8 +116,8 @@ ${cv ? `<p><a href="/convert.html">High school to college conversion tables ›<
 
   /* 3. conversion tables */
   const convPages = [
-    ["1600m-to-1500m-conversion", "1600m to 1500m Conversion", "1600m", "m", [240, 400, 5]],
-    ["mile-to-1500m-conversion", "Mile to 1500m Conversion", "Mile", "m", [240, 400, 5]],
+    ["1600m-to-1500m-conversion", "1600m to 1500m Conversion (and 1500 to 1600)", "1600m", "m", [240, 400, 5]],
+    ["mile-to-1500m-conversion", "Mile to 1500m Conversion (and 1500 to Mile)", "Mile", "m", [240, 400, 5]],
     ["3200m-to-3000m-and-5000m-conversion", "3200m to 3000m and 5000m Conversion", "3200m", "m", [510, 840, 10]],
     ["300m-hurdles-to-400m-hurdles-boys", "300m Hurdles to 400m Hurdles Conversion (Boys)", "300m Hurdles", "m", [35, 46, 0.5]],
     ["300m-hurdles-to-400m-hurdles-girls", "300m Hurdles to 400m Hurdles Conversion (Girls)", "300m Hurdles", "w", [41, 56, 0.5]],
@@ -126,7 +126,8 @@ ${cv ? `<p><a href="/convert.html">High school to college conversion tables ›<
     const p = `/convert/${s}.html`, rows = []; for (let v = a; v <= b + 1e-9; v += st) rows.push([+v.toFixed(2), toCollege(e, g, +v.toFixed(2))]);
     write(p, page({ title: `${t} Table for High School Athletes | Preferred Recruit`, desc: `${t} table for high school athletes: every ${e} time next to its college ${CONV[e].to} equivalent, the same conversion this site uses for college recruiting standards.`,
       pathname: p, crumbs: [["Home", "/"], ["Conversions", "/convert.html"], [t, p]], h1: esc(t),
-      intro: `High school and college race different distances or hurdle heights, so college standards need a conversion: ${esc(CONV[e].how)}. These are standard coaching conversions, a close estimate rather than an exact race result. The standards search on this site applies them automatically.`,
+      intro: `${CONV[e].to === "1500m" ? (() => { const k = CONV[e].k[g], x = 270, f = v => `${Math.floor(v / 60)}:${(v % 60).toFixed(1).padStart(4, "0")}`;   /* "1500 to 1600 conversion": position 8-10 (2026-10-30), so both directions up top */
+        return `<b>To convert a ${esc(e)} time to 1500m, multiply by ${k}: a ${f(x)} ${esc(e)} is about ${f(x * k)} for 1500m. To go from 1500m back to the ${esc(e)}, divide by ${k} (×${(1 / k).toFixed(4)}): a 4:00.0 1500m is about ${f(240 / k)}.</b> `; })() : ""}High school and college race different distances or hurdle heights, so college standards need a conversion: ${esc(CONV[e].how)}. These are standard coaching conversions, a close estimate rather than an exact race result. The standards search on this site applies them automatically.`,
       body: `<div class="scroll"><table><tr><th>High school ${esc(e)}</th>${rows[0][1].map(z => `<th class="n">College ${esc(z.e)}</th>`).join("")}</tr>${rows.map(([v, cl]) => `<tr><td>${esc(fmt(e, v))}</td>${cl.map(z => `<td class="n">${esc(fmt(z.e, z.v))}</td>`).join("")}</tr>`).join("")}</table></div>
 <p><a href="${hsPath(g, HS_EVENTS.includes(e) ? e : "1600m")}">${esc(howAsk(HS_EVENTS.includes(e) ? e : "1600m").replace(/^h/, "H"))} in college? ›</a></p>` }));
   }
