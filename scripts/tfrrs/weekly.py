@@ -12,14 +12,16 @@ sys.path.insert(0, HERE)
 import scrape_lists, scrape_champs, scrape_xc
 
 year = datetime.date.today().year
-scrape_lists.main([str(year)], fresh=True, limit=10000)   # full depth: every athlete (Ryan 2026-10-22)
-scrape_champs.main(year, year)
+# TFRRS files December meets under next year's indoor season (2026-10-30 audit: December was skipped until Jan 1)
+years = [year] + ([year + 1] if datetime.date.today().month == 12 else [])
+scrape_lists.main([str(y) for y in years], fresh=True, limit=10000)   # full depth: every athlete (Ryan 2026-10-22)
+scrape_champs.main(year, years[-1])
 try: scrape_xc.main([year], fresh=True)   # cross country championships (Sep-Nov), results only
 except Exception as e: print("xc scrape failed:", e)
 tmp = os.path.join(HERE, "rank_tmp")
 subprocess.run([sys.executable, os.path.join(HERE, "build_rank.py")], check=True,
                env={**os.environ, "CONF_CAP": "100", "TFRRS_LISTS": os.path.join(HERE, "lists"), "TFRRS_CHAMPS": os.path.join(HERE, "champs"), "RANK_OUT": tmp})
-idx = [x for x in json.load(open(os.path.join(tmp, "rank_index.json"))) if x["year"] == str(year)]
+idx = [x for x in json.load(open(os.path.join(tmp, "rank_index.json"))) if x["year"] in [str(y) for y in years]]
 for x in idx:
     with open(os.path.join(tmp, x["key"] + ".json"), "rb") as a, gzip.open(os.path.join(OUT, "rank", x["key"] + ".dat"), "wb", compresslevel=9) as b:
         b.write(a.read())
@@ -28,8 +30,9 @@ subprocess.run([sys.executable, os.path.join(HERE, "build_legal.py"), os.path.jo
                env={**os.environ, "TFRRS_CACHE": os.path.join(HERE, "cache"), "LEGAL_BASE": os.path.join(HERE, "..", "..", "public", "data", "legal"), "LEGAL_FETCH": "1500"})
 # athlete careers (Ryan 2026-10-23: "keep adding peoples times, even if they are at multiple schools"): every season, this week's included
 subprocess.run([sys.executable, os.path.join(HERE, "build_career.py"), os.path.join(OUT, "career"), os.path.join(HERE, "..", "..", "public", "data", "rank"), os.path.join(OUT, "rank")])
-# weekly ranking snapshot for week-over-week / month-over-month movement (scripts/tfrrs/depth_snapshot.py)
-subprocess.run([sys.executable, os.path.join(HERE, "depth_snapshot.py"), OUT])
+# official championship team scores for this year (Power Index national points), then the weekly Power Ranking snapshot
+subprocess.run([sys.executable, os.path.join(HERE, "fetch_teamscores.py"), str(year), str(years[-1]), os.path.join(OUT, "teamscores")])
+subprocess.run(["node", os.path.join(HERE, "..", "seo", "power-snapshot.mjs"), OUT])
 json.dump(idx, open(os.path.join(OUT, "rank_index.json"), "w"))
 json.dump({"updated": datetime.datetime.utcnow().isoformat(timespec="minutes") + "Z"}, open(os.path.join(OUT, "updated.json"), "w"))
 print(len(idx), "result sets for", year, "·", len(glob.glob(os.path.join(OUT, "rank", "*.dat"))), "files")

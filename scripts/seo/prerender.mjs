@@ -22,7 +22,7 @@ import { hsLevel, hsRows, fmtXC, fmtHS } from "./hsconv.mjs";
 import { topicPages, EDITED } from "./topics.mjs";
 import { gapGuides } from "./gap-guides.mjs";
 import { morePages } from "./more-pages.mjs";
-import { computeDepth, rankPath } from "./depth.mjs";
+import { computeSite, rankPath } from "./power-site.mjs";
 import { rankingPages } from "./rankings.mjs";
 import { dailyPages } from "./daily.mjs";
 import { athleteIndex, athletePages } from "./athletes.mjs";
@@ -63,7 +63,7 @@ function checker(pathname) {
 const CHK_CSS = `.chk{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:16px 0}.chk b{display:block;font-size:15px;margin-bottom:8px}.chk div{display:flex;gap:8px;flex-wrap:wrap}.chk select,.chk input{font:inherit;padding:10px 12px;border:1px solid #DCDAE5;border-radius:12px;background:#FAFAFC;flex:1 1 140px;min-width:0}.chk button{font:inherit;font-weight:650;border:0;border-radius:999px;padding:10px 18px;background:#7A45F0;color:#fff;cursor:pointer}`;
 const withChecker = (pathname, body) => { const c = checker(pathname), i = body.indexOf('<p class="upd">'); if (body.includes('<div class="qa">') && i > -1) { const j = body.indexOf("</p>", i) + 4; return body.slice(0, j) + c + body.slice(j); } return c + body; };
 function page({ title, desc, pathname, crumbs, h1, intro, body, ld }) {
-  if (!/^\/(guides|for-coaches)\.html$/.test(pathname)) body = withChecker(pathname, body);
+  if (!/^\/(guides|for-coaches)\.html$/.test(pathname) && !/^\/rankings/.test(pathname)) body = withChecker(pathname, body);
   title = fitTitle(title); desc = fitDesc(desc, tailsFor(pathname));
   const url = SITE + pathname;
   const bc = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: crumbs.map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) };
@@ -215,8 +215,8 @@ export function generate(root, out) {
   const statePath = st => `/states/${slug(STATE[st] || st)}-college-track-and-field.html`;
   const evAvail = (list, g) => EVENTS.filter(e => list.some(s => raw(s, g, e)));
 
-  /* national depth rankings (depth.mjs): computed once from dist/data/rank (repo copy + Monday data) for every page that shows a rank */
-  let R = { seasons: {}, cur: {}, bySchool: new Map(), conf: new Map(), hist: [] }; try { R = computeDepth({ out, S: S.filter(x => !x.j) }); } catch (e) { console.warn("rankings skipped:", e && e.message); }
+  /* PR Power Index (power-site.mjs): computed once from dist/data/rank (repo copy + Monday data) for every page that shows a rank */
+  let R = { seasons: {}, cur: {}, bySchool: new Map(), conf: new Map(), hist: [] }; try { R = computeSite({ out, root, S: S.filter(x => !x.j) }); } catch (e) { console.warn("rankings skipped:", e && e.message); }
 
   /* conferences */
   for (const [k, list] of confs) {
@@ -231,7 +231,7 @@ export function generate(root, out) {
     const juco = d === "NJCAA";
     /* the conference's own ranking (Ryan 2026-10-30: rankings schools can share) */
     const CR = R.conf.get(k), cur = R.cur[d];
-    const depthTbl = CR && cur ? `<h2>${esc(c)} track and field rankings (${cur.year} ${cur.season})</h2><p>${esc(c)} programs ranked by athletes in the top 50 of the ${esc(d)} national lists, ${cur.year} ${cur.season} (<a href="${rankPath(d)}">full ${esc(d)} rankings</a>).</p><div class="scroll"><table><tr><th>#</th><th>School</th><th class="n">Top-50 entries</th><th class="n">Men</th><th class="n">Women</th><th class="n">${esc(d)} rank</th></tr>${CR.map(x => `<tr><td>${x.crank || "–"}</td><td><a href="${sl(x.s)}">${esc(x.s.t && !/\./.test(x.s.t.replace(/\(.*?\)/g, "")) ? x.s.t : x.s.n)}</a></td><td class="n"><b>${x.n}</b></td><td class="n">${x.m || "–"}</td><td class="n">${x.w || "–"}</td><td class="n">${x.rank ? "#" + x.rank : "–"}</td></tr>`).join("")}</table></div>` : "";
+    const depthTbl = CR && cur ? `<h2>${esc(c)} Power Rankings (${cur.year} ${cur.season})</h2><p>${esc(c)} programs by their place in the ${esc(d)} Power Rankings: national meet points, projected points, qualifiers and event-group squads (<a href="${rankPath(d)}">full ${esc(d)} Power Rankings</a>).</p><div class="scroll"><table><tr><th>#</th><th>School</th><th class="n">Power</th><th class="n">${cur.P.final ? "Nat'l pts" : "Proj. pts"}</th><th class="n">Qualifiers</th><th class="n">${esc(d)} rank</th></tr>${CR.map(r => `<tr><td>${r.crank}</td><td><a href="${sl(r.s)}">${esc(r.s.t && !/\./.test(r.s.t.replace(/\(.*?\)/g, "")) ? r.s.t : r.s.n)}</a></td><td class="n"><b>${r.x.power.toFixed(1)}</b></td><td class="n">${cur.P.final ? r.x.act : "–"}</td><td class="n">${r.x.qual}</td><td class="n">#${r.x.rank}</td></tr>`).join("")}</table></div>` : "";
     /* a conference named like a school ("American" vs American University) says Conference, so no two pages share a title */
     const cTitle = S.some(x => (x.t || "") === c || x.n === c) ? `${c} Conference` : c;
     write(confName.get(k), page({ title: juco ? `NJCAA Junior College Track & Field Programs (${list.length})` : `${cTitle} Track & Field Recruiting Standards ${SEASON}`,
@@ -383,7 +383,7 @@ export function generate(root, out) {
   try { TOPICS.push(...gapGuides({ S: S.filter(x => !x.j), CT, write, page, parse, esc, slug, evPath, FIELD, SITE, gName, STATE, statePath, resultPages, DATES, QUIZ })); } catch (e) { console.warn("gap guides skipped:", e && e.message); }
   /* missing pages found in Search Console 2026-10-30: XC times, best colleges, printable sheet (scripts/seo/more-pages.mjs) */
   try { TOPICS.push(...morePages({ root, out, S: S.filter(x => !x.j), CT, write, page, parse, esc, sl, evPath, FIELD, SITE, gName, QUIZ, fmtXC })); } catch (e) { console.warn("more pages skipped:", e && e.message); }
-  try { rankingPages({ R, write, page, esc, sl, SITE, QUIZ, confUrl: x => confName.get(x.d + "|" + x.c) }); } catch (e) { console.warn("ranking pages skipped:", e && e.message); }
+  try { rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }); } catch (e) { console.warn("ranking pages skipped:", e && e.message); }
   /* NJCAA marks by event (Ryan 2026-10-16, keyword gap "njcaa track standards"): this site sets no NJCAA levels (national, not
      conference, competition), so the page shows what it took to rank #1/#10/#25/#50/#100 on the newest NJCAA national list (TFRRS). */
   try {
@@ -531,10 +531,11 @@ async function freshData(out) {
     for (let t = 0; t < 4 && !(d && d.ok); t++) { if (t) await new Promise(r => setTimeout(r, 1500 * t)); try { d = await fetch(LIVE_BASE + "rank/" + x.key + ".dat", { signal: AbortSignal.timeout(30000) }); } catch { d = null; } }
     if (!d || !d.ok) { console.warn(`Monday data: ${x.key} failed after 4 tries (its pages use the repo copy if there is one)`); if (!idx.some(y => y.key === x.key) && fs.existsSync(path.join(out, "data/rank", x.key + ".dat"))) idx.push(x); continue; }
     fs.writeFileSync(path.join(out, "data/rank", x.key + ".dat"), Buffer.from(await d.arrayBuffer())); n++;
+    try { const ts = await fetch(LIVE_BASE + "teamscores/" + x.key + ".json", { signal: AbortSignal.timeout(15000) }); if (ts.ok) { fs.mkdirSync(path.join(out, "data/teamscores"), { recursive: true }); fs.writeFileSync(path.join(out, "data/teamscores", x.key + ".json"), await ts.text()); } } catch {}   /* official championship team scores */
     const i = idx.findIndex(y => y.key === x.key); if (i >= 0) idx[i] = x; else idx.push(x);
   }
   try { const u = await fetch(LIVE_BASE + "updated.json", { signal: AbortSignal.timeout(15000) }); if (u.ok) fs.writeFileSync(path.join(out, "data/updated.json"), await u.text()); } catch {}
-  try { const h = await fetch(LIVE_BASE + "depth_history.json", { signal: AbortSignal.timeout(15000) }); if (h.ok) fs.writeFileSync(path.join(out, "data/depth_history.json"), await h.text()); } catch {}   /* weekly ranking snapshots */
+  try { const h = await fetch(LIVE_BASE + "power_history.json", { signal: AbortSignal.timeout(15000) }); if (h.ok) fs.writeFileSync(path.join(out, "data/power_history.json"), await h.text()); } catch {}   /* weekly Power Ranking snapshots */
   fs.writeFileSync(f, JSON.stringify(idx)); console.log(`Monday data: ${n} result files from the data branch`);
 }
 
