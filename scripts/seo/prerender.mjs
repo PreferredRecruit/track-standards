@@ -148,7 +148,10 @@ var shown=false;function show(trig){if(shown)return;shown=true;try{sessionStorag
   function esc(k){if(k.key==="Escape")close()}document.addEventListener("keydown",esc);bg.addEventListener("click",close);d.querySelector(".x").addEventListener("click",close);d.querySelector(".later").addEventListener("click",close);
   setTimeout(function(){try{a.focus({preventScroll:true})}catch(z){}},360)}
 var tm=setTimeout(function(){show("timer-25s")},25000);
-addEventListener("scroll",function f(){var h=document.documentElement;if((scrollY+innerHeight)/Math.max(h.scrollHeight,1)>=.5){removeEventListener("scroll",f);clearTimeout(tm);setTimeout(function(){show("scroll-50")},400)}},{passive:true});
+/* 2026-10-30: day one showed it after ~2 s on average (456 views, 0 clicks): arriving from Google, the browser jumps to the
+   highlighted answer, and that jump counted as "scrolled halfway". Now it needs 10 s on the page AND 400 px the reader scrolled. */
+var y0=null;addEventListener("scroll",function f(){if(y0===null){y0=scrollY;return}var h=document.documentElement;
+  if(Date.now()-T0>=10000&&Math.abs(scrollY-y0)>=400&&(scrollY+innerHeight)/Math.max(h.scrollHeight,1)>=.5){removeEventListener("scroll",f);clearTimeout(tm);setTimeout(function(){show("scroll-50")},400)}},{passive:true});
 })();
 })();</script></body></html>`;
 }
