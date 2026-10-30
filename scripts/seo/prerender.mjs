@@ -22,6 +22,8 @@ import { hsLevel, hsRows, fmtXC, fmtHS } from "./hsconv.mjs";
 import { topicPages, EDITED } from "./topics.mjs";
 import { gapGuides } from "./gap-guides.mjs";
 import { morePages } from "./more-pages.mjs";
+import { computeDepth, rankPath } from "./depth.mjs";
+import { rankingPages } from "./rankings.mjs";
 import { dailyPages } from "./daily.mjs";
 import { athleteIndex, athletePages } from "./athletes.mjs";
 const SITE = "https://trackandfieldstandards.com";
@@ -106,7 +108,7 @@ details.morel{margin-top:6px}details.morel>summary{cursor:pointer;list-style:non
 code{overflow-wrap:anywhere;word-break:break-word;font-size:.9em;background:var(--soft);border-radius:6px;padding:1px 6px}
 header nav a.cta .s{display:none}
 @media(max-width:560px){td,th{padding:11px 12px}td{font-size:14px}header div{flex-wrap:nowrap;padding:10px 16px}header nav{gap:0}header nav a.cta{padding:8px 14px;font-size:13.5px}header nav a.cta .l{display:none}header nav a.cta .s{display:inline}header a.logo small{letter-spacing:.12em}}</style></head><body>
-<header><div><a class="logo" href="/"><img src="/icon-192.png" alt=""><span><b>Preferred Recruit</b><small>Track Standards</small></span></a><nav><a href="/">Standards</a><a href="/explore.html">Explore</a><a class="cta" href="${QUIZ}"><span class="l">Free recruitment evaluation</span><span class="s">Free evaluation</span></a></nav></div></header>
+<header><div><a class="logo" href="/"><img src="/icon-192.png" alt=""><span><b>Preferred Recruit</b><small>Track Standards</small></span></a><nav><a href="/">Standards</a><a href="/rankings.html">Rankings</a><a href="/explore.html">Explore</a><a class="cta" href="${QUIZ}"><span class="l">Free recruitment evaluation</span><span class="s">Free evaluation</span></a></nav></div></header>
 <main><div class="bc">${crumbs.map(([n, u], i) => i < crumbs.length - 1 ? `<a href="${u}">${esc(n)}</a> › ` : esc(n)).join("")}</div>
 <h1>${h1}</h1>${intro ? `<p class="intro">${intro}</p>` : ""}${body}
 <div class="cta"><b>Looking to run in college?</b> Preferred Recruit gets athletes' marks in front of college coaches. <a href="${QUIZ}">Get your free recruitment evaluation ›</a></div></main>
@@ -213,6 +215,9 @@ export function generate(root, out) {
   const statePath = st => `/states/${slug(STATE[st] || st)}-college-track-and-field.html`;
   const evAvail = (list, g) => EVENTS.filter(e => list.some(s => raw(s, g, e)));
 
+  /* national depth rankings (depth.mjs): computed once from dist/data/rank (repo copy + Monday data) for every page that shows a rank */
+  let R = { seasons: {}, cur: {}, bySchool: new Map(), conf: new Map(), hist: [] }; try { R = computeDepth({ out, S: S.filter(x => !x.j) }); } catch (e) { console.warn("rankings skipped:", e && e.message); }
+
   /* conferences */
   for (const [k, list] of confs) {
     const [d, c] = k.split("|"); list.sort((a, b) => a.n.localeCompare(b.n));
@@ -224,12 +229,15 @@ export function generate(root, out) {
     const body = (d !== "NJCAA" && Object.keys(line.m || line.w || {}).length ? confHS("m") + confHS("w") + `<p>The ${esc(c)}'s levels from its 2026 championship, converted to the events you run in high school (1600m from the 1500m, 3200m from the 5000m, 300m hurdles from the 400m hurdles). Schools with their own published chart (★) can differ: open the school.</p>` : "") + `<h2>${esc(c)} track &amp; field programs (${list.length})</h2><div class="scroll"><table><tr><th>School</th><th>State</th><th>${d === "NJCAA" ? "On this site" : "Standards"}</th></tr>${list.map(s => `<tr><td><a href="${sl(s)}">${esc(s.n)}</a>${s.o ? ' <span class="star">★ official</span>' : ""}</td><td>${esc(STATE[s.s] || s.s || "")}</td><td>${s.j ? "Season results" : s.o ? "Published by the school" : s.est ? "Estimate" : "Set from 2026 conference results"}</td></tr>`).join("")}</table></div>` +
       (Object.keys(line.m || {}).length ? ["m", "w"].map(g => (line.rule === "p4" ? `<h2>${esc(c)} ${gName(g).toLowerCase()} marks: what it took this season</h2><p>The ${esc(c)} is a Power 4 conference, so there is no Walk-On level. Target is the middle of the 8th to 10th best marks in the conference in 2026 and Recruit the middle of the 15th to 25th, for conference schools without an official chart.</p><div class="scroll"><table><tr><th>Event</th><th class="n">Target</th><th class="n">Recruit</th></tr>${evRows(g, 2)}</table></div>` : `<h2>${esc(c)} ${gName(g).toLowerCase()} marks: what it took this season</h2><p>The 8th, 15th and 25th best marks in the ${esc(c)} in 2026, which set the Target, Recruit and Walk-On levels for conference schools without an official chart.</p><div class="scroll"><table><tr><th>Event</th><th class="n">8th (Target)</th><th class="n">15th (Recruit)</th><th class="n">25th (Walk-On)</th></tr>${evRows(g)}</table></div>`)).join("") : "");
     const juco = d === "NJCAA";
+    /* the conference's own ranking (Ryan 2026-10-30: rankings schools can share) */
+    const CR = R.conf.get(k), cur = R.cur[d];
+    const depthTbl = CR && cur ? `<h2>${esc(c)} track and field rankings (${cur.year} ${cur.season})</h2><p>${esc(c)} programs ranked by athletes in the top 50 of the ${esc(d)} national lists, ${cur.year} ${cur.season} (<a href="${rankPath(d)}">full ${esc(d)} rankings</a>).</p><div class="scroll"><table><tr><th>#</th><th>School</th><th class="n">Top-50 entries</th><th class="n">Men</th><th class="n">Women</th><th class="n">${esc(d)} rank</th></tr>${CR.map(x => `<tr><td>${x.crank || "–"}</td><td><a href="${sl(x.s)}">${esc(x.s.t && !/\./.test(x.s.t.replace(/\(.*?\)/g, "")) ? x.s.t : x.s.n)}</a></td><td class="n"><b>${x.n}</b></td><td class="n">${x.m || "–"}</td><td class="n">${x.w || "–"}</td><td class="n">${x.rank ? "#" + x.rank : "–"}</td></tr>`).join("")}</table></div>` : "";
     /* a conference named like a school ("American" vs American University) says Conference, so no two pages share a title */
     const cTitle = S.some(x => (x.t || "") === c || x.n === c) ? `${c} Conference` : c;
     write(confName.get(k), page({ title: juco ? `NJCAA Junior College Track & Field Programs (${list.length})` : `${cTitle} Track & Field Recruiting Standards ${SEASON}`,
       desc: juco ? `All ${list.length} NJCAA junior college track and field programs, with each team's season results, roster and TFRRS links. Results only: no predicted levels.` : `${c} track and field recruiting standards ${SEASON}: ${levelWords(d)} marks for all ${list.length} ${d} programs, plus what it took to score at the ${c} championships.`,
       pathname: confName.get(k), crumbs: [["Home", "/"], ["Explore", "/explore.html"], juco ? ["Junior colleges", JG] : [d, divPath(d)], [c, confName.get(k)]], h1: juco ? "NJCAA Junior College Track &amp; Field Programs" : `${esc(c)} Track &amp; Field Recruiting Standards`,
-      intro: juco ? `${list.length} junior college programs compete in NJCAA track and field. There are no conference lists, so this site doesn't set recruiting levels for them; each program's page shows its season bests, roster and TFRRS links, and the <a href="${JG}">junior college guide</a> explains how NJCAA recruiting works.` : `Every ${esc(d)} ${esc(c)} track and field program, with links to each school's Target, Recruit and Walk-On standards for men and women.`, body,
+      intro: juco ? `${list.length} junior college programs compete in NJCAA track and field. There are no conference lists, so this site doesn't set recruiting levels for them; each program's page shows its season bests, roster and TFRRS links, and the <a href="${JG}">junior college guide</a> explains how NJCAA recruiting works.` : `Every ${esc(d)} ${esc(c)} track and field program, with links to each school's Target, Recruit and Walk-On standards for men and women.`, body: body + depthTbl,
       ld: [{ "@context": "https://schema.org", "@type": "ItemList", name: `${c} track and field programs`, itemListElement: list.map((s, i) => ({ "@type": "ListItem", position: i + 1, url: SITE + sl(s), name: s.n })) }] }));
   }
   /* division x event */
@@ -375,6 +383,7 @@ export function generate(root, out) {
   try { TOPICS.push(...gapGuides({ S: S.filter(x => !x.j), CT, write, page, parse, esc, slug, evPath, FIELD, SITE, gName, STATE, statePath, resultPages, DATES, QUIZ })); } catch (e) { console.warn("gap guides skipped:", e && e.message); }
   /* missing pages found in Search Console 2026-10-30: XC times, best colleges, printable sheet (scripts/seo/more-pages.mjs) */
   try { TOPICS.push(...morePages({ root, out, S: S.filter(x => !x.j), CT, write, page, parse, esc, sl, evPath, FIELD, SITE, gName, QUIZ, fmtXC })); } catch (e) { console.warn("more pages skipped:", e && e.message); }
+  try { rankingPages({ R, write, page, esc, sl, SITE, QUIZ, confUrl: x => confName.get(x.d + "|" + x.c) }); } catch (e) { console.warn("ranking pages skipped:", e && e.message); }
   /* NJCAA marks by event (Ryan 2026-10-16, keyword gap "njcaa track standards"): this site sets no NJCAA levels (national, not
      conference, competition), so the page shows what it took to rank #1/#10/#25/#50/#100 on the newest NJCAA national list (TFRRS). */
   try {
@@ -418,7 +427,7 @@ export function generate(root, out) {
   /* AEO: give AI answer engines every guide's quick answer in llms.txt (numbers regenerate with the data each build) */
   { const f = path.join(out, "llms.txt"); if (fs.existsSync(f)) fs.appendFileSync(f, `\n## Recruiting guides (quick answers)\n${TOPICS.map(([u, t, a]) => `- [${t}](${SITE}${u}): ${a}`).join("\n")}\n`); }
   /* pre-built HTML for every school page (served at /schools/<slug> by vercel.json); already in the sitemap */
-  try { schoolPages({ root, out, S, CT, DATES, SITE, QUIZ, esc, schoolSlug, std, parse, EVENTS, STATE, evLabel, confUrl: s => confName.get(s.d + "|" + s.c), statePath, evPath, gName }); }
+  try { schoolPages({ root, out, S, CT, DATES, SITE, QUIZ, DEPTH: R, esc, schoolSlug, std, parse, EVENTS, STATE, evLabel, confUrl: s => confName.get(s.d + "|" + s.c), statePath, evPath, gName }); }
   catch (e) { console.warn("school pages skipped:", e && e.message); }
   /* junior college guide (Ryan 2026-10-15: JUCOs get no levels, but every junior-college search should still land here) */
   {
@@ -499,7 +508,8 @@ ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter((
     standards: ["/", ...files.filter(u => /^\/(standards|conferences|states)\//.test(u) || u === "/explore.html").sort()] };
   groups.colleges = files.filter(u => u === "/colleges.html" || u.startsWith("/colleges/")).sort();
   groups.athletes = files.filter(u => u === "/athletes.html" || u.startsWith("/athletes/")).sort();
-  const used = new Set([...groups.schools, ...groups.results, ...groups.standards, ...groups.colleges, ...groups.athletes]);
+  groups.rankings = files.filter(u => u === "/rankings.html" || u.startsWith("/rankings/")).sort();
+  const used = new Set([...groups.schools, ...groups.results, ...groups.standards, ...groups.colleges, ...groups.athletes, ...groups.rankings]);
   groups.guides = files.filter(u => !used.has(u)).sort();
   for (const k of Object.keys(groups)) groups[k] = [...new Set(groups[k])];   /* a page written twice (guides.html) is listed once */
   const urls = Object.values(groups).flat();
@@ -524,6 +534,7 @@ async function freshData(out) {
     const i = idx.findIndex(y => y.key === x.key); if (i >= 0) idx[i] = x; else idx.push(x);
   }
   try { const u = await fetch(LIVE_BASE + "updated.json", { signal: AbortSignal.timeout(15000) }); if (u.ok) fs.writeFileSync(path.join(out, "data/updated.json"), await u.text()); } catch {}
+  try { const h = await fetch(LIVE_BASE + "depth_history.json", { signal: AbortSignal.timeout(15000) }); if (h.ok) fs.writeFileSync(path.join(out, "data/depth_history.json"), await h.text()); } catch {}   /* weekly ranking snapshots */
   fs.writeFileSync(f, JSON.stringify(idx)); console.log(`Monday data: ${n} result files from the data branch`);
 }
 

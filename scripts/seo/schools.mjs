@@ -15,7 +15,7 @@ const JG = "/guides/junior-college-track-and-field-recruiting.html";
 const divHub = d => `/standards/${String(d).toLowerCase().replace(/[^a-z0-9]+/g, "-")}-track-and-field-recruiting-standards.html`;   /* same path as prerender divPath */
 const DK = { "NCAA D1": "d1", "NCAA D2": "d2", "NCAA D3": "d3", NAIA: "naia", NJCAA: "njcaa" };   /* NJCAA: season bests only */
 
-export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, esc, schoolSlug, std, parse, EVENTS, STATE, evLabel, confUrl, statePath, evPath, gName }) {
+export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, DEPTH = { bySchool: new Map() }, esc, schoolSlug, std, parse, EVENTS, STATE, evLabel, confUrl, statePath, evPath, gName }) {
   const shellFile = path.join(out, "index.html");
   if (!fs.existsSync(shellFile)) return [];
   const shell = fs.readFileSync(shellFile, "utf8");
@@ -114,6 +114,14 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, esc
     const frg = F && F.fresh && (F.fresh.m || {})["100 Meters"] ? "men's" : "women's";
     return `<p class="answer" style="font-size:17px;background:#F4F1FF;border-radius:14px;padding:14px 16px"><b>Quick answer:</b> ${esc(shortOf(s))}'s ${lv} is ${s.o ? "" : "about "}${m.length ? `${join(m)} for men` : ""}${m.length && w.length ? ", and " : ""}${w.length ? `${join(w)} for women` : ""}.${fr ? ` ${esc(shortOf(s))}'s ${frg} freshmen ran a median ${esc(fr.med)} in the 100m in their first college season (${fr.n} freshmen since 2022).` : ""}</p>`;
   }
+  /* national depth rank (depth.mjs, Ryan 2026-10-30): "#3 of 11 in the GLIAC, #24 in NCAA D2" */
+  const RP = { "NCAA D1": "ncaa-d1", "NCAA D2": "ncaa-d2", "NCAA D3": "ncaa-d3", NAIA: "naia" };
+  const depthOf = s => { const x = DEPTH.bySchool.get(s); return x && x.n ? x : null; };
+  const depthLine = (s, x) => `${esc(shortOf(s))} ranks #${x.rank} of ${x.of} in ${esc(x.d)}${x.crank ? ` and #${x.crank} of ${x.cof} in the ${esc(s.c)}` : ""} for ${x.year} ${x.season} national depth: ${x.n} athletes in the top 50 of the national lists (${x.m} men, ${x.w} women)${x.prev ? `, ${x.prev > x.rank ? `up from #${x.prev}` : x.prev < x.rank ? `down from #${x.prev}` : `the same rank as`} in ${+x.year - 1}` : ""}.`;
+  function rankSec(s) { const x = depthOf(s); if (!x) return "";
+    const GN = { sprints: "sprints", hurdles: "hurdles", distance: "distance", jumps: "jumps", throws: "throws", multis: "multi-events" }, G = DEPTH.bySchoolGroups ? DEPTH.bySchoolGroups.get(s) || {} : {};
+    const top = Object.entries(G).filter(([, r]) => r <= 25).sort((a, b) => a[1] - b[1]).map(([k, r]) => `<a href="/rankings/${RP[x.d]}-${k}-rankings.html">#${r} in ${GN[k]}</a>`);
+    return `<h2>Where ${esc(shortOf(s))} ranks nationally</h2><p>${depthLine(s, x)}${top.length ? ` By event group: ${top.join(", ")}.` : ""} <a href="/rankings/${RP[x.d]}-track-and-field-rankings.html">Full ${esc(x.d)} rankings ›</a></p>`; }
   function factSections(s, F) {
     if (!F) return "";
     const nm = esc(shortOf(s)); let o = "";
@@ -165,6 +173,7 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, esc
         const t = ["m", "w"].map(part).filter(Boolean);
         if (t.length) q.push([`What cross country times do you need for ${nm}?`, `To ${i === 1 ? "be a scoring runner" : "make the varsity seven"} at ${nm}, ${t.join("; ")}, from its own runners at the NCAA regional or conference meet in 2024 and 2025.`]); } }
     if (!J && (s.arch || []).length) q.push([`Has ${shortOf(s)} published track and field recruiting standards before?`, `Yes. ${shortOf(s)} published ${s.arch.length > 1 ? "charts" : "a chart"} on its athletics site (${s.arch.map(e => e.yr === "Undated" ? "undated" : e.yr).join(", ")}), shown under Previous years on this page. ${s.o ? "Its current official chart is at the top." : "It hasn't published a 2024 or later chart, so the current levels come from 2026 conference results."}`]);
+    { const x = depthOf(s); if (x) q.push([`Where does ${shortOf(s)} rank in track and field?`, depthLine(s, x).replace(/<[^>]+>/g, "").replace(/&amp;/g, "&")]); }
     q.push([`What conference is ${s.n} track and field in?`, `${s.n} competes in ${s.c !== s.d ? `the ${s.c} (${s.d})` : J ? "the NJCAA (junior colleges compete nationally)" : `the ${s.d}`}${s.s ? ` and is based in ${STATE[s.s] || s.s}` : ""}.`]);
     if (B) { const top = g => (B[g] || []).slice(0, 4).map(r => `${r.e} ${r.mk}${parseFloat(r.w) > 2 ? "w" : ""}`); const bm = top("m"), bw = top("w");
       if (bm.length || bw.length) q.push([`What are ${s.n}'s best track and field marks in ${B.y}?`, [bm.length ? `Men: ${bm.join(", ")}.` : "", bw.length ? `Women: ${bw.join(", ")}.` : ""].filter(Boolean).join(" ") + " From TFRRS outdoor lists."]); }
@@ -223,7 +232,7 @@ ${J ? `<h2>No recruiting levels for junior colleges</h2><p>This site doesn't set
       ? `<h2>${gName(g)} official standards</h2><p>As published by ${esc(shortOf(s))}${s.yr ? ` (${esc(String(s.yr))})` : ""}${s.src ? `: <a href="${esc(String(s.src).split(" ")[0])}" rel="noopener">source</a>` : ""}.</p>${side(g)}`
       : `<h2>${gName(g)} standards in high school events</h2><p>${esc(shortOf(s))}'s levels as the marks you run in high school: the 1600m, 3200m and 300m hurdles are converted from the college events with the same factors as the mark checker.</p>${hsTbl(s, g)}<h2>${gName(g)} standards (college events)</h2>${side(g)}`).join("")}${xcSection(s)}`}
 ${B ? `<h2>${B.y} season bests</h2><p>${esc(s.n)}'s best mark in each event this outdoor season on TFRRS${B.conf ? `, with its rank in the ${esc(B.conf)} list` : ""}. A w marks a wind-aided mark.</p>${bestTbl("m")}${bestTbl("w")}` : ""}
-${factSections(s, factsOf(s))}
+${rankSec(s)}${factSections(s, factsOf(s))}
 ${archSection(s)}
 ${vidHtml((VID.schools || {})[s.n])}
 ${(() => { const q = faq(s, B); return `<h2>Common questions</h2>${q.map(([qq, aa]) => `<h3>${esc(qq)}</h3><p>${esc(aa)}</p>`).join("")}`; })()}
