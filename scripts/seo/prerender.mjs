@@ -23,6 +23,7 @@ import { topicPages, EDITED } from "./topics.mjs";
 import { gapGuides } from "./gap-guides.mjs";
 import { morePages } from "./more-pages.mjs";
 import { computeSite, rankPath } from "./power-site.mjs";
+import { markPrograms, stdGroup } from "./programs.mjs";
 import { rankingPages } from "./rankings.mjs";
 import { dailyPages } from "./daily.mjs";
 import { athleteIndex, athletePages } from "./athletes.mjs";
@@ -194,6 +195,8 @@ export function generate(root, out) {
     }
     fs.writeFileSync(path.join(out, "data/db.json"), JSON.stringify(DB)); console.log(`teams without a men's or women's program: ${hidden}`);
   } catch (e) { console.warn("team check skipped:", e && e.message); }
+  /* event groups a program doesn't field (programs.mjs): no filled-in levels there, and the search skips them */
+  try { const P = markPrograms({ out, S: S.filter(x => !x.j) }); fs.writeFileSync(path.join(out, "data/db.json"), JSON.stringify(DB)); console.log(`programs missing an event group: ${P.n} (TFRRS ${P.years.join(", ")})`); } catch (e) { console.warn("program check skipped:", e && e.message); }
   const NS = S.filter(x => !x.j).length, NJ = S.filter(x => x.j).length;   /* schools with levels / junior colleges (results only) */
   const JG = "/guides/junior-college-track-and-field-recruiting.html";
   for (const name of ["index.html", "llms.txt"]) { const f = path.join(out, name); if (fs.existsSync(f)) fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace(/\{\{SCHOOLS\}\}/g, NS.toLocaleString())); }
@@ -202,7 +205,7 @@ export function generate(root, out) {
   try { DATES.data = JSON.parse(fs.readFileSync(path.join(out, "data/updated.json"), "utf8")).updated.slice(0, 10); } catch { DATES.data = DATES.db; }
   DATES.max = DATES.data > DATES.db ? DATES.data : DATES.db;
   let XCS = {}; try { XCS = JSON.parse(fs.readFileSync(path.join(root, "public", "data", "xc_standards.json"), "utf8")); } catch { }
-  const std = (s, g, e) => { if ((s.ng || []).includes(g)) return null; const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? (v[1] ? `${v[1]} (${v[0]})` : v[0]) + (v[2] ? " est." : "") : "")) : null; };
+  const std = (s, g, e) => { if ((s.ng || []).includes(g)) return null; if (((s.nf || {})[g] || []).includes(stdGroup(e))) return null;   /* groups the program doesn't field (programs.mjs) */ const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? (v[1] ? `${v[1]} (${v[0]})` : v[0]) + (v[2] ? " est." : "") : "")) : null; };
   const raw = (s, g, e) => { if ((s.ng || []).includes(g)) return null; const o = (s.om || {})[g] || {}; if (o[e]) return o[e]; if (s.em) return (s.em[g] || {})[e] || null; const c = ((CT[s.ck] || {})[g] || {})[e]; return c ? c.map(v => (v ? v[0] : "")) : null; };
   const sl = (s) => `/schools/${schoolSlug(s)}`;
   const files = []; const write = (p, html) => { const f = path.join(out, p); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, html); files.push(p); };
