@@ -1995,6 +1995,18 @@ document.addEventListener("click",ev=>{if(ev.target.closest("#stop"))CTL?.abort(
 
 const toBottom=()=>requestAnimationFrame(()=>scrollTo({top:document.body.scrollHeight,behavior:"smooth"}));
 
+/* ---------- Rankings (Ryan 2026-10-30: a tab inside the app like Results and Recruiting AI; header and tabs stay put).
+   The Power Rankings pages are pre-built (scripts/seo/rankings.mjs); this view loads one, keeps its .pr block and styles, and
+   opens links to other ranking pages in place (/?tab=rankings&rk=<path>, so back/forward and shared links work). ---------- */
+const RK={path:"/rankings.html",html:{},busy:{}};
+const rkOk=p=>/^\/rankings(\.html|\/[a-z0-9-]+\.html)$/.test(p||"");
+function rankings(){const p=RK.path,h=RK.html[p];
+  if(h!=null)return h;
+  if(!RK.busy[p]){RK.busy[p]=true;fetch(p).then(r=>r.ok?r.text():Promise.reject(r.status)).then(t=>{const d=new DOMParser().parseFromString(t,"text/html"),pr=d.querySelector("main .pr"),h1=d.querySelector("main h1"),st=[...d.querySelectorAll("main style")].map(x=>x.outerHTML).join("");
+      RK.html[p]=pr?`<div class="rkwrap">${p!=="/rankings.html"?`<p class="rkback"><a href="/rankings.html">‹ All rankings</a></p>`:""}${h1&&p!=="/rankings.html"?`<h2 class="rkh">${h1.innerHTML}</h2>`:""}${st}${pr.outerHTML}</div>`:`<p class="rkload">Rankings could not load. <a href="${p}">Open them here ›</a></p>`;})
+    .catch(()=>{RK.html[p]=`<p class="rkload">Rankings could not load. <a href="${p}">Open them here ›</a></p>`}).finally(()=>{RK.busy[p]=false;if(S.tab==="rankings"&&RK.path===p)render()});}
+  return `<div class="rkwrap"><p class="rkload">Loading rankings…</p></div>`}
+
 /* ---------- shell ---------- */
 let first=true;
 function moveInd(){const a=document.querySelector('.switch button[aria-selected="true"]'),ind=$("ind");if(!a)return;
@@ -2010,9 +2022,9 @@ function render(){
   $("hero").hidden=onSchool||(S.tab==="results"&&TM.i!=null);
   {const pl=$("evpill");if(pl)pl.hidden=onSchool||!EV.dismissed||EV.shown&&$("eval").classList.contains("on");}
   document.querySelectorAll(".switch button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));
-  $("app").className=S.tab==="results"&&!onSchool?"wide":"";
+  $("app").className=(S.tab==="results"||S.tab==="rankings")&&!onSchool?"wide":"";
   const ae=document.activeElement,fid=ae&&/^(tq|tq2|q|rq|cmsa|cmsb)$/.test(ae.id)?ae.id:null,fpos=fid?ae.selectionStart:0,fval=fid?ae.value:"";
-  $("app").innerHTML=onSchool?school():{standards,results,ask}[S.tab]();
+  $("app").innerHTML=onSchool?school():{standards,rankings,results,ask}[S.tab]();
   if(fid){const n=$(fid);if(n){n.value=fval;n.focus();try{n.setSelectionRange(fpos,fpos)}catch(e){}if(fid==="q")drop();else teamDrop(fid)}}  /* a data load mid-typing keeps the search box and its list */
   if(S.tab==="standards"&&!onSchool) drop();
   moveInd(); if(S.tab==="standards"&&!onSchool) watchMore();  R.swap=false; ACC.ensureHead&&ACC.ensureHead();
@@ -2022,9 +2034,12 @@ matchMedia("(min-width:761px)").addEventListener("change",()=>{if(S.tab==="resul
 document.addEventListener("click",ev=>{
   {const ci=ev.target.closest("[data-cinfo]");document.querySelectorAll(".ci.open").forEach(x=>{if(!ci||x!==ci.parentNode){x.classList.remove("open");x.querySelector("button").setAttribute("aria-expanded","false")}});if(ci){const w=ci.parentNode;w.classList.toggle("open");ci.setAttribute("aria-expanded",w.classList.contains("open"));return}}
   if(ev.target.closest("#evx")){evalOut();return}
+  {const a=S.tab==="rankings"&&S.school==null&&ev.target.closest('#app a[href^="/rankings"]');
+    if(a&&!(ev.metaKey||ev.ctrlKey||ev.shiftKey)&&rkOk(a.getAttribute("href"))){ev.preventDefault();RK.path=a.getAttribute("href");history.pushState({},"","/?tab=rankings"+(RK.path!=="/rankings.html"?"&rk="+encodeURIComponent(RK.path):""));render();const t=$("app").getBoundingClientRect().top+scrollY-80;if(scrollY>t)scrollTo(0,t);return}}
+  {const tb=ev.target.closest("#app .pr-tabs button");if(tb){const t=tb.closest(".pr-tabs"),k=t.dataset.k;t.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===tb));
+    t.parentNode.querySelectorAll("[data-"+k+"]").forEach(v=>{if(!v.classList.contains("pr-tabs"))v.hidden=v.getAttribute("data-"+k)!==tb.dataset.v});return}}
   const b=ev.target.closest("button,a[data-tpage]");if(!b)return;const d=b.dataset;
-  if(d.tab==="rankings"){location.href="/rankings.html";return}   /* Rankings tab (Ryan 2026-10-30: add next to Recruiting AI, not replace it) */
-  if(d.tab){const home=b.classList.contains("logo");S.tab=d.tab;S.school=null;TM.i=null;TM.ath=null;R.swap=true;
+  if(d.tab){const home=b.classList.contains("logo");if(d.tab==="rankings")RK.path="/rankings.html";S.tab=d.tab;S.school=null;TM.i=null;TM.ath=null;R.swap=true;
     if(home){S.run=false;S.mark="";S.f=S.div=S.conf=S.st="";try{if(location.pathname!=="/"||location.search)history.pushState({},"","/")}catch(e){}}
     render();if(home)scrollTo({top:0,behavior:"smooth"});return}
   if("back" in d){S.school=null;render();return}
@@ -2181,7 +2196,10 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
       { const gq = +q.get("gr"); if (gq >= 9 && gq <= 12 && INT.gr !== gq) { INT.gr = gq; S.gr = gq; saveInt(); log("grade", {}); } }   /* grade from the SEO-page mark checker */
       if (q.get("m") && q.get("e")) { if (!S.run || S.mark !== q.get("m") || S.e !== q.get("e")) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; } }
       else if (S.run) { S.run = false; S.mark = ""; S.f = S.div = S.conf = S.st = ""; }
-      if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); if (q.get("cmp")) ccFromUrl(q.get("cmp"));
+      if (S.tab === "rankings" && !q.get("rk")) RK.path = "/rankings.html";   /* back from a division page lands on the rankings home */
+      if (q.get("tab") === "rankings") { S.tab = "rankings"; RK.path = rkOk(q.get("rk")) ? q.get("rk") : "/rankings.html"; }
+      else if (q.get("tab") === "ask" && !(q.get("m") && q.get("e"))) S.tab = "ask";
+      else if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); if (q.get("cmp")) ccFromUrl(q.get("cmp"));
         /* athlete profile links: /?tab=results&season=2026-outdoor&div=NCAA%20D1&athlete=<TFRRS id> (results pages link every name here) */
         if (/^\d+$/.test(q.get("athlete") || "")) { if (seasons().includes(q.get("season"))) R.season = q.get("season"); R.sel = [R.div]; R.conf = ""; R.q = ""; R.team = null; R.ath = null; TM.i = null; CC.on = false; R.pendAth = q.get("athlete"); } } }
     S.school = null; setMeta("College Track & Field Recruiting Standards & Rankings", `Recruiting standards for ${NSTD.toLocaleString()} college track and field programs: walk-on, recruit and scholarship times for NCAA D1, D2, D3 and NAIA, plus results since 2016.`, "/",
