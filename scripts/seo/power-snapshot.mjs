@@ -15,7 +15,8 @@ let hist = []; try { const r = await fetch("https://raw.githubusercontent.com/Pr
 const today = new Date().toISOString().slice(0, 10), year = String(new Date().getUTCFullYear() + (new Date().getUTCMonth() === 11 ? 1 : 0));
 hist = hist.filter(h => h.date !== today);
 for (const d of PDIVS) { const c = R.cur[d]; if (!c || c.P.final || +c.year < +year - 1) continue;   /* only a season still in progress */
-  hist.push({ date: today, d, key: `${c.year}-${c.season}`, ranks: Object.fromEntries(["m", "w"].map(v => [v, Object.fromEntries(c.P[v].map(r => [r.t, [r.rank, +r.power.toFixed(1)]]))])) });   /* [rank, Power] */ }
+  hist.push({ date: today, d, key: `${c.year}-${c.season}`, ranks: Object.fromEntries(["m", "w"].map(v => [v, Object.fromEntries(c.P[v].map(r => [r.t, [r.rank, +r.power.toFixed(1)]]))])),   /* [rank, Power] */
+    groups: Object.fromEntries(["m", "w"].map(v => [v, Object.fromEntries(Object.entries(c.P.groups[v]).map(([k, L]) => [k, L.slice(0, 50).map(r => [r.t, r.rank, Math.round(r.score)])]))])) });   /* event-group top 50 per week */ }
 const cut = new Date(Date.now() - 800 * 864e5).toISOString().slice(0, 10);
 fs.writeFileSync(path.join(OUT, "power_history.json"), JSON.stringify(hist.filter(h => h.date >= cut)));
 console.log("power snapshots:", hist.length);

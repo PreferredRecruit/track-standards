@@ -1995,58 +1995,78 @@ document.addEventListener("click",ev=>{if(ev.target.closest("#stop"))CTL?.abort(
 
 const toBottom=()=>requestAnimationFrame(()=>scrollTo({top:document.body.scrollHeight,behavior:"smooth"}));
 
-/* ---------- Rankings explorer (Ryan 2026-10-30: a tab inside the app; "see each year, each event, weekly, monthly").
-   Data: /data/power/index.json + /data/power/<season>.json, written at build by scripts/seo/rankings.mjs from the PR Power Index
-   (official national meet points, wind-legal lists, qualifiers, squads). Weeks/months = the Monday snapshots of that season.
-   URL: /?tab=rankings&d=<division>&s=<season>&g=m|w&v=overall|grp:<group>|ev:<event>&p=final|w:<date>|mo:<yyyy-mm> ---------- */
-const RK={d:"NCAA D1",key:null,g:"m",v:"overall",p:"final",idx:null,data:{},busy:{},all:false};
+/* ---------- Rankings dashboard (Ryan 2026-10-30: "an easy dashboard": overall school rankings + distance/sprints/throws...,
+   weekly / monthly / yearly; conference meets live in Results). Data: /data/power/index.json + /data/power/<season>.json, built by
+   scripts/seo/rankings.mjs from the PR Power Index. Weeks and months come from the Monday snapshots (overall + event groups).
+   URL: /?tab=rankings&d=<division>&g=m|w&tf=season|week|month&s=<season>&w=<date>&mo=<yyyy-mm>&c=home|overall|grp:<k>|ev:<event> ---------- */
+const RK={d:"NCAA D1",g:"m",tf:"season",key:null,wk:null,mo:null,c:"home",idx:null,data:{},busy:{},all:false};
 const RKG=[["sprints","Sprints"],["hurdles","Hurdles"],["distance","Distance"],["jumps","Jumps"],["throws","Throws"],["multis","Multi-events"]];
 const RKE=["60 Meters","100 Meters","200 Meters","400 Meters","600 Meters","800 Meters","1000 Meters","1500 Meters","Mile","3000 Meters","5000 Meters","10,000 Meters","60 Hurdles","100 Hurdles","110 Hurdles","400 Hurdles","3000 Steeplechase","High Jump","Pole Vault","Long Jump","Triple Jump","Shot Put","Weight Throw","Discus","Hammer","Javelin","Pentathlon","Heptathlon","Decathlon","4 x 100 Relay","4 x 400 Relay","Distance Medley Relay"];
-const rkEv=e=>e.replace(" Meters","m").replace(" Hurdles","m hurdles").replace("10,000m","10,000m").replace(" Relay"," relay");
-function rkLoad(u,k){if(RK[k==="idx"?"idx":"data"]&&(k==="idx"?RK.idx:RK.data[k]))return true;if(RK.busy[u])return false;RK.busy[u]=true;
+const rkEv=e=>e.replace(" Meters","m").replace(" Hurdles","m hurdles").replace(" Relay"," relay");
+function rkLoad(u,k){if(k==="idx"?RK.idx:RK.data[k])return true;if(RK.busy[u])return false;RK.busy[u]=true;
   fetch(u).then(r=>r.ok?r.json():Promise.reject(r.status)).then(j=>{if(k==="idx")RK.idx=j;else RK.data[k]=j}).catch(()=>{if(k==="idx")RK.idx={err:1};else RK.data[k]={err:1}}).finally(()=>{RK.busy[u]=false;if(S.tab==="rankings")render()});return false}
 function rkCss(){if(document.getElementById("rkcss"))return;const l=document.createElement("link");l.id="rkcss";l.rel="stylesheet";l.href="/rankings.css";document.head.appendChild(l)}
-function rkUrl(){const q=new URLSearchParams({tab:"rankings",d:RK.d,g:RK.g});if(RK.key)q.set("s",RK.key);if(RK.v!=="overall")q.set("v",RK.v);if(RK.p!=="final")q.set("p",RK.p);history.replaceState({},"","/?"+q)}
-function rankings(){rkCss();
-  if(!rkLoad("/data/power/index.json","idx"))return `<div class="rkwrap"><p class="rkload">Loading rankings…</p></div>`;
-  if(RK.idx.err)return `<div class="rkwrap"><p class="rkload">Rankings could not load. <a href="/rankings.html">Open them here ›</a></p></div>`;
-  const L=RK.idx.seasons[RK.d]||[];if(!RK.key||!L.some(x=>x.key===RK.key))RK.key=L[0]&&L[0].key;
-  if(!rkLoad("/data/power/"+RK.key+".json",RK.key))return `<div class="rkwrap">${rkBar(null)}<p class="rkload">Loading ${esc(RK.d)}…</p></div>`;
-  const J=RK.data[RK.key];if(J.err)return `<div class="rkwrap">${rkBar(null)}<p class="rkload">This season could not load.</p></div>`;
-  return `<div class="rkwrap">${rkBar(J)}<div class="pr">${rkBody(J)}</div></div>`}
-function rkBar(J){const L=(RK.idx.seasons[RK.d]||[]),seg=(k,opts,cur)=>`<div class="rkseg">${opts.map(([v,l])=>`<button type="button" data-rk="${k}" data-val="${esc(v)}" class="${v===cur?"on":""}">${esc(l)}</button>`).join("")}</div>`;
-  const evs=J?RKE.filter(e=>(J.events[RK.g]||{})[e]&&J.events[RK.g][e].length):[],grs=J?RKG.filter(([k])=>(J.groups[RK.g]||{})[k]&&J.groups[RK.g][k].length):[];
-  const W=J?J.weeks||[]:[],mos=[...new Set(W.map(w=>w.date.slice(0,7)))];
-  return `<div class="rkbar">${seg("d",RK.idx.divs.map(d=>[d,d.replace("NCAA ","")]),RK.d)}${seg("g",[["m","Men"],["w","Women"]],RK.g)}
-    <label><span>Season</span><select data-rk="s">${L.map(x=>`<option value="${x.key}"${x.key===RK.key?" selected":""}>${esc(x.label)}${x.final?"":" (in season)"}</option>`).join("")}</select></label>
-    <label><span>Ranking</span><select data-rk="v"><option value="overall"${RK.v==="overall"?" selected":""}>Overall team</option><optgroup label="Event groups">${grs.map(([k,l])=>`<option value="grp:${k}"${RK.v==="grp:"+k?" selected":""}>${l}</option>`).join("")}</optgroup><optgroup label="Events">${evs.map(e=>`<option value="ev:${esc(e)}"${RK.v==="ev:"+e?" selected":""}>${esc(rkEv(e))}</option>`).join("")}</optgroup></select></label>
-    <label><span>Period</span><select data-rk="p"${W.length?"":" disabled"} title="Weekly and monthly: overall team ranking"><option value="final">${J&&J.final?"Final":"Latest"}</option>${mos.length?`<optgroup label="Monthly">${mos.slice().reverse().map(m=>`<option value="mo:${m}"${RK.p==="mo:"+m?" selected":""}>${mname(m)}</option>`).join("")}</optgroup><optgroup label="Weekly">${W.slice().reverse().map(w=>`<option value="w:${w.date}"${RK.p==="w:"+w.date?" selected":""}>${wname(w.date)}</option>`).join("")}</optgroup>`:""}</select></label></div>
-    ${J&&!W.length?`<p class="rknote">Weekly and monthly rankings are saved every Monday from the 2027 indoor season on (December). TFRRS keeps only season bests, so earlier weeks can't be rebuilt exactly.</p>`:""}`}
+function rkUrl(){const q=new URLSearchParams({tab:"rankings",d:RK.d,g:RK.g});if(RK.tf!=="season")q.set("tf",RK.tf);if(RK.key)q.set("s",RK.key);if(RK.tf==="week"&&RK.wk)q.set("w",RK.wk);if(RK.tf==="month"&&RK.mo)q.set("mo",RK.mo);if(RK.c!=="home")q.set("c",RK.c);history.replaceState({},"","/?"+q)}
 const mname=m=>new Date(m+"-15T12:00:00Z").toLocaleString("en-US",{month:"long",year:"numeric",timeZone:"UTC"}),wname=d=>"Week of "+new Date(d+"T12:00:00Z").toLocaleString("en-US",{month:"short",day:"numeric",timeZone:"UTC"});
 function rkTeam(J,t){const x=J.teams[t]||[t,"",null,null,"#6C47FF"];return {nm:x[0],conf:x[1],url:x[2],logo:x[3],col:x[4]||"#6C47FF"}}
 function rkLogo(i,z){return i.logo?`<span class="pr-lg" style="width:${z}px;height:${z}px"><img src="${i.logo}" alt="" loading="lazy" width="${z}" height="${z}"></span>`:`<span class="pr-lg ph" style="width:${z}px;height:${z}px;background:${i.col}">${esc((i.nm||"?")[0])}</span>`}
 function rkName(i){return i.url?`<a href="${i.url}">${esc(i.nm)}</a>`:esc(i.nm)}
 const rkMv=(now,then)=>then==null?"":then>now?`<span class="pr-mv u">▲${then-now}</span>`:then<now?`<span class="pr-mv d">▼${now-then}</span>`:"";
 const rkMed=r=>r===1?"g":r===2?"s":r===3?"b":"";
-function rkBody(J){const g=RK.g,G=g==="m"?"men":"women",V=RK.v,lab=V==="overall"?"Power Rankings":V.startsWith("grp:")?(RKG.find(x=>"grp:"+x[0]===V)||[0,""])[1]+" rankings":rkEv(V.slice(3))+" rankings";
-  const per=RK.p==="final"?"":RK.p.startsWith("w:")?wname(RK.p.slice(2)):mname(RK.p.slice(3));
-  const kick=`${esc(J.d)} · ${esc(J.label)} · ${G==="men"?"Men":"Women"} · ${per?esc(per):J.final?"Final":J.noMeet?"Final lists":J.asOf?"Updated "+esc(J.asOf):"In season"}`;
-  let h=`<div class="pr-hero"><div class="pr-kick">${kick}</div><div class="pr-title">${esc(lab)}</div><p>${J.official?"Official TFRRS team scores · ":""}Wind-legal marks · ${J.noMeet==="cancelled"?"National meet cancelled":J.noMeet?"National meet results not on TFRRS":"Field sizes from the championship"}</p></div>`;
-  if(RK.p!=="final"&&(J.weeks||[]).length){/* a saved week or month: that Monday's ranks, movement vs the snapshot before it */
-    const W=J.weeks,snap=RK.p.startsWith("w:")?W.find(w=>w.date===RK.p.slice(2)):W.filter(w=>w.date.slice(0,7)===RK.p.slice(3)).pop();
-    if(!snap)return h+`<p class="rkload">No snapshot for that period.</p>`;
-    const i0=W.indexOf(snap),prev=RK.p.startsWith("w:")?W[i0-1]:W.filter(w=>w.date.slice(0,7)<RK.p.slice(3)).pop(),R0=(snap.ranks||{})[g]||{},P0=prev?((prev.ranks||{})[g]||{}):{};
-    const rows=Object.entries(R0).map(([t,x])=>({t,rank:Array.isArray(x)?x[0]:x,pw:Array.isArray(x)?x[1]:null,pr:P0[t]==null?null:(Array.isArray(P0[t])?P0[t][0]:P0[t])})).sort((a,b)=>a.rank-b.rank);
-    return h+`<div class="pr-tbl"><div class="pr-th rk3"><span>#</span><span>Program</span><span class="n">Power</span></div>${rows.slice(0,RK.all?999:50).map(r=>{const i=rkTeam(J,r.t);return `<div class="pr-tr rk3" style="--c:${i.col}"><span class="pr-rk ${rkMed(r.rank)}">${r.rank}</span><span class="pr-pg">${rkLogo(i,32)}<span><b>${rkName(i)}</b><small>${esc(i.conf)}</small></span></span><span class="n"><b>${r.pw??""}</b>${rkMv(r.rank,r.pr)}</span></div>`}).join("")}</div>${rkMore(rows.length)}`}
-  if(V==="overall"){const rows=J[g]||[];if(!rows.length)return h+`<p class="rkload">No ranked programs.</p>`;
-    const pod=`<div class="pr-pod">${[1,0,2].filter(ix=>rows[ix]).map(ix=>{const r=rows[ix],i=rkTeam(J,r[0]);return `<div class="pr-pc p${ix+1}" style="--c:${i.col}"><div class="pr-pm">${r[1]}</div>${rkLogo(i,72)}<b>${rkName(i)}</b><small>${esc(i.conf)}</small><div class="pr-ps">${r[2].toFixed(1)}<em>Power</em></div><div class="pr-pd"><span>${J.final?r[3]:r[4]}<em>${J.final?"Nat'l pts":"Proj. pts"}</em></span><span>${r[5]}<em>Qualifiers</em></span></div></div>`}).join("")}</div>`;
-    return h+pod+`<div class="pr-tbl"><div class="pr-th"><span>#</span><span>Program</span><span class="n">Power</span><span class="n hide">Nat'l pts</span><span class="n hide">Projected</span><span class="n hide">Qualifiers</span><span class="n hide">Squads</span><span class="hide">vs ${+J.year-1}</span></div>${rows.slice(0,RK.all?999:50).map(r=>{const i=rkTeam(J,r[0]);
-      return `<div class="pr-tr" style="--c:${i.col}"><span class="pr-rk ${rkMed(r[1])}">${r[1]}</span><span class="pr-pg">${rkLogo(i,36)}<span><b>${rkName(i)}</b><small>${esc(i.conf)}</small></span></span><span class="n pr-pw"><b>${r[2].toFixed(1)}${rkMv(r[1],r[8]!=null?r[8]:null)}</b><i style="width:${Math.max(4,r[2])}%"></i></span><span class="n hide">${r[3]??"–"}</span><span class="n hide">${r[4]}</span><span class="n hide">${r[5]}</span><span class="n hide">${r[6]}</span><span class="hide">${r[7]!=null?rkMv(r[1],r[7])||"–":"new"}</span></div>`}).join("")}</div>${rkMore(rows.length)}`}
-  const L=V.startsWith("grp:")?(J.groups[g]||{})[V.slice(4)]:(J.events[g]||{})[V.slice(3)];
-  if(!L||!L.length)return h+`<p class="rkload">No ranked squads for this ${V.startsWith("grp:")?"group":"event"} this season.</p>`;
-  return h+`<p class="rknote">A squad scores its best four athletes on the wind-legal national list (1.0, 0.75, 0.5, 0.25 weights); relays score the team's best relay. One athlete inside the championship field is enough to be ranked.</p><div class="pr-tbl">${L.map(r=>{const i=rkTeam(J,r[0]);
-    return `<div class="pr-tr g" style="--c:${i.col}"><span class="pr-rk ${rkMed(r[1])}">${r[1]}</span><span class="pr-pg">${rkLogo(i,30)}<span><b>${rkName(i)}</b><small>${r[4].map(a=>`${esc(a[0]==="Relay"?rkEv(a[1]):a[0])} <em>#${a[2]}${V.startsWith("grp:")?" "+esc(rkEv(a[1])):""} · ${esc(a[3])}</em>`).join(" · ")}</small></span></span><span class="pr-sq">${r[3]>1?"Squad of "+r[3]:a1(r)}</span><span class="n"><b>${r[2]}</b></span></div>`}).join("")}</div>`}
-function a1(r){return r[4][0]&&r[4][0][0]==="Relay"?"Relay":"Squad of 1"}
+function rankings(){rkCss();
+  if(!rkLoad("/data/power/index.json","idx"))return `<div class="rkwrap"><p class="rkload">Loading rankings…</p></div>`;
+  if(RK.idx.err)return `<div class="rkwrap"><p class="rkload">Rankings could not load. <a href="/rankings.html">Open them here ›</a></p></div>`;
+  const L=RK.idx.seasons[RK.d]||[];if(!RK.key||!L.some(x=>x.key===RK.key))RK.key=L[0]&&L[0].key;
+  if(!rkLoad("/data/power/"+RK.key+".json",RK.key))return `<div class="rkwrap">${rkTop(null)}<p class="rkload">Loading ${esc(RK.d)}…</p></div>`;
+  const J=RK.data[RK.key];if(J.err)return `<div class="rkwrap">${rkTop(null)}<p class="rkload">This season could not load.</p></div>`;
+  const W=J.weeks||[];if(RK.tf==="week"&&!W.some(w=>w.date===RK.wk))RK.wk=W.length?W[W.length-1].date:null;
+  const mos=[...new Set(W.map(w=>w.date.slice(0,7)))];if(RK.tf==="month"&&!mos.includes(RK.mo))RK.mo=mos.length?mos[mos.length-1]:null;
+  return `<div class="rkwrap">${rkTop(J)}<div class="pr">${rkMain(J)}</div></div>`}
+/* the controls: division + gender, timeframe (week / month / season) with its picker, then the sections */
+function rkTop(J){const seg=(k,opts,cur,cls="")=>`<div class="rkseg ${cls}">${opts.map(([v,l])=>`<button type="button" data-rk="${k}" data-val="${esc(v)}" class="${v===cur?"on":""}">${esc(l)}</button>`).join("")}</div>`;
+  const L=RK.idx.seasons[RK.d]||[],W=J?J.weeks||[]:[],mos=[...new Set(W.map(w=>w.date.slice(0,7)))];
+  const pick=RK.tf==="season"?`<select data-rk="key" aria-label="Season">${L.map(x=>`<option value="${x.key}"${x.key===RK.key?" selected":""}>${esc(x.label)}${x.final?"":" (in season)"}</option>`).join("")}</select>`
+    :RK.tf==="week"?(W.length?`<select data-rk="wk" aria-label="Week">${W.slice().reverse().map(w=>`<option value="${w.date}"${w.date===RK.wk?" selected":""}>${wname(w.date)}</option>`).join("")}</select>`:"")
+    :(mos.length?`<select data-rk="mo" aria-label="Month">${mos.slice().reverse().map(m=>`<option value="${m}"${m===RK.mo?" selected":""}>${mname(m)}</option>`).join("")}</select>`:"");
+  const evs=J?RKE.filter(e=>(J.events[RK.g]||{})[e]&&J.events[RK.g][e].length):[];
+  const cats=[["home","Dashboard"],["overall","Overall school"],...RKG.map(([k,l])=>["grp:"+k,l]),["ev","Events"]];
+  const cc=RK.c.startsWith("ev:")?"ev":RK.c;
+  return `<div class="rkbar">${seg("d",RK.idx.divs.map(d=>[d,d.replace("NCAA ","")]),RK.d)}${seg("g",[["m","Men"],["w","Women"]],RK.g)}${seg("tf",[["week","Weekly"],["month","Monthly"],["season","Season"]],RK.tf)}${pick}</div>
+    <nav class="rkcats" aria-label="Rankings sections">${cats.map(([v,l])=>`<button type="button" data-rk="c" data-val="${v==="ev"?"ev:"+(evs[0]||""):v}" class="${v===cc?"on":""}">${esc(l)}</button>`).join("")}</nav>
+    ${cc==="ev"&&J?`<div class="rkevs">${evs.map(e=>`<button type="button" data-rk="c" data-val="ev:${esc(e)}" class="${RK.c==="ev:"+e?"on":""}">${esc(rkEv(e))}</button>`).join("")}</div>`:""}`}
+/* rows for a section in the chosen timeframe: [{t, rank, score, mv(previous rank), extra}] */
+function rkRows(J,cat){const g=RK.g,W=J.weeks||[];
+  if(RK.tf!=="season"){if(cat.startsWith("ev:"))return {none:"Weekly and monthly rankings cover the overall school ranking and the event groups. Single events are ranked by season."};
+    const snap=RK.tf==="week"?W.find(w=>w.date===RK.wk):W.filter(w=>w.date.slice(0,7)===RK.mo).pop();
+    if(!snap)return {none:`${RK.tf==="week"?"Weekly":"Monthly"} rankings are saved every Monday from the 2027 indoor season on (first lists in December). TFRRS keeps only season bests, so earlier weeks can't be rebuilt exactly. Pick Season to see every final since 2016.`};
+    const i0=W.indexOf(snap),prev=RK.tf==="week"?W[i0-1]:W.filter(w=>w.date.slice(0,7)<RK.mo).pop();
+    if(cat==="overall"||cat==="home"){const R0=(snap.ranks||{})[g]||{},P0=prev?((prev.ranks||{})[g]||{}):{},v=x=>x==null?null:Array.isArray(x)?x[0]:x;
+      return {rows:Object.entries(R0).map(([t,x])=>({t,rank:v(x),score:Array.isArray(x)?x[1]:null,mv:v(P0[t])})).sort((a,b)=>a.rank-b.rank),label:"Power"}}
+    const k=cat.slice(4),G0=(((snap.groups||{})[g])||{})[k],P1=prev&&prev.groups?((prev.groups[g]||{})[k]||[]):[];
+    if(!G0)return {none:"No event-group snapshot for this period."};const pm=new Map(P1.map(r=>[r[0],r[1]]));
+    return {rows:G0.map(r=>({t:r[0],rank:r[1],score:r[2],mv:pm.has(r[0])?pm.get(r[0]):null})),label:"Score"}}
+  if(cat==="overall"||cat==="home")return {rows:(J[g]||[]).map(r=>({t:r[0],rank:r[1],score:r[2].toFixed(1),mv:r[7],nat:r[3],qual:r[5],proj:r[4],sq:r[6]})),label:"Power",full:true};
+  const L=cat.startsWith("grp:")?(J.groups[g]||{})[cat.slice(4)]:(J.events[g]||{})[cat.slice(3)];
+  return {rows:(L||[]).map(r=>({t:r[0],rank:r[1],score:r[2],size:r[3],ath:r[4]})),label:"Score",squad:true}}
+function rkPeriod(J){return RK.tf==="week"&&RK.wk?wname(RK.wk):RK.tf==="month"&&RK.mo?mname(RK.mo):`${J.label} · ${J.final?"Final":J.noMeet?"Final lists":"In season"}`}
+function rkMain(J){const G=RK.g==="m"?"Men":"Women";
+  if(RK.c==="home"){/* dashboard: overall top 5 + every event group's top 3, each opens its full list */
+    const card=(cat,title,n)=>{const X=rkRows(J,cat),R=(X.rows||[]).slice(0,n);
+      return `<div class="rkcard"><div class="rkch"><b>${esc(title)}</b><button type="button" data-rk="c" data-val="${cat}">See all ›</button></div>${R.length?R.map(r=>{const i=rkTeam(J,r.t);
+        return `<div class="rkcr" style="--c:${i.col}"><span class="pr-rk ${rkMed(r.rank)}">${r.rank}</span>${rkLogo(i,28)}<span class="rkcn">${rkName(i)}</span><span class="rkcs">${r.score??""}${rkMv(r.rank,r.mv)}</span></div>`}).join(""):`<p class="rkempty">${esc(X.none||"No ranked programs yet.")}</p>`}</div>`};
+    return `<div class="pr-hero"><div class="pr-kick">${esc(J.d)} · ${G} · ${esc(rkPeriod(J))}</div><div class="pr-title">Rankings dashboard</div><p>Overall school rankings and every event group. Tap a card for the full list.</p></div>
+      <div class="rkgrid">${card("overall","Overall school rankings",5)}${RKG.map(([k,l])=>card("grp:"+k,l,3)).join("")}</div>`}
+  const cat=RK.c,X=rkRows(J,cat),title=cat==="overall"?"Overall school rankings":cat.startsWith("grp:")?(RKG.find(x=>"grp:"+x[0]===cat)||[0,""])[1]+" rankings":rkEv(cat.slice(3))+" rankings";
+  let h=`<div class="pr-hero"><div class="pr-kick">${esc(J.d)} · ${G} · ${esc(rkPeriod(J))}</div><div class="pr-title">${esc(title)}</div><p>${J.official&&RK.tf==="season"?"Official TFRRS team scores · ":""}Wind-legal marks · Updated every Monday in season</p></div>`;
+  if(X.none)return h+`<p class="rkempty big">${esc(X.none)}</p>`;
+  const rows=X.rows;if(!rows.length)return h+`<p class="rkempty big">No ranked programs for this ${cat.startsWith("ev:")?"event":"section"}.</p>`;
+  if(X.full){const pod=`<div class="pr-pod">${[1,0,2].filter(ix=>rows[ix]).map(ix=>{const r=rows[ix],i=rkTeam(J,r.t);return `<div class="pr-pc p${ix+1}" style="--c:${i.col}"><div class="pr-pm">${r.rank}</div>${rkLogo(i,72)}<b>${rkName(i)}</b><small>${esc(i.conf)}</small><div class="pr-ps">${r.score}<em>Power</em></div><div class="pr-pd"><span>${J.final?r.nat:r.proj}<em>${J.final?"Nat'l pts":"Proj. pts"}</em></span><span>${r.qual}<em>Qualifiers</em></span></div></div>`}).join("")}</div>`;
+    return h+pod+`<div class="pr-tbl"><div class="pr-th"><span>#</span><span>Program</span><span class="n">Power</span><span class="n hide">Nat'l pts</span><span class="n hide">Projected</span><span class="n hide">Qualifiers</span><span class="n hide">Squads</span><span class="hide">vs ${+J.year-1}</span></div>${rows.slice(0,RK.all?999:50).map(r=>{const i=rkTeam(J,r.t);
+      return `<div class="pr-tr" style="--c:${i.col}"><span class="pr-rk ${rkMed(r.rank)}">${r.rank}</span><span class="pr-pg">${rkLogo(i,36)}<span><b>${rkName(i)}</b><small>${esc(i.conf)}</small></span></span><span class="n pr-pw"><b>${r.score}</b><i style="width:${Math.max(4,+r.score)}%"></i></span><span class="n hide">${r.nat??"–"}</span><span class="n hide">${r.proj}</span><span class="n hide">${r.qual}</span><span class="n hide">${r.sq}</span><span class="hide">${r.mv!=null?rkMv(r.rank,r.mv)||"–":"new"}</span></div>`}).join("")}</div>${rkMore(rows.length)}`}
+  if(X.squad)return h+`<p class="rknote">A squad scores its best four athletes on the wind-legal national list (1.0, 0.75, 0.5, 0.25 weights); relays score the team's best relay. One athlete inside the championship field is enough to be ranked.</p><div class="pr-tbl">${rows.slice(0,RK.all?999:50).map(r=>{const i=rkTeam(J,r.t);
+    return `<div class="pr-tr g" style="--c:${i.col}"><span class="pr-rk ${rkMed(r.rank)}">${r.rank}</span><span class="pr-pg">${rkLogo(i,30)}<span><b>${rkName(i)}</b><small>${r.ath.map(a=>`${esc(a[0]==="Relay"?rkEv(a[1]):a[0])} <em>#${a[2]}${cat.startsWith("grp:")?" "+esc(rkEv(a[1])):""} · ${esc(a[3])}</em>`).join(" · ")}</small></span></span><span class="pr-sq">${r.size>1?"Squad of "+r.size:r.ath[0]&&r.ath[0][0]==="Relay"?"Relay":"Squad of 1"}</span><span class="n"><b>${r.score}</b></span></div>`}).join("")}</div>${rkMore(rows.length)}`;
+  return h+`<div class="pr-tbl"><div class="pr-th rk3"><span>#</span><span>Program</span><span class="n">${X.label}</span></div>${rows.slice(0,RK.all?999:50).map(r=>{const i=rkTeam(J,r.t);
+    return `<div class="pr-tr rk3" style="--c:${i.col}"><span class="pr-rk ${rkMed(r.rank)}">${r.rank}</span><span class="pr-pg">${rkLogo(i,32)}<span><b>${rkName(i)}</b><small>${esc(i.conf)}</small></span></span><span class="n"><b>${r.score??""}</b>${rkMv(r.rank,r.mv)}</span></div>`}).join("")}</div>${rkMore(rows.length)}`}
 function rkMore(n){return n>50&&!RK.all?`<p style="text-align:center"><button type="button" class="rkall" data-rk="all">Show all ${n} programs</button></p>`:""}
 
 /* ---------- shell ---------- */
@@ -2077,7 +2097,7 @@ document.addEventListener("click",ev=>{
   {const ci=ev.target.closest("[data-cinfo]");document.querySelectorAll(".ci.open").forEach(x=>{if(!ci||x!==ci.parentNode){x.classList.remove("open");x.querySelector("button").setAttribute("aria-expanded","false")}});if(ci){const w=ci.parentNode;w.classList.toggle("open");ci.setAttribute("aria-expanded",w.classList.contains("open"));return}}
   if(ev.target.closest("#evx")){evalOut();return}
   {const rb=S.tab==="rankings"&&ev.target.closest("#app [data-rk]");if(rb&&rb.tagName==="BUTTON"){const k=rb.dataset.rk,v=rb.dataset.val;   /* rankings explorer buttons */
-    if(k==="all")RK.all=true;else{RK[k]=v;RK.all=false;if(k==="d"){RK.key=null;RK.p="final"}}rkUrl();render();return}}
+    if(k==="all")RK.all=true;else{RK[k]=v;RK.all=false;if(k==="d")RK.key=null;}rkUrl();render();if(k==="c"){const t=document.querySelector(".rkcats");if(t&&t.getBoundingClientRect().top<0)t.scrollIntoView({block:"start"})}return}}
   const b=ev.target.closest("button,a[data-tpage]");if(!b)return;const d=b.dataset;
   if(d.tab){const home=b.classList.contains("logo");S.tab=d.tab;S.school=null;TM.i=null;TM.ath=null;R.swap=true;
     if(home){S.run=false;S.mark="";S.f=S.div=S.conf=S.st="";try{if(location.pathname!=="/"||location.search)history.pushState({},"","/")}catch(e){}}
@@ -2153,9 +2173,7 @@ document.addEventListener("input",ev=>{const t=ev.target;
   if(t.id==="ct"){CHAT.draft=t.value;t.style.height="auto";t.style.height=Math.min(t.scrollHeight,160)+"px";$("send").disabled=!t.value.trim()||CHAT.busy}});
 document.addEventListener("keydown",ev=>{if(ev.target.id==="ct"&&ev.key==="Enter"&&!ev.shiftKey){ev.preventDefault();send(ev.target.value)}if(ev.key==="Escape"&&EV.shown&&!EV.dismissed)evalOut()});
 document.addEventListener("change",ev=>{const t=ev.target;
-  if(t.dataset&&t.dataset.rk&&S.tab==="rankings"){const k=t.dataset.rk;if(k==="s"){RK.key=t.value;RK.p="final"}else RK[k]=t.value;
-    if(k==="p"&&RK.p!=="final")RK.v="overall";if(k==="v"&&RK.v!=="overall")RK.p="final";   /* weekly/monthly snapshots cover the overall team ranking */
-    RK.all=false;rkUrl();render();return}   /* rankings explorer selects */
+  if(t.dataset&&t.dataset.rk&&S.tab==="rankings"){RK[t.dataset.rk]=t.value;RK.all=false;rkUrl();render();return}   /* rankings dashboard pickers */   /* rankings explorer selects */
   if(t.dataset&&t.dataset.cc){const c=CC.cols[+t.dataset.i];if(c){const k=t.dataset.cc,v=t.value.trim();
     if(k==="s")c.s=v;else if(k==="div"){c.div=v;c.l="nat";c.t="";if(c.s&&!RIDX.some(r=>r.year+"-"+r.season===c.s&&r.div===v))c.s=""}else if(k==="l")c.l=v;else if(k==="g")c.g=v;else if(k==="e")c.e=v;else if(k==="t"){c.t=v;if(!v&&c.e==="*")c.e=R.ev||"100 Meters"}
     ccSync();R.swap=false;render()}return}
@@ -2243,7 +2261,8 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
         const rk = q.get("rk") || "", dv = { "ncaa-d1": "NCAA D1", "ncaa-d2": "NCAA D2", "ncaa-d3": "NCAA D3", naia: "NAIA" }, m = rk.match(/(ncaa-d[123]|naia)-/);
         RK.d = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA"].includes(q.get("d")) ? q.get("d") : m ? dv[m[1]] : "NCAA D1";
         RK.g = q.get("g") === "w" || /#women/.test(rk) ? "w" : "m"; RK.key = /^\d{4}-(indoor|outdoor)-(d[123]|naia)$/.test(q.get("s") || "") ? q.get("s") : null;
-        RK.v = /^(overall|grp:[a-z]+|ev:[\w ,]+)$/.test(q.get("v") || "") ? q.get("v") : "overall"; RK.p = /^(final|w:\d{4}-\d\d-\d\d|mo:\d{4}-\d\d)$/.test(q.get("p") || "") ? q.get("p") : "final"; RK.all = false; }
+        RK.tf = ["week", "month"].includes(q.get("tf")) ? q.get("tf") : "season"; RK.wk = /^\d{4}-\d\d-\d\d$/.test(q.get("w") || "") ? q.get("w") : null; RK.mo = /^\d{4}-\d\d$/.test(q.get("mo") || "") ? q.get("mo") : null;
+        const cv = q.get("c") || q.get("v") || ""; RK.c = /^(home|overall|grp:[a-z]+|ev:[\w ,]+)$/.test(cv) ? cv : rk.match(/-(sprints|hurdles|distance|jumps|throws|multis)-rankings/) ? "grp:" + rk.match(/-(sprints|hurdles|distance|jumps|throws|multis)-rankings/)[1] : rk ? "overall" : "home"; RK.all = false; }
       else if (q.get("tab") === "ask" && !(q.get("m") && q.get("e"))) S.tab = "ask";
       else if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); if (q.get("cmp")) ccFromUrl(q.get("cmp"));
         /* athlete profile links: /?tab=results&season=2026-outdoor&div=NCAA%20D1&athlete=<TFRRS id> (results pages link every name here) */
