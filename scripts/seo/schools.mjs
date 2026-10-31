@@ -220,7 +220,12 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, DEP
       { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [["Home", "/"], ...(J ? [] : [[s.d, divHub(s.d)]]), [s.c, confUrl(s)], [s.n, p]].map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) }];
     const side = g => {
       const off = s.o && (s.off || {})[g];
-      if (off) return tbl(["Event", ...off.tiers.map(esc)], off.rows.map(r => [esc(r[0]), ...off.tiers.map((_, i) => esc(r[i + 1] || "–"))]));
+      if (off) {   /* an official chart that covers only some events (2026-10-31: Fresno Pacific's is its XC page, 800m-3200m): the rest from the conference */
+        const om = Object.keys(((s.om || {})[g]) || {}), cov = e => om.includes(e) || (e === "1500m" && om.some(x => /1600m|Mile|1500m/.test(x))) || (/^(3000m|5000m)$/.test(e) && om.some(x => /3200m|3000m|5000m/.test(x)));
+        const CL = (CT[s.ck] || {})[g] || {}, rest = EVENTS.filter(e => CL[e] && !cov(e));
+        return tbl(["Event", ...off.tiers.map(esc)], off.rows.map(r => [esc(r[0]), ...off.tiers.map((_, i) => esc(r[i + 1] || "–"))]))
+          + (rest.length ? `<h4 style="margin:16px 0 6px">Other events · ${esc(s.c)} levels</h4><p style="font-size:13px;color:#4A4A52;margin:0 0 8px">${esc(shortOf(s))}'s chart doesn't list these events, so they use the ${esc(s.c)} levels set from conference results.</p>` + tbl(["Event", "Target", "Recruit", ...(p4 ? [] : ["Walk-On"])], rest.map(e => [`<a href="${evPath(s.d, g, e)}">${esc(e)}</a>`, ...[0, 1, 2].slice(0, p4 ? 2 : 3).map(i => esc(((CL[e] || [])[i] || [])[0] || "–"))])) : "");
+      }
       const ev = EVENTS.filter(e => std(s, g, e));
       return ev.length ? tbl(["Event", "Target", "Recruit", ...(p4 ? [] : ["Walk-On"])], ev.map(e => [`<a href="${evPath(s.d, g, e)}">${esc(e)}</a>`, ...std(s, g, e).slice(0, p4 ? 2 : 3).map(x => esc(x || "–"))])) : "<p>No marks listed yet.</p>";
     };
