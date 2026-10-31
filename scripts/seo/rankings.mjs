@@ -43,15 +43,23 @@ export const RANK_CSS = `<style>
 .pr-cn{font-size:78px;font-weight:900;line-height:1;margin-top:10px;background:linear-gradient(180deg,#fff,#F5C451);-webkit-background-clip:text;background-clip:text;color:transparent}.pr-cl{font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:13px}.pr-cs{font-size:20px;font-weight:800;margin-top:4px}
 .pr-cm{display:flex;gap:18px;margin-top:14px;font-weight:800;font-size:18px}.pr-cm em{display:block;font-style:normal;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.65)}.pr-cf{margin-top:auto;padding-top:10px;font-size:10px;letter-spacing:.14em;color:rgba(255,255,255,.6);font-weight:650}
 .pr-more{display:inline-block;margin:10px 0 0;font-weight:650}
+.pr-pick{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:14px 0 0;font-size:14px}.pr-pick label{font-weight:650;color:var(--mu)}.pr-pick select{font:inherit;font-weight:600;color:var(--tx);margin-left:6px;padding:7px 10px;border:1px solid var(--ln);border-radius:10px;background:#fff}.pr-pick a{font-weight:650}
 .pr-duo{display:grid;grid-template-columns:1fr 1fr;gap:16px}.pr-duo h3{margin:0 0 8px;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)}
 .pr-slim .hide{display:none}.pr-slim .pr-th,.pr-slim .pr-tr{grid-template-columns:34px 1fr 64px}
 @media (max-width:760px){.pr-duo{grid-template-columns:1fr}.pr .hide{display:none}.pr-th,.pr-tr{grid-template-columns:34px 1fr 70px}.pr-pod{grid-template-columns:1fr}.pr-pc.p1{order:-1}.pr-note{grid-template-columns:1fr}.pr-tr.g{grid-template-columns:34px 1fr 56px}.pr-sq{display:none}.pr-tr.g small{display:none}
 .pr-pc{display:grid;grid-template-columns:auto 1fr auto;text-align:left;gap:0 14px;align-items:center;padding:14px 16px!important}.pr-pc .pr-lg{margin:0;grid-row:span 2;width:52px!important;height:52px!important}.pr-pc b{margin:0;font-size:16px}.pr-pc small{grid-column:2}.pr-ps{grid-column:3;grid-row:1/3;margin:0;font-size:26px;text-align:right}.pr-pd{display:none}.pr-pm{top:8px;left:8px;width:22px;height:22px;font-size:12px}.pr-card{width:100%;max-width:360px}}
 </style>`;
+/* explorer controls (app Rankings tab) */
+const RKX_CSS = `.rkbar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;margin:6px 0 14px}.rkseg{display:flex;gap:4px;background:#F4F2FA;border:1px solid #ECEAF3;padding:4px;border-radius:12px}
+.rkseg button{all:unset;cursor:pointer;padding:7px 12px;border-radius:9px;font-weight:650;font-size:14px;color:#6B6A7B}.rkseg button.on{background:#6C47FF;color:#fff;box-shadow:0 6px 16px rgba(108,71,255,.28)}
+.rkbar label{display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6B6A7B}.rkbar select{font:inherit;font-size:14px;text-transform:none;letter-spacing:0;font-weight:600;color:#12111A;padding:8px 10px;border:1px solid #ECEAF3;border-radius:10px;background:#fff;min-width:150px}
+.rkbar select:disabled{opacity:.55}.rknote{font-size:13px;color:#6B6A7B;margin:4px 0 12px}.pr-th.rk3,.pr-tr.rk3{grid-template-columns:44px 1fr 110px}.rkall{all:unset;cursor:pointer;margin-top:12px;font-weight:650;color:#6C47FF}
+@media (max-width:760px){.rkbar label{flex:1 1 45%}.rkbar select{min-width:0;width:100%}.pr-th.rk3,.pr-tr.rk3{grid-template-columns:34px 1fr 80px}}`;
 const TABS_JS = `<script>if(location.hash==="#women"){var wb=document.querySelector('.pr-tabs[data-k="v"] button[data-v="w"]');if(wb)setTimeout(function(){wb.click()},0)}document.querySelectorAll(".pr-tabs").forEach(function(t){t.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;t.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b)});var k=t.dataset.k;document.querySelectorAll("[data-"+k+"]").forEach(function(v){if(v.classList.contains("pr-tabs"))return;v.hidden=v.getAttribute("data-"+k)!==b.dataset.v})})})</script>`;
 
 export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
   if (!PDIVS.every(d => R.cur[d])) return [];
+  fs.writeFileSync(path.join(out, "rankings.css"), RANK_CSS.replace(/<\/?style>/g, "") + RKX_CSS);   /* the app's Rankings tab uses the same styles */
   let brand = {}; try { brand = JSON.parse(fs.readFileSync(path.join(out, "brand", "brand.json"), "utf8")); } catch { }
   const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.com", logo: SITE + "/icon-512.png" };
   const LG = Object.fromEntries(PGROUPS.map(([k, l]) => [k, l]));
@@ -97,7 +105,8 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
       + `<div class="pr-tabs" data-k="g${g}">${gl(g).map(([k, l], j) => `<button data-v="${k}" class="${j ? "" : "on"}">${l}</button>`).join("")}</div>`
       + gl(g).map(([k], j) => `<div data-g${g}="${k}"${j ? " hidden" : ""}>${squadsTbl(c.P.groups[g][k], 15)}${current ? `<a class="pr-more" href="${groupPath(d, k)}">All ${esc(d)} ${esc(LG[k].toLowerCase())} squads ›</a>` : ""}</div>`).join("")
       + `<h2>Share the ranking</h2><div class="pr-cards">${card(c, top(g), `${d} ${GW[g]} Power Ranking`)}</div></section>`;
-    const body = badges(c)
+    const pick = `<div class="pr-pick"><label>Season <select onchange="location.href=this.value">${[...R.seasons[d]].reverse().map(x => `<option value="${x === R.cur[d] ? rankPath(d) : seasonPath(d, x.year, x.season)}"${x === c ? " selected" : ""}>${esc(seasonLabel(x))}</option>`).join("")}</select></label><a href="/?tab=rankings&d=${encodeURIComponent(d)}&s=${c.key}">Open the rankings explorer: every event, week and month ›</a></div>`;
+    const body = badges(c) + pick
       + `<div class="pr-tabs" data-k="v">${["m", "w"].map((g, i) => `<button data-v="${g}" class="${i ? "" : "on"}">${G[g]}</button>`).join("")}</div>`
       + ["m", "w"].map(genderBlock).join("")
       + method(c)
@@ -134,6 +143,25 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
       done.push(q);
     }
   }
+  /* explorer data (Ryan 2026-10-30: "see each year, each event, weekly, monthly"): one JSON per division + season for the app's
+     Rankings tab, plus an index. Rows are [team, rank, power, natPts, projPts, qualifiers, squads, prevYearRank, lastWeek, lastMonth];
+     squads [team, rank, score, size, [[athlete, event, list position, mark]...]]; weeks = the Monday snapshots of that season. */
+  { const dir = path.join(out, "data", "power"); fs.mkdirSync(dir, { recursive: true });
+    const idx = { divs: PDIVS, seasons: {} };
+    for (const d of PDIVS) { idx.seasons[d] = [];
+      for (const x of [...R.seasons[d]].reverse()) {
+        const T = {}, tid = r => { if (!T[r.t]) { const i = info(r); T[r.t] = [i.nm, i.conf, i.url, i.logo, i.col]; } return r.t; };
+        const rows = g => x.P[g].map(r => [tid(r), r.rank, +r.power.toFixed(1), x.P.final ? r.act : null, r.proj, r.qual, Math.round(r.squad), r.prev ?? null, r.wk ?? null, r.mo ?? null]);
+        const sq = L => L.slice(0, 30).map(r => [tid(r), r.rank, Math.round(r.score), r.size, r.ath.map(a => [a.nm, a.ev, a.p, a.mk])]);
+        const weeks = R.hist.filter(h => h.d === d && h.key === `${x.year}-${x.season}`).sort((a, b) => a.date.localeCompare(b.date)).map(h => ({ date: h.date, ranks: { m: h.ranks.m, w: h.ranks.w } }));
+        const J = { d, key: x.key, year: x.year, season: x.season, label: seasonLabel(x), final: x.P.final, official: x.official, noMeet: x.noMeet || null, asOf: x.asOf || null, page: x === R.cur[d] ? rankPath(d) : seasonPath(d, x.year, x.season),
+          m: rows("m"), w: rows("w"), groups: { m: Object.fromEntries(Object.entries(x.P.groups.m).map(([k, L]) => [k, sq(L)])), w: Object.fromEntries(Object.entries(x.P.groups.w).map(([k, L]) => [k, sq(L)])) },
+          events: { m: Object.fromEntries(Object.entries(x.P.events.m).map(([k, L]) => [k, sq(L)])), w: Object.fromEntries(Object.entries(x.P.events.w).map(([k, L]) => [k, sq(L)])) }, weeks, teams: T };
+        fs.writeFileSync(path.join(dir, x.key + ".json"), JSON.stringify(J));
+        idx.seasons[d].push({ key: x.key, label: seasonLabel(x), final: x.P.final, weeks: weeks.length });
+      } }
+    fs.writeFileSync(path.join(dir, "index.json"), JSON.stringify(idx)); }
+
   /* hub: men's and women's top 5 per division, side by side */
   const H = PDIVS.map(d => R.cur[d]);
   art({ p: "/rankings.html", date: H.map(dateOf).sort().pop(), crumbs: [["Home", "/"], ["Rankings", "/rankings.html"]],

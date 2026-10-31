@@ -33,10 +33,10 @@ export function computePower({ dat, legal, official, fields }) {
   const FS = { m: {}, w: {} };   /* field size per event: from this season's championship, else the newest one passed in (in season) */
   if (!L) return null;
   const report = { windSwapped: 0, windDropped: 0, fieldSizes: {} };
-  const out = { m: null, w: null, all: null, groups: {}, report, fields: FS, final: !!C };
+  const out = { m: null, w: null, all: null, groups: {}, events: {}, report, fields: FS, final: !!C };
   const team = r => clean(T[r[3]]);
   const per = { m: new Map(), w: new Map() };   /* team -> {proj, act, qual, ath: [{id, nm, ev, g, p, F, sc, grp}]} */
-  const get = (g, t) => { let o = per[g].get(t); if (!o) per[g].set(t, o = { t, proj: 0, act: 0, qual: 0, ath: [] }); return o; };
+  const get = (g, t) => { let o = per[g].get(t); if (!o) per[g].set(t, o = { t, proj: 0, act: 0, qual: 0, ath: [], rel: [] }); return o; };
   for (const g of ["m", "w"]) {
     const LG = (L.g || {})[g] || {}, CG = (C && C.g && C.g[g]) || {}, LEG = ((legal || {})[g]) || {};
     for (const [ev, rows0] of Object.entries(LG)) {
@@ -49,8 +49,8 @@ export function computePower({ dat, legal, official, fields }) {
       const seen = new Set(); rows = rows.filter(x => !seen.has(x.id) && seen.add(x.id));
       rows.forEach((x, i) => { const p = i + 1, t = team(x.r); if (!t) return;
         if (p <= 8) get(g, t).proj += PTS[p - 1];
-        if (rel) return;
         const sc = p <= F ? 100 - 50 * (p - 1) / Math.max(F - 1, 1) : p < 2 * F ? 50 * (2 * F - p) / F : 0;
+        if (rel) { if (sc > 0 && !get(g, t).rel.some(z => z.ev === ev)) get(g, t).rel.push({ id: t + "|" + ev, nm: "Relay", ev, p, F, sc, mk: x.mk || x.r[4] }); return; }   /* a team's best relay per event */
         if (!C && p <= F) get(g, t).qual++;   /* in season: projected qualifiers (inside the field on the legal list) */
         if (sc > 0) get(g, t).ath.push({ id: x.id, nm: x.r[1], ev, p, F, sc, grp: grp(ev), mk: x.mk || x.r[4] }); });
     }
@@ -79,7 +79,14 @@ export function computePower({ dat, legal, official, fields }) {
     let rk = 0, prev = null; R.forEach((r, i) => { const v = key(r); if (v !== prev) { rk = i + 1; prev = v; } r.rank = rk; }); return R; };
   for (const g of ["m", "w"]) { const teams = [...per[g].values()]; for (const o of teams) o.sq = squads(o); out[g] = build(teams);
     out.groups[g] = Object.fromEntries(PGROUPS.map(([k]) => { const R = teams.filter(o => o.sq[k]).map(o => ({ t: o.t, ...o.sq[k] })).sort((a, b) => b.score - a.score);
-      let rk = 0, prev = null; R.forEach((r, i) => { const v = r.score.toFixed(1); if (v !== prev) { rk = i + 1; prev = v; } r.rank = rk; }); return [k, R]; })); }
+      let rk = 0, prev = null; R.forEach((r, i) => { const v = r.score.toFixed(1); if (v !== prev) { rk = i + 1; prev = v; } r.rank = rk; }); return [k, R]; }));
+    /* per-event team rankings (Ryan 2026-10-30: "for each event"): the same squad rule inside one event; relays score the team's best relay */
+    const EV = {}; for (const o of teams) for (const a of [...o.ath, ...o.rel]) { const e = (EV[a.ev] ||= new Map()); const L = e.get(o.t) || []; L.push(a); e.set(o.t, L); }
+    out.events[g] = Object.fromEntries(Object.entries(EV).map(([ev, M]) => { const R = [];
+      for (const [t, L] of M) { const best = new Map(); for (const a of L) if (!best.has(a.id) || best.get(a.id).sc < a.sc) best.set(a.id, a);
+        const top = [...best.values()].sort((a, b) => b.sc - a.sc); if (!top.some(a => a.p <= a.F)) continue;
+        R.push({ t, score: top.slice(0, 4).reduce((s, a, i) => s + a.sc * W[i], 0), size: Math.min(top.length, 4), ath: top.slice(0, 4) }); }
+      R.sort((a, b) => b.score - a.score); let rk = 0, prev = null; R.forEach((r, i) => { const v = r.score.toFixed(1); if (v !== prev) { rk = i + 1; prev = v; } r.rank = rk; }); return [ev, R]; })); }
   /* combined: men + women summed per part, squads summed across both genders */
   const comb = new Map(); for (const g of ["m", "w"]) for (const o of per[g].values()) { const c = comb.get(o.t) || { t: o.t, proj: 0, act: 0, qual: 0, ath: [], sq: {} }; c.proj += o.proj; c.act += o.act; c.qual += o.qual;
     for (const [k] of PGROUPS) if (o.sq[k]) c.sq[k + g] = o.sq[k]; comb.set(o.t, c); }

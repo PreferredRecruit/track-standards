@@ -53,7 +53,8 @@ export function computeSite({ out, root, S }) {
     const day = x => Date.parse(x + "T00:00:00Z");
     const H = R.hist.filter(h => h.d === d && h.key === `${c.year}-${c.season}`).sort((a, b) => a.date.localeCompare(b.date));
     if (H.length >= 2) { const last = H[H.length - 1], wk = [...H].reverse().find(h => day(last.date) - day(h.date) >= 6 * 864e5), mo = [...H].reverse().find(h => day(last.date) - day(h.date) >= 27 * 864e5);
-      for (const v of ["all", "m", "w"]) for (const r of c.P[v]) { if (wk) r.wk = ((wk.ranks || {})[v] || {})[r.t] ?? null; if (mo) r.mo = ((mo.ranks || {})[v] || {})[r.t] ?? null; }
+      const rk = (h, v, t) => { const x = ((h.ranks || {})[v] || {})[t]; return x == null ? null : Array.isArray(x) ? x[0] : x; };   /* snapshots store [rank, Power] */
+      for (const v of ["m", "w"]) for (const r of c.P[v]) { if (wk) r.wk = rk(wk, v, r.t); if (mo) r.mo = rk(mo, v, r.t); }
       c.wkDate = wk && wk.date; c.moDate = mo && mo.date; c.asOf = last.date; }
     /* men and women ranked separately (Ryan 2026-10-30: "we have to separate women and men rankings") */
     for (const g of ["m", "w"]) for (const r of c.P[g]) { if (!r.s) continue; const b = R.bySchool.get(r.s) || { d, year: c.year, season: c.season, m: null, w: null }; if (b[g]) continue;
