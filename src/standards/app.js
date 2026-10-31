@@ -2006,6 +2006,9 @@ const toBottom=()=>requestAnimationFrame(()=>scrollTo({top:document.body.scrollH
 const RK={d:"NCAA D1",g:"m",tf:"season",key:null,wk:null,mo:null,c:"home",idx:null,data:{},busy:{},all:false};
 const RKG=[["sprints","Sprints"],["hurdles","Hurdles"],["distance","Distance"],["jumps","Jumps"],["throws","Throws"],["multis","Multi-events"]];
 const RKE=["60 Meters","100 Meters","200 Meters","400 Meters","600 Meters","800 Meters","1000 Meters","1500 Meters","Mile","3000 Meters","5000 Meters","10,000 Meters","60 Hurdles","100 Hurdles","110 Hurdles","400 Hurdles","3000 Steeplechase","High Jump","Pole Vault","Long Jump","Triple Jump","Shot Put","Weight Throw","Discus","Hammer","Javelin","Pentathlon","Heptathlon","Decathlon","4 x 100 Relay","4 x 400 Relay","Distance Medley Relay"];
+/* which group an event belongs to (same rules as scripts/seo/power.mjs PGROUPS); relays sit only under Events */
+const RKGE={sprints:/^(55|60|100|200|300|400) Meters$/,hurdles:/Hurdles$/,distance:/^(600|800|1000|1500|3000|5000|10,000) Meters$|^Mile$|Steeplechase/,jumps:/Jump$|Vault$/,throws:/^(Shot Put|Discus|Hammer|Javelin|Weight Throw)$/,multis:/athlon$/};
+const rkGrpOf=e=>(Object.entries(RKGE).find(([,re])=>re.test(e))||[])[0]||null;
 const rkEv=e=>e.replace(" Meters","m").replace(" Hurdles","m hurdles").replace(" Relay"," relay");
 function rkLoad(u,k){if(k==="idx"?RK.idx:RK.data[k])return true;if(RK.busy[u])return false;RK.busy[u]=true;
   fetch(u).then(r=>r.ok?r.json():Promise.reject(r.status)).then(j=>{if(k==="idx")RK.idx=j;else RK.data[k]=j}).catch(()=>{if(k==="idx")RK.idx={err:1};else RK.data[k]={err:1}}).finally(()=>{RK.busy[u]=false;if(S.tab==="rankings")render()});return false}
@@ -2034,16 +2037,17 @@ function rkTop(J){const seg=(k,opts,cur,cls="")=>`<div class="rkseg ${cls}">${op
     :(mos.length?`<select data-rk="mo" aria-label="Month">${mos.slice().reverse().map(m=>`<option value="${m}"${m===RK.mo?" selected":""}>${mname(m)}</option>`).join("")}</select>`:"");
   const evs=J?RKE.filter(e=>(J.events[RK.g]||{})[e]&&J.events[RK.g][e].length):[];
   const cats=[["home","Dashboard"],["overall","Overall school"],...RKG.map(([k,l])=>["grp:"+k,l]),["ev","Events"]];
-  const cc=RK.c.startsWith("ev:")?"ev":RK.c;
+  const ce=RK.c.startsWith("ev:")?RK.c.slice(3):null,cg=ce?rkGrpOf(ce):RK.c.startsWith("grp:")?RK.c.slice(4):null,cc=ce?(cg?"grp:"+cg:"ev"):RK.c;
   return `<div class="rkbar">${seg("d",RK.idx.divs.map(d=>[d,d.replace("NCAA ","")]),RK.d)}${seg("g",[["m","Men"],["w","Women"]],RK.g)}${seg("tf",[["week","Weekly"],["month","Monthly"],["season","Season"]],RK.tf)}${pick}</div>
     <nav class="rkcats" aria-label="Rankings sections">${cats.map(([v,l])=>`<button type="button" data-rk="c" data-val="${v==="ev"?"ev:"+(evs[0]||""):v}" class="${v===cc?"on":""}">${esc(l)}</button>`).join("")}</nav>
-    ${cc==="ev"&&J?`<div class="rkevs">${evs.map(e=>`<button type="button" data-rk="c" data-val="ev:${esc(e)}" class="${RK.c==="ev:"+e?"on":""}">${esc(rkEv(e))}</button>`).join("")}</div>`:""}`}
+    ${J&&cg?(()=>{const ge=evs.filter(e=>rkGrpOf(e)===cg),gl=(RKG.find(x=>x[0]===cg)||[0,""])[1];   /* drill-down: the group's own events */
+      return ge.length?`<div class="rkevs"><span class="lab">${esc(gl)}</span><button type="button" data-rk="c" data-val="grp:${cg}" class="${RK.c==="grp:"+cg?"on":""}">All ${esc(gl.toLowerCase())}</button>${ge.map(e=>`<button type="button" data-rk="c" data-val="ev:${esc(e)}" class="${RK.c==="ev:"+e?"on":""}">${esc(rkEv(e))}</button>`).join("")}</div>`:""})()
+    :cc==="ev"&&J?`<div class="rkevs"><span class="lab">Events</span>${evs.map(e=>`<button type="button" data-rk="c" data-val="ev:${esc(e)}" class="${RK.c==="ev:"+e?"on":""}">${esc(rkEv(e))}</button>`).join("")}</div>`:""}`}
 /* Madden-style ratings (Ryan 2026-10-31): OVR out of 99 + letter grade, same formula as scripts/seo/power.mjs (leader 99,
    60 + 39 x (score / leader)^0.6, never rising down a list). Season files carry the ratings; weekly snapshots are rated here. */
 const rkOvr=(s,m)=>m>0&&s>0?Math.round(60+39*Math.pow(Math.min(s,m)/m,0.6)):null;
-const rkGrade=o=>o==null?"":o>=95?"A+":o>=90?"A":o>=87?"A-":o>=84?"B+":o>=80?"B":o>=77?"B-":o>=74?"C+":o>=70?"C":o>=67?"C-":o>=64?"D+":"D";
 const rkTier=o=>o==null?"d":o>=90?"a":o>=80?"b":o>=70?"c":"d";
-const rkOv=(o,big)=>o==null?"–":`<span class="ov ov-${rkTier(o)}${big?" big":""}"><b>${o}</b><i>${rkGrade(o)}</i></span>`;
+const rkOv=(o,big)=>o==null?"–":`<span class="ov ov-${rkTier(o)}${big?" big":""}"><b>${o}</b>${big?"<i>OVR</i>":""}</span>`;   /* number-first (Ryan 2026-10-31: no letter grades) */
 const rkAt=(o,raw)=>`<span class="at">${o==null?"–":`<b class="t-${rkTier(o)}">${o}</b>`}${raw!=null&&raw!==""?`<small>${raw}</small>`:""}</span>`;
 function rkRate(rows,key){const m=Math.max(0,...rows.map(r=>r[key]||0));let cap=99;for(const r of rows){const o=rkOvr(r[key],m);r.ovr=o==null?null:Math.min(o,cap);if(r.ovr!=null)cap=r.ovr}return rows}
 /* rows for a section in the chosen timeframe: [{t, rank, ovr, mv(previous rank), ...}] */
@@ -2061,16 +2065,17 @@ function rkRows(J,cat){const g=RK.g,W=J.weeks||[];
   const L=cat.startsWith("grp:")?(J.groups[g]||{})[cat.slice(4)]:(J.events[g]||{})[cat.slice(3)];
   return {rows:(L||[]).map(r=>({t:r[0],rank:r[1],ovr:r[2],size:r[3],ath:r[4]})),squad:true}}
 function rkPeriod(J){return RK.tf==="week"&&RK.wk?wname(RK.wk):RK.tf==="month"&&RK.mo?mname(RK.mo):`${J.label} · ${J.final?"Final":J.noMeet?"Final lists":"In season"}`}
-const RK_HOW=`<details class="rkhow"><summary>How ratings work</summary><p>Every ranking is rated out of 99, like a video game. The #1 team in a list is 99; everyone else is rated by how close they are to the leader (60 + 39 × (score ÷ leader)^0.6), and a rating never goes up as you move down a list. Grades: A+ 95-99 · A 90-94 · A- 87-89 · B+ 84-86 · B 80-83 · B- 77-79 · C+ 74-76 · C 70-73 · C- 67-69 · D+ 64-66 · D 60-63.</p><p>Team attributes: <b>Nationals</b> (points at the national meet), <b>Lists</b> (projected points from the top 8 on each wind-legal national list), <b>Squads</b> (best four athletes in every event group) and <b>Qualifiers</b> (athletes in the national meet field). Athletes are rated by their spot on the national list.</p></details>`;
+const RK_HOW=`<details class="rkhow"><summary>How ratings work</summary><p>Every ranking is rated out of 99, like a video game, and ratings are relative to the division: the best D3 team is 99 in D3, the best D1 team 99 in D1. Everyone else is rated by how close they are to the leader (60 + 39 × (score ÷ leader)^0.6), and a rating never goes up as you move down a list. 90+ elite · 80s national-level · 70s strong · 60s ranked.</p><p>Team attributes: <b>Nationals</b> (points at the national meet), <b>Lists</b> (projected points from the top 8 on each wind-legal national list), <b>Squads</b> (best four athletes in every event group) and <b>Qualifiers</b> (athletes in the national meet field). Athletes are rated by their spot on the national list.</p></details>`;
 function rkMain(J){const G=RK.g==="m"?"Men":"Women";
   if(RK.c==="home"){/* dashboard: overall top 5 + every event group's top 3, each opens its full list */
     const card=(cat,title,n)=>{const X=rkRows(J,cat),R=(X.rows||[]).slice(0,n);
-      return `<div class="rkcard"><div class="rkch"><b>${esc(title)}</b><button type="button" data-rk="c" data-val="${cat}">See all ›</button></div>${R.length?R.map(r=>{const i=rkTeam(J,r.t);
+      const gk=cat.startsWith("grp:")?cat.slice(4):null,ge=gk?RKE.filter(e=>rkGrpOf(e)===gk&&((J.events[RK.g]||{})[e]||[]).length):[];
+      return `<div class="rkcard"><div class="rkch"><b>${esc(title)}</b><button type="button" data-rk="c" data-val="${cat}">See all ›</button></div>${ge.length?`<div class="rkmini">${ge.map(e=>`<button type="button" data-rk="c" data-val="ev:${esc(e)}">${esc(rkEv(e))}</button>`).join("")}</div>`:""}${R.length?R.map(r=>{const i=rkTeam(J,r.t);
         return `<div class="rkcr" style="--c:${i.col}"><span class="pr-rk ${rkMed(r.rank)}">${r.rank}</span>${rkLogo(i,28)}<span class="rkcn">${rkName(i)}</span><span class="rkcs">${rkOv(r.ovr)}${rkMv(r.rank,r.mv)}</span></div>`}).join(""):`<p class="rkempty">${esc(X.none||"No ranked programs yet.")}</p>`}</div>`};
-    return `<div class="pr-hero"><div class="pr-kick">${esc(J.d)} · ${G} · ${esc(rkPeriod(J))}</div><div class="pr-title">Rankings dashboard</div><p>Every team rated out of 99 with a letter grade. Tap a card for the full list.</p></div>
+    return `<div class="pr-hero"><div class="pr-kick">${esc(J.d)} · ${G} · ${esc(rkPeriod(J))}</div><div class="pr-title">Rankings dashboard</div><p>Every team rated out of 99. Tap a card for the full list, or a group to see its events.</p><span class="rkdiv">Rated within ${esc(J.d)} · the best ${esc(J.d.replace("NCAA ",""))} team is 99</span></div>
       <div class="rkgrid">${card("overall","Overall school rankings",5)}${RKG.map(([k,l])=>card("grp:"+k,l,3)).join("")}</div>${RK_HOW}`}
   const cat=RK.c,X=rkRows(J,cat),title=cat==="overall"?"Overall school rankings":cat.startsWith("grp:")?(RKG.find(x=>"grp:"+x[0]===cat)||[0,""])[1]+" rankings":rkEv(cat.slice(3))+" rankings";
-  let h=`<div class="pr-hero"><div class="pr-kick">${esc(J.d)} · ${G} · ${esc(rkPeriod(J))}</div><div class="pr-title">${esc(title)}</div><p>${J.official&&RK.tf==="season"?"Official TFRRS team scores · ":""}Wind-legal marks · Rated out of 99</p></div>`;
+  let h=`<div class="pr-hero"><div class="pr-kick">${esc(J.d)} · ${G} · ${esc(rkPeriod(J))}</div><div class="pr-title">${esc(title)}</div><p>${J.official&&RK.tf==="season"?"Official TFRRS team scores · ":""}Wind-legal marks</p><span class="rkdiv">Rated out of 99 within ${esc(J.d)}</span></div>`;
   if(X.none)return h+`<p class="rkempty big">${esc(X.none)}</p>`;
   const rows=X.rows;if(!rows.length)return h+`<p class="rkempty big">No ranked programs for this ${cat.startsWith("ev:")?"event":"section"}.</p>`;
   if(X.full){const pod=`<div class="pr-pod">${[1,0,2].filter(ix=>rows[ix]).map(ix=>{const r=rows[ix],i=rkTeam(J,r.t);return `<div class="pr-pc p${ix+1}" style="--c:${i.col}"><div class="pr-pm">${r.rank}</div>${rkLogo(i,72)}<b>${rkName(i)}</b><small>${esc(i.conf)}</small><div class="pr-ps">${rkOv(r.ovr,true)}</div><div class="pr-pd"><span>${J.final?r.nat:r.proj}<em>${J.final?"Nat'l pts":"Proj. pts"}</em></span><span>${r.qual}<em>Qualifiers</em></span></div></div>`}).join("")}</div>`;
