@@ -55,16 +55,21 @@ export function computeSite({ out, root, S }) {
     if (H.length >= 2) { const last = H[H.length - 1], wk = [...H].reverse().find(h => day(last.date) - day(h.date) >= 6 * 864e5), mo = [...H].reverse().find(h => day(last.date) - day(h.date) >= 27 * 864e5);
       for (const v of ["all", "m", "w"]) for (const r of c.P[v]) { if (wk) r.wk = ((wk.ranks || {})[v] || {})[r.t] ?? null; if (mo) r.mo = ((mo.ranks || {})[v] || {})[r.t] ?? null; }
       c.wkDate = wk && wk.date; c.moDate = mo && mo.date; c.asOf = last.date; }
-    for (const r of c.P.all) if (r.s && !R.bySchool.has(r.s)) R.bySchool.set(r.s, { d, rank: r.rank, of: c.P.all.length, prev: r.prev, act: r.act, qual: r.qual, power: r.power, year: c.year, season: c.season,
-      groups: Object.fromEntries(["m", "w"].flatMap(g => Object.entries(c.P.groups[g]).map(([k, rows]) => { const x = rows.find(y => y.t === r.t); return x ? [k + g, x.rank] : null; }).filter(Boolean))) });
+    /* men and women ranked separately (Ryan 2026-10-30: "we have to separate women and men rankings") */
+    for (const g of ["m", "w"]) for (const r of c.P[g]) { if (!r.s) continue; const b = R.bySchool.get(r.s) || { d, year: c.year, season: c.season, m: null, w: null }; if (b[g]) continue;
+      const gr = Object.fromEntries(Object.entries(c.P.groups[g]).map(([k, rows]) => { const x = rows.find(y => y.t === r.t); return x ? [k, x.rank] : null; }).filter(Boolean));
+      b[g] = { rank: r.rank, of: c.P[g].length, prev: r.prev, act: r.act, qual: r.qual, power: r.power, groups: gr }; R.bySchool.set(r.s, b); }
   }
-  /* conference tables: every conference school, ranked by its division Power rank */
+  /* conference tables: every conference school, ranked by its division Power rank, men and women separately */
   const confs = new Map(); for (const s of S) if (R.cur[s.d]) { const k = s.d + "|" + s.c; if (!confs.has(k)) confs.set(k, []); confs.get(k).push(s); }
   for (const [k, list] of confs) {
-    const rows = list.map(s => ({ s, x: R.bySchool.get(s) })).filter(r => r.x).sort((a, b) => a.x.rank - b.x.rank);
-    if (!rows.length) continue;
-    rows.forEach((r, i) => { r.crank = i && r.x.rank === rows[i - 1].x.rank ? rows[i - 1].crank : i + 1; r.x.crank = r.crank; r.x.cof = list.length; });
-    R.conf.set(k, rows);
+    const T = {};
+    for (const g of ["m", "w"]) {
+      const rows = list.map(s => ({ s, x: (R.bySchool.get(s) || {})[g] })).filter(r => r.x).sort((a, b) => a.x.rank - b.x.rank);
+      rows.forEach((r, i) => { r.crank = i && r.x.rank === rows[i - 1].x.rank ? rows[i - 1].crank : i + 1; r.x.crank = r.crank; r.x.cof = list.length; });
+      if (rows.length) T[g] = rows;
+    }
+    if (T.m || T.w) R.conf.set(k, T);
   }
   return R;
 }

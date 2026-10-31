@@ -43,10 +43,12 @@ export const RANK_CSS = `<style>
 .pr-cn{font-size:78px;font-weight:900;line-height:1;margin-top:10px;background:linear-gradient(180deg,#fff,#F5C451);-webkit-background-clip:text;background-clip:text;color:transparent}.pr-cl{font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:13px}.pr-cs{font-size:20px;font-weight:800;margin-top:4px}
 .pr-cm{display:flex;gap:18px;margin-top:14px;font-weight:800;font-size:18px}.pr-cm em{display:block;font-style:normal;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.65)}.pr-cf{margin-top:auto;padding-top:10px;font-size:10px;letter-spacing:.14em;color:rgba(255,255,255,.6);font-weight:650}
 .pr-more{display:inline-block;margin:10px 0 0;font-weight:650}
-@media (max-width:760px){.pr .hide{display:none}.pr-th,.pr-tr{grid-template-columns:34px 1fr 70px}.pr-pod{grid-template-columns:1fr}.pr-pc.p1{order:-1}.pr-note{grid-template-columns:1fr}.pr-tr.g{grid-template-columns:34px 1fr 56px}.pr-sq{display:none}.pr-tr.g small{display:none}
+.pr-duo{display:grid;grid-template-columns:1fr 1fr;gap:16px}.pr-duo h3{margin:0 0 8px;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)}
+.pr-slim .hide{display:none}.pr-slim .pr-th,.pr-slim .pr-tr{grid-template-columns:34px 1fr 64px}
+@media (max-width:760px){.pr-duo{grid-template-columns:1fr}.pr .hide{display:none}.pr-th,.pr-tr{grid-template-columns:34px 1fr 70px}.pr-pod{grid-template-columns:1fr}.pr-pc.p1{order:-1}.pr-note{grid-template-columns:1fr}.pr-tr.g{grid-template-columns:34px 1fr 56px}.pr-sq{display:none}.pr-tr.g small{display:none}
 .pr-pc{display:grid;grid-template-columns:auto 1fr auto;text-align:left;gap:0 14px;align-items:center;padding:14px 16px!important}.pr-pc .pr-lg{margin:0;grid-row:span 2;width:52px!important;height:52px!important}.pr-pc b{margin:0;font-size:16px}.pr-pc small{grid-column:2}.pr-ps{grid-column:3;grid-row:1/3;margin:0;font-size:26px;text-align:right}.pr-pd{display:none}.pr-pm{top:8px;left:8px;width:22px;height:22px;font-size:12px}.pr-card{width:100%;max-width:360px}}
 </style>`;
-const TABS_JS = `<script>document.querySelectorAll(".pr-tabs").forEach(function(t){t.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;t.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b)});var k=t.dataset.k;document.querySelectorAll("[data-"+k+"]").forEach(function(v){if(v.classList.contains("pr-tabs"))return;v.hidden=v.getAttribute("data-"+k)!==b.dataset.v})})})</script>`;
+const TABS_JS = `<script>if(location.hash==="#women"){var wb=document.querySelector('.pr-tabs[data-k="v"] button[data-v="w"]');if(wb)setTimeout(function(){wb.click()},0)}document.querySelectorAll(".pr-tabs").forEach(function(t){t.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;t.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b)});var k=t.dataset.k;document.querySelectorAll("[data-"+k+"]").forEach(function(v){if(v.classList.contains("pr-tabs"))return;v.hidden=v.getAttribute("data-"+k)!==b.dataset.v})})})</script>`;
 
 export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
   if (!PDIVS.every(d => R.cur[d])) return [];
@@ -61,7 +63,6 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
   const mv = (now, then) => then == null ? "" : then > now ? `<span class="pr-mv u">▲${then - now}</span>` : then < now ? `<span class="pr-mv d">▼${now - then}</span>` : "";
   const chips = (c, v, t) => { const L = []; for (const g of v === "all" ? ["m", "w"] : [v]) for (const [k, rows] of Object.entries(c.P.groups[g])) { const x = rows.find(y => y.t === t); if (x && x.rank <= 10) L.push([x.rank, `#${x.rank} ${LG[k]}${v === "all" ? (g === "m" ? " M" : " W") : ""}`]); }
     return L.sort((a, b) => a[0] - b[0]).slice(0, 3).map(x => `<span class="pr-chip">${esc(x[1])}</span>`).join(""); };
-  const VIEWS = [["all", "Combined"], ["m", "Men"], ["w", "Women"]];
   const table = (c, v, lim) => `<div class="pr-tbl"><div class="pr-th"><span>#</span><span>Program</span><span class="n">Power</span><span class="n hide">Nat'l pts</span><span class="n hide">Projected</span><span class="n hide">Qualifiers</span><span class="n hide">Squads</span><span class="hide">Best groups</span></div>`
     + c.P[v].slice(0, lim).map(r => { const i = info(r);
       return `<div class="pr-tr" style="--c:${i.col}"><span class="pr-rk ${medal(r.rank)}">${r.rank}</span><span class="pr-pg">${logo(i)}<span><b>${nmLink(i)}</b><small>${esc(i.conf)}</small></span></span><span class="n pr-pw"><b>${r.power.toFixed(1)}${mv(r.rank, r.wk != null ? r.wk : r.prev)}</b><i style="width:${Math.max(4, r.power)}%"></i></span><span class="n hide">${c.P.final ? r.act : "–"}</span><span class="n hide">${r.proj}</span><span class="n hide">${r.qual}</span><span class="n hide">${r.squad.toFixed(0)}</span><span class="hide">${chips(c, v, r.t)}</span></div>`; }).join("") + `</div>`;
@@ -89,27 +90,29 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
     const arch = R.seasons[d].filter(x => x !== R.cur[d]).reverse();
     const top = v => c.P[v][0];
     const gl = g => PGROUPS.filter(([k]) => (c.P.groups[g][k] || []).length);
+    const G = { m: "Men", w: "Women" }, GW = { m: "men's", w: "women's" };
+    /* men and women are separate rankings (Ryan 2026-10-30): each tab has its own podium, table, squads and share card */
+    const genderBlock = (g, i) => `<section data-v="${g}"${i ? " hidden" : ""}>${podium(c, g)}${table(c, g, 400)}`
+      + `<h2>${esc(d)} ${GW[g]} event-group squads</h2><p>A squad scores its best four athletes, weighted 1.0, 0.75, 0.5 and 0.25, so one great athlete counts and real depth still wins. A squad needs at least one athlete inside the championship field.</p>`
+      + `<div class="pr-tabs" data-k="g${g}">${gl(g).map(([k, l], j) => `<button data-v="${k}" class="${j ? "" : "on"}">${l}</button>`).join("")}</div>`
+      + gl(g).map(([k], j) => `<div data-g${g}="${k}"${j ? " hidden" : ""}>${squadsTbl(c.P.groups[g][k], 15)}${current ? `<a class="pr-more" href="${groupPath(d, k)}">All ${esc(d)} ${esc(LG[k].toLowerCase())} squads ›</a>` : ""}</div>`).join("")
+      + `<h2>Share the ranking</h2><div class="pr-cards">${card(c, top(g), `${d} ${GW[g]} Power Ranking`)}</div></section>`;
     const body = badges(c)
-      + `<div class="pr-tabs" data-k="v">${VIEWS.map(([v, l], i) => `<button data-v="${v}" class="${i ? "" : "on"}">${l}</button>`).join("")}</div>`
-      + VIEWS.map(([v], i) => `<section data-v="${v}"${i ? " hidden" : ""}>${podium(c, v)}${table(c, v, 400)}</section>`).join("")
-      + `<h2>Event-group squads</h2><p>The best squads in each event group. A squad scores its best four athletes, weighted 1.0, 0.75, 0.5 and 0.25, so one great athlete counts and real depth still wins. A squad needs at least one athlete inside the championship field.</p>`
-      + `<div class="pr-tabs" data-k="g">${["m", "w"].flatMap(g => gl(g).map(([k, l], j) => `<button data-v="${g}${k}" class="${g === "m" && !j ? "on" : ""}">${g === "m" ? "Men's" : "Women's"} ${l}</button>`)).join("")}</div>`
-      + ["m", "w"].flatMap(g => gl(g).map(([k], j) => `<div data-g="${g}${k}"${g === "m" && !j ? "" : " hidden"}>${squadsTbl(c.P.groups[g][k], 15)}${current ? `<a class="pr-more" href="${groupPath(d, k)}">All ${esc(d)} ${esc(LG[k].toLowerCase())} squads ›</a>` : ""}</div>`)).join("")
-      + `<h2>Share your ranking</h2><p>Every program's ranking makes a shareable card in its own colors.</p><div class="pr-cards">${card(c, top("m"), `${d} men's Power Ranking`)}${card(c, top("w"), `${d} women's Power Ranking`)}</div>`
+      + `<div class="pr-tabs" data-k="v">${["m", "w"].map((g, i) => `<button data-v="${g}" class="${i ? "" : "on"}">${G[g]}</button>`).join("")}</div>`
+      + ["m", "w"].map(genderBlock).join("")
       + method(c)
       + (current && arch.length ? `<h2>Past seasons</h2><div class="links">${arch.map(x => `<a href="${seasonPath(d, x.year, x.season)}">${esc(d)} ${esc(seasonLabel(x))}</a>`).join("")}</div>` : "")
       + `<h2>Other divisions</h2><div class="links">${PDIVS.filter(x => x !== d).map(x => `<a href="${rankPath(x)}">${esc(x)} Power Rankings</a>`).join("")}<a href="/rankings.html">All rankings</a></div>`;
-    const t3 = c.P.all.slice(0, 3).map(nmOf);
+    const t3 = g => c.P[g].slice(0, 3).map(nmOf);
     art({ p, date: dateOf(c), crumbs: current ? [["Home", "/"], ["Rankings", "/rankings.html"], [d, p]] : [["Home", "/"], ["Rankings", "/rankings.html"], [d, rankPath(d)], [seasonLabel(c), p]],
       title: current ? `${d} Track and Field Rankings ${c.year} (${c.season === "indoor" ? "Indoor" : "Outdoor"})` : `${d} Track and Field Rankings: ${seasonLabel(c)} Final`,
-      desc: `${d} track and field Power Rankings, ${seasonLabel(c)}: ${c.P.all.length} programs ranked on ${c.P.final ? "national meet points, " : ""}projected points, qualifiers and event-group squads, men's, women's and combined.`,
+      desc: `${d} men's and women's track and field Power Rankings, ${seasonLabel(c)}: ${c.P.m.length} men's and ${c.P.w.length} women's programs ranked on ${c.P.final ? "national meet points, " : ""}projected points, qualifiers and event-group squads.`,
       kick: `${esc(d)} · ${esc(seasonLabel(c))} · ${c.P.final ? "Final" : c.noMeet ? "Final lists" : c.asOf ? `Updated ${esc(c.asOf)}` : "In season"}`,
-      h1: `${d} track and field Power Rankings, ${seasonLabel(c)}`,
-      sub: `<b>${esc(list(t3))}</b> lead the ${esc(seasonLabel(c))} ${esc(d)} Power Rankings. Men: <b>${esc(nmOf(top("m")))}</b>. Women: <b>${esc(nmOf(top("w")))}</b>. Every program is ranked on ${c.P.final ? "national meet points, " : ""}projected points from the wind-legal national lists, qualifiers and event-group squads.`,
+      h1: `${d} men's and women's track and field Power Rankings, ${seasonLabel(c)}`,
+      sub: `Men: <b>${esc(list(t3("m")))}</b>. Women: <b>${esc(list(t3("w")))}</b>. Every program is ranked on ${c.P.final ? "national meet points, " : ""}projected points from the wind-legal national lists, qualifiers and event-group squads.`,
       body,
-      faq: [[`Who is the best ${d} track and field team in ${seasonLabel(c)}?`, `${esc(t3[0])} leads the combined Power Rankings (${c.P.all[0].power.toFixed(1)}), ahead of ${esc(t3[1])} and ${esc(t3[2])}.`],
-        [`What is the best ${d} men's track program?`, `${esc(nmOf(top("m")))}${c.P.final ? `, with ${top("m").act} points at the national meet` : ""}.`],
-        [`What is the best ${d} women's track program?`, `${esc(nmOf(top("w")))}${c.P.final ? `, with ${top("w").act} points at the national meet` : ""}.`],
+      faq: [[`What is the best ${d} men's track and field team in ${seasonLabel(c)}?`, `${esc(nmOf(top("m")))}${c.P.final ? `, with ${top("m").act} points at the national meet` : ""}, ahead of ${esc(t3("m")[1])} and ${esc(t3("m")[2])}.`],
+        [`What is the best ${d} women's track and field team in ${seasonLabel(c)}?`, `${esc(nmOf(top("w")))}${c.P.final ? `, with ${top("w").act} points at the national meet` : ""}, ahead of ${esc(t3("w")[1])} and ${esc(t3("w")[2])}.`],
         ["How often do the rankings update?", "Every Monday during the indoor and outdoor seasons. Each finished season keeps its final ranking on its own page."]] });
     done.push(p);
   };
@@ -131,14 +134,14 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
       done.push(q);
     }
   }
-  /* hub */
+  /* hub: men's and women's top 5 per division, side by side */
   const H = PDIVS.map(d => R.cur[d]);
   art({ p: "/rankings.html", date: H.map(dateOf).sort().pop(), crumbs: [["Home", "/"], ["Rankings", "/rankings.html"]],
-    title: `College Track and Field Rankings ${H[0].year}: D1, D2, D3, NAIA`, desc: `${H[0].year} college track and field Power Rankings for NCAA D1, D2, D3 and NAIA: national meet points, projected points, qualifiers and event-group squads. Updated every Monday in season.`,
-    kick: "NCAA D1 · D2 · D3 · NAIA", h1: "College track and field Power Rankings",
-    sub: `The top programs right now: ${PDIVS.map((d, i) => `${esc(d.replace("NCAA ", ""))} <b>${esc(nmOf(H[i].P.all[0]))}</b>`).join(", ")}.`,
-    body: PDIVS.map((d, i) => { const c = H[i]; return `<h2>${esc(d)} · ${esc(seasonLabel(c))}</h2>${podium(c, "all")}${table(c, "all", 10)}<a class="pr-more" href="${rankPath(d)}">Full ${esc(d)} Power Rankings: men, women and squads ›</a>`; }).join(""),
-    faq: [["What are the best college track and field programs?", PDIVS.map((d, i) => `${esc(nmOf(H[i].P.all[0]))} in ${esc(d)}`).join(", ") + "."], ["How often are the rankings updated?", "Every Monday during the indoor (December to March) and outdoor (March to June) seasons."]] });
+    title: `College Track and Field Rankings ${H[0].year}: D1, D2, D3, NAIA`, desc: `${H[0].year} college track and field Power Rankings for NCAA D1, D2, D3 and NAIA men and women: national meet points, projected points, qualifiers and event-group squads. Updated every Monday in season.`,
+    kick: "NCAA D1 · D2 · D3 · NAIA · Men and women", h1: "College track and field Power Rankings",
+    sub: `Men: ${PDIVS.map((d, i) => `${esc(d.replace("NCAA ", ""))} <b>${esc(nmOf(H[i].P.m[0]))}</b>`).join(", ")}. Women: ${PDIVS.map((d, i) => `${esc(d.replace("NCAA ", ""))} <b>${esc(nmOf(H[i].P.w[0]))}</b>`).join(", ")}.`,
+    body: PDIVS.map((d, i) => { const c = H[i]; return `<h2>${esc(d)} · ${esc(seasonLabel(c))}</h2><div class="pr-duo">${["m", "w"].map(g => `<div><h3>${g === "m" ? "Men" : "Women"}</h3><div class="pr-slim">${table(c, g, 5)}</div><a class="pr-more" href="${rankPath(d)}${g === "w" ? "#women" : ""}">All ${esc(d)} ${g === "m" ? "men" : "women"} ›</a></div>`).join("")}</div>`; }).join(""),
+    faq: [["What are the best college track and field programs?", `Men: ${PDIVS.map((d, i) => `${esc(nmOf(H[i].P.m[0]))} in ${esc(d)}`).join(", ")}. Women: ${PDIVS.map((d, i) => `${esc(nmOf(H[i].P.w[0]))} in ${esc(d)}`).join(", ")}.`], ["How often are the rankings updated?", "Every Monday during the indoor (December to March) and outdoor (March to June) seasons."]] });
   done.push("/rankings.html");
   return done;
 }

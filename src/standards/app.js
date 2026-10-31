@@ -1998,7 +1998,7 @@ const toBottom=()=>requestAnimationFrame(()=>scrollTo({top:document.body.scrollH
 /* ---------- Rankings (Ryan 2026-10-30: a tab inside the app like Results and Recruiting AI; header and tabs stay put).
    The Power Rankings pages are pre-built (scripts/seo/rankings.mjs); this view loads one, keeps its .pr block and styles, and
    opens links to other ranking pages in place (/?tab=rankings&rk=<path>, so back/forward and shared links work). ---------- */
-const RK={path:"/rankings.html",html:{},busy:{}};
+const RK={path:"/rankings.html",html:{},busy:{},g:"m"};
 const rkOk=p=>/^\/rankings(\.html|\/[a-z0-9-]+\.html)$/.test(p||"");
 function rankings(){const p=RK.path,h=RK.html[p];
   if(h!=null)return h;
@@ -2027,6 +2027,7 @@ function render(){
   $("app").innerHTML=onSchool?school():{standards,rankings,results,ask}[S.tab]();
   if(fid){const n=$(fid);if(n){n.value=fval;n.focus();try{n.setSelectionRange(fpos,fpos)}catch(e){}if(fid==="q")drop();else teamDrop(fid)}}  /* a data load mid-typing keeps the search box and its list */
   if(S.tab==="standards"&&!onSchool) drop();
+  if(S.tab==="rankings"&&!onSchool&&RK.g==="w"){const wb=document.querySelector('#app .pr-tabs[data-k="v"] button[data-v="w"]');if(wb&&!wb.classList.contains("on"))wb.click()}   /* "All women" links open the Women tab */
   moveInd(); if(S.tab==="standards"&&!onSchool) watchMore();  R.swap=false; ACC.ensureHead&&ACC.ensureHead();
 }
 addEventListener("resize",moveInd);
@@ -2035,11 +2036,12 @@ document.addEventListener("click",ev=>{
   {const ci=ev.target.closest("[data-cinfo]");document.querySelectorAll(".ci.open").forEach(x=>{if(!ci||x!==ci.parentNode){x.classList.remove("open");x.querySelector("button").setAttribute("aria-expanded","false")}});if(ci){const w=ci.parentNode;w.classList.toggle("open");ci.setAttribute("aria-expanded",w.classList.contains("open"));return}}
   if(ev.target.closest("#evx")){evalOut();return}
   {const a=S.tab==="rankings"&&S.school==null&&ev.target.closest('#app a[href^="/rankings"]');
-    if(a&&!(ev.metaKey||ev.ctrlKey||ev.shiftKey)&&rkOk(a.getAttribute("href"))){ev.preventDefault();RK.path=a.getAttribute("href");history.pushState({},"","/?tab=rankings"+(RK.path!=="/rankings.html"?"&rk="+encodeURIComponent(RK.path):""));render();const t=$("app").getBoundingClientRect().top+scrollY-80;if(scrollY>t)scrollTo(0,t);return}}
-  {const tb=ev.target.closest("#app .pr-tabs button");if(tb){const t=tb.closest(".pr-tabs"),k=t.dataset.k;t.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===tb));
+    const hr=a&&a.getAttribute("href").split("#");
+    if(a&&!(ev.metaKey||ev.ctrlKey||ev.shiftKey)&&rkOk(hr[0])){ev.preventDefault();RK.path=hr[0];RK.g=hr[1]==="women"?"w":"m";history.pushState({},"","/?tab=rankings"+(RK.path!=="/rankings.html"?"&rk="+encodeURIComponent(RK.path):""));render();const t=$("app").getBoundingClientRect().top+scrollY-80;if(scrollY>t)scrollTo(0,t);return}}
+  {const tb=ev.target.closest("#app .pr-tabs button");if(tb){const t=tb.closest(".pr-tabs"),k=t.dataset.k;if(k==="v")RK.g=tb.dataset.v;t.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===tb));
     t.parentNode.querySelectorAll("[data-"+k+"]").forEach(v=>{if(!v.classList.contains("pr-tabs"))v.hidden=v.getAttribute("data-"+k)!==tb.dataset.v});return}}
   const b=ev.target.closest("button,a[data-tpage]");if(!b)return;const d=b.dataset;
-  if(d.tab){const home=b.classList.contains("logo");if(d.tab==="rankings")RK.path="/rankings.html";S.tab=d.tab;S.school=null;TM.i=null;TM.ath=null;R.swap=true;
+  if(d.tab){const home=b.classList.contains("logo");if(d.tab==="rankings"){RK.path="/rankings.html";RK.g="m"}S.tab=d.tab;S.school=null;TM.i=null;TM.ath=null;R.swap=true;
     if(home){S.run=false;S.mark="";S.f=S.div=S.conf=S.st="";try{if(location.pathname!=="/"||location.search)history.pushState({},"","/")}catch(e){}}
     render();if(home)scrollTo({top:0,behavior:"smooth"});return}
   if("back" in d){S.school=null;render();return}

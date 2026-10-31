@@ -116,12 +116,15 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, DEP
   }
   /* PR Power Index rank (power-site.mjs, Ryan 2026-10-30): "#3 in the NCAA D1 Power Rankings and #1 of 18 in the Big Ten" */
   const RP = { "NCAA D1": "ncaa-d1", "NCAA D2": "ncaa-d2", "NCAA D3": "ncaa-d3", NAIA: "naia" };
-  const depthOf = s => DEPTH.bySchool.get(s) || null;   /* PR Power Index (power-site.mjs) */
-  const depthLine = (s, x) => `${esc(shortOf(s))} is #${x.rank} of ${x.of} in the ${esc(x.d)} Power Rankings${x.crank ? ` and #${x.crank} of ${x.cof} in the ${esc(s.c)}` : ""} (${x.year} ${x.season}): ${x.act ? `${x.act} points at the national meet, ` : ""}${x.qual} ${x.act || x.season === "outdoor" ? "national qualifiers" : "qualifiers"}${x.prev ? `, ${x.prev > x.rank ? `up from #${x.prev} in ${+x.year - 1}` : x.prev < x.rank ? `down from #${x.prev} in ${+x.year - 1}` : `the same rank as in ${+x.year - 1}`}` : ""}.`;
+  const depthOf = s => { const x = DEPTH.bySchool.get(s); return x && (x.m || x.w) ? x : null; };   /* PR Power Index, men and women separately */
+  const one = (s, x, g) => { const y = x[g]; if (!y) return ""; const w = g === "m" ? "men" : "women";
+    return `${esc(shortOf(s))} ${w} are #${y.rank} of ${y.of} in the ${esc(x.d)} Power Rankings${y.crank ? ` (#${y.crank} of ${y.cof} in the ${esc(s.c)})` : ""}${y.act ? `, with ${y.act} points at the national meet` : ""}${y.prev ? `, ${y.prev > y.rank ? `up from #${y.prev}` : y.prev < y.rank ? `down from #${y.prev}` : `the same rank as`} in ${+x.year - 1}` : ""}.`; };
+  const depthLine = (s, x) => [one(s, x, "m"), one(s, x, "w")].filter(Boolean).join(" ");
   function rankSec(s) { const x = depthOf(s); if (!x) return "";
     const GN = { sprints: "sprints", hurdles: "hurdles", distance: "distance", jumps: "jumps", throws: "throws", multis: "multi-events" };
-    const top = Object.entries(x.groups || {}).filter(([, r]) => r <= 25).sort((a, b) => a[1] - b[1]).slice(0, 4).map(([k, r]) => { const g = k.slice(-1), grp = k.slice(0, -1); return `<a href="/rankings/${RP[x.d]}-${grp}-rankings.html">#${r} in ${g === "m" ? "men's" : "women's"} ${GN[grp]}</a>`; });
-    return `<h2>Where ${esc(shortOf(s))} ranks nationally</h2><p>${depthLine(s, x)}${top.length ? ` Event-group squads: ${top.join(", ")}.` : ""} <a href="/rankings/${RP[x.d]}-track-and-field-rankings.html">${esc(x.d)} Power Rankings ›</a></p>`; }
+    const top = ["m", "w"].flatMap(g => Object.entries((x[g] || {}).groups || {}).map(([k, r]) => [g, k, r])).filter(([, , r]) => r <= 25).sort((a, b) => a[2] - b[2]).slice(0, 4)
+      .map(([g, k, r]) => `<a href="/rankings/${RP[x.d]}-${k}-rankings.html">#${r} in ${g === "m" ? "men's" : "women's"} ${GN[k]}</a>`);
+    return `<h2>Where ${esc(shortOf(s))} ranks nationally (${x.year} ${x.season})</h2><p>${depthLine(s, x)}${top.length ? ` Event-group squads: ${top.join(", ")}.` : ""} <a href="/rankings/${RP[x.d]}-track-and-field-rankings.html">${esc(x.d)} Power Rankings ›</a></p>`; }
   function factSections(s, F) {
     if (!F) return "";
     const nm = esc(shortOf(s)); let o = "";
