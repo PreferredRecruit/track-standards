@@ -4,6 +4,7 @@
                                    standards + season bests as real HTML inside #root (the app replaces it when it starts)
      dist/data/teams/<slug>.json   the school's season bests from the latest outdoor TFRRS lists (the app shows the same table)
    Served at /schools/<slug> on hosts that map clean URLs to .html (vercel.json). On Lovable the SPA still serves that path. */
+import { grade } from "./power.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
@@ -118,7 +119,7 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, DEP
   const RP = { "NCAA D1": "ncaa-d1", "NCAA D2": "ncaa-d2", "NCAA D3": "ncaa-d3", NAIA: "naia" };
   const depthOf = s => { const x = DEPTH.bySchool.get(s); return x && (x.m || x.w) ? x : null; };   /* PR Power Index, men and women separately */
   const one = (s, x, g) => { const y = x[g]; if (!y) return ""; const w = g === "m" ? "men" : "women";
-    return `${esc(shortOf(s))} ${w} are #${y.rank} of ${y.of} in the ${esc(x.d)} Power Rankings${y.crank ? ` (#${y.crank} of ${y.cof} in the ${esc(s.c)})` : ""}${y.act ? `, with ${y.act} points at the national meet` : ""}${y.prev ? `, ${y.prev > y.rank ? `up from #${y.prev}` : y.prev < y.rank ? `down from #${y.prev}` : `the same rank as`} in ${+x.year - 1}` : ""}.`; };
+    return `${esc(shortOf(s))} ${w} are #${y.rank} of ${y.of} in the ${esc(x.d)} Power Rankings${y.crank ? ` (#${y.crank} of ${y.cof} in the ${esc(s.c)})` : ""}${y.ovr ? `, rated ${y.ovr} out of 99 (${grade(y.ovr)})` : ""}${y.act ? `, with ${y.act} points at the national meet` : ""}${y.prev ? `, ${y.prev > y.rank ? `up from #${y.prev}` : y.prev < y.rank ? `down from #${y.prev}` : `the same rank as`} in ${+x.year - 1}` : ""}.`; };
   const depthLine = (s, x) => [one(s, x, "m"), one(s, x, "w")].filter(Boolean).join(" ");
   function rankSec(s) { const x = depthOf(s); if (!x) return "";
     const GN = { sprints: "sprints", hurdles: "hurdles", distance: "distance", jumps: "jumps", throws: "throws", multis: "multi-events" };

@@ -59,7 +59,7 @@ export function computeSite({ out, root, S }) {
     /* men and women ranked separately (Ryan 2026-10-30: "we have to separate women and men rankings") */
     for (const g of ["m", "w"]) for (const r of c.P[g]) { if (!r.s) continue; const b = R.bySchool.get(r.s) || { d, year: c.year, season: c.season, m: null, w: null }; if (b[g]) continue;
       const gr = Object.fromEntries(Object.entries(c.P.groups[g]).map(([k, rows]) => { const x = rows.find(y => y.t === r.t); return x ? [k, x.rank] : null; }).filter(Boolean));
-      b[g] = { rank: r.rank, of: c.P[g].length, prev: r.prev, act: r.act, qual: r.qual, power: r.power, groups: gr }; R.bySchool.set(r.s, b); }
+      b[g] = { rank: r.rank, of: c.P[g].length, prev: r.prev, act: r.act, qual: r.qual, power: r.power, ovr: r.ovr, groups: gr }; R.bySchool.set(r.s, b); }
   }
   /* conference tables: every conference school, ranked by its division Power rank, men and women separately */
   const confs = new Map(); for (const s of S) if (R.cur[s.d]) { const k = s.d + "|" + s.c; if (!confs.has(k)) confs.set(k, []); confs.get(k).push(s); }
