@@ -2023,6 +2023,7 @@ document.addEventListener("click",ev=>{
   {const ci=ev.target.closest("[data-cinfo]");document.querySelectorAll(".ci.open").forEach(x=>{if(!ci||x!==ci.parentNode){x.classList.remove("open");x.querySelector("button").setAttribute("aria-expanded","false")}});if(ci){const w=ci.parentNode;w.classList.toggle("open");ci.setAttribute("aria-expanded",w.classList.contains("open"));return}}
   if(ev.target.closest("#evx")){evalOut();return}
   const b=ev.target.closest("button,a[data-tpage]");if(!b)return;const d=b.dataset;
+  if(d.tab==="rankings"){location.href="/rankings.html";return}   /* Rankings tab (Ryan 2026-10-30: add next to Recruiting AI, not replace it) */
   if(d.tab){const home=b.classList.contains("logo");S.tab=d.tab;S.school=null;TM.i=null;TM.ath=null;R.swap=true;
     if(home){S.run=false;S.mark="";S.f=S.div=S.conf=S.st="";try{if(location.pathname!=="/"||location.search)history.pushState({},"","/")}catch(e){}}
     render();if(home)scrollTo({top:0,behavior:"smooth"});return}

@@ -7,7 +7,7 @@ import { computePower, PGROUPS } from "./power.mjs";
 import zlib from "node:zlib";
 
 export const PDIVS = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA"];
-export const POWER_FROM = 2022;
+export const POWER_FROM = 2016;   /* every season with TFRRS lists (Ryan 2026-10-30: "everything since 2016") */
 const KEY = { "NCAA D1": "d1", "NCAA D2": "d2", "NCAA D3": "d3", NAIA: "naia" };
 const DS = d => KEY[d] === "naia" ? "naia" : "ncaa-" + KEY[d];
 export const rankPath = d => `/rankings/${DS(d)}-track-and-field-rankings.html`;
@@ -27,7 +27,7 @@ export function computeSite({ out, root, S }) {
   const SO = s => s === "indoor" ? 0 : 1;
   for (const d of PDIVS) {
     const keys = files.map(f => f.match(new RegExp(`^(\\d{4})-(indoor|outdoor)-${KEY[d]}\\.dat$`))).filter(Boolean).filter(m => +m[1] >= POWER_FROM)
-      .map(m => ({ year: m[1], season: m[2] })).sort((a, b) => a.year.localeCompare(b.year) || SO(a.season) - SO(b.season));
+      .map(m => ({ year: m[1], season: m[2] })).filter(k => !(k.year === "2020" && k.season === "outdoor")).sort((a, b) => a.year.localeCompare(b.year) || SO(a.season) - SO(b.season));
     R.seasons[d] = []; const lastFields = {};
     for (const k of keys) {
       const key = `${k.year}-${k.season}-${KEY[d]}`;
@@ -45,6 +45,9 @@ export function computeSite({ out, root, S }) {
     for (const x of R.seasons[d]) { const p = R.seasons[d].find(y => y.season === x.season && +y.year === +x.year - 1); if (!p) continue;
       for (const v of ["all", "m", "w"]) { const pr = new Map(p.P[v].map(r => [r.t, r.rank])); for (const r of x.P[v]) r.prev = pr.has(r.t) ? pr.get(r.t) : null; } x.hasPrev = true; }
     const c = R.cur[d] = R.seasons[d][R.seasons[d].length - 1] || null;
+    /* finished seasons with no national meet on TFRRS: 2020 indoor (cancelled, COVID-19), D1 outdoor 2016 and 2021, NAIA outdoor 2021,
+       D3 indoor 2021 (cancelled). Ranked on the lists only and labelled so. */
+    for (const x of R.seasons[d]) if (x !== c && !x.P.final) x.noMeet = x.year === "2020" || (x.year === "2021" && x.season === "indoor") ? "cancelled" : "missing";
     if (!c) continue;
     /* weekly / monthly movement (combined view) from the Monday snapshots of this season */
     const day = x => Date.parse(x + "T00:00:00Z");

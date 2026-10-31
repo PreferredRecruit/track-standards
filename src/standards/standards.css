@@ -41,7 +41,7 @@ h1 span{display:block;background:linear-gradient(90deg,#A98BFF 0%,#8A5CF5 32%,#7
 .inl{margin:20px auto 0;font-size:16px;color:var(--pr-mute)}
 .inl a{color:var(--pr-accent);font-weight:600;white-space:nowrap}
 .inl a:hover{text-decoration:underline;text-underline-offset:4px}
-.switch{position:relative;display:inline-grid;grid-template-columns:repeat(3,auto);margin:34px auto 0;padding:5px;border-radius:999px;background:color-mix(in srgb,var(--pr-card) 82%,transparent);box-shadow:var(--pr-rim);border:1px solid color-mix(in srgb,var(--pr-line) 60%,transparent)}
+.switch{position:relative;display:inline-grid;grid-template-columns:repeat(4,auto);margin:34px auto 0;padding:5px;border-radius:999px;background:color-mix(in srgb,var(--pr-card) 82%,transparent);box-shadow:var(--pr-rim);border:1px solid color-mix(in srgb,var(--pr-line) 60%,transparent)}
 .switch .ind{position:absolute;top:5px;bottom:5px;left:0;border-radius:999px;background:var(--pr-black);box-shadow:0 8px 20px -10px rgba(11,11,15,.7);transition:transform .5s cubic-bezier(.2,.8,.2,1),width .5s cubic-bezier(.2,.8,.2,1)}
 .switch button{position:relative;z-index:1;display:flex;align-items:center;gap:8px;border:0;background:none;padding:11px 22px;border-radius:999px;font-size:15px;font-weight:600;color:var(--pr-mute);cursor:pointer;white-space:nowrap;transition:color .35s}
 .switch button[aria-selected="true"]{color:var(--pr-card)}
@@ -181,7 +181,7 @@ td{padding:13px 10px 13px 0;border-bottom:1px solid var(--pr-line);font-size:15p
 footer{text-align:center;font-size:13px;color:var(--pr-mute);padding:10px 22px 34px}
 :focus-visible{outline:2px solid var(--pr-accent);outline-offset:3px}
 @media (max-width:700px){.row{grid-template-columns:1fr 1fr}.row .seg{grid-column:1/-1;justify-self:start}.row .go{grid-column:1/-1}.legend,.sugg{grid-template-columns:1fr}
-  .switch button{padding:10px 14px;font-size:14px}.switch svg{display:none}.hero{padding-top:44px}.logo small{display:none}.pill span{display:none}.pill{padding:0 14px}
+  .switch button{padding:9px 11px;font-size:13.5px}.switch svg{display:none}.hero{padding-top:44px}.logo small{display:none}.pill span{display:none}.pill{padding:0 14px}
   .eval{right:12px;left:12px;bottom:12px;width:auto;transform:translateY(calc(100% + 30px))}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 

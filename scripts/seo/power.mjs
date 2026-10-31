@@ -68,10 +68,15 @@ export function computePower({ dat, legal, official, fields }) {
     const top = [...best.values()].sort((a, b) => b.sc - a.sc), ok = top.some(a => a.p <= a.F);
     S[k] = ok ? { score: top.slice(0, 4).reduce((s, a, i) => s + a.sc * W[i], 0), size: Math.min(top.length, 4), ath: top.slice(0, 4) } : null; } return S; };
   const build = teams => { const rows = teams.map(o => ({ ...o, sq: o.sq, squad: Object.values(o.sq).reduce((s, x) => s + (x ? x.score : 0), 0) }));
-    const mx = k => Math.max(...rows.map(r => r[k]), 1), M = { proj: mx("proj"), act: mx("act"), squad: mx("squad"), qual: mx("qual") }, WT = Object.values(WEIGHTS).reduce((a, b) => a + b, 0);
-    for (const r of rows) { r.part = Object.fromEntries(Object.keys(WEIGHTS).map(k => [k, 100 * r[k] / M[k]])); r.power = Object.keys(WEIGHTS).reduce((s, k) => s + r.part[k] * WEIGHTS[k], 0) / WT; }
-    const R = rows.filter(r => r.power > 0).sort((a, b) => b.power - a.power || b.act - a.act || a.t.localeCompare(b.t));
-    let rk = 0, prev = null; R.forEach((r, i) => { const v = r.power.toFixed(1); if (v !== prev) { rk = i + 1; prev = v; } r.rank = rk; }); return R; };
+    const mx = k => Math.max(...rows.map(r => r[k]), 1), M = { proj: mx("proj"), act: mx("act"), squad: mx("squad"), qual: mx("qual") };
+    /* a part nobody scores in (no national meet yet, or none held) drops out and the other weights rescale, so the leader stays near 100 */
+    const K = Object.keys(WEIGHTS).filter(k => rows.some(r => r[k] > 0)), WT = K.reduce((a, k) => a + WEIGHTS[k], 0);
+    for (const r of rows) { r.part = Object.fromEntries(Object.keys(WEIGHTS).map(k => [k, 100 * r[k] / M[k]])); r.power = K.reduce((s, k) => s + r.part[k] * WEIGHTS[k], 0) / WT; }
+    /* after the national meet the final order follows the official team scores, so the champion is always #1 (2026-10-30: Power alone put
+       Florida over 2018 champion Georgia); Power breaks ties and orders the teams that didn't score. In season: Power only. */
+    const fin = K.includes("act"), key = r => fin ? `${r.act}|${r.power.toFixed(1)}` : r.power.toFixed(1);
+    const R = rows.filter(r => r.power > 0).sort((a, b) => (fin ? b.act - a.act : 0) || b.power - a.power || a.t.localeCompare(b.t));
+    let rk = 0, prev = null; R.forEach((r, i) => { const v = key(r); if (v !== prev) { rk = i + 1; prev = v; } r.rank = rk; }); return R; };
   for (const g of ["m", "w"]) { const teams = [...per[g].values()]; for (const o of teams) o.sq = squads(o); out[g] = build(teams);
     out.groups[g] = Object.fromEntries(PGROUPS.map(([k]) => { const R = teams.filter(o => o.sq[k]).map(o => ({ t: o.t, ...o.sq[k] })).sort((a, b) => b.score - a.score);
       let rk = 0, prev = null; R.forEach((r, i) => { const v = r.score.toFixed(1); if (v !== prev) { rk = i + 1; prev = v; } r.rank = rk; }); return [k, R]; })); }
