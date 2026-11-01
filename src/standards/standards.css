@@ -1342,3 +1342,10 @@ header .hd .acchd{flex:none;visibility:visible}
 .pglog{margin-top:12px}.pglog .gh,.pglog .gr{grid-template-columns:118px minmax(0,1fr) 70px 96px}.pglog .pgld{font-weight:600;font-size:14px}.pglog .pgld small,.pglog .pglm small{display:block;color:var(--pr-mute);font-size:12px;font-weight:500}
 .pglog .pglm{font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis}.pglog .pglp{font-size:13px;color:var(--pr-mute)}.pglog .gr.pglpr{background:#F0FBF5}.pgprb{color:#13865a!important;font-weight:800}
 @media (max-width:760px){.pglog .gh,.pglog .gr{grid-template-columns:84px minmax(0,1fr) 78px}.pglog .pglp{display:none}.pglog .gh span:nth-child(3){display:none}}
+/* UX audit 2026-10-31 (ui-ux-pro-max): phone fit, contrast, tap targets */
+.simple .scroll tbody td.num small{display:block;margin-top:1px}
+.simple .scroll thead th{color:var(--pr-mute)}.simple .scroll{border-top:3px solid var(--sb,var(--pr-line))}
+@media (max-width:560px){.simple .scroll thead th{font-size:11px}}
+.switch button{min-height:44px}.back{min-height:44px;min-width:44px;display:inline-flex;align-items:center}.eval .x{width:40px!important;height:40px!important}.hlp .hbtn{min-height:40px}
+@media (max-width:400px){.switch{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;box-sizing:border-box}.switch button{justify-content:center;padding:9px 4px;font-size:13px}}
+.tsw{max-width:100%;box-sizing:border-box}@media (max-width:380px){.tsw a,.tsw span{padding:0 9px;font-size:12.5px}}

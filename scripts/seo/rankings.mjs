@@ -30,10 +30,10 @@ export const RANK_CSS = `<style>
 .pr-th,.pr-tr{display:grid;grid-template-columns:44px minmax(170px,2.2fr) 1.1fr .7fr .7fr .7fr .7fr 1.6fr;gap:10px;align-items:center;padding:10px 16px}
 .pr-th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);border-bottom:1px solid var(--ln);background:#FAF9FD;font-weight:700}
 .pr-tr{border-bottom:1px solid var(--ln);position:relative}.pr-tr:last-child{border-bottom:0}.pr-tr::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--c)}.pr-tr:hover{background:#F7F5FF}
-.pr .n{text-align:right;font-variant-numeric:tabular-nums}.pr-rk{font-weight:900;font-size:18px;color:#B4B3C2}.pr-rk.g{color:var(--gold)}.pr-rk.s{color:var(--silver)}.pr-rk.b{color:var(--bronze)}
+.pr .n{text-align:right;font-variant-numeric:tabular-nums}.pr-rk{font-weight:900;font-size:18px;color:#6B6A7B}.pr-rk.g{color:#9A6A00}.pr-rk.s{color:#5E6672}.pr-rk.b{color:#9A4F1F}   /* rank numbers at 4.5:1+ (UX audit 2026-10-31); medal colours stay on the podium discs */
 .pr-pg{display:flex;gap:12px;align-items:center;min-width:0}.pr-pg b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tx)}.pr-pg a{color:inherit}.pr-pg small{color:var(--mu);font-size:12px;display:block}
 .pr-pw b{display:block}.pr-pw i{display:block;height:5px;margin:4px 0 0 auto;border-radius:4px;background:linear-gradient(90deg,transparent,var(--ac))}
-.pr-mv{font-size:11px;font-weight:700;margin-left:6px}.pr-mv.u{color:var(--up)}.pr-mv.d{color:var(--dn)}
+.pr-mv{font-size:12px;font-weight:700;margin-left:6px}.pr-mv.u{color:#0B7A43}.pr-mv.d{color:var(--dn)}
 .pr-chip{display:inline-block;font-size:11px;font-weight:650;padding:3px 8px;border-radius:99px;background:#F0EBFF;color:var(--ac2);margin:2px 4px 2px 0;white-space:nowrap}
 .pr-tr.g{grid-template-columns:44px 1fr 110px 70px}.pr-tr.g small em{font-style:normal;color:var(--ac2)}.pr-sq{font-size:12px;font-weight:700;color:#5A3E00;background:#FFE7A8;border-radius:99px;padding:3px 10px;justify-self:end;white-space:nowrap}
 .pr-note{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}.pr-box{background:#FAF9FD;border:1px solid var(--ln);border-radius:18px;padding:18px}.pr-box h3{margin:0 0 6px;font-size:16px}.pr-box p,.pr-box li{color:#3B3A4A;font-size:14px}.pr-box ul{margin:6px 0 0;padding-left:18px}
