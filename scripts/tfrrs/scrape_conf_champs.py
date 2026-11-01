@@ -75,8 +75,20 @@ def main(rank_dir, years, seasons, divs):
                 f = os.path.join(rank_dir, f"{year}-{season}-{div}.dat")
                 if not os.path.exists(f): continue
                 D = json.loads(gzip.open(f).read())
+                isconf = lambda L: not (L.get("nat") or L.get("champ") or L.get("region") or SKIP.search(L["label"]))
+                if not any(isconf(L) for L in D["lists"]):
+                    # TFRRS published no conference lists before 2020 (Ryan 2026-11-01, Eureka): take the conferences and their teams
+                    # from the nearest later season that has them; the team-match check still has to pass for that year's meet
+                    # (the one with the most conferences: 2020-21 lost some to COVID-19)
+                    best = None
+                    for y2 in range(year + 1, year + 7):
+                        f2 = os.path.join(rank_dir, f"{y2}-{season}-{div}.dat")
+                        if not os.path.exists(f2) or (y2 == 2020 and season == "outdoor"): continue
+                        D2 = json.loads(gzip.open(f2).read()); n = sum(isconf(L) for L in D2["lists"])
+                        if n and (not best or n > best[0]): best = (n, y2, D2)
+                    if best: D = best[2]; print(f"  {year} {season} {div}: conferences from {best[1]}", flush=True)
                 for L in D["lists"]:
-                    if L.get("nat") or L.get("champ") or L.get("region") or SKIP.search(L["label"]): continue
+                    if not isconf(L): continue
                     slug = re.sub(r"[^a-z0-9]+", "-", L["label"].lower()).strip("-")
                     out_p = os.path.join(OUT, str(year), season, div, slug + ".json")
                     if os.path.exists(out_p):
