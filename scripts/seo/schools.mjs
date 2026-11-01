@@ -116,6 +116,7 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, DEP
     return `<p class="answer" style="font-size:17px;background:#F4F1FF;border-radius:14px;padding:14px 16px"><b>Quick answer:</b> ${esc(shortOf(s))}'s ${lv} is ${s.o ? "" : "about "}${m.length ? `${join(m)} for men` : ""}${m.length && w.length ? ", and " : ""}${w.length ? `${join(w)} for women` : ""}.${fr ? ` ${esc(shortOf(s))}'s ${frg} freshmen ran a median ${esc(fr.med)} in the 100m in their first college season (${fr.n} freshmen since 2022).` : ""}</p>`;
   }
   /* PR Power Index rank (power-site.mjs, Ryan 2026-10-30): "#3 in the NCAA D1 Power Rankings and #1 of 18 in the Big Ten" */
+  const BADGE_LIVE = false;   /* embed box waits for Ryan to OK the badge design (preview first: schools will screenshot it) */
   const RP = { "NCAA D1": "ncaa-d1", "NCAA D2": "ncaa-d2", "NCAA D3": "ncaa-d3", NAIA: "naia" };
   const depthOf = s => { const x = DEPTH.bySchool.get(s); return x && (x.m || x.w) ? x : null; };   /* PR Power Index, men and women separately */
   const one = (s, x, g) => { const y = x[g]; if (!y) return ""; const w = g === "m" ? "men" : "women";
@@ -125,7 +126,12 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, DEP
     const GN = { sprints: "sprints", hurdles: "hurdles", distance: "distance", jumps: "jumps", throws: "throws", multis: "multi-events" };
     const top = ["m", "w"].flatMap(g => Object.entries((x[g] || {}).groups || {}).map(([k, r]) => [g, k, r])).filter(([, , r]) => r <= 25).sort((a, b) => a[2] - b[2]).slice(0, 4)
       .map(([g, k, r]) => `<a href="/rankings/${RP[x.d]}-${k}-rankings.html">#${r} in ${g === "m" ? "men's" : "women's"} ${GN[k]}</a>`);
-    return `<h2>Where ${esc(shortOf(s))} ranks nationally (${x.year} ${x.season})</h2><p>${depthLine(s, x)}${top.length ? ` Event-group squads: ${top.join(", ")}.` : ""} <a href="/rankings/${RP[x.d]}-track-and-field-rankings.html">${esc(x.d)} Power Rankings ›</a></p>`; }
+    /* embeddable badge (rankings.mjs writes /badge/<slug>-<m|w>.svg): offered to programs a coach would want to show off */
+    const bg = !BADGE_LIVE ? [] : ["m", "w"].filter(g => x[g] && (x[g].rank <= 100 || (x[g].crank && x[g].crank <= 5)));
+    const embed = g => { const alt = `${shortOf(s)} ${g === "m" ? "men's" : "women's"} track and field: #${x[g].rank} in the ${x.d} Power Rankings`;
+      return `<a href="${SITE}/schools/${schoolSlug(s)}"><img src="${SITE}/badge/${schoolSlug(s)}-${g}.svg" alt="${alt}" width="340" height="112"></a>`; };
+    const badgeBox = bg.length ? `<details class="rkhow" style="margin-top:12px"><summary>Add this ranking to your team website</summary><p>Coaches and athletic departments can put the live badge on a roster or recruiting page. It updates every Monday in season.</p>${bg.map(g => `<p><img src="/badge/${schoolSlug(s)}-${g}.svg" alt="" width="340" height="112" loading="lazy" style="max-width:100%;height:auto"></p><textarea readonly rows="3" style="width:100%;font:12px ui-monospace,monospace;border:1px solid #ECEAF3;border-radius:10px;padding:8px" onclick="this.select()">${esc(embed(g))}</textarea>`).join("")}</details>` : "";
+    return `<h2>Where ${esc(shortOf(s))} ranks nationally (${x.year} ${x.season})</h2><p>${depthLine(s, x)}${top.length ? ` Event-group squads: ${top.join(", ")}.` : ""} <a href="/rankings/${RP[x.d]}-track-and-field-rankings.html">${esc(x.d)} Power Rankings ›</a></p>${badgeBox}`; }
   function factSections(s, F) {
     if (!F) return "";
     const nm = esc(shortOf(s)); let o = "";

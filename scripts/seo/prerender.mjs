@@ -22,7 +22,7 @@ import { hsLevel, hsRows, fmtXC, fmtHS } from "./hsconv.mjs";
 import { topicPages, EDITED } from "./topics.mjs";
 import { gapGuides } from "./gap-guides.mjs";
 import { morePages } from "./more-pages.mjs";
-import { computeSite, rankPath } from "./power-site.mjs";
+import { computeSite, rankPath, eventPath, stdToList, eventSeason, evName, seasonLabel as seasonLabel2 } from "./power-site.mjs";
 import { markPrograms, stdGroup } from "./programs.mjs";
 import { rankingPages } from "./rankings.mjs";
 import { dailyPages } from "./daily.mjs";
@@ -248,6 +248,10 @@ export function generate(root, out) {
   /* division x event */
   for (const d of DIVS) for (const g of ["m", "w"]) {
     const list = S.filter(s => s.d === d);
+    /* the event's team rankings next to its standards (2026-10-31): where the best programs in this event are */
+    const evRank = (d, g, e) => { const ev = stdToList(e), x = R.seasons[d] && eventSeason(R, d, ev), L = x && (x.P.events[g] || {})[ev]; if (!L || L.length < 3) return "";
+      const nm = r => r.s ? (r.s.t && !/\./.test(r.s.t.replace(/\(.*?\)/g, "")) ? r.s.t : r.s.n) : r.t;
+      return `<h2>Best ${esc(d)} ${gName(g).toLowerCase()} ${esc(evName(ev))} programs</h2><p>${esc(seasonLabel2(x))}: ${L.slice(0, 3).map((r, i) => `${i + 1}. ${r.s ? `<a href="${sl(r.s)}">${esc(nm(r))}</a>` : esc(nm(r))}`).join(", ")}. <a href="${eventPath(d, ev)}">Full ${esc(d)} ${esc(evName(ev))} team rankings ›</a></p>`; };
     for (const e of evAvail(list, g)) {
       const rows = list.map(s => ({ s, t: std(s, g, e), r: raw(s, g, e) })).filter(x => x.t);
       const wv = x => parse(x.r[2], e); rows.sort((a, b) => { const va = wv(a), vb = wv(b); if (va == null) return 1; if (vb == null) return -1; return FIELD.has(e) ? va - vb : vb - va; });
@@ -272,6 +276,7 @@ export function generate(root, out) {
         pathname: p, crumbs: [["Home", "/"], ["Explore", "/explore.html"], [d, divPath(d)], [`${gName(g)} ${e}`, p]], h1: `${esc(name)} Recruiting Standards`,
         intro: `<b>${esc(ans)}</b> Below: Target, Recruit and Walk-On marks for every ${esc(d)} program, most reachable Walk-On first (middle half of programs: Target ${esc(mid(0))}). ★ = the school's own published standards.`,
         body: `<div class="scroll"><table><tr><th>School</th><th>Conference</th>${HSE ? `<th class="n">High school ${esc(HSE)} to make the team</th>` : ""}<th class="n">Target</th><th class="n">Recruit</th><th class="n">Walk-On</th></tr>${rows.map(x => `<tr><td><a href="${sl(x.s)}">${esc(x.s.n)}</a>${x.s.o ? ' <span class="star">★</span>' : ""}</td><td><a href="${confName.get(x.s.d + "|" + x.s.c)}">${esc(x.s.c)}</a></td>${HSE ? `<td class="n"><b>${esc(hsOf(x) || "–")}</b></td>` : ""}${[0, 1, 2].map(j => `<td class="n">${esc(x.t[j] || "–")}</td>`).join("")}</tr>`).join("")}</table></div>`
+          + evRank(d, g, e)
           + `<h2>Common questions</h2>${faq.mainEntity.map(x => `<h3>${esc(x.name)}</h3><p>${esc(x.acceptedAnswer.text)}</p>`).join("")}`,
         ld: [faq] }));
     }
@@ -389,6 +394,15 @@ export function generate(root, out) {
   /* missing pages found in Search Console 2026-10-30: XC times, best colleges, printable sheet (scripts/seo/more-pages.mjs) */
   try { TOPICS.push(...morePages({ root, out, S: S.filter(x => !x.j), CT, write, page, parse, esc, sl, evPath, FIELD, SITE, gName, QUIZ, fmtXC })); } catch (e) { console.warn("more pages skipped:", e && e.message); }
   try { rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }); } catch (e) { console.warn("ranking pages skipped:", e && e.message); }
+  /* AEO: the rankings' answers in llms.txt (who is #1 per division and per event), regenerated every build */
+  try { const nm = r => r ? (r.s ? (r.s.t && !/\./.test(r.s.t.replace(/\(.*?\)/g, "")) ? r.s.t : r.s.n) : r.t) : "–";
+    const L = ["", "## College track and field Power Rankings (PR Power Index: national meet points, wind-legal national lists, qualifiers, event-group squads; updated Mondays in season)", `- [All divisions](${SITE}/rankings.html)`];
+    for (const d of Object.keys(R.cur)) { const c = R.cur[d]; if (!c) continue;
+      L.push(`- [${d} Power Rankings, ${seasonLabel2(c)}](${SITE}${rankPath(d)}): men #1 ${nm(c.P.m[0])}, #2 ${nm(c.P.m[1])}; women #1 ${nm(c.P.w[0])}, #2 ${nm(c.P.w[1])}`);
+      const evs = [...new Set(R.seasons[d].flatMap(x => ["m", "w"].flatMap(g => Object.keys(x.P.events[g] || {}))))].filter(ev => !/Race Walk|Marathon/.test(ev));
+      for (const ev of evs) { const x = eventSeason(R, d, ev); if (!x) continue; const M = (x.P.events.m[ev] || [])[0], W = (x.P.events.w[ev] || [])[0];
+        L.push(`- [Best ${d} programs for the ${evName(ev)}, ${seasonLabel2(x)}](${SITE}${eventPath(d, ev)}):${M ? ` men ${nm(M)}` : ""}${M && W ? ";" : ""}${W ? ` women ${nm(W)}` : ""}`); } }
+    fs.appendFileSync(path.join(out, "llms.txt"), L.join("\n") + "\n"); } catch (e) { console.warn("llms rankings skipped:", e && e.message); }
   /* NJCAA marks by event (Ryan 2026-10-16, keyword gap "njcaa track standards"): this site sets no NJCAA levels (national, not
      conference, competition), so the page shows what it took to rank #1/#10/#25/#50/#100 on the newest NJCAA national list (TFRRS). */
   try {

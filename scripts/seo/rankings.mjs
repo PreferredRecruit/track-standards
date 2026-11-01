@@ -7,7 +7,7 @@
      /rankings/<year>-<season>-ncaa-d1-track-and-field-rankings.html   each finished season (POWER_FROM on) */
 import fs from "node:fs";
 import path from "node:path";
-import { PDIVS, PGROUPS, rankPath, seasonPath, groupPath, seasonLabel } from "./power-site.mjs";
+import { PDIVS, PGROUPS, rankPath, seasonPath, groupPath, seasonLabel, eventPath, evName, eventSeason, EV_SKIP } from "./power-site.mjs";
 import { WEIGHTS } from "./power.mjs";
 
 export const RANK_CSS = `<style>
@@ -99,10 +99,13 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
   const badges = c => `<div class="pr-badges"><span class="pr-badge"><b>${c.noMeet ? "!" : "✓"}</b> ${c.official ? "Official TFRRS team scores" : c.P.final ? "National meet results (TFRRS)" : c.noMeet === "cancelled" ? "National meet cancelled: ranked on the national lists" : c.noMeet ? "National meet results not on TFRRS: ranked on the national lists" : "National lists, updated Mondays"}</span><span class="pr-badge"><b>✓</b> Wind-legal marks</span><span class="pr-badge"><b>✓</b> Field sizes from the championship</span><span class="pr-badge">Conference meet points: coming</span></div>`;
   const method = c => `<h2>How the Power Index works</h2><div class="pr-note"><div class="pr-box"><h3>The formula</h3><ul><li><b>National meet points</b> (${WEIGHTS.act}%): ${c.official ? "the official TFRRS team scores, ties and DQs included" : "scored 10-8-6-5-4-3-2-1 from the championship places"}</li><li><b>Projected points</b> (${WEIGHTS.proj}%): 10-8-6-5-4-3-2-1 for the top 8 on each wind-legal national list</li><li><b>Event-group squads</b> (${WEIGHTS.squad}%): sprints, hurdles, distance, jumps, throws and multis for men and women; each squad scores its best four athletes, weighted 1.0, 0.75, 0.5 and 0.25</li><li><b>Qualifiers</b> (${WEIGHTS.qual}%): ${c.P.final ? "individual entrants at the national meet" : "athletes inside each event's championship field on the national list"}</li><li><b>Conference meet points</b> (10%): added once conference results are saved</li></ul><p>Each part is scaled against the division leader. Every rating is out of 99 like a video game, and it is relative to the division: the best team in ${esc(c.d)} is 99 in ${esc(c.d)}. Everyone else is 60 + 39 × (their score ÷ the leader's)^0.6, and a rating never rises as you go down a list. 90+ elite, 80s national-level, 70s strong, 60s ranked.${c.P.final ? " After the national meet, the final order follows the official team scores, so the national champion is #1; the Power Index breaks ties and orders the teams that didn't score." : " During the season the order is the Power Index alone."}</p></div>`
     + `<div class="pr-box"><h3>Checked against the data</h3><ul><li>${c.official ? "National points come straight from the official team scores on TFRRS" : "National points scored from the championship places"}</li><li>${c.P.report.windSwapped.toLocaleString()} wind-aided marks replaced with each athlete's legal best</li><li>Field size per event counted from the championship results</li><li>Every athlete counted once per event; B and C squads count for their school</li></ul><p>An athlete's score is 100 at #1 on the national list, 50 at the last spot inside the championship field and 0 at twice that depth.</p></div></div>`;
-  const art = ({ p, date, crumbs, title, desc, kick, h1, sub, body, faq }) => {
+  const art = ({ p, date, crumbs, title, desc, kick, h1, sub, body, faq, lists = [] }) => {
     const plain = s => String(s).replace(/<[^>]+>/g, "").replace(/&amp;/g, "&");
     const ld = [{ "@context": "https://schema.org", "@type": "Article", headline: plain(h1), description: desc, author: ORG, publisher: ORG, dateModified: date, mainEntityOfPage: SITE + p, image: SITE + "/og.jpg", citation: ["https://www.tfrrs.org/"] },
-      { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map(([q, x]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: plain(x) } })) }];
+      { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map(([q, x]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: plain(x) } })) },
+      /* AEO: each ranking as an ItemList (top 25, school pages as item URLs) so answer engines can lift "who is #1" */
+      ...lists.filter(([, rows]) => rows && rows.length).map(([name, rows]) => ({ "@context": "https://schema.org", "@type": "ItemList", name, itemListOrder: "https://schema.org/ItemListOrderAscending", numberOfItems: Math.min(rows.length, 25),
+        itemListElement: rows.slice(0, 25).map(r => { const i = info(r); return { "@type": "ListItem", position: r.rank, name: i.nm, ...(i.url ? { url: SITE + i.url } : {}) }; }) }))];
     write(p, page({ title, desc, pathname: p, crumbs, h1: esc(plain(h1)), intro: "", ld,
       body: RANK_CSS + `<div class="pr"><div class="pr-hero"><div class="pr-kick">${kick}</div><div class="pr-title" aria-hidden="true">Power Rankings</div><p>${sub}</p></div>${body}<h2>Common questions</h2>${faq.map(([q, x]) => `<h3>${esc(q)}</h3><p>${x}</p>`).join("")}<h2>Sharing these rankings</h2><p>Schools, coaches and journalists are welcome to share a ranking with a link to its page. Every number behind a rank is on the page.</p><div class="cta"><b>Want coaches to see your marks?</b> Preferred Recruit gets athletes' marks in front of college coaches. <a href="${QUIZ}">Get your free recruitment evaluation ›</a></div></div>` + TABS_JS }));
   };
@@ -127,6 +130,7 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
       + `<div class="pr-tabs" data-k="v">${["m", "w"].map((g, i) => `<button data-v="${g}" class="${i ? "" : "on"}">${G[g]}</button>`).join("")}</div>`
       + ["m", "w"].map(genderBlock).join("")
       + method(c)
+      + (current && evPages[d].length ? `<h2>${esc(d)} team rankings by event</h2><div class="links">${evPages[d].map(([ev]) => `<a href="${eventPath(d, ev)}">${esc(evName(ev))}</a>`).join("")}</div>` : "")
       + (current && arch.length ? `<h2>Past seasons</h2><div class="links">${arch.map(x => `<a href="${seasonPath(d, x.year, x.season)}">${esc(d)} ${esc(seasonLabel(x))}</a>`).join("")}</div>` : "")
       + `<h2>Other divisions</h2><div class="links">${PDIVS.filter(x => x !== d).map(x => `<a href="${rankPath(x)}">${esc(x)} Power Rankings</a>`).join("")}<a href="/rankings.html">All rankings</a></div>`;
     const t3 = g => c.P[g].slice(0, 3).map(nmOf);
@@ -136,15 +140,49 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
       kick: `${esc(d)} · ${esc(seasonLabel(c))} · ${c.P.final ? "Final" : c.noMeet ? "Final lists" : c.asOf ? `Updated ${esc(c.asOf)}` : "In season"}`,
       h1: `${d} men's and women's track and field Power Rankings, ${seasonLabel(c)}`,
       sub: `Men: <b>${esc(list(t3("m")))}</b>. Women: <b>${esc(list(t3("w")))}</b>. Every program is ranked on ${c.P.final ? "national meet points, " : ""}projected points from the wind-legal national lists, qualifiers and event-group squads.`,
-      body,
+      body, lists: [[`${d} men's track and field Power Rankings, ${seasonLabel(c)}`, c.P.m], [`${d} women's track and field Power Rankings, ${seasonLabel(c)}`, c.P.w]],
       faq: [[`What is the best ${d} men's track and field team in ${seasonLabel(c)}?`, `${esc(nmOf(top("m")))}${c.P.final ? `, with ${top("m").act} points at the national meet` : ""}, ahead of ${esc(t3("m")[1])} and ${esc(t3("m")[2])}.`],
         [`What is the best ${d} women's track and field team in ${seasonLabel(c)}?`, `${esc(nmOf(top("w")))}${c.P.final ? `, with ${top("w").act} points at the national meet` : ""}, ahead of ${esc(t3("w")[1])} and ${esc(t3("w")[2])}.`],
         ["How often do the rankings update?", "Every Monday during the indoor and outdoor seasons. Each finished season keeps its final ranking on its own page."]] });
     done.push(p);
   };
 
+  /* team rankings for each event (2026-10-31, SEO: "best d1 schools for the 400m"): one page per division + event, the newest season
+     that ranks it, men and women; each row shows the athletes, their national list place and mark */
+  const GRP = ev => (PGROUPS.find(([, , re]) => re.test(ev)) || [])[0] || "relays";
+  const evOf = {}, evPages = {};
+  for (const d of PDIVS) { evOf[d] = {}; evPages[d] = [];
+    const all = [...new Set(R.seasons[d].flatMap(x => ["m", "w"].flatMap(g => Object.keys(x.P.events[g] || {}))))].filter(ev => !EV_SKIP.test(ev));
+    for (const ev of all) { const x = eventSeason(R, d, ev); if (!x) continue; evPages[d].push([ev, x]); (evOf[d][GRP(ev)] ||= []).push(ev); } }
+  const evTbl = rows => `<div class="pr-tbl">${rows.map(r => { const i = info(r);
+    return `<div class="pr-tr g" style="--c:${i.col}"><span class="pr-rk ${medal(r.rank)}">${r.rank}</span><span class="pr-pg">${logo(i, 30)}<span><b>${nmLink(i)}</b><small>${r.ath.map(a => `${a.nm === "Relay" ? "Relay" : esc(a.nm)} <em>#${a.p} · ${esc(a.mk || "")}</em>`).join(" · ")}</small></span></span><span class="pr-sq">${r.size > 1 ? `${r.size} on the list` : "1 on the list"}</span><span class="n">${ovB(r.ovr)}</span></div>`; }).join("")}</div>`;
+  const STDN = ev => ev === "Mile" ? "Mile" : ev === "3000 Steeplechase" ? "3000m Steeplechase" : ev === "10,000 Meters" ? "10000m" : ev.replace(/ Meters$/, "m").replace(/^(\d+) Hurdles$/, "$1m Hurdles");
+  const stdPage = (d, g, ev) => { const q = `/standards/${d.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${g === "m" ? "mens" : "womens"}-${STDN(ev).toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}.html`; return fs.existsSync(path.join(out, q)) ? q : null; };
+  const lead = (r, g, ev) => { if (!r) return ""; const a = r.ath[0], who = a.nm === "Relay" ? `a ${esc(a.mk)} relay, #${a.p} on the national list` : `${esc(a.nm)} (#${a.p} on the national list, ${esc(a.mk)})`;
+    return `${g === "m" ? "Men" : "Women"}: <b>${esc(nmOf(r))}</b>, rated ${r.ovr}, led by ${who}${r.size > 1 ? ` with ${r.size} athletes on the list` : ""}. `; };
+  const eventPages = d => { for (const [ev, x] of evPages[d]) {
+    const p = eventPath(d, ev), nm = evName(ev), M = (x.P.events.m[ev] || []), W = (x.P.events.w[ev] || []), gk = GRP(ev);
+    const T1 = `Best ${d} Programs for the ${nm}: Rankings ${x.year}`;
+    const sibs = (evOf[d][gk] || []).filter(e => e !== ev).slice(0, 6);
+    const std = ["m", "w"].map(g => [g, stdPage(d, g, ev)]).filter(([, q]) => q);
+    const tabs = ["m", "w"].filter(g => (x.P.events[g][ev] || []).length);
+    art({ p, date: dateOf(x), crumbs: [["Home", "/"], ["Rankings", "/rankings.html"], [d, rankPath(d)], [nm, p]],
+      title: T1.length <= 60 ? T1 : `Best ${d} ${nm} Programs ${x.year}`,
+      desc: `The best ${d} ${nm} programs in ${seasonLabel(x)}, men and women: each team's best ${/Relay/.test(ev) ? "relay" : "four athletes"} on the wind-legal national list, with places and marks.`,
+      kick: `${esc(d)} · ${esc(nm)} · ${esc(seasonLabel(x))}`, h1: `Best ${d} programs for the ${nm}, ${seasonLabel(x)}`,
+      sub: lead(M[0], "m", ev) + lead(W[0], "w", ev) + (/Relay/.test(ev) ? "Each team is ranked on its best relay on the national list." : "Each program scores its best four athletes on the national list, weighted 1.0, 0.75, 0.5 and 0.25."),
+      body: `<div class="pr-tabs" data-k="g">${tabs.map((g, i) => `<button data-v="${g}" class="${i ? "" : "on"}">${g === "m" ? "Men" : "Women"}</button>`).join("")}</div>` + tabs.map((g, i) => `<div data-g="${g}"${i ? " hidden" : ""}>${evTbl(x.P.events[g][ev])}</div>`).join("")
+        + `<p>Programs need at least one athlete inside the championship field (the number of ${esc(nm)} entrants at the ${esc(d)} national meet) to be ranked. Marks are wind-legal; aided marks are replaced by the athlete's legal best.</p>`
+        + (std.length ? `<h2>What it takes to make these teams</h2><div class="links">${std.map(([g, q]) => `<a href="${q}">${esc(d)} ${g === "m" ? "men's" : "women's"} ${esc(STDN(ev))} recruiting standards</a>`).join("")}</div>` : "")
+        + `<h2>More ${esc(d)} rankings</h2><div class="links">${sibs.map(e => `<a href="${eventPath(d, e)}">Best ${esc(d)} programs: ${esc(evName(e))}</a>`).join("")}${gk !== "relays" ? `<a href="${groupPath(d, gk)}">${esc(d)} ${esc(LG[gk].toLowerCase())} rankings</a>` : ""}<a href="${rankPath(d)}">${esc(d)} Power Rankings</a></div>`,
+      lists: tabs.map(g => [`Best ${d} ${g === "m" ? "men's" : "women's"} ${nm} programs, ${seasonLabel(x)}`, x.P.events[g][ev]]),
+      faq: tabs.map(g => { const L = x.P.events[g][ev], gw = g === "m" ? "men's" : "women's";
+        return [`What is the best ${d} ${gw} ${nm} program?`, `${esc(nmOf(L[0]))} in ${esc(seasonLabel(x))}${L[1] ? `, ahead of ${esc(nmOf(L[1]))}${L[2] ? ` and ${esc(nmOf(L[2]))}` : ""}` : ""}. ${L.length} ${esc(d)} programs had an athlete inside the national championship field.`]; }) });
+    done.push(p); } };
+
   for (const d of PDIVS) {
     const c = R.cur[d];
+    eventPages(d);
     seasonPage(d, c, rankPath(d), true);
     for (const x of R.seasons[d]) if (x !== c) seasonPage(d, x, seasonPath(d, x.year, x.season), false);
     for (const [k, l] of PGROUPS) {
@@ -155,7 +193,9 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
         kick: `${esc(d)} · ${esc(l)} · ${esc(seasonLabel(c))}`, h1: `${d} ${lw} rankings, ${seasonLabel(c)}`,
         sub: `${M ? `Men: <b>${esc(nmOf(M))}</b>. ` : ""}${W ? `Women: <b>${esc(nmOf(W))}</b>. ` : ""}Each squad scores its best four ${esc(lw)} athletes, weighted 1.0, 0.75, 0.5 and 0.25.`,
         body: `<div class="pr-tabs" data-k="g"><button data-v="m" class="on">Men</button><button data-v="w">Women</button></div>` + ["m", "w"].map((g, i) => `<div data-g="${g}"${i ? " hidden" : ""}>${squadsTbl(c.P.groups[g][k] || [], 40)}</div>`).join("")
+          + ((evOf[d][k] || []).length ? `<h2>${esc(d)} ${esc(lw)} rankings by event</h2><div class="links">${evOf[d][k].map(ev => `<a href="${eventPath(d, ev)}">Best ${esc(d)} programs: ${esc(evName(ev))}</a>`).join("")}</div>` : "")
           + `<p><a href="${rankPath(d)}">${esc(d)} Power Rankings ›</a></p><h2>Other event groups</h2><div class="links">${PGROUPS.filter(([x]) => x !== k).map(([x, y]) => `<a href="${groupPath(d, x)}">${esc(d)} ${esc(y.toLowerCase())}</a>`).join("")}</div>`,
+        lists: [[`Best ${d} men's ${lw} programs, ${seasonLabel(c)}`, c.P.groups.m[k]], [`Best ${d} women's ${lw} programs, ${seasonLabel(c)}`, c.P.groups.w[k]]],
         faq: [[`What is the best ${d} ${lw} program?`, `${M ? `Men: ${esc(nmOf(M))} (squad of ${M.size}). ` : ""}${W ? `Women: ${esc(nmOf(W))} (squad of ${W.size}).` : ""}`]] });
       done.push(q);
     }
@@ -179,6 +219,27 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
       } }
     fs.writeFileSync(path.join(dir, "index.json"), JSON.stringify(idx)); }
 
+  /* embeddable ranking badges (2026-10-31, link earning): /badge/<school slug>-<m|w>.svg for every ranked program, current season.
+     Plain SVG text (no external images, so it renders inside an <img> on any site); school pages carry the embed code. */
+  { const dir = path.join(out, "badge"); fs.mkdirSync(dir, { recursive: true });
+    const x = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+    const TG = { a: ["#FFE58A", "#C98A00", "#2A1B00"], b: ["#9C82FF", "#4B2BD6", "#fff"], c: ["#7FB4FF", "#1D5BBF", "#fff"], d: ["#C9C8D3", "#8A8999", "#fff"] };
+    let n = 0;
+    for (const [sch, b] of R.bySchool) for (const g of ["m", "w"]) { const y = b[g]; if (!y) continue;
+      const i = info({ s: sch, t: sch.n }), t = TG[tier(y.ovr)], X0 = 20 + 24 + 22 * String(y.rank).length + 10, cut = (v, px) => { const k = Math.floor((262 - X0) / px); return v.length > k ? v.slice(0, k - 1).trimEnd() + "…" : v; }, nm = cut(i.nm, 8.6);
+      const sub = `${b.d} ${g === "m" ? "Men" : "Women"}`, conf = y.crank && y.crank <= 10 ? `#${y.crank} in the ${sch.c}` : "";
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="340" height="112" viewBox="0 0 340 112" role="img" aria-label="${x(`${i.nm} ${g === "m" ? "men" : "women"}: #${y.rank} in the ${b.d} track and field Power Rankings, rated ${y.ovr}`)}">`
+        + `<defs><linearGradient id="o" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t[0]}"/><stop offset="1" stop-color="${t[1]}"/></linearGradient></defs>`
+        + `<rect x=".5" y=".5" width="339" height="111" rx="16" fill="#fff" stroke="#ECEAF3"/><rect x="0" y="16" width="5" height="80" rx="2.5" fill="${x(i.col)}"/>`
+        + `<g font-family="Inter,'Segoe UI',Helvetica,Arial,sans-serif"><text x="20" y="27" font-size="9.5" font-weight="700" letter-spacing="1.6" fill="#6C47FF">TRACK &amp; FIELD POWER RANKINGS</text>`
+        + `<text x="20" y="65" font-size="34" font-weight="900" letter-spacing="-.5" fill="#12111A">#${y.rank}</text>`
+        + `<text x="${X0}" y="${conf ? 47 : 51}" font-size="15" font-weight="800" fill="#12111A">${x(nm)}</text>`
+        + `<text x="${X0}" y="${conf ? 63 : 68}" font-size="11.5" font-weight="600" fill="#6B6A7B">${x(sub)}</text>${conf ? `<text x="${X0}" y="78" font-size="11.5" font-weight="700" fill="#5B3BE0">${x(cut(conf, 6.9))}</text>` : ""}`
+        + `<text x="20" y="100" font-size="9.5" font-weight="600" fill="#8A8999">${x(seasonLabel(b))} · trackandfieldstandards.com</text></g>`
+        + `<rect x="270" y="30" width="54" height="52" rx="13" fill="url(#o)"/><g font-family="Inter,'Segoe UI',Helvetica,Arial,sans-serif" text-anchor="middle" fill="${t[2]}"><text x="297" y="62" font-size="24" font-weight="900">${y.ovr}</text><text x="297" y="76" font-size="7.5" font-weight="800" letter-spacing="1.4">OVR</text></g></svg>`;
+      fs.writeFileSync(path.join(dir, `${sl(sch).split("/").pop()}-${g}.svg`), svg); n++; }
+    console.log(`ranking badges: ${n}`); }
+
   /* hub: men's and women's top 5 per division, side by side */
   const H = PDIVS.map(d => R.cur[d]);
   art({ p: "/rankings.html", date: H.map(dateOf).sort().pop(), crumbs: [["Home", "/"], ["Rankings", "/rankings.html"]],
@@ -186,6 +247,7 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
     kick: "NCAA D1 · D2 · D3 · NAIA · Men and women", h1: "College track and field Power Rankings",
     sub: `Men: ${PDIVS.map((d, i) => `${esc(d.replace("NCAA ", ""))} <b>${esc(nmOf(H[i].P.m[0]))}</b>`).join(", ")}. Women: ${PDIVS.map((d, i) => `${esc(d.replace("NCAA ", ""))} <b>${esc(nmOf(H[i].P.w[0]))}</b>`).join(", ")}.`,
     body: PDIVS.map((d, i) => { const c = H[i]; return `<h2>${esc(d)} · ${esc(seasonLabel(c))}</h2><div class="pr-duo">${["m", "w"].map(g => `<div><h3>${g === "m" ? "Men" : "Women"}</h3><div class="pr-slim">${table(c, g, 5)}</div><a class="pr-more" href="${rankPath(d)}${g === "w" ? "#women" : ""}">All ${esc(d)} ${g === "m" ? "men" : "women"} ›</a></div>`).join("")}</div>`; }).join(""),
+    lists: PDIVS.flatMap((d, i) => [[`${d} men's track and field Power Rankings`, H[i].P.m.slice(0, 5)], [`${d} women's track and field Power Rankings`, H[i].P.w.slice(0, 5)]]),
     faq: [["What are the best college track and field programs?", `Men: ${PDIVS.map((d, i) => `${esc(nmOf(H[i].P.m[0]))} in ${esc(d)}`).join(", ")}. Women: ${PDIVS.map((d, i) => `${esc(nmOf(H[i].P.w[0]))} in ${esc(d)}`).join(", ")}.`], ["How often are the rankings updated?", "Every Monday during the indoor (December to March) and outdoor (March to June) seasons."]] });
   done.push("/rankings.html");
   return done;

@@ -14,6 +14,15 @@ export const rankPath = d => `/rankings/${DS(d)}-track-and-field-rankings.html`;
 export const seasonPath = (d, year, season) => `/rankings/${year}-${season}-${DS(d)}-track-and-field-rankings.html`;
 export const groupPath = (d, k) => `/rankings/${DS(d)}-${k}-rankings.html`;
 export const seasonLabel = x => `${x.year} ${x.season === "indoor" ? "Indoor" : "Outdoor"}`;
+/* per-event team rankings pages (one per division + event, newest season that holds the event); race walks and road events left out */
+export const EV_SKIP = /Race Walk|Marathon/;
+export const evName = ev => ev.replace(/^([\d,]+) Meters$/, (_, n) => n.replace(",", "") + "m").replace(/^(\d+) Hurdles$/, "$1m Hurdles").replace(/^3000 Steeplechase$/, "Steeplechase").replace(/^4 x (\d+) Relay$/, "4x$1m Relay");
+export const eventPath = (d, ev) => `/rankings/${DS(d)}-${evName(ev).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "")}-team-rankings.html`;
+/* the standards tables' event names (100m, 110m Hurdles, 3000m Steeplechase) to TFRRS list names */
+export const stdToList = e => e === "Mile" ? "Mile" : e === "3000m Steeplechase" ? "3000 Steeplechase" : /^(\d+)m Hurdles$/.test(e) ? e.replace(/m Hurdles$/, " Hurdles")
+  : /^\d+m$/.test(e) ? (e === "10000m" ? "10,000 Meters" : e.replace(/m$/, " Meters")) : e;
+/* division + list event -> the season that page shows (newest season with at least 3 ranked teams for either gender) */
+export const eventSeason = (R, d, ev) => [...(R.seasons[d] || [])].reverse().find(x => ["m", "w"].some(g => ((x.P.events[g] || {})[ev] || []).length >= 3)) || null;
 export { PGROUPS };
 
 const fnorm = x => String(x || "").toLowerCase().replace(/\bwis\.-/g, "wisconsin ").replace(/\bst\.(?=\s|$)/g, "state").replace(/\buniv\.?\b/g, "university").replace(/[^a-z0-9&]+/g, " ").trim();
@@ -38,7 +47,7 @@ export function computeSite({ out, root, S }) {
       if (!P || !P.all || !P.all.length) continue;
       if (P.final) lastFields[k.season] = P.fields;
       for (const v of ["all", "m", "w"]) for (const r of P[v]) r.s = schoolOf(r.t, d);
-      for (const g of ["m", "w"]) for (const rows of Object.values(P.groups[g])) for (const r of rows) r.s = schoolOf(r.t, d);
+      for (const g of ["m", "w"]) for (const rows of [...Object.values(P.groups[g]), ...Object.values(P.events[g] || {})]) for (const r of rows) r.s = schoolOf(r.t, d);
       R.seasons[d].push({ ...k, key, P, official: !!(official && official.m) });
     }
     /* change vs the same season a year earlier, per view */
