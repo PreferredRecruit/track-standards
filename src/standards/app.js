@@ -2147,7 +2147,7 @@ function rkTop(J){const seg=(k,opts,cur,cls="")=>`<div class="rkseg ${cls}">${op
   const cats=[["home","Dashboard"],["overall","Overall school"],...RKG.map(([k,l])=>["grp:"+k,l]),["ev","Events"]];
   const ce=RK.c.startsWith("ev:")?RK.c.slice(3):null,cg=ce?rkGrpOf(ce):RK.c.startsWith("grp:")?RK.c.slice(4):null,cc=ce?(cg?"grp:"+cg:"ev"):RK.c;
   const ksum=`${esc(RK.d.replace("NCAA ",""))} · ${RK.g==="m"?"Men":"Women"} · ${RK.tf==="week"?"Weekly":RK.tf==="month"?"Monthly":esc(((L.find(x=>x.key===RK.key)||{}).label)||"Season")}`;
-  return `<button type="button" class="rfsum rkfs" data-rkf aria-expanded="${!!RK.fopen}"><span>${ksum}</span><b>${RK.fopen?"Done":"Filters"}</b></button><div class="rkbar${RK.fopen?" open":""}">${seg("d",RK.idx.divs.map(d=>[d,d.replace("NCAA ","")]),RK.d)}${seg("g",[["m","Men"],["w","Women"]],RK.g)}${seg("tf",[["week","Weekly"],["month","Monthly"],["season","Season"]],RK.tf)}${pick}</div>
+  return `<button type="button" class="rfsum rkfs" data-rkf aria-expanded="${!!RK.fopen}"><span>${ksum}</span><b>${RK.fopen?"Done":"Filters"}</b></button><div class="rkbar${RK.fopen?" open":""}">${seg("d",RK.idx.divs.map(d=>[d,d.replace("NCAA ","")]),RK.d)}${seg("g",[["m","Men"],["w","Women"]],RK.g)}${pick}</div>
     <nav class="rkcats" aria-label="Rankings sections">${cats.map(([v,l])=>`<button type="button" data-rk="c" data-val="${v==="ev"?"ev:"+(evs[0]||""):v}" class="${v===cc?"on":""}">${esc(l)}</button>`).join("")}</nav>
     ${J&&cg?(()=>{const ge=evs.filter(e=>rkGrpOf(e)===cg),gl=(RKG.find(x=>x[0]===cg)||[0,""])[1];   /* drill-down: the group's own events */
       return ge.length?`<div class="rkevs"><span class="lab">${esc(gl)}</span><button type="button" data-rk="c" data-val="grp:${cg}" class="${RK.c==="grp:"+cg?"on":""}">All ${esc(gl.toLowerCase())}</button>${ge.map(e=>`<button type="button" data-rk="c" data-val="ev:${esc(e)}" class="${RK.c==="ev:"+e?"on":""}">${esc(rkEv(e))}</button>`).join("")}</div>`:""})()
@@ -2398,7 +2398,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
         const rk = q.get("rk") || "", dv = { "ncaa-d1": "NCAA D1", "ncaa-d2": "NCAA D2", "ncaa-d3": "NCAA D3", naia: "NAIA" }, m = rk.match(/(ncaa-d[123]|naia)-/);
         RK.d = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA"].includes(q.get("d")) ? q.get("d") : m ? dv[m[1]] : "NCAA D1";
         RK.g = q.get("g") === "w" || /#women/.test(rk) ? "w" : "m"; RK.key = /^\d{4}-(indoor|outdoor)-(d[123]|naia)$/.test(q.get("s") || "") ? q.get("s") : null;
-        RK.tf = ["week", "month"].includes(q.get("tf")) ? q.get("tf") : "season"; RK.wk = /^\d{4}-\d\d-\d\d$/.test(q.get("w") || "") ? q.get("w") : null; RK.mo = /^\d{4}-\d\d$/.test(q.get("mo") || "") ? q.get("mo") : null;
+        RK.tf = "season";   /* weekly / monthly views retired (Ryan 2026-11-01) */ RK.wk = /^\d{4}-\d\d-\d\d$/.test(q.get("w") || "") ? q.get("w") : null; RK.mo = /^\d{4}-\d\d$/.test(q.get("mo") || "") ? q.get("mo") : null;
         const cv = q.get("c") || q.get("v") || ""; RK.c = /^(home|overall|grp:[a-z]+|ev:[\w ,]+)$/.test(cv) ? cv : rk.match(/-(sprints|hurdles|distance|jumps|throws|multis)-rankings/) ? "grp:" + rk.match(/-(sprints|hurdles|distance|jumps|throws|multis)-rankings/)[1] : rk ? "overall" : "home"; RK.all = false; }
       else if (q.get("tab") === "ask" && !(q.get("m") && q.get("e"))) S.tab = "ask";
       else if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); if (q.get("cmp")) ccFromUrl(q.get("cmp"));
