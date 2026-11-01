@@ -368,7 +368,24 @@ function eyebrow(){if(S.school!=null){const s=SCH[S.school];return s?`${s.t||s.n
   if(S.run&&S.mark)return who?`${who} · ${cls?cls+" · ":""}${S.e} ${S.mark.trim()}`:`${S.g==="w"?"Girls":"Boys"} ${S.e} · ${S.mark.trim()}${S.gr?` · ${S.gr}th grade`:""}`;
   if(who)return `${who}${cls?" · "+cls:""}${INT.e&&INT.m?` · ${INT.e} ${INT.m}`:""}`;
   return "Free recruitment evaluation"}
+/* logo row on the pop-up (Ryan 2026-10-31: "pop ups should just look super appealing to kids", "school logos etc enticing them"):
+   real school logos picked for this visitor. After a search: programs their mark already fits (D1 first). On a school page: that
+   school and its conference. Otherwise programs athletes dream about. Only logos we trust (brand.json conf high/medium). */
+const EVDREAM=["university-of-oregon","university-of-arkansas","university-of-georgia","louisiana-state-university","texas-am-university","university-of-southern-california","university-of-florida","stanford"];
+function evLogoPick(){const B=BR||{},sl=s=>(s.os&&s.os[0])||slugOf(s.n),ok=s=>{const b=B[sl(s)];return b&&b.logo&&b.conf!=="low"},DV={"NCAA D1":0,"NCAA D2":1,"NCAA D3":2,NAIA:3};
+  const hsh=x=>{let h=7;for(const c of x)h=(h*31+c.charCodeAt(0))>>>0;return h};
+  let L=[],cap="";
+  if(S.school!=null&&SCH[S.school]){const me=SCH[S.school];L=[me,...SCH.filter(x=>x!==me&&!x.j&&x.ck===me.ck&&ok(x)).sort((a,b)=>hsh(a.n)-hsh(b.n))];cap=`${me.t||me.n} and the ${me.c}`}
+  else if(S.run&&S.mark){const v=parse(S.mark,S.e);if(v!=null){const F=SCH.filter(x=>!x.j&&tier(x,S.g,S.e,v));L=F.filter(ok).sort((a,b)=>(DV[a.d]??9)-(DV[b.d]??9)||hsh(a.n)-hsh(b.n));
+    if(F.length)cap=`${F.length.toLocaleString()} programs fit your ${S.mark.trim()} ${S.e}`}}
+  if(L.filter(ok).length<5){const D=EVDREAM.map(k=>SCH.find(x=>sl(x)===k+"-track-standards")).filter(Boolean);L=[...L,...D.filter(x=>!L.includes(x))];if(!cap)cap="Programs like these recruit off their lists"}
+  return {L:L.filter(ok).slice(0,5),cap,sl}}
+function evLogos(){let w=$("evlg");const el=$("eval");if(!el)return;if(!w){w=document.createElement("div");w.id="evlg";w.className="evlg";el.insertBefore(w,el.querySelector(".bd"))}
+  if(!BR){loadBrand();const t=setInterval(()=>{if(BR){clearInterval(t);evLogos()}},300);setTimeout(()=>clearInterval(t),8000)}
+  const {L,cap,sl}=evLogoPick();if(!L.length){w.hidden=true;return}w.hidden=false;
+  w.innerHTML=`<div class="evlr">${L.map((x,i)=>{const b=BR[sl(x)];return `<span class="evlt" style="--i:${i};--c:${esc(b.primary||"#6C47FF")}"><img src="${esc(b.logo)}" alt="${esc(x.t||x.n)}" width="44" height="44" loading="eager"></span>`}).join("")}</div>${cap?`<p class="evlc">${esc(cap)}</p>`:""}`}
 function openEval(log1){const el=$("eval");if(document.documentElement.classList.contains("onbon"))return;
+  try{evLogos()}catch(e){}
   $("eve").textContent=eyebrow();$("evm").textContent=EV.title||"Talent gets you the offer. Visibility gets you in the room.";
   $("evp").textContent=evBody();const a=$("eva");a.href=EV.ready?"/readiness":quizFor();a.textContent=EV.ready?"Take the 2-minute readiness check":"Get my free evaluation";
   if(EV.ready)a.removeAttribute("target");else a.target="_blank";{const g=document.querySelector("#evs small");if(g)g.style.display=EV.ready?"none":""}

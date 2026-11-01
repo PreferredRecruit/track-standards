@@ -1357,3 +1357,18 @@ header .hd .acchd{flex:none;visibility:visible}
   .rfsum span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rfsum b{flex:none;background:var(--pr-black,#0B0B0F);color:#fff;border-radius:10px;padding:8px 14px;font-size:13.5px}
   .rcard:not(.open),.rkbar:not(.open){display:none}.sec>.lede{display:none}
 }
+/* pop-up logo row (Ryan 2026-10-31: appealing to kids, school logos enticing them) */
+.eval .evlg{position:relative;padding:26px 18px 16px;text-align:center;overflow:hidden;background:radial-gradient(260px 160px at 20% 0%,rgba(255,255,255,.22),transparent 70%),radial-gradient(300px 200px at 100% 100%,rgba(255,190,60,.35),transparent 70%),linear-gradient(135deg,#2A1270,#6C47FF 55%,#9B6BFF)}
+.eval .evlg[hidden]{display:none}
+.eval .evlg::before{content:"";position:absolute;inset:auto -20% -60% -20%;height:120%;background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 2px,transparent 2px 46px);transform:perspective(220px) rotateX(58deg);transform-origin:bottom;pointer-events:none}
+.eval .evlr{position:relative;display:flex;justify-content:center;align-items:center;gap:0;height:76px}
+.eval .evlt{display:grid;place-items:center;width:64px;height:64px;margin:0 -6px;border-radius:20px;background:#fff;box-shadow:0 12px 24px -10px rgba(0,0,0,.55),0 0 0 3px color-mix(in srgb,var(--c) 70%,#fff);
+  transform:translateY(calc((var(--i) - 2) * (var(--i) - 2) * 3px)) rotate(calc((var(--i) - 2) * 6deg));animation:evfl 3.2s ease-in-out calc(var(--i) * -.6s) infinite;z-index:calc(5 - (var(--i) - 2) * (var(--i) - 2))}
+.eval .evlt:nth-child(3){width:76px;height:76px;border-radius:24px}
+.eval .evlt img{width:72%;height:72%;object-fit:contain}
+.eval .evlc{position:relative;margin:12px 0 0;font-size:13.5px;font-weight:750;letter-spacing:.01em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.25)}
+@keyframes evfl{0%,100%{translate:0 0}50%{translate:0 -6px}}
+@media (prefers-reduced-motion:reduce){.eval .evlt{animation:none}}
+.eval .evlg~.x,.eval:has(.evlg:not([hidden])) .x{background:rgba(255,255,255,.22)!important;color:#fff!important}
+.eval:has(.evlg:not([hidden])) .eye{color:#6C47FF;font-weight:750}
+@media (max-width:700px){.eval .evlg{padding:16px 14px 10px}.eval .evlr{height:62px}.eval .evlt{width:52px;height:52px;border-radius:16px}.eval .evlt:nth-child(3){width:62px;height:62px;border-radius:19px}.eval .evlc{margin-top:8px;font-size:13px}}
