@@ -4,9 +4,19 @@
 const LIVE_BASE = "https://raw.githubusercontent.com/PreferredRecruit/track-standards/data/";   // Monday refresh (data branch)
 const LIVE_KEYS = new Set();   // keys published on the data branch (not the chat's LIVE flag)
 async function unpack(r){ return await new Response(r.body.pipeThrough(new DecompressionStream("gzip"))).json(); }
+/* conference championship meets (Ryan 2026-10-31): the site build merges /data/confmeets/<key>.dat into its own copy; the Monday copy
+   from the data branch doesn't have them, so they are merged here the same way (prerender.mjs mergeConfMeets) */
+async function withConfMeets(key, D){
+  if (D.lists.some(L => L.champ && L.conf)) return D;
+  try { const r = await fetch("/data/confmeets/" + key + ".dat"); if (!r.ok) return D; const C = await unpack(r);
+    const ix = (arr, s) => { let i = arr.indexOf(s); if (i < 0) { i = arr.length; arr.push(s); } return i; }, tm = C.teams.map(t => ix(D.teams, t)), mm = C.meets.map(m => ix(D.meets, m));
+    for (const L of C.lists) for (const g of Object.keys(L.g)) for (const rows of Object.values(L.g[g])) for (const r of rows) { r[3] = tm[r[3]]; r[6] = mm[r[6]]; }
+    const head = D.lists.filter(L => L.nat || L.champ); D.lists = [...head, ...C.lists, ...D.lists.filter(L => !(L.nat || L.champ))]; } catch (e) {}
+  return D;
+}
 async function getRank(key){
   if (LIVE_KEYS.has(key) && typeof DecompressionStream !== "undefined") {
-    try { const lr = await fetch(LIVE_BASE + "rank/" + key + ".dat", { cache: "no-cache" }); if (lr.ok) return await unpack(lr); } catch (e) {}
+    try { const lr = await fetch(LIVE_BASE + "rank/" + key + ".dat", { cache: "no-cache" }); if (lr.ok) return await withConfMeets(key, await unpack(lr)); } catch (e) {}
   }
   const r = await fetch("/data/rank/" + key + ".dat");
   if (!r.ok) throw new Error("missing " + key);
@@ -1245,12 +1255,14 @@ function confIdx(D,lab){let i=D.lists.findIndex(z=>z.label===lab);if(i<0){const 
 const confsOf=D=>D.lists.filter(z=>!z.nat&&!z.champ&&!NCL.test(z.label)).map(z=>z.label).sort((a,b)=>a.localeCompare(b));
 document.addEventListener("click",ev=>{if(R.cdd&&!ev.target.closest(".cdd")){R.cdd=false;render()}});
 document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&R.cdd){R.cdd=false;render();const b=document.querySelector("[data-cdd]");if(b)b.focus()}});
-function confBar(D,L,miss){const cs=confsOf(D),oth=D.lists.filter(z=>!z.nat&&!cs.includes(z.label)).map(z=>z.label);
+function confBar(D,L,miss){const cs=confsOf(D),ch=D.lists.filter(z=>z.champ).map(z=>z.label),oth=D.lists.filter(z=>!z.nat&&!z.champ&&!cs.includes(z.label)).map(z=>z.label);
+  /* championship meets (Ryan 2026-10-31): the national meet first, then every conference meet, shown like the national one */
+  const pair=L.champ&&L.conf?D.lists.find(z=>!z.champ&&z.label===L.conf):!L.nat&&!L.champ?D.lists.find(z=>z.champ&&z.conf===L.label):null;
   /* own menu, not a native <select> (Ryan 2026-10-22: the Mac menu draws "Conferences" / "Other lists" faint gray over the page) */
   const cur=L.nat?`All of ${R.div}`:L.label,op=(v,t)=>`<button type="button" role="option" class="cddo${(v===""?L.nat:!L.nat&&L.label===v)?" on":""}" aria-selected="${v===""?L.nat:!L.nat&&L.label===v}" data-rconfv="${esc(v)}">${esc(t||v)}</button>`;
   return `<div class="rconf"><div class="cmp cdd"><span id="cddl">Conference</span><button type="button" class="cddb" data-cdd aria-haspopup="listbox" aria-expanded="${!!R.cdd}" aria-labelledby="cddl"><b>${esc(cur)}</b><i aria-hidden="true"></i></button>
-    ${R.cdd?`<div class="cddp" role="listbox" aria-label="Conference">${op("",`All of ${R.div}`)}${cs.length?`<p class="cddh">Conferences</p>${cs.map(v=>op(v)).join("")}`:""}${oth.length?`<p class="cddh">Other lists <span>regions and qualifying</span></p>${oth.map(v=>op(v)).join("")}`:""}</div>`:""}</div>
-    ${L.nat?"":`<button type="button" class="rcbtn" data-rconfx>Show all of ${esc(R.div)}</button><button type="button" class="rcbtn rcgo" data-rconfcmp>Compare years in ${esc(L.label)}</button>`}</div>
+    ${R.cdd?`<div class="cddp" role="listbox" aria-label="Conference">${op("",`All of ${R.div}`)}${cs.length?`<p class="cddh">Conferences</p>${cs.map(v=>op(v)).join("")}`:""}${ch.length?`<p class="cddh">Championship meets <span>results</span></p>${ch.map(v=>op(v)).join("")}`:""}${oth.length?`<p class="cddh">Other lists <span>regions and qualifying</span></p>${oth.map(v=>op(v)).join("")}`:""}</div>`:""}</div>
+    ${L.nat?"":`<button type="button" class="rcbtn" data-rconfx>Show all of ${esc(R.div)}</button>${pair?`<button type="button" class="rcbtn rcgo" data-rconfv="${esc(pair.label)}">${L.champ?`${esc(pair.label)} season list`:`${esc(pair.label)} results`}</button>`:""}${L.champ?"":`<button type="button" class="rcbtn${pair?"":" rcgo"}" data-rconfcmp>Compare years in ${esc(L.label)}</button>`}`}</div>
     ${miss?`<p class="ccmsg">${esc(R.conf)} has no list for ${esc(seasonLabel(R.season))}, so this is all of ${esc(R.div)}.</p>`:""}`}
 /* High school results (Ryan 2026-10-21: "just do highschool tab it can switch to dont make ui more complicated than it needs to be").
    One College | High School switch on Results. High school = plain ranked list per state: rank, athlete (first name + last initial),
@@ -1333,9 +1345,9 @@ function resultsCollege(){
   <div class="rbody${R.swap?" swap":""}"><div class="rhead"><h3>${L.nat?"":esc(L.label)+" "}${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(listName)} · ${esc(seasonLabel(R.season))}${WIND&&WEV.has(R.ev)?" · wind-legal":""} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools (national rank shown)`:`${all.length} marks`}</span></div>
   ${windNote(L,R.g,R.ev)}${tsug}${L.nat?`<div class="stats">${[1,10,25,50].filter(k=>rows[k-1]).map(k=>stR(rows[k-1],k===1?"Best":ord(k)+" best",k===1?"lead":"")).join("")}</div>`:""}
   <div class="grid${L.nat?"":" raw"}"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span>${L.nat?"<span>Meet</span>":""}</div>
-  ${rows.slice(0,RCAP(R.n)).map((r,i)=>{const k=all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span>${L.nat?`<span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(fmtD(r[7]))}</span>`:""}</div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
+  ${rows.slice(0,RCAP(R.n)).map((r,i)=>{const k=L.champ&&+r[0]?+r[0]:all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span>${L.nat?`<span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(fmtD(r[7]))}</span>`:""}</div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
   </div>${rwall(rows.length,RCAP(R.n))}${ACC.member()&&rows.length>R.n?`<p class="rmorew"><button type="button" class="rmoreb" data-rmore>Show ${Math.min(200,rows.length-R.n)} more <small>${R.n.toLocaleString()} of ${rows.length.toLocaleString()}</small></button></p>`:""}${hookRow()}
-  <p class="note">Source: TFRRS performance lists. Tap a team to see all of its top marks.</p></div></div>`;
+  <p class="note">${L.champ?`Source: TFRRS meet results${D.meets[(all[0]||[])[6]]?`, ${esc(D.meets[all[0][6]])}`:""}. Finals in finishing order, then everyone else by their best mark at the meet.`:"Source: TFRRS performance lists."} Tap a team to see all of its top marks.</p></div></div>`;
   return o;
 }
 /* ---------- Recruiting AI ---------- */
@@ -1824,7 +1836,7 @@ async function answerCore(raw){
       const div=CX.div||"NCAA D1",yy=CX.year||"2026",se=CX.season||"outdoor",r=RIDX.find(z=>z.year===yy&&z.season===se&&z.div===div);
       if(!r)return {html:`<p>I don't have ${esc(yy)} ${esc(se)} ${esc(div)} results.</p>`,f:["2026 outdoor","2025 outdoor"]};
       await load(r.key,true);const D=CACHE[r.key];if(!D||D.err)return {html:"<p>Those results aren't available right now.</p>"};
-      const L=intent==="champ"?(D.lists.find(l=>l.champ)||null):(CX.conf?D.lists.find(l=>l.label.toLowerCase()===CX.conf.toLowerCase())||D.lists.find(l=>l.label.toLowerCase().includes(CX.conf.toLowerCase())):D.lists.find(l=>l.nat)||D.lists[0]);
+      const L=intent==="champ"?(D.lists.find(l=>l.champ&&!l.conf)||null):(CX.conf?D.lists.find(l=>l.label.toLowerCase()===CX.conf.toLowerCase())||D.lists.find(l=>l.label.toLowerCase().includes(CX.conf.toLowerCase())):D.lists.find(l=>l.nat)||D.lists[0]);
       if(!L)return {html:`<p>${intent==="champ"?`There are no ${esc(div)} championship results for ${esc(yy)} ${esc(se)} on TFRRS`:"I couldn't find that list"}.</p>`};
       const E=L.g[g]||{},want=TF[e]||e,ek=Object.keys(E).find(k=>k===want)||Object.keys(E).find(k=>evLabel(k)===e);
       if(!ek)return {html:`<p>No ${gl(g)} ${esc(e)} on the ${esc(L.nat?div+" national":L.label)} ${esc(yy)} ${esc(se)} list.</p>`,f:evChips(g).slice(0,4)};

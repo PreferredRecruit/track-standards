@@ -39,7 +39,7 @@ def main():
         if season == "xc": continue
         d = json.loads(gzip.decompress(open(f, "rb").read()))
         for l in d["lists"]:
-            if not l.get("champ"): continue
+            if not l.get("champ") or l.get("conf"): continue   # national meet only (conference meets carry "conf")
             for g, E in l["g"].items():
                 for ev, rows in E.items():
                     if rows and rows[0][0] == 1 and rows[0][1] and "Relay" not in ev:

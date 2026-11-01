@@ -363,7 +363,7 @@ export function generate(root, out) {
     if (!RDIVS.includes(x.div)) continue;
     let D; try { D = cleanRank(JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(out, "data/rank", x.key + ".dat"))).toString())); } catch { continue; }
     const XC = x.season === "xc", seasonName = XC ? "Cross Country" : x.season[0].toUpperCase() + x.season.slice(1);
-    const nat = D.lists.find(l => l.nat), champ = XC ? nat : D.lists.find(l => l.champ);   /* XC: the national meet is both */
+    const nat = D.lists.find(l => l.nat), champ = XC ? nat : D.lists.find(l => l.champ && !l.conf);   /* XC: the national meet is both */
     if (champ) {
       const p = `/champions/${x.year}-${x.season}-${slug(x.div)}.html`; champPages.push([p, `${x.year} ${seasonName} ${x.div}`]);
       const rows = g => Object.entries(champ.g[g] || {}).filter(([, r]) => r.length).map(([e, r]) => `<tr><td>${esc(evLabel(e))}</td><td>${nameCell(r[0], D, x)}</td><td>${esc(D.teams[r[0][3]])}</td><td class="n">${esc(r[0][4])}${r[0][5] ? ` <small>(${esc(r[0][5])})</small>` : ""}</td></tr>`).join("");
@@ -558,6 +558,25 @@ async function freshData(out) {
   fs.writeFileSync(f, JSON.stringify(idx)); console.log(`Monday data: ${n} result files from the data branch`);
 }
 
+/* conference championship meets (Ryan 2026-10-31: shown in Results like the national meet). Scraped once per finished meet
+   (scripts/tfrrs/scrape_conf_champs.py + add_conf_champs.py -> public/data/confmeets/<key>.dat) and merged here into that season's
+   results file after the Monday data, right after the national meet; team and meet names are re-indexed into the season's tables. */
+function mergeConfMeets(out) {
+  const dir = path.join(out, "data/confmeets"); let files = []; try { files = fs.readdirSync(dir).filter(f => f.endsWith(".dat")); } catch { return 0; }
+  let n = 0;
+  for (const f of files) {
+    const tgt = path.join(out, "data/rank", f); if (!fs.existsSync(tgt)) continue;
+    const C = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(dir, f)))), D = JSON.parse(zlib.gunzipSync(fs.readFileSync(tgt)));
+    const ix = (arr, s) => { let i = arr.indexOf(s); if (i < 0) { i = arr.length; arr.push(s); } return i; };
+    const tm = C.teams.map(t => ix(D.teams, t)), mm = C.meets.map(m => ix(D.meets, m));
+    for (const L of C.lists) for (const g of Object.keys(L.g)) for (const rows of Object.values(L.g[g])) for (const r of rows) { r[3] = tm[r[3]]; r[6] = mm[r[6]]; }
+    const keep = D.lists.filter(L => !(L.champ && L.conf)), head = keep.filter(L => L.nat || L.champ);
+    D.lists = [...head, ...C.lists, ...keep.filter(L => !(L.nat || L.champ))];
+    fs.writeFileSync(tgt, zlib.gzipSync(JSON.stringify(D), { level: 9 })); n += C.lists.length;
+  }
+  console.log(`conference meets: ${n} merged into ${files.length} season files`); return n;
+}
+
 /* Vite plugin: generate after the app is built. A failure here never breaks the site build. */
 export function seoPages() {
   let outDir = "dist", root = process.cwd();
@@ -566,6 +585,7 @@ export function seoPages() {
     configResolved(c) { outDir = path.resolve(c.root, c.build.outDir); root = c.root; },
     async closeBundle() {
       try { await freshData(outDir); } catch (e) { console.warn("Monday data not fetched, using the copy in the repo:", e && e.message); }
+      try { mergeConfMeets(outDir); } catch (e) { console.warn("conference meets skipped:", e && e.message); }
       try { const r = generate(root, outDir); console.log(`SEO pages: ${r.pages} pages, sitemap ${r.urls} URLs`); }
       catch (e) { console.warn("SEO pages skipped:", e && e.message); }
     },

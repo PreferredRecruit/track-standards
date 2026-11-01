@@ -37,7 +37,7 @@ const wnum = w => { const x = parseFloat(String(w).replace("+", "")); return isN
 const clean = t => String(t || "").replace(/ \([B-H]\)$/, "");
 
 export function computePower({ dat, legal, official, fields }) {
-  const T = dat.teams, L = (dat.lists || []).find(l => l.nat), C = (dat.lists || []).find(l => /Championships$/.test(l.label || "") && !l.nat);
+  const T = dat.teams, L = (dat.lists || []).find(l => l.nat), C = (dat.lists || []).find(l => /Championships$/.test(l.label || "") && !l.nat && !l.conf);   /* national meet, not a conference meet */
   const FS = { m: {}, w: {} };   /* field size per event: from this season's championship, else the newest one passed in (in season) */
   if (!L) return null;
   const report = { windSwapped: 0, windDropped: 0, fieldSizes: {} };
