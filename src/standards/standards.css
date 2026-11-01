@@ -1349,3 +1349,11 @@ header .hd .acchd{flex:none;visibility:visible}
 .switch button{min-height:44px}.back{min-height:44px;min-width:44px;display:inline-flex;align-items:center}.eval .x{width:40px!important;height:40px!important}.hlp .hbtn{min-height:40px}
 @media (max-width:400px){.switch{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;box-sizing:border-box}.switch button{justify-content:center;padding:9px 4px;font-size:13px}}
 .tsw{max-width:100%;box-sizing:border-box}@media (max-width:380px){.tsw a,.tsw span{padding:0 9px;font-size:12.5px}}
+/* compact data tabs (UX audit 2026-10-31, preview): headline only on Standards; on phones the Results/Rankings filters fold into one summary bar */
+.hero.compact{padding-top:18px}.hero.compact h1,.hero.compact .inl{display:none}.hero.compact .switch{margin-top:0}
+.rfsum{display:none}
+@media (max-width:760px){
+  .rfsum{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;margin:0 0 12px;padding:0 6px 0 16px;border:1px solid var(--pr-line);border-radius:14px;background:var(--pr-card);font:inherit;font-size:14.5px;font-weight:600;color:var(--pr-ink);cursor:pointer;text-align:left;box-shadow:0 1px 2px rgba(20,16,50,.05)}
+  .rfsum span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rfsum b{flex:none;background:var(--pr-black,#0B0B0F);color:#fff;border-radius:10px;padding:8px 14px;font-size:13.5px}
+  .rcard:not(.open),.rkbar:not(.open){display:none}.sec>.lede{display:none}
+}
