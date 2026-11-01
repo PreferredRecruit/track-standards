@@ -1079,7 +1079,23 @@ const MEV={LJ:"Long Jump",HJ:"High Jump",PV:"Pole Vault",TJ:"Triple Jump",SP:"Sh
 const mevKey=c=>MEV[c]||(/^(\d+)H$/.test(c)?c.replace(/H$/," Hurdles"):/^4x(\d+)$/.test(c)?c.replace(/^4x(\d+)$/,"4 x $1 Relay"):/^\d+$/.test(c)?c+" Meters":c);
 const mnorm=x=>String(x||"").toLowerCase().replace(/&/g,"and").replace(/\btrack and field\b|\bt and f\b|\btf\b/g,"tf").replace(/[^a-z0-9]+/g," ").trim();
 const meetSeason=d=>{const y=(String(d).match(/(\d{4})\s*$/)||[])[1],mo=MO.findIndex(x=>String(d).startsWith(x));if(!y||mo<0)return null;return mo===11?(+y+1)+"-indoor":mo<=2?y+"-indoor":y+"-outdoor"};
+/* full meet results (scripts/tfrrs/scrape_meets.py + build_meets.py): /data/meets/index.json maps athlete -> meet name -> id */
+let MIDX=null,MIDXL=null;const MF={};
+function loadMeetIdx(){if(MIDX||MIDXL)return;MIDXL=fetch("/data/meets/index.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>{MIDX=d;if(R.mv)render()})}
+function loadMeet(id){if(MF[id])return;MF[id]="…";getGz("/data/meets/"+id+".dat").then(d=>{MF[id]=d;if(R.mv)render()}).catch(()=>{MF[id]="x";if(R.mv)render()})}
+async function getGz(u){const r=await fetch(u);if(!r.ok)throw new Error(u);return await unpack(r)}
+function fullMeet(M){const mv=R.mv,evs=Object.keys(M.ev).filter(e=>M.ev[e][R.g]).sort((a,b)=>eord(ecode(a))-eord(ecode(b))),ev=evs.includes(mv.e)?mv.e:evs[0];
+  const tf=M.url;
+  return `<div class="rbody${R.swap?" swap":""}"><p style="margin:14px 2px 0"><button class="lnk" data-mvback>‹ Back to ${esc(mv.name)}</button></p>
+  <div class="rhead"><h3>${esc(M.meet)}</h3><span>${esc(fmtD(mv.date))} · ${R.g==="m"?"Men":"Women"} · full results</span></div>
+  <div class="evwrap"><div class="evs" role="group" aria-label="Event">${evs.map(e=>`<button data-mvev="${esc(e)}" aria-pressed="${e===ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
+  ${(M.ev[ev]||{})[R.g]?M.ev[ev][R.g].map(([rnd,w,rows])=>`<div class="rhead" style="margin-top:14px"><h3 style="font-size:17px">${esc(rnd)}</h3><span>${rows.length} ${/Relay/.test(ev)?"teams":"athletes"}${w?` · wind ${esc(w)}`:""}</span></div>
+  <div class="grid raw"><div class="gh"><span>Place</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span></div>
+  ${rows.map(r=>{const p=+String(r[0]).replace(/\D/g,"");return `<div class="gr ${/^final/i.test(rnd)&&p&&p<=3?"p"+p:""}${r[1]===mv.name?" me":""}"><span class="rkb">${esc(r[0]||"–")}</span><span class="gnmw"><span class="gnm"><b>${esc(r[1]||r[3])}</b></span><small>${esc(yr(r[2]))}</small></span><span class="gtm" style="cursor:default">${esc(r[3])}</span><span class="gmk">${esc(r[4])}${r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span></div>`}).join("")}</div>`).join(""):""}
+  <p class="note">Source: <a href="${esc(tf)}" target="_blank" rel="noopener">TFRRS meet results ↗</a></p>${hookRow()}</div></div>`}
 function meetView(D){
+  const id=MIDX&&R.mv.path&&(MIDX[R.mv.path]||{})[R.mv.meet];if(!MIDX){loadMeetIdx();return skeleton()}
+  if(id){loadMeet(id);const M=MF[id];if(M==="…")return skeleton();if(M&&M!=="x")return fullMeet(M)}
   const mv=R.mv,nm=mnorm(mv.meet),by={};
   D.lists.forEach(l=>Object.entries(l.g[R.g]||{}).forEach(([e,rows])=>rows.forEach(r=>{if(mnorm(D.meets[r[6]])!==nm)return;(by[e]||(by[e]=new Map())).set(r[1]+"|"+r[3],r)})));
   const evs=Object.keys(by).sort((a,b)=>eord(ecode(a))-eord(ecode(b)));let ev=evs.includes(mv.e)?mv.e:evs[0];
@@ -2217,7 +2233,7 @@ document.addEventListener("click",ev=>{
   if(d.ai!==undefined){const D=CACHE[curKey()],E=D.lists[R.list].g[R.g],r=E[d.ae||R.ev][+d.ai];R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();log("athlete",{athlete:r[1],team:D.teams[r[3]],event:evLabel(d.ae||R.ev),g:R.g,division:R.div});const c=document.querySelector(".rcard");if(c)scrollTo({top:c.offsetTop-70,behavior:"smooth"});return}
   if("athback" in d){R.ath=null;R.swap=true;render();return}
   if(d.ameet!==undefined){const P=ATH&&R.ath&&ATH[R.ath.path],m=P&&P.meets[+d.ameet];if(!m)return;const sea=meetSeason(m.date);
-    R.mv={meet:m.meet,date:m.date,e:mevKey(d.amev||(m.rows[0]||[])[0]||""),name:R.ath.name,ath:R.ath};if(sea&&RIDX.some(x=>x.year+"-"+x.season===sea&&x.div===R.div))R.season=sea;
+    R.mv={meet:m.meet,date:m.date,e:mevKey(d.amev||(m.rows[0]||[])[0]||""),name:R.ath.name,ath:R.ath,path:R.ath.path};if(sea&&RIDX.some(x=>x.year+"-"+x.season===sea&&x.div===R.div))R.season=sea;
     R.ath=null;R.team=null;R.q="";R.swap=true;render();scrollTo({top:0});log("results_event",{detail:"meet",meet:m.meet});return}
   if(d.mvev!==undefined){R.mv.e=d.mvev;render();return}
   if("hlback" in d){R.ath=R.hlAth;R.hlAth=null;R.hl=null;R.conf="";R.swap=true;render();return}
