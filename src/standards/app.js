@@ -262,10 +262,11 @@ let ARM=null;
 function armOffer(){const o=offerCopy();if(!o||EV.shown||EV.dismissed)return;if(ARM)clearInterval(ARM.iv),clearTimeout(ARM.t);ARM={since:0};
   const fire=trig=>{if(!ARM)return;clearInterval(ARM.iv);clearTimeout(ARM.t);ARM=null;evalIn(o.t,o.b,0,o.v,trig,o.ready?null:o.bs)};
   if(!o.n){ARM.t=setTimeout(()=>fire("nofit"),3000);return}
-  ARM.t=setTimeout(()=>fire("results-timer"),likelyA()?6000:12000);   /* fallback if they never scroll to the list */
+  ARM.t=setTimeout(()=>fire("results-timer"),20000);   /* fallback if they never reach the end of the list (Ryan 2026-10-31 "send it": no longer 5 s after results) */
   ARM.iv=setInterval(()=>{if(!ARM)return;if(!S.run||S.school!=null){clearInterval(ARM.iv);clearTimeout(ARM.t);ARM=null;return}
-    const el=document.querySelector(".mtab"),r=el&&el.getBoundingClientRect(),inView=r&&r.top<innerHeight*0.55&&r.bottom>innerHeight*0.2;
-    if(inView){if(!ARM.since)ARM.since=Date.now();else if(Date.now()-ARM.since>=1500)fire("results-seen")}else ARM.since=0},250)}
+    /* fires once they reach the end of the list they can see (UX audit 2026-10-31: not mid-scroll through their own results) */
+    const el=document.querySelector(".mtab"),r=el&&el.getBoundingClientRect(),atEnd=r&&r.top<innerHeight*0.5&&r.bottom<innerHeight*1.02;
+    if(atEnd){if(!ARM.since)ARM.since=Date.now();else if(Date.now()-ARM.since>=900)fire("results-end")}else ARM.since=0},250)}
 /* ---------- leaving? one last offer (Duolingo-style churn catch) ----------
    Desktop: the mouse heads for the tab bar. Phones: a fast scroll back up or 45 s idle on the results. Once per visit, never if an
    offer was already shown or dismissed, never in the first 20 s unless they searched. */
@@ -709,7 +710,7 @@ const CACHE={},LOADING={};
    (scripts/tfrrs/build_legal.py), or hidden when there is none / it isn't loaded yet; the list is then re-sorted and re-ranked.
    CACHE holds whichever version is on, so every view (lists, conferences, Compare, team pages, athlete views, the AI) follows it. */
 const WEV=new Set(["100 Meters","200 Meters","100 Hurdles","110 Hurdles","Long Jump","Triple Jump"]),WCODE=new Set(["100","200","100H","110H","LJ","TJ"]);
-let WIND=(()=>{const q=new URLSearchParams(location.search).get("wind");if(q)return q==="legal";try{return localStorage.getItem("prWind")==="1"}catch(e){return false}})();
+let WIND=(()=>{const q=new URLSearchParams(location.search).get("wind");if(q)return q==="legal";try{return localStorage.getItem("prWind")!=="0"}catch(e){return true}})();   /* wind-legal by default (Ryan 2026-10-31): aided marks don't count, so they don't lead the lists */
 const RAW={},LEG={},LEGC={};
 const aided=w=>{const x=parseFloat(w);return isFinite(x)&&x>2};
 const wkey=k=>/-outdoor-/.test(k);

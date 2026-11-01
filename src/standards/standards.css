@@ -1372,3 +1372,5 @@ header .hd .acchd{flex:none;visibility:visible}
 .eval .evlg~.x,.eval:has(.evlg:not([hidden])) .x{background:rgba(255,255,255,.22)!important;color:#fff!important}
 .eval:has(.evlg:not([hidden])) .eye{color:#6C47FF;font-weight:750}
 @media (max-width:700px){.eval .evlg{padding:16px 14px 10px}.eval .evlr{height:62px}.eval .evlt{width:52px;height:52px;border-radius:16px}.eval .evlt:nth-child(3){width:62px;height:62px;border-radius:19px}.eval .evlc{margin-top:8px;font-size:13px}}
+/* lighter scrim, no blur over their results (UX audit 2026-10-31) */
+.evbg{background:rgba(12,10,24,.3)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
