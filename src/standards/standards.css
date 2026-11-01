@@ -1333,3 +1333,6 @@ header .hd .acchd{flex:none;visibility:visible}
 
 .othev{font-size:16px;margin:22px 0 4px}.othnote{font-size:13px;color:var(--pr-mute);margin:0 0 8px}
 .nfnote{margin:14px 0 0;padding:12px 14px;border-radius:14px;background:#FAF9FD;border:1px solid var(--pr-line,#ECEAF3);font-size:14px;color:var(--pr-ink2,#3B3A4A)}
+/* athlete meet history: each meet opens its results (2026-10-31) */
+.mt1.mtgo{cursor:pointer;transition:box-shadow .15s,transform .15s}.mt1.mtgo:hover{box-shadow:var(--pr-rim),0 10px 28px -16px rgba(108,71,255,.45);transform:translateY(-1px)}.mt1 .mtar{font-style:normal;color:var(--pr-violet);font-weight:800;margin-left:4px}
+.mt1.mtgo .mr:hover{background:#F7F5FF}.gr.me{background:#F1ECFF;box-shadow:inset 3px 0 0 var(--pr-violet)}
