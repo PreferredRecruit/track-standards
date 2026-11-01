@@ -559,7 +559,7 @@ def write_brand(wstate):
         w = ws.get("rec") or {}
         cur = b.get(slug)
         if cur is None:
-            continue
+            cur = {}   # no harvested site record at all (2026-10-31: Oregon State had none, so no logo anywhere): Wikipedia fills it
         if not w.get("logo") and cur.get("logo") == "/brand/logos/%s-wiki.webp" % slug:
             # our earlier logo was dropped (QA reject / re-run found nothing): back to the harvested site record
             site = (H.load_json(H.STATE_JSON, {}).get(slug) or {}).get("rec") or {}

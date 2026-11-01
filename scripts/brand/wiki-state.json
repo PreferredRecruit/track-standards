@@ -2953,7 +2953,7 @@
     "inst-override Central Christian College of Kansas"
    ],
    "status": "colour-only",
-   "t": 1792226566,
+   "t": 1793506082,
    "tried": []
   },
   "name": "Central Christian",
@@ -3460,7 +3460,7 @@
     "ath-link-rejected WHAC -> Wolverine\u2013Hoosier Athletic Conference sports league"
    ],
    "status": "colour-only",
-   "t": 1792226179,
+   "t": 1793506085,
    "tried": []
   },
   "name": "Cleary",
@@ -3862,7 +3862,7 @@
     "inst-exact Columbia College (South Carolina) -> Columbia College (South Carolina)"
    ],
    "status": "nothing",
-   "t": 1792226185,
+   "t": 1793506093,
    "tried": []
   },
   "name": "Columbia (S.C.)",
@@ -4045,13 +4045,7 @@
   "d": "NAIA",
   "dbg": {
    "ath": null,
-   "cands": [
-    [
-     "Cottey College Main Hall.jpg",
-     "image",
-     "medium"
-    ]
-   ],
+   "cands": [],
    "colours": [
     "#002f6d",
     "#fcdb64"
@@ -4062,19 +4056,8 @@
     "inst-exact Cottey College -> Cottey College"
    ],
    "status": "colour-only",
-   "t": 1792216299,
-   "tried": [
-    [
-     "Cottey College Main Hall.jpg",
-     "image",
-     "photo-like",
-     330,
-     195,
-     1.69,
-     0.28,
-     0.84
-    ]
-   ]
+   "t": 1793506106,
+   "tried": []
   },
   "name": "Cottey",
   "rec": {
@@ -6082,6 +6065,64 @@
    "src": "https://en.wikipedia.org/wiki/File:Florida_College_logo.png"
   }
  },
+ "florida-gulf-coast-university-track-standards": {
+  "d": "NCAA D1",
+  "dbg": {
+   "ath": "Florida Gulf Coast Eagles",
+   "cands": [
+    [
+     "Florida Gulf Coast Eagles logo.svg",
+     "athletics",
+     "high"
+    ],
+    [
+     "Florida gcu logo.png",
+     "logo",
+     "medium"
+    ],
+    [
+     "Florida Gulf Coast University Seal.svg",
+     "seal",
+     "medium"
+    ]
+   ],
+   "colours": [
+    "#004785",
+    "#00794c"
+   ],
+   "inst": "Florida Gulf Coast University",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact Florida Gulf Coast University -> Florida Gulf Coast University",
+    "ath-link Florida Gulf Coast Eagles -> Florida Gulf Coast Eagles"
+   ],
+   "status": "ok",
+   "t": 1793506143,
+   "tried": [
+    [
+     "Florida Gulf Coast Eagles logo.svg",
+     "athletics",
+     "ok",
+     330,
+     234,
+     1.41,
+     0.65,
+     0.53
+    ]
+   ]
+  },
+  "name": "Florida Gulf Coast University",
+  "rec": {
+   "colour_src": "infobox",
+   "conf": "high",
+   "file": "Florida Gulf Coast Eagles logo.svg",
+   "logo": "/brand/logos/florida-gulf-coast-university-track-standards-wiki.webp",
+   "logo_kind": "athletics",
+   "primary": "#004785",
+   "secondary": "#00794c",
+   "src": "https://en.wikipedia.org/wiki/File:Florida_Gulf_Coast_Eagles_logo.svg"
+  }
+ },
  "florida-institute-of-technology-track-standards": {
   "d": "NCAA D2",
   "dbg": {
@@ -6729,6 +6770,58 @@
    "src": "https://commons.wikimedia.org/wiki/File:Furman_Paladins_logo.svg"
   }
  },
+ "gannon-university-track-standards": {
+  "d": "NCAA D2",
+  "dbg": {
+   "ath": null,
+   "cands": [
+    [
+     "Gannon university logo.png",
+     "logo",
+     "medium"
+    ],
+    [
+     "Gannon University seal.png",
+     "seal",
+     "medium"
+    ]
+   ],
+   "colours": [
+    "#993333",
+    "#f9cf62"
+   ],
+   "inst": "Gannon University",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact Gannon University -> Gannon University"
+   ],
+   "status": "ok",
+   "t": 1793506154,
+   "tried": [
+    [
+     "Gannon university logo.png",
+     "logo",
+     "ok",
+     328,
+     319,
+     1.03,
+     1.0,
+     1.0
+    ]
+   ]
+  },
+  "name": "Gannon University",
+  "rec": {
+   "colour_src": "infobox",
+   "conf": "medium",
+   "file": "Gannon university logo.png",
+   "logo": "/brand/logos/gannon-university-track-standards-wiki.webp",
+   "logo_kind": "logo",
+   "primary": "#993333",
+   "secondary": "#f9cf62",
+   "src": "https://commons.wikimedia.org/wiki/File:Gannon_university_logo.png"
+  }
+ },
  "garden-city-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
@@ -7014,6 +7107,59 @@
    "primary": "#041e42",
    "secondary": "#63666a",
    "src": "https://commons.wikimedia.org/wiki/File:Georgetown_Hoyas_logo.svg"
+  }
+ },
+ "georgia-college-state-university-track-standards": {
+  "d": "NCAA D2",
+  "dbg": {
+   "ath": "Georgia College Bobcats",
+   "cands": [
+    [
+     "Georgia College Bobcats logo.svg",
+     "athletics",
+     "high"
+    ],
+    [
+     "Georgia College Seal (Updated).png",
+     "seal",
+     "medium"
+    ]
+   ],
+   "colours": [
+    "#003399",
+    "#006633"
+   ],
+   "inst": "Georgia College & State University",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact Georgia College & State University -> Georgia College & State University",
+    "ath-link Georgia College Bobcats -> Georgia College Bobcats"
+   ],
+   "status": "ok",
+   "t": 1793506164,
+   "tried": [
+    [
+     "Georgia College Bobcats logo.svg",
+     "athletics",
+     "ok",
+     330,
+     294,
+     1.12,
+     0.67,
+     0.58
+    ]
+   ]
+  },
+  "name": "Georgia College & State University",
+  "rec": {
+   "colour_src": "infobox",
+   "conf": "high",
+   "file": "Georgia College Bobcats logo.svg",
+   "logo": "/brand/logos/georgia-college-state-university-track-standards-wiki.webp",
+   "logo_kind": "athletics",
+   "primary": "#003399",
+   "secondary": "#006633",
+   "src": "https://en.wikipedia.org/wiki/File:Georgia_College_Bobcats_logo.svg"
   }
  },
  "glendale-cc-track-standards": {
@@ -7722,7 +7868,7 @@
     "inst-override University of Health Sciences and Pharmacy in St. Louis"
    ],
    "status": "colour-only",
-   "t": 1792226652,
+   "t": 1793506203,
    "tried": []
   },
   "name": "Health Sciences and Pharmacy",
@@ -11160,6 +11306,58 @@
    "src": "https://commons.wikimedia.org/wiki/File:MACU_Signature_M-2_Color-High_Res.png"
   }
  },
+ "middle-georgia-state-university-track-standards": {
+  "d": "NCAA D2",
+  "dbg": {
+   "ath": null,
+   "cands": [
+    [
+     "Middle Georgia State University logo.png",
+     "logo",
+     "medium"
+    ],
+    [
+     "Middle Georgia State University seal.png",
+     "seal",
+     "medium"
+    ]
+   ],
+   "colours": [
+    "#633393",
+    "#b0b6bb"
+   ],
+   "inst": "Middle Georgia State University",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact Middle Georgia State University -> Middle Georgia State University"
+   ],
+   "status": "ok",
+   "t": 1793506209,
+   "tried": [
+    [
+     "Middle Georgia State University logo.png",
+     "logo",
+     "ok",
+     330,
+     99,
+     3.33,
+     0.98,
+     0.7
+    ]
+   ]
+  },
+  "name": "Middle Georgia State University",
+  "rec": {
+   "colour_src": "infobox",
+   "conf": "medium",
+   "file": "Middle Georgia State University logo.png",
+   "logo": "/brand/logos/middle-georgia-state-university-track-standards-wiki.webp",
+   "logo_kind": "logo",
+   "primary": "#633393",
+   "secondary": "#b0b6bb",
+   "src": "https://en.wikipedia.org/wiki/File:Middle_Georgia_State_University_logo.png"
+  }
+ },
  "midland-track-standards": {
   "d": "NAIA",
   "dbg": {
@@ -12081,7 +12279,7 @@
     "inst-exact Mount Mercy University -> Mount Mercy University"
    ],
    "status": "colour-only",
-   "t": 1792226294,
+   "t": 1793506219,
    "tried": []
   },
   "name": "Mount Mercy",
@@ -13697,6 +13895,64 @@
    "src": "https://commons.wikimedia.org/wiki/File:Onondaga_Community_College_Logo.svg"
   }
  },
+ "oregon-state-university-track-standards": {
+  "d": "NCAA D1",
+  "dbg": {
+   "ath": "Oregon State Beavers",
+   "cands": [
+    [
+     "Oregon State Beavers logo.svg",
+     "athletics",
+     "high"
+    ],
+    [
+     "Oregon State University primary logo.svg",
+     "logo",
+     "medium"
+    ],
+    [
+     "Oregon State University seal.svg",
+     "seal",
+     "medium"
+    ]
+   ],
+   "colours": [
+    "#d73f09",
+    "#000000"
+   ],
+   "inst": "Oregon State University",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact Oregon State University -> Oregon State University",
+    "ath-link Oregon State Beavers -> Oregon State Beavers"
+   ],
+   "status": "ok",
+   "t": 1793506225,
+   "tried": [
+    [
+     "Oregon State Beavers logo.svg",
+     "athletics",
+     "ok",
+     326,
+     183,
+     1.78,
+     0.92,
+     0.98
+    ]
+   ]
+  },
+  "name": "Oregon State University",
+  "rec": {
+   "colour_src": "infobox-expanded",
+   "conf": "high",
+   "file": "Oregon State Beavers logo.svg",
+   "logo": "/brand/logos/oregon-state-university-track-standards-wiki.webp",
+   "logo_kind": "athletics",
+   "primary": "#d73f09",
+   "secondary": null,
+   "src": "https://en.wikipedia.org/wiki/File:Oregon_State_Beavers_logo.svg"
+  }
+ },
  "ottawa-track-standards": {
   "d": "NAIA",
   "dbg": {
@@ -14380,6 +14636,56 @@
    "primary": "#0e4d8e",
    "secondary": null,
    "src": "https://en.wikipedia.org/wiki/File:Pratt_Beavers_logo.png"
+  }
+ },
+ "presbyterian-college-track-standards": {
+  "d": "NCAA D1",
+  "dbg": {
+   "ath": null,
+   "cands": [
+    [
+     "Presbyterian College wordmark.svg",
+     "logo",
+     "medium"
+    ],
+    [
+     "Presbyterian College seal.svg",
+     "seal",
+     "medium"
+    ]
+   ],
+   "colours": [],
+   "inst": "Presbyterian College",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact Presbyterian College -> Presbyterian College",
+    "ath-link-rejected Presbyterian Blue Hose -> Presbyterian Blue Hose college athletics"
+   ],
+   "status": "ok",
+   "t": 1793506260,
+   "tried": [
+    [
+     "Presbyterian College wordmark.svg",
+     "logo",
+     "ok",
+     330,
+     77,
+     4.29,
+     1.0,
+     1.0
+    ]
+   ]
+  },
+  "name": "Presbyterian College",
+  "rec": {
+   "colour_src": "logo",
+   "conf": "medium",
+   "file": "Presbyterian College wordmark.svg",
+   "logo": "/brand/logos/presbyterian-college-track-standards-wiki.webp",
+   "logo_kind": "logo",
+   "primary": "#0060aa",
+   "secondary": null,
+   "src": "https://commons.wikimedia.org/wiki/File:Presbyterian_College_wordmark.svg"
   }
  },
  "providence-college-track-standards": {
@@ -15160,7 +15466,7 @@
     "inst-exact Rochester Christian University -> Rochester Christian University"
    ],
    "status": "colour-only",
-   "t": 1792221272,
+   "t": 1793506276,
    "tried": []
   },
   "name": "Rochester Christian University",
@@ -15196,7 +15502,7 @@
     "inst-exact Rocky Mountain College -> Rocky Mountain College"
    ],
    "status": "colour-only",
-   "t": 1792221301,
+   "t": 1793506281,
    "tried": [
     [
      "RockySeal.jpg",
@@ -16394,6 +16700,64 @@
    "primary": "#50c878",
    "secondary": null,
    "src": "https://en.wikipedia.org/wiki/File:Shelton_State_Community_College_logo.svg"
+  }
+ },
+ "shepherd-university-track-standards": {
+  "d": "NCAA D2",
+  "dbg": {
+   "ath": "Shepherd Rams",
+   "cands": [
+    [
+     "Shepherd rams logo.png",
+     "athletics",
+     "high"
+    ],
+    [
+     "Sheph university brand logo.png",
+     "logo",
+     "medium"
+    ],
+    [
+     "Shepherd University seal.png",
+     "seal",
+     "medium"
+    ]
+   ],
+   "colours": [
+    "#fabd00",
+    "#011e41"
+   ],
+   "inst": "Shepherd University",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact Shepherd University -> Shepherd University",
+    "ath-link Shepherd Rams -> Shepherd Rams"
+   ],
+   "status": "ok",
+   "t": 1793506323,
+   "tried": [
+    [
+     "Shepherd rams logo.png",
+     "athletics",
+     "ok",
+     288,
+     233,
+     1.24,
+     0.73,
+     0.85
+    ]
+   ]
+  },
+  "name": "Shepherd University",
+  "rec": {
+   "colour_src": "infobox",
+   "conf": "high",
+   "file": "Shepherd rams logo.png",
+   "logo": "/brand/logos/shepherd-university-track-standards-wiki.webp",
+   "logo_kind": "athletics",
+   "primary": "#fabd00",
+   "secondary": "#011e41",
+   "src": "https://en.wikipedia.org/wiki/File:Shepherd_rams_logo.png"
   }
  },
  "siena-heights-track-standards": {
@@ -18093,6 +18457,64 @@
    "src": "https://en.wikipedia.org/wiki/File:Sterling_Warriors_Logo.png"
   }
  },
+ "stetson-university-track-standards": {
+  "d": "NCAA D1",
+  "dbg": {
+   "ath": "Stetson Hatters",
+   "cands": [
+    [
+     "Stetson Hatters current logo.svg",
+     "athletics",
+     "high"
+    ],
+    [
+     "Stetson University wordmark.svg",
+     "logo",
+     "medium"
+    ],
+    [
+     "Stetson Univ Seal.svg",
+     "seal",
+     "medium"
+    ]
+   ],
+   "colours": [
+    "#3d8e33",
+    "#ffffff"
+   ],
+   "inst": "Stetson University",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact Stetson University -> Stetson University",
+    "ath-link Stetson Hatters -> Stetson Hatters"
+   ],
+   "status": "ok",
+   "t": 1793506334,
+   "tried": [
+    [
+     "Stetson Hatters current logo.svg",
+     "athletics",
+     "ok",
+     328,
+     330,
+     1.01,
+     0.92,
+     0.61
+    ]
+   ]
+  },
+  "name": "Stetson University",
+  "rec": {
+   "colour_src": "infobox",
+   "conf": "high",
+   "file": "Stetson Hatters current logo.svg",
+   "logo": "/brand/logos/stetson-university-track-standards-wiki.webp",
+   "logo_kind": "athletics",
+   "primary": "#3d8e33",
+   "secondary": null,
+   "src": "https://en.wikipedia.org/wiki/File:Stetson_Hatters_current_logo.svg"
+  }
+ },
  "suffolk-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
@@ -19721,6 +20143,64 @@
    "src": "https://en.wikipedia.org/wiki/File:UAB_Blazers_primary_logo.svg"
   }
  },
+ "university-of-alaska-fairbanks-track-standards": {
+  "d": "NCAA D2",
+  "dbg": {
+   "ath": "Alaska Nanooks",
+   "cands": [
+    [
+     "Alaska Nanooks.svg",
+     "athletics",
+     "high"
+    ],
+    [
+     "University of Alaska Fairbanks logo.svg",
+     "logo",
+     "medium"
+    ],
+    [
+     "UAFairbanksSeal.png",
+     "seal",
+     "medium"
+    ]
+   ],
+   "colours": [
+    "#236192",
+    "#ffcd00"
+   ],
+   "inst": "University of Alaska Fairbanks",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact University of Alaska Fairbanks -> University of Alaska Fairbanks",
+    "ath-link Alaska Nanooks -> Alaska Nanooks"
+   ],
+   "status": "ok",
+   "t": 1793506344,
+   "tried": [
+    [
+     "Alaska Nanooks.svg",
+     "athletics",
+     "ok",
+     328,
+     394,
+     1.2,
+     0.81,
+     0.71
+    ]
+   ]
+  },
+  "name": "University of Alaska Fairbanks",
+  "rec": {
+   "colour_src": "infobox",
+   "conf": "high",
+   "file": "Alaska Nanooks.svg",
+   "logo": "/brand/logos/university-of-alaska-fairbanks-track-standards-wiki.webp",
+   "logo_kind": "athletics",
+   "primary": "#236192",
+   "secondary": "#ffcd00",
+   "src": "https://en.wikipedia.org/wiki/File:Alaska_Nanooks.svg"
+  }
+ },
  "university-of-arkansas-track-standards": {
   "d": "NCAA D1",
   "dbg": {
@@ -20353,6 +20833,64 @@
    "src": "https://en.wikipedia.org/wiki/File:New_Mexico_Lobos_logo.svg"
   }
  },
+ "university-of-north-alabama-track-standards": {
+  "d": "NCAA D1",
+  "dbg": {
+   "ath": "North Alabama Lions",
+   "cands": [
+    [
+     "North Alabama Lions logo.svg",
+     "athletics",
+     "high"
+    ],
+    [
+     "University of North Alabama logo.svg",
+     "logo",
+     "medium"
+    ],
+    [
+     "University of North Alabama seal.svg",
+     "seal",
+     "medium"
+    ]
+   ],
+   "colours": [
+    "#592b8a",
+    "#ffb92a"
+   ],
+   "inst": "University of North Alabama",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact University of North Alabama -> University of North Alabama",
+    "ath-link North Alabama Lions -> North Alabama Lions"
+   ],
+   "status": "ok",
+   "t": 1793506355,
+   "tried": [
+    [
+     "North Alabama Lions logo.svg",
+     "athletics",
+     "ok",
+     326,
+     234,
+     1.39,
+     0.91,
+     0.66
+    ]
+   ]
+  },
+  "name": "University of North Alabama",
+  "rec": {
+   "colour_src": "infobox",
+   "conf": "high",
+   "file": "North Alabama Lions logo.svg",
+   "logo": "/brand/logos/university-of-north-alabama-track-standards-wiki.webp",
+   "logo_kind": "athletics",
+   "primary": "#592b8a",
+   "secondary": "#ffb92a",
+   "src": "https://en.wikipedia.org/wiki/File:North_Alabama_Lions_logo.svg"
+  }
+ },
  "university-of-north-carolina-at-greensboro-track-standards": {
   "d": "NCAA D1",
   "dbg": {
@@ -20636,6 +21174,59 @@
    "primary": "#00543c",
    "secondary": "#fdbb30",
    "src": "https://commons.wikimedia.org/wiki/File:San_Francisco_Dons_logo.svg"
+  }
+ },
+ "university-of-south-carolina-aiken-track-standards": {
+  "d": "NCAA D2",
+  "dbg": {
+   "ath": "USC Aiken Pacers",
+   "cands": [
+    [
+     "USCA Pacers Icon.svg",
+     "athletics",
+     "high"
+    ],
+    [
+     "University of South Carolina Aiken logo.svg",
+     "logo",
+     "medium"
+    ]
+   ],
+   "colours": [
+    "#002341",
+    "#ff0039"
+   ],
+   "inst": "University of South Carolina Aiken",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact University of South Carolina Aiken -> University of South Carolina Aiken",
+    "ath-link USC Aiken Pacers -> USC Aiken Pacers"
+   ],
+   "status": "ok",
+   "t": 1793506387,
+   "tried": [
+    [
+     "USCA Pacers Icon.svg",
+     "athletics",
+     "ok",
+     330,
+     300,
+     1.1,
+     0.89,
+     0.67
+    ]
+   ]
+  },
+  "name": "University of South Carolina Aiken",
+  "rec": {
+   "colour_src": "infobox",
+   "conf": "high",
+   "file": "USCA Pacers Icon.svg",
+   "logo": "/brand/logos/university-of-south-carolina-aiken-track-standards-wiki.webp",
+   "logo_kind": "athletics",
+   "primary": "#002341",
+   "secondary": "#ff0039",
+   "src": "https://en.wikipedia.org/wiki/File:USCA_Pacers_Icon.svg"
   }
  },
  "university-of-south-florida-track-standards": {
@@ -21098,6 +21689,64 @@
    "src": "https://commons.wikimedia.org/wiki/File:Tulsa_Golden_Hurricane_logo.svg"
   }
  },
+ "university-of-west-florida-track-standards": {
+  "d": "NCAA D2",
+  "dbg": {
+   "ath": "West Florida Argonauts",
+   "cands": [
+    [
+     "West Florida Argonauts primary logo.svg",
+     "athletics",
+     "high"
+    ],
+    [
+     "University of West Florida Logo.svg",
+     "logo",
+     "medium"
+    ],
+    [
+     "University of West Florida seal.svg",
+     "seal",
+     "medium"
+    ]
+   ],
+   "colours": [
+    "#00205b",
+    "#00a346"
+   ],
+   "inst": "University of West Florida",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact University of West Florida -> University of West Florida",
+    "ath-link West Florida Argonauts -> West Florida Argonauts"
+   ],
+   "status": "ok",
+   "t": 1793506398,
+   "tried": [
+    [
+     "West Florida Argonauts primary logo.svg",
+     "athletics",
+     "ok",
+     330,
+     330,
+     1.0,
+     0.61,
+     0.7
+    ]
+   ]
+  },
+  "name": "University of West Florida",
+  "rec": {
+   "colour_src": "infobox",
+   "conf": "high",
+   "file": "West Florida Argonauts primary logo.svg",
+   "logo": "/brand/logos/university-of-west-florida-track-standards-wiki.webp",
+   "logo_kind": "athletics",
+   "primary": "#00205b",
+   "secondary": "#00a346",
+   "src": "https://en.wikipedia.org/wiki/File:West_Florida_Argonauts_primary_logo.svg"
+  }
+ },
  "university-of-wisconsin-parkside-track-standards": {
   "d": "NCAA D2",
   "dbg": {
@@ -21297,6 +21946,64 @@
    "primary": "#f05023",
    "secondary": "#646469",
    "src": "https://en.wikipedia.org/wiki/File:UTRGV_Athletics_logo.svg"
+  }
+ },
+ "valdosta-state-university-track-standards": {
+  "d": "NCAA D2",
+  "dbg": {
+   "ath": "Valdosta State Blazers",
+   "cands": [
+    [
+     "Valdosta State Blazers current logo.svg",
+     "athletics",
+     "high"
+    ],
+    [
+     "Valdosta university logo.png",
+     "logo",
+     "medium"
+    ],
+    [
+     "Valdosta State University seal.png",
+     "seal",
+     "medium"
+    ]
+   ],
+   "colours": [
+    "#cc0000",
+    "#000000"
+   ],
+   "inst": "Valdosta State University",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact Valdosta State University -> Valdosta State University",
+    "ath-link Valdosta State Blazers -> Valdosta State Blazers"
+   ],
+   "status": "ok",
+   "t": 1793506408,
+   "tried": [
+    [
+     "Valdosta State Blazers current logo.svg",
+     "athletics",
+     "ok",
+     329,
+     247,
+     1.33,
+     0.8,
+     0.67
+    ]
+   ]
+  },
+  "name": "Valdosta State University",
+  "rec": {
+   "colour_src": "infobox",
+   "conf": "high",
+   "file": "Valdosta State Blazers current logo.svg",
+   "logo": "/brand/logos/valdosta-state-university-track-standards-wiki.webp",
+   "logo_kind": "athletics",
+   "primary": "#cc0000",
+   "secondary": null,
+   "src": "https://en.wikipedia.org/wiki/File:Valdosta_State_Blazers_current_logo.svg"
   }
  },
  "valley-city-state-track-standards": {
@@ -21755,6 +22462,64 @@
    "primary": "#6d0020",
    "secondary": "#c6a362",
    "src": "https://en.wikipedia.org/wiki/File:Walsh_Cavaliers_logo.svg"
+  }
+ },
+ "washington-state-university-track-standards": {
+  "d": "NCAA D1",
+  "dbg": {
+   "ath": "Washington State Cougars",
+   "cands": [
+    [
+     "Washington State Cougars logo.svg",
+     "athletics",
+     "high"
+    ],
+    [
+     "Washington State University signature.svg",
+     "logo",
+     "medium"
+    ],
+    [
+     "Washington State University seal.svg",
+     "seal",
+     "medium"
+    ]
+   ],
+   "colours": [
+    "#a60f2d",
+    "#4d4d4d"
+   ],
+   "inst": "Washington State University",
+   "inst_how": "exact",
+   "log": [
+    "inst-exact Washington State University -> Washington State University",
+    "ath-link Washington State Cougars -> Washington State Cougars"
+   ],
+   "status": "ok",
+   "t": 1793506447,
+   "tried": [
+    [
+     "Washington State Cougars logo.svg",
+     "athletics",
+     "ok",
+     325,
+     312,
+     1.04,
+     0.92,
+     0.69
+    ]
+   ]
+  },
+  "name": "Washington State University",
+  "rec": {
+   "colour_src": "infobox",
+   "conf": "high",
+   "file": "Washington State Cougars logo.svg",
+   "logo": "/brand/logos/washington-state-university-track-standards-wiki.webp",
+   "logo_kind": "athletics",
+   "primary": "#a60f2d",
+   "secondary": "#4d4d4d",
+   "src": "https://en.wikipedia.org/wiki/File:Washington_State_Cougars_logo.svg"
   }
  },
  "wayland-baptist-track-standards": {
