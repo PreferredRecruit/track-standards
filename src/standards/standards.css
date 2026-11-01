@@ -1336,3 +1336,9 @@ header .hd .acchd{flex:none;visibility:visible}
 /* athlete meet history: each meet opens its results (2026-10-31) */
 .mt1.mtgo{cursor:pointer;transition:box-shadow .15s,transform .15s}.mt1.mtgo:hover{box-shadow:var(--pr-rim),0 10px 28px -16px rgba(108,71,255,.45);transform:translateY(-1px)}.mt1 .mtar{font-style:normal;color:var(--pr-violet);font-weight:800;margin-left:4px}
 .mt1.mtgo .mr:hover{background:#F7F5FF}.gr.me{background:#F1ECFF;box-shadow:inset 3px 0 0 var(--pr-violet)}
+/* progression: every meet across the career (2026-10-31) */
+.pgbo{fill:#F4F1FF}.pgbi{fill:#F2F7FF}.pgpr{fill:none;stroke:#13865a;stroke-width:2;stroke-dasharray:5 4;opacity:.85}
+.pgpt{fill:#7A45F0;stroke:#fff;stroke-width:1.5}.pgpt.pgin2{fill:#fff;stroke:#7A45F0;stroke-width:2}.pgpt.pgprp{fill:#13865a;stroke:#fff;stroke-width:2}.pgpt.pgprp.pgin2{fill:#fff;stroke:#13865a;stroke-width:2.5}
+.pglog{margin-top:12px}.pglog .gh,.pglog .gr{grid-template-columns:118px minmax(0,1fr) 70px 96px}.pglog .pgld{font-weight:600;font-size:14px}.pglog .pgld small,.pglog .pglm small{display:block;color:var(--pr-mute);font-size:12px;font-weight:500}
+.pglog .pglm{font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis}.pglog .pglp{font-size:13px;color:var(--pr-mute)}.pglog .gr.pglpr{background:#F0FBF5}.pgprb{color:#13865a!important;font-weight:800}
+@media (max-width:760px){.pglog .gh,.pglog .gr{grid-template-columns:84px minmax(0,1fr) 78px}.pglog .pglp{display:none}.pglog .gh span:nth-child(3){display:none}}

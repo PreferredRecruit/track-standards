@@ -1060,6 +1060,34 @@ function seasonChart(H,code,sk){const F=tfield(code),all=H.filter(x=>x[0]===sk&&
   ticks.forEach(dd=>{g+=`<text x="${X([0,dd])}" y="${H2-Bt+20}" text-anchor="middle" class="pgt">${fmt(dd)}</text>`});
   const bx=pts[bi],ch=(F?(best-v[0])/v[0]:(v[0]-best)/v[0]);
   return g+`</svg><p class="pgcap"><span><i style="background:#7A45F0"></i>best mark at each meet</span><span><i style="background:#13865a"></i>season best: ${esc(bx[4])} at ${esc(bx[2])}, ${esc(fmt(bx[1]))}</span><b class="${ch>=0?"up":"dn"}">${pts.length} meet${pts.length>1?"s":""}${bi>0?` · ${ch>=0?"+":""}${(ch*100).toFixed(1)}% from first meet to best`:""}</b></p>`}
+/* every meet across every year (Ryan 2026-10-31: "view their progression through every single meet they have competed in over the
+   years ... handle and display a large amount of data"): one point per meet day (its best mark; other rounds in the tooltip), a running
+   personal-best step line, season bands, PRs marked; the year chips narrow the window; the log below lists every meet, PRs flagged,
+   newest first, 25 at a time. Wind-legal on = aided marks left out, as in the season view. */
+function careerChart(H,code){const F=tfield(code),ok=x=>!(WIND&&WCODE.has(code)&&aided(x[5])),better=(a,b)=>F?a>b:a<b;
+  const all=H.filter(x=>x[3]===code&&tval(x[4])!=null&&x[1]&&ok(x));if(!all.length)return `<p class="pgnone">No ${esc(ename(code))} races on file yet.</p>`;
+  const yrs=[...new Set(all.map(x=>x[1].slice(0,4)))].sort();if(R.pyr&&!yrs.includes(R.pyr))R.pyr="";
+  const byDay=new Map();for(const x of all){const k=x[1]+"|"+x[2],b=byDay.get(k);if(!b||better(tval(x[4]),tval(b[4]))){const c=x.slice();c.nr=(b?b.nr:0)+1;byDay.set(k,c)}else b.nr++}
+  const days=[...byDay.values()].sort((a,b)=>a[1].localeCompare(b[1]));let pb=null;days.forEach(x=>{const v=tval(x[4]);x.pr=pb==null||better(v,pb);if(x.pr)pb=v;x.pb=pb});
+  const pts=R.pyr?days.filter(x=>x[1].startsWith(R.pyr)):days,v=pts.map(x=>tval(x[4]));
+  const W=CW(),H2=260,L=W<500?40:52,Rr=18,T=30,Bt=50,lo=Math.min(...v,...pts.map(x=>x.pb)),hi=Math.max(...v,...pts.map(x=>x.pb)),pad=(hi-lo||Math.abs(hi)*.02||1)*.15;
+  const d0=dnum(pts[0][1]),d1=dnum(pts[pts.length-1][1]),y=z=>{const f=(z-(lo-pad))/((hi+pad)-(lo-pad));return T+(F?1-f:f)*(H2-T-Bt)},X=x=>d1===d0?W/2:L+(dnum(x[1])-d0)/(d1-d0)*(W-L-Rr);
+  const fmt=d=>{const [yy,m,dd]=d.split("-");return MO[+m-1]+" "+(+dd)+", "+yy},mk=x=>x[4].replace(/\s*[@#]+/g,"");
+  let g=`<svg class="pgc" viewBox="0 0 ${W} ${H2}" role="img" aria-label="${esc(ename(code))}: every meet${R.pyr?" in "+R.pyr:""}">`;
+  /* season bands */
+  const seas=[...new Set(pts.map(x=>x[0]))];seas.forEach((k,i)=>{const sp=pts.filter(x=>x[0]===k),a=X(sp[0])-4,b=X(sp[sp.length-1])+4;
+    g+=`<rect x="${a}" y="${T-6}" width="${Math.max(8,b-a)}" height="${H2-T-Bt+12}" rx="6" class="${/indoor/.test(k)?"pgbi":"pgbo"}"/>${b-a>34||seas.length<=8?`<text x="${(a+b)/2}" y="${H2-Bt+34}" text-anchor="middle" class="pgt">${/indoor/.test(k)?"In":"Out"} ’${k.slice(2,4)}</text>`:""}`});
+  [lo,hi].forEach(z=>{g+=`<line x1="${L}" x2="${W-Rr}" y1="${y(z)}" y2="${y(z)}" class="pgg"/>`});
+  /* running PR (step line) */
+  let st="";pts.forEach((x,i)=>{st+=(i?` ${X(x)},${y(pts[i-1].pb)} `:"")+`${X(x)},${y(x.pb)}`});st+=` ${W-Rr},${y(pts[pts.length-1].pb)}`;g+=`<polyline class="pgpr" points="${st}"/>`;
+  const big=pts.length>60;pts.forEach((x,i)=>{const ind=/indoor/.test(x[0]);g+=`<circle cx="${X(x)}" cy="${y(v[i])}" r="${x.pr?(big?4.5:6):(big?2.6:4)}" class="${x.pr?"pgpt pgprp":"pgpt"}${ind?" pgin2":""}"><title>${esc(fmt(x[1]))} · ${esc(x[2])} · ${esc(x[4])}${x[5]?" (wind "+esc(x[5])+")":""}${x[6]?" · "+esc(x[6]):""}${x.nr>1?` · best of ${x.nr} rounds`:""}${x.pr?" · PR":""}</title></circle>`});
+  const prs=pts.filter(x=>x.pr),lastPR=prs[prs.length-1];if(lastPR)g+=`<text x="${Math.min(W-Rr-30,Math.max(L+30,X(lastPR)))}" y="${y(v[pts.indexOf(lastPR)])-12}" text-anchor="middle" class="pgv pgb">${esc(mk(lastPR))}</text>`;
+  g+=`<text x="${L-6}" y="${y(hi)+4}" text-anchor="end" class="pgt">${esc(String(F?hi.toFixed(2)+"m":fmtT(hi)))}</text><text x="${L-6}" y="${y(lo)+4}" text-anchor="end" class="pgt">${esc(String(F?lo.toFixed(2)+"m":fmtT(lo)))}</text>`;
+  const first=days[0],best=days.filter(x=>x.pr).pop(),ch=F?(tval(best[4])-tval(first[4]))/tval(first[4]):(tval(first[4])-tval(best[4]))/tval(first[4]);
+  const chips=yrs.length>1?`<div class="evs pgsea" role="group" aria-label="Years"><button type="button" data-pyr="" aria-pressed="${!R.pyr}">All years</button>${yrs.map(z=>`<button type="button" data-pyr="${z}" aria-pressed="${R.pyr===z}">${z}</button>`).join("")}</div>`:"";
+  const n=R.pln||25,log=[...pts].reverse();
+  return chips+g+`</svg><p class="pgcap"><span><i style="background:#7A45F0"></i>best mark at each meet</span><span><i class="pgin"></i>indoor</span><span><i style="background:#13865a"></i>personal best line</span><b class="${ch>=0?"up":"dn"}">${days.length} meets · ${prs.length} PR${prs.length===1?"":"s"}${R.pyr?" this year":""} · ${ch>=0?"+":""}${(ch*100).toFixed(1)}% from first meet to PR</b></p>
+  <div class="grid pglog"><div class="gh"><span>Date</span><span>Meet</span><span>Place</span><span style="text-align:right">Mark</span></div>${log.slice(0,n).map(x=>`<div class="gr${x.pr?" pglpr":""}"><span class="pgld">${esc(fmt(x[1]))}<small>${esc(seasonLabel(x[0]))}</small></span><span class="pglm">${esc(x[2])}${x.nr>1?`<small>${x.nr} rounds</small>`:""}</span><span class="pglp">${esc(x[6]||"–")}</span><span class="gmk">${esc(x[4])}${x.pr?`<small class="pgprb">PR</small>`:x[5]?`<small>wind ${esc(x[5])}</small>`:""}</span></div>`).join("")}</div>${log.length>n?`<p class="rmorew"><button type="button" class="rmoreb" data-pln>Show ${Math.min(50,log.length-n)} more <small>${n} of ${log.length}</small></button></p>`:""}`}
 /* the progression box; switching events redraws only this box, so the page doesn't jump */
 let PGCS=null,PGID="";
 function progBlock(cs,aid){PGCS=cs;PGID=aid||PGID;/* every event they've competed in (Ryan 2026-10-24: "toggle to the 200 or click into any other event"); most seasons first */
@@ -1067,8 +1095,8 @@ function progBlock(cs,aid){PGCS=cs;PGID=aid||PGID;/* every event they've compete
     if(!evs.includes(R.pev))R.pev=evs[0];
     const H=PGID?histOf(PGID):null;if(PGID&&H===null)loadHist(PGID);const code=ecode(R.pev);
     const hs=H?[...new Set(H.filter(x=>x[3]===code).map(x=>x[0]))].sort((a,b)=>skey(b)-skey(a)):[];if(!hs.includes(R.psea))R.psea=hs[0];
-    const mode=`<div class="seg pgmode" role="group" aria-label="View"><button type="button" data-pmode="years" aria-pressed="${R.pmode!=="season"}">Across years</button><button type="button" data-pmode="season" aria-pressed="${R.pmode==="season"}">Within a season</button></div>`;
-    const body=R.pmode==="season"?(H===null?'<p class="pgnone">Loading every race…</p>':!hs.length?`<p class="pgnone">Meet-by-meet marks for this athlete aren't loaded yet. They fill in as the TFRRS scan reaches them; the season bests are under Across years.</p>`
+    const mode=`<div class="seg pgmode" role="group" aria-label="View"><button type="button" data-pmode="years" aria-pressed="${!R.pmode||R.pmode==="years"}">Across years</button><button type="button" data-pmode="season" aria-pressed="${R.pmode==="season"}">Within a season</button><button type="button" data-pmode="meets" aria-pressed="${R.pmode==="meets"}">Every meet</button></div>`;
+    const body=R.pmode==="meets"?(H===null?'<p class="pgnone">Loading every race…</p>':!H.some(x=>x[3]===code)?`<p class="pgnone">Meet-by-meet marks for this athlete aren't loaded yet. They fill in as the TFRRS scan reaches them; the season bests are under Across years.</p>`:careerChart(H,code)):R.pmode==="season"?(H===null?'<p class="pgnone">Loading every race…</p>':!hs.length?`<p class="pgnone">Meet-by-meet marks for this athlete aren't loaded yet. They fill in as the TFRRS scan reaches them; the season bests are under Across years.</p>`
       :`<div class="evs pgsea" role="group" aria-label="Season">${hs.map(k=>`<button type="button" data-psea="${esc(k)}" aria-pressed="${k===R.psea}">${esc(seasonLabel(k))}</button>`).join("")}</div>${seasonChart(H,code,R.psea)}`):progChart(cs,R.pev);
     return `<div class="ah2">Progression</div><div class="pgw">${mode}${evs.length>1?`<div class="evs pgev" role="group" aria-label="Event">${evs.map(e=>`<button type="button" data-pev="${esc(e)}" aria-pressed="${e===R.pev}">${esc(evLabel(e))}<small>${nS(e)}</small></button>`).join("")}</div>`:""}${body}</div>`}
 /* meets from an athlete's history (Ryan 2026-10-31: "i should be able to click into the track meets and see the results at the meet").
@@ -2221,8 +2249,9 @@ document.addEventListener("click",ev=>{
   if("cmore" in d){R.cn=(R.cn||25)+50;render();return}
   if("amore" in d){R.an=(R.an||100)+200;render();return}
   if(d.wind!==undefined){setWind(!WIND);return}
+  if(d.pyr!==undefined||"pln" in d){if(d.pyr!==undefined){R.pyr=d.pyr;R.pln=25}else R.pln=(R.pln||25)+50;const w=document.querySelector(".pgw");if(w&&PGCS){const t=document.createElement("div");t.innerHTML=progBlock(PGCS);const n=t.querySelector(".pgw");if(n){w.replaceWith(n);return}}render();return}
   if(d.pmode||d.psea){if(d.pmode)R.pmode=d.pmode;if(d.psea)R.psea=d.psea;const w=document.querySelector(".pgw");if(w&&PGCS){const t=document.createElement("div");t.innerHTML=progBlock(PGCS);const n=t.querySelector(".pgw");if(n){w.replaceWith(n);return}}render();return}
-  if(d.pev){R.pev=d.pev;const w=document.querySelector(".pgw");if(w&&PGCS){const t=document.createElement("div");t.innerHTML=progBlock(PGCS);const n=t.querySelector(".pgw");if(n){w.replaceWith(n);return}}R.swap=false;render();return}
+  if(d.pev){R.pev=d.pev;R.pyr="";R.pln=25;const w=document.querySelector(".pgw");if(w&&PGCS){const t=document.createElement("div");t.innerHTML=progBlock(PGCS);const n=t.querySelector(".pgw");if(n){w.replaceWith(n);return}}R.swap=false;render();return}
   if(d.gath){const [aid,sk,div]=d.gath.split("|");if(TM.i!=null){TM.i=null;TM.ath=null;history.pushState({},"",`/?tab=results&season=${sk}&div=${encodeURIComponent(div)}&athlete=${aid}`)}R.season=sk;R.div=div;R.sel=[div];R.conf="";R.q="";R.team=null;R.ath=null;R.pendAth=aid;R.swap=true;render();{const x=$("rqd"),qi=$("rq");if(x)x.innerHTML="";if(qi)qi.value=""}scrollTo(0,0);log("athlete",{from:"search-all",season:sk,division:div});return}
   if(d.rath){const [li,g,ev,i]=d.rath.split("|"),D=CACHE[curKey()],r=D&&((D.lists[+li].g[g]||{})[ev]||[])[+i];if(!r)return;
     R.conf="";R.g=g;R.ev=ev;R.q="";R.team=null;R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();{const x=$("rqd"),qi=$("rq");if(x)x.innerHTML="";if(qi)qi.value=""}scrollTo(0,0);log("athlete",{athlete:r[1],team:D.teams[r[3]],from:"search"});return}
