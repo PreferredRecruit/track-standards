@@ -115,17 +115,18 @@ export async function writeShare(out, jobs) {
   for (const j of jobs) {
     const key = `${j.label.toLowerCase().replace(" ", "-")}-${SUF[j.d]}`, P = season(key); if (!P) continue;
     const lists = {};
-    for (const g of Object.keys(j.g)) {
+    for (const g of j.post) {
       const rows = (P[g] || []).map(r => { const t = P.teams[r[0]] || [r[0], "", null, null, null]; return { rank: r[1], nm: t[0], conf: t[1], ovr: r[2], logo: t[3], col: t[4], me: (t[2] || "").endsWith("/" + j.slug) }; });
       if (!rows.some(r => r.me)) continue;
       lists[g] = { d: j.d, g, label: j.label, upd: upd(j.upd), items: pick(rows, j.g[g].rank) };
     }
-    const G = Object.keys(lists); if (!G.length) continue;
+    const G = Object.keys(lists), only = { nm: j.nm, conf: j.conf, d: j.d, label: j.label, upd: upd(j.upd), g: Object.fromEntries(Object.entries(j.g).map(([g, y]) => [g, { rank: y.rank, of: y.of, crank: y.crank, cof: y.cof, ovr: y.ovr }])) };
+    if (!G.length) { idx[j.slug] = only; continue; }
     const best = G.sort((a, b) => j.g[a].rank - j.g[b].rank)[0], L = lists[best];
     const Lp = { ...L, items: await Promise.all(L.items.map(async t => t.gap ? t : { ...t, logo: await pngLogo(t.logo) })) };
     fs.writeFileSync(path.join(dir, j.slug + ".png"), await R.small(R.png(ogCard(Lp))));
     for (const g of G) for (const k of ["post", "story"]) fs.writeFileSync(path.join(dir, `${j.slug}-${g}-${k}.svg`), igCard(lists[g], k));
-    idx[j.slug] = { nm: j.nm, conf: j.conf, d: j.d, label: j.label, upd: upd(j.upd), g: Object.fromEntries(G.map(g => [g, { ...j.g[g], list: lists[g].items.map(t => t.gap ? 0 : [t.rank, t.nm, t.ovr, t.me ? 1 : 0]) }])) }; n++;
+    idx[j.slug] = { ...only, g: { ...only.g, ...Object.fromEntries(G.map(g => [g, { ...j.g[g], post: 1, list: lists[g].items.map(t => t.gap ? 0 : [t.rank, t.nm, t.ovr, t.me ? 1 : 0]) }])) } }; n++;
   }
   fs.writeFileSync(path.join(dir, "index.json"), JSON.stringify(idx));
   console.log(`ranking share cards: ${n} schools`);

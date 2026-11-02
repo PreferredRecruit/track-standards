@@ -25,6 +25,7 @@ async function getRank(key){
 }
 import * as ACC from "./account.js";
 import * as READY from "./readiness.js";
+import * as TOUR from "./tour.js";
 const slugOf = n => n.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim() + "-track-standards";
 export async function mount(opts = {}) {
   if (window.__prStandardsMounted) { window.__prStandardsRoute && window.__prStandardsRoute(opts.slug); return; }
@@ -541,9 +542,9 @@ function schoolExtra(s){const lvl="Walk-On",i=SCH.indexOf(s);
   /* folds (Ryan 2026-10-16: "less cluttered but still have all of the back links"): every link and answer stays in the page
      (search engines read collapsed <details>), each section is one tap-to-open row */
   const list=(t,L)=>L.length?`<details class="fold"><summary>${t}<small>${L.length}</small></summary><div class="rel">${L.map(([x,k])=>`<button type="button" data-school="${k}">${esc(x.n)}<small>${esc(x.d)}</small></button>`).join("")}</div></details>`:"";
-  return `<details class="fold faq"><summary>Common questions<small>${q.length}</small></summary>${q.map(([a,b])=>`<details><summary>${esc(a)}</summary><p>${esc(b)}</p></details>`).join("")}</details>`+(conf.length||st.length?`<details class="fold"><summary>Similar programs<small>${conf.length+st.length}</small></summary>${conf.length?`<h4 class="relh">${esc(s.c)}</h4><div class="rel">${conf.map(([x,k])=>`<button type="button" data-school="${k}">${esc(x.n)}<small>${esc(x.d)}</small></button>`).join("")}</div>`:""}${st.length?`<h4 class="relh">More in ${esc(ST_NAME[s.s]||s.s||"")}</h4><div class="rel">${st.map(([x,k])=>`<button type="button" data-school="${k}">${esc(x.n)}<small>${esc(x.d)}</small></button>`).join("")}</div>`:""}</details>`:"")}
+  return `<details class="fold faq"><summary>Common questions<small>${q.length}</small></summary>${q.map(([a,b])=>`<details><summary>${esc(a)}</summary><p>${esc(b)}</p></details>`).join("")}</details>`+(conf.length||st.length?`<details class="fold"><summary>More schools to explore<small>${conf.length+st.length}</small></summary>${conf.length?`<h4 class="relh">${esc(s.c)}</h4><div class="rel">${conf.map(([x,k])=>`<button type="button" data-school="${k}">${esc(x.n)}<small>${esc(x.d)}</small></button>`).join("")}</div>`:""}${st.length?`<h4 class="relh">More in ${esc(ST_NAME[s.s]||s.s||"")}</h4><div class="rel">${st.map(([x,k])=>`<button type="button" data-school="${k}">${esc(x.n)}<small>${esc(x.d)}</small></button>`).join("")}</div>`:""}${schoolMore(s)}</details>`:schoolMore(s))}
 function schoolMore(s){const L=[`<a href="${confUrl(s)}">All ${esc(s.c)} schools</a>`];if(s.s)L.push(`<a href="${stateUrl(s.s)}">Colleges in ${esc(ST_NAME[s.s]||s.s)}</a>`);
-  L.push(s.j?`<a href="/guides/junior-college-track-and-field-recruiting.html">Junior college recruiting guide</a>`:`<a href="/standards/${slugx(s.d)}-mens-400m.html">${esc(s.d)} standards by event</a>`,`<a href="/explore.html">Every conference and state</a>`);return `<nav class="more" aria-label="Explore"><h3 class="moreh">Explore</h3><ol>${L.map(a=>`<li>${a}</li>`).join("")}</ol></nav>`}
+  L.push(s.j?`<a href="/guides/junior-college-track-and-field-recruiting.html">Junior college recruiting guide</a>`:`<a href="/standards/${slugx(s.d)}-mens-400m.html">${esc(s.d)} standards by event</a>`,`<a href="/explore.html">Every conference and state</a>`);return `<nav class="more" aria-label="Explore"><h4 class="relh">Browse</h4><ol>${L.map(a=>`<li>${a}</li>`).join("")}</ol></nav>`}   /* inside the last fold (Ryan 2026-11-02: bottom "cluttered ... too many links") */
 function schoolLinks(s){const L=[];
   if(s.o&&s.src)L.push(`<a class="sl off" href="${esc(s.src)}" target="_blank" rel="noopener">★ Official standards</a>`);
   if(s.rs)L.push(`<a class="sl" href="${esc(s.rs)}" target="_blank" rel="noopener">Track &amp; field roster</a>`);
@@ -597,12 +598,12 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   const {bv,mark}=bandBits(s);
   const still=BRQ;BRQ=false;
   let o=`<div class="sec branded simple${still?" still":""}" style="padding-top:0;${bv}"><button class="back" data-back>‹ Back</button>
-  <div class="sband">${mark}<div><small>${/\(/.test(s.n)?esc(s.n.replace(/^.*?\((.*?)\).*$/,"$1"))+" · ":""}${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(s.s):""}</small><h1 class="sname">${esc(s.n.replace(/\s*\(.*?\)\s*/g," ").trim())} Track &amp; Field${s.j?" (NJCAA)":" Standards"}</h1>${s.j?`<a class="tplink1" href="/teams/${tslug(S.school)}" data-tpage="${S.school}">Team results &amp; roster ›</a>`:tsw(S.school,"std")}${s.o?`<span class="offpill">★ Official standards${s.yr?` · ${esc(s.yr)}`:""}${oldChart(s)?" (latest published)":""}</span>`:""}</div></div>
+  <div class="sband">${mark}<div><small>${/\(/.test(s.n)?esc(s.n.replace(/^.*?\((.*?)\).*$/,"$1"))+" · ":""}${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(s.s):""}</small><h1 class="sname">${esc(s.n.replace(/\s*\(.*?\)\s*/g," ").trim())} Track &amp; Field${s.j?" (NJCAA)":" Standards"}</h1>${s.j?`<a class="tplink1" href="/teams/${tslug(S.school)}" data-tpage="${S.school}">Team results &amp; roster ›</a>`:tsw(S.school,"std")}${s.o?`<span class="offpill">★ Official standards${s.yr?` · ${esc(s.yr)}`:""}${oldChart(s)?" (latest published)":""}</span>`:""}</div><div class="srchips" id="srchips"></div></div>
   ${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} track &amp; field only</p>`:seg("g",g)}`;   /* school checker removed (Ryan 2026-10-16: "is that even necessary, the kids can clearly see") */
   if(s.j){
     o+=`<div class="verify" style="margin-top:16px"><b>No recruiting levels for junior colleges</b><span>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: junior colleges compete nationally rather than in conferences, so there's no reliable way to predict a program's marks. Below are ${esc(s.n)}'s best marks this season; the full national list, by event, is in Results.</span><a href="/?tab=results&div=NJCAA">NJCAA national list ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
     setTimeout(()=>teamBest(S.school),0);
-    return o+`<div id="tbest"></div>`+schoolExtra(s)+schoolMore(s)+`</div>`}
+    return o+`<div id="tbest"></div>`+schoolExtra(s)+`</div>`}
   const off=s.o&&(s.off||{})[g];
   if(off){
     o+=`<div class="scroll" style="margin-top:16px"><table><thead><tr><th>Event</th>${off.tiers.map(t=>`<th class="num" title="${esc(t)}">${esc(String(t).replace(/^(men's|women's|men|women)\s+/i,"").replace(/\s+standards?$/i,"")||t)}</th>`).join("")}</tr></thead><tbody>${off.rows.map(r=>`<tr><td>${esc(r[0])}</td>${off.tiers.map((_,i)=>`<td class="num">${r[i+1]?twoLine(r[i+1]):"–"}</td>`).join("")}</tr>`).join("")}</tbody></table></div>${oldChart(s)?`<p class="oldnote">Most recent standards ${esc(s.t||s.n)} has published (${esc(s.yr)}). Current requirements may differ, so confirm with the coaching staff.</p>`:""}
@@ -627,7 +628,7 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   setTimeout(()=>schoolIntent(S.school),0);
   /* the "how these are set" / official-source box goes to the bottom (Ryan 2026-10-16: "just put it at the bottom") */
   const vm=o.match(/<div class="verify">[\s\S]*?<\/div>/),vf=vm?vm[0]:"";if(vf)o=o.replace(vf,"");
-  return o+`<div id="srank"></div><div id="sfacts"></div><div id="tbest"></div><div id="svid"></div>`+schoolArch(s)+schoolAbout(s,vf)+schoolExtra(s)+schoolMore(s)+brandNote(s,B)+`</div>`}
+  return o+`<div id="sfacts"></div><div id="srank"></div><div id="tbest"></div><div id="svid"></div>`+schoolArch(s)+schoolAbout(s,vf)+schoolExtra(s)+brandNote(s,B)+`</div>`}
 /* parent capture (Ryan 2026-10-25, enterprise value: parents buy, but 71 of 100 athlete accounts had no parent contact).
    Signed-in athletes without a parent on file see one card under their results until they add one or close it.
    Saves parent name / email / phone to their own profile (RLS: owner only). No SMS consent is taken here: a parent's
@@ -671,14 +672,19 @@ let SHX=null,SHF=null;
 const shLine=(r,g)=>{const y=r.g[g];return `${r.nm} ${g==="m"?"men":"women"} are ranked No. ${y.rank}${y.of?` of ${y.of}`:""} in the ${r.d} Track & Field Power Rankings${y.crank&&y.crank<=10?` and No. ${y.crank} in the ${r.conf}`:""} (trackandfieldstandards.com, ${r.label}, updated ${r.upd}).`};
 function schoolRank(i){const slug=window.__prSlug?window.__prSlug(i):null;if(!slug||i==null)return;
   const fill=()=>{const el=document.getElementById("srank");if(!el||S.school!==i)return;const r=(SHX||{})[slug];if(!r){el.innerHTML="";return}
-    const G=["m","w"].filter(g=>r.g[g]),gl=g=>g==="m"?"Men":"Women",site="https://trackandfieldstandards.com";
+    const RG=["m","w"].filter(g=>r.g[g]),G=RG.filter(g=>r.g[g].post),gl=g=>g==="m"?"Men":"Women",site="https://trackandfieldstandards.com";
     const embed=g=>`<a href="${site}/schools/${slug}"><img src="${site}/badge/${slug}-${g}.svg" alt="${esc(r.nm)} ${g==="m"?"men's":"women's"} track and field: #${r.g[g].rank} in the ${esc(r.d)} Power Rankings" width="340" height="112"></a>`;
-    const g0=r.g[S.g]?S.g:G[0],y0=r.g[g0],tr=o=>o>=90?"a":o>=80?"b":o>=70?"c":"d";
-    el.innerHTML=`<div class="srk"><div class="srk-h"><b>${esc(r.d)} ${g0==="m"?"men's":"women's"} rankings</b><small>${esc(r.label)} · <a href="/?tab=rankings">All rankings</a></small></div><ol class="srk-ls">${(y0.list||[]).map(t=>t?`<li${t[3]?' class="me"':""}><b>${t[0]}</b><span>${esc(t[1])}</span>${t[2]!=null?`<em class="t-${tr(t[2])}">${t[2]}</em>`:""}</li>`:`<li class="gap">···</li>`).join("")}</ol>${G.filter(g=>g!==g0).map(g=>`<p class="srk-o">${esc(r.nm)} ${g==="m"?"men":"women"}: <b>#${r.g[g].rank}</b> in ${esc(r.d)}</p>`).join("")}</div>
-    <details class="fold"><summary>Post this ranking<small>for coaches</small></summary><p class="tbp">Ready-to-post graphics for Instagram, a line for a news story and a badge for your team website. The ranking updates every Monday in season.</p><div class="srk-pv" data-rpv="${slug}|${g0}"></div>
+    const g0=G.includes(S.g)?S.g:G[0],y0=r.g[g0]||{},tr=o=>o>=90?"a":o>=80?"b":o>=70?"c":"d";
+    /* header chip: the rank for the gender on screen, so Men / Women switch it (Ryan 2026-11-02) */
+    const gc=(SCH[i].ng||[]).includes(S.g)&&RG.length?RG[0]:S.g,yc=r.g[gc];   /* a one-gender program shows its own rank */
+    const chips=document.getElementById("srchips");if(chips)chips.innerHTML=yc?`<button type="button" class="srchip" data-rgo="${gc}"${G.includes(gc)?"":" disabled"} aria-label="${gl(gc)}: number ${yc.rank} in the ${esc(r.d)} national rankings"><small class="srk-k0">National rank</small><b>#${yc.rank}</b><span>${gc==="m"?"Men's":"Women's"}<small>${yc.of?`of ${yc.of} in `:"in "}${esc(r.d)}</small></span></button>`:`<span class="srchip off"><span>${gc==="m"?"Men's":"Women's"}<small>Not ranked this season</small></span></span>`;
+    if(!G.length){el.innerHTML="";return}
+    el.innerHTML=`<details class="fold srk-f"${S.rkOpen?" open":""}><summary>National ranking<small>${RG.map(g=>`#${r.g[g].rank} ${g==="m"?"men":"women"}`).join(" · ")}</small></summary>
+    <div class="srk"><div class="srk-h"><b>${esc(r.d)} ${g0==="m"?"men's":"women's"} rankings</b><small>${esc(r.label)} · <a href="/?tab=rankings">All rankings</a></small></div><ol class="srk-ls">${(y0.list||[]).map(t=>t?`<li${t[3]?' class="me"':""}><b>${t[0]}</b><span>${esc(t[1])}</span>${t[2]!=null?`<em class="t-${tr(t[2])}">${t[2]}</em>`:""}</li>`:`<li class="gap">···</li>`).join("")}</ol>${RG.filter(g=>g!==g0).map(g=>`<p class="srk-o">${esc(r.nm)} ${g==="m"?"men":"women"}: <b>#${r.g[g].rank}</b>${r.g[g].of?` of ${r.g[g].of}`:""} in ${esc(r.d)}</p>`).join("")}</div>
+    <h4 class="srk-t">Post this ranking</h4><p class="tbp">Ready-to-post graphics for Instagram and a line for a news story. The ranking updates every Monday in season.</p><div class="srk-pv" data-rpv="${slug}|${g0}"></div>
     ${G.map(g=>`<div class="srk-k">${G.length>1?`<h4>${gl(g)}</h4>`:""}<div class="srk-b"><button type="button" class="hbtn" data-rshare="${slug}|${g}|post">Instagram post</button><button type="button" class="hbtn" data-rshare="${slug}|${g}|story">Story</button><button type="button" class="hbtn" data-rcopy="${g}">Copy news line</button></div><p class="srk-l" data-rline="${g}">${esc(shLine(r,g))}</p></div>`).join("")}
-    <p class="tbp" style="margin-top:14px">Website badge (updates itself):</p>${G.map(g=>`<p><img src="/badge/${slug}-${g}.svg" alt="" width="340" height="112" loading="lazy" style="max-width:100%;height:auto"></p><textarea class="srk-c" readonly rows="3" aria-label="Badge code">${esc(embed(g))}</textarea>`).join("")}</details>`};
-  const pv=()=>{const d=document.querySelector("#srank details"),p=document.querySelector("[data-rpv]");if(!d||!p)return;d.addEventListener("toggle",async()=>{if(!d.open||p.dataset.done)return;p.dataset.done=1;const [sl,g]=p.dataset.rpv.split("|");
+    <details class="srk-bd"><summary>Badge for your team website</summary>${G.map(g=>`<p><img src="/badge/${slug}-${g}.svg" alt="" width="340" height="112" loading="lazy" style="max-width:100%;height:auto"></p><textarea class="srk-c" readonly rows="3" aria-label="Badge code">${esc(embed(g))}</textarea>`).join("")}</details></details>`};
+  const pv=()=>{const d=document.querySelector("#srank .srk-f"),p=document.querySelector("[data-rpv]");if(!d||!p)return;d.addEventListener("toggle",async()=>{S.rkOpen=d.open;if(!d.open||p.dataset.done)return;p.dataset.done=1;const [sl,g]=p.dataset.rpv.split("|");
     try{const b=await rankCard(sl,g,"post"),img=new Image();img.src=URL.createObjectURL(b);img.alt="Instagram post preview";p.appendChild(img)}catch(e){}})};
   if(SHX){fill();return pv()}fetch("/share/index.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>{SHX=d||{};fill();pv()})}
 const toData=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
@@ -696,7 +702,7 @@ document.addEventListener("click",async ev=>{const b=ev.target.closest("[data-rs
     if(navigator.canShare&&navigator.canShare({files:[file]})&&/Mobi|Android|iPhone|iPad/.test(navigator.userAgent)){try{await navigator.share({files:[file]})}catch(e){}}
     else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
     log("rank_share",{kind,school:slug});b.textContent=was}catch(e){b.textContent="Try again"}b.disabled=false});
-document.addEventListener("click",ev=>{const t=ev.target.closest(".srk-c");if(t)t.select()});
+document.addEventListener("click",ev=>{const t=ev.target.closest(".srk-c");if(t)t.select();const c=ev.target.closest("[data-rgo]");if(c){const d=document.querySelector("#srank .srk-f");if(d){d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})}log("rank_chip",{})}});
 /* season bests (Ryan 2026-10-14 "optimize everything"): /data/teams/<slug>.json is written at build from the latest outdoor TFRRS lists */
 const TB={};
 function teamBest(i){const slug=window.__prSlug?window.__prSlug(i):null;if(!slug||i==null)return;
@@ -2251,6 +2257,7 @@ function render(){
   if(fid){const n=$(fid);if(n){n.value=fval;n.focus();try{n.setSelectionRange(fpos,fpos)}catch(e){}if(fid==="q")drop();else teamDrop(fid)}}  /* a data load mid-typing keeps the search box and its list */
   if(S.tab==="standards"&&!onSchool) drop();
   moveInd(); if(S.tab==="standards"&&!onSchool) watchMore();  R.swap=false; ACC.ensureHead&&ACC.ensureHead();
+  if(S.tab==="standards"&&!onSchool) TOUR.maybe();   /* first sign-in tour, or ?tour=1 from Help on another page */
 }
 addEventListener("resize",moveInd);
 matchMedia("(min-width:761px)").addEventListener("change",()=>{if(S.tab==="results"&&R.cmp&&MULTI())render()});
@@ -2265,7 +2272,7 @@ document.addEventListener("click",ev=>{
     render();if(home)scrollTo({top:0,behavior:"smooth"});return}
   if("back" in d){S.school=null;render();return}
   if(d.school){S.school=+d.school;render();scrollTo({top:0});INT.sch=SCH[S.school].n;saveInt();log("school",{school:SCH[S.school].n,division:SCH[S.school].d,state:ST_NAME[SCH[S.school].s]||SCH[S.school].s});return}
-  if(d.grade){S.gr=INT.gr=+d.grade;saveInt();document.querySelectorAll("[data-grade]").forEach(x=>x.setAttribute("aria-pressed",x===b));const gs=b.closest(".gseg");gs&&gs.classList.remove("need");log("grade",{});const h=$("hint");if(h&&/grade/.test(h.textContent))h.textContent="";return}
+  if(d.grade){S.gr=INT.gr=+d.grade;saveInt();document.querySelectorAll("[data-grade]").forEach(x=>x.setAttribute("aria-pressed",x===b));const gs=b.closest(".gseg");gs&&gs.classList.remove("need");log("grade",{});const h=$("hint");if(h&&/grade/.test(h.textContent)){h.textContent="";const f=$("mf");if(f&&S.mark)setTimeout(()=>f.requestSubmit?f.requestSubmit():f.dispatchEvent(new Event("submit",{bubbles:true,cancelable:true})),0)}return}   /* grade picked after the "pick your grade" hint: run the search they asked for */
   if(d.cev!==undefined){S.cev=d.cev==="1";render();return}
   if(d.g){S.g=d.g;render();return}
   if(d.f!==undefined){S.f=d.f;S.n=24;render();return}
@@ -2451,6 +2458,8 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     const rs={getting_started:"none",talking:"some",real_interest:"some",offers:"offers"}[P.recruiting_stage];if(rs)INT.rs=rs;
     if(P.gender&&!INT.g)INT.g=P.gender;saveInt()};
   READY.bind();
+  TOUR.init({DEF,log,signedIn:()=>ACC.signedIn(),member:()=>ACC.member(),userId:()=>{const x=ACC.core.ses();return x&&x.user?x.user.id:""},
+    ask:()=>{const b=document.querySelector('.switch [data-tab="ask"]');if(b)b.click();else location.href="/?tab=ask"}});
   ACC.init({divfit:(e,g,v)=>{const o={};SCH.forEach(s=>{if(s.j)return;const t=tier(s,g,e,v);if(!t)return;const d=o[s.d]||(o[s.d]={T:0,R:0,W:0});d[t]++});return o},
     /* the readiness result's link carries the quiz's own answers, not the last search (account tier/class tags kept) */
     quiz:o=>{const u=new URL(quizFor()),keep=(u.searchParams.get("utm_term")||"").split(" ").filter(t=>/^[tc](A\+|[ABCSM])$/.test(t));u.searchParams.set("utm_content","readiness");
