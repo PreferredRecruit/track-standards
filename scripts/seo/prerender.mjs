@@ -16,6 +16,7 @@ import { hsPages } from "./hs.mjs";
 import { parseMark, cleanRank } from "./markparse.mjs";
 import { fitTitle, fitDesc, tailsFor, levelWords, SEASON } from "./meta.mjs";
 import { schoolPages } from "./schools.mjs";
+import { writeShare } from "./share.mjs";
 import { statePages } from "./states.mjs";
 import { reportPages } from "./reports.mjs";
 import { hsLevel, hsRows, fmtXC, fmtHS } from "./hsconv.mjs";
@@ -166,6 +167,7 @@ var y0=null;addEventListener("scroll",function f(){if(y0===null){y0=scrollY;retu
 }
 
 export function generate(root, out) {
+  const SHARE = [];   /* "post your ranking" cards, rendered after the pages (share.mjs writeShare is async) */
   const DB = JSON.parse(fs.readFileSync(path.join(root, "public/data/db.json"), "utf8"));
   const RIDX = JSON.parse(fs.readFileSync(path.join(out, "data/rank_index.json"), "utf8"));   /* dist copy: includes the newest Monday data (seoPages) */
   const S = DB.schools, CT = DB.ct;
@@ -456,7 +458,7 @@ export function generate(root, out) {
   /* AEO: give AI answer engines every guide's quick answer in llms.txt (numbers regenerate with the data each build) */
   { const f = path.join(out, "llms.txt"); if (fs.existsSync(f)) fs.appendFileSync(f, `\n## Recruiting guides (quick answers)\n${TOPICS.map(([u, t, a]) => `- [${t}](${SITE}${u}): ${a}`).join("\n")}\n`); }
   /* pre-built HTML for every school page (served at /schools/<slug> by vercel.json); already in the sitemap */
-  try { schoolPages({ root, out, S, CT, DATES, SITE, QUIZ, DEPTH: R, esc, schoolSlug, std, parse, EVENTS, STATE, evLabel, confUrl: s => confName.get(s.d + "|" + s.c), statePath, evPath, gName }); }
+  try { schoolPages({ root, out, S, CT, DATES, SITE, QUIZ, SHARE, DEPTH: R, esc, schoolSlug, std, parse, EVENTS, STATE, evLabel, confUrl: s => confName.get(s.d + "|" + s.c), statePath, evPath, gName }); }
   catch (e) { console.warn("school pages skipped:", e && e.message); }
   /* junior college guide (Ryan 2026-10-15: JUCOs get no levels, but every junior-college search should still land here) */
   {
@@ -544,7 +546,7 @@ ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter((
   const urls = Object.values(groups).flat();
   for (const [k, list] of Object.entries(groups)) fs.writeFileSync(path.join(out, `sitemap-${k}.xml`), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${list.map(u => `  <url><loc>${SITE}${u}</loc><lastmod>${lastmod(u)}</lastmod></url>`).join("\n")}\n</urlset>\n`);
   fs.writeFileSync(path.join(out, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${Object.entries(groups).map(([k, list]) => `  <sitemap><loc>${SITE}/sitemap-${k}.xml</loc><lastmod>${list.map(lastmod).sort().pop()}</lastmod></sitemap>`).join("\n")}\n</sitemapindex>\n`);
-  return { pages: files.length, urls: urls.length };
+  return { pages: files.length, urls: urls.length, share: SHARE };
 }
 
 /* newest Monday results (data branch) copied over the repo's copy in dist/data before the pages are generated,
@@ -596,8 +598,10 @@ export function seoPages() {
     async closeBundle() {
       try { await freshData(outDir); } catch (e) { console.warn("Monday data not fetched, using the copy in the repo:", e && e.message); }
       try { mergeConfMeets(outDir); } catch (e) { console.warn("conference meets skipped:", e && e.message); }
-      try { const r = generate(root, outDir); console.log(`SEO pages: ${r.pages} pages, sitemap ${r.urls} URLs`); }
+      let r = null;
+      try { r = generate(root, outDir); console.log(`SEO pages: ${r.pages} pages, sitemap ${r.urls} URLs`); }
       catch (e) { console.warn("SEO pages skipped:", e && e.message); }
+      if (r && r.share.length) try { await writeShare(outDir, r.share); } catch (e) { console.warn("ranking share cards skipped:", e && e.message); }
     },
   };
 }

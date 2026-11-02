@@ -16,7 +16,7 @@ const JG = "/guides/junior-college-track-and-field-recruiting.html";
 const divHub = d => `/standards/${String(d).toLowerCase().replace(/[^a-z0-9]+/g, "-")}-track-and-field-recruiting-standards.html`;   /* same path as prerender divPath */
 const DK = { "NCAA D1": "d1", "NCAA D2": "d2", "NCAA D3": "d3", NAIA: "naia", NJCAA: "njcaa" };   /* NJCAA: season bests only */
 
-export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, DEPTH = { bySchool: new Map() }, esc, schoolSlug, std, parse, EVENTS, STATE, evLabel, confUrl, statePath, evPath, gName }) {
+export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, SHARE = [], DEPTH = { bySchool: new Map() }, esc, schoolSlug, std, parse, EVENTS, STATE, evLabel, confUrl, statePath, evPath, gName }) {
   const shellFile = path.join(out, "index.html");
   if (!fs.existsSync(shellFile)) return [];
   const shell = fs.readFileSync(shellFile, "utf8");
@@ -130,6 +130,9 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, DEP
     const bg = !BADGE_LIVE ? [] : ["m", "w"].filter(g => x[g] && (x[g].rank <= 100 || (x[g].crank && x[g].crank <= 5)));
     const embed = g => { const alt = `${shortOf(s)} ${g === "m" ? "men's" : "women's"} track and field: #${x[g].rank} in the ${x.d} Power Rankings`;
       return `<a href="${SITE}/schools/${schoolSlug(s)}"><img src="${SITE}/badge/${schoolSlug(s)}-${g}.svg" alt="${alt}" width="340" height="112"></a>`; };
+    if (bg.length) SHARE.push({ slug: schoolSlug(s), nm: shortOf(s), conf: s.c, d: x.d, label: `${x.year} ${String(x.season).replace(/^./, c => c.toUpperCase())}`, upd: DATES.data,
+      g: Object.fromEntries(bg.map(g => [g, { rank: x[g].rank, of: x[g].of, crank: x[g].crank, cof: x[g].cof, ovr: x[g].ovr,
+        top: Object.entries(x[g].groups || {}).filter(([, r]) => r <= 25).sort((a, b) => a[1] - b[1]).slice(0, 3).map(([k, r]) => `#${r} in ${GN[k]}`) }])) });
     const badgeBox = bg.length ? `<details class="rkhow" style="margin-top:12px"><summary>Add this ranking to your team website</summary><p>Coaches and athletic departments can put the live badge on a roster or recruiting page. It updates every Monday in season.</p>${bg.map(g => `<p><img src="/badge/${schoolSlug(s)}-${g}.svg" alt="" width="340" height="112" loading="lazy" style="max-width:100%;height:auto"></p><textarea readonly rows="3" style="width:100%;font:12px ui-monospace,monospace;border:1px solid #ECEAF3;border-radius:10px;padding:8px" onclick="this.select()">${esc(embed(g))}</textarea>`).join("")}</details>` : "";
     return `<h2>Where ${esc(shortOf(s))} ranks nationally (${x.year} ${x.season})</h2><p>${depthLine(s, x)}${top.length ? ` Event-group squads: ${top.join(", ")}.` : ""} <a href="/rankings/${RP[x.d]}-track-and-field-rankings.html">${esc(x.d)} Power Rankings ›</a></p>${badgeBox}`; }
   function factSections(s, F) {
@@ -263,6 +266,7 @@ ${/* coach portal links removed (Ryan 2026-10-16: "take out the coach log in"); 
     let h = shell.replace(/<title>[^<]*<\/title>/, `<title>${esc(title)}</title>`).replace(/<link rel="canonical" href="[^"]*"\s*\/?>/, `<link rel="canonical" href="${url}" />`);
     h = meta(h, "name", "description", desc); h = meta(h, "property", "og:url", url); h = meta(h, "property", "og:title", title); h = meta(h, "property", "og:description", desc);
     h = meta(h, "name", "twitter:title", title); h = meta(h, "name", "twitter:description", desc);
+    if (SHARE.length && SHARE[SHARE.length - 1].slug === schoolSlug(s)) { h = meta(h, "property", "og:image", `${SITE}/share/${schoolSlug(s)}.png`); h = meta(h, "name", "twitter:image", `${SITE}/share/${schoolSlug(s)}.png`); }   /* link previews show the ranking card */
     h = h.replace("</head>", ld.map(x => `<script type="application/ld+json">${JSON.stringify(x).replace(/</g, "\\u003c")}</script>`).join("") + "\n</head>").replace('<div id="root"></div>', `<div id="root">${body}</div>`);
     const f = path.join(out, "schools", slug + ".html"); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, h); files.push(p);
     /* the school's other old URLs get the same page (canonical stays on the main URL) so none of them 404 */

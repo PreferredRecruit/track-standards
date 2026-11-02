@@ -621,12 +621,13 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   }
   setTimeout(()=>teamBest(S.school),0);
   setTimeout(()=>schoolVids(S.school),0);
+  setTimeout(()=>schoolRank(S.school),0);
   setTimeout(()=>armSchoolOffer(S.school),0);
   setTimeout(()=>schoolFacts(S.school),0);
   setTimeout(()=>schoolIntent(S.school),0);
   /* the "how these are set" / official-source box goes to the bottom (Ryan 2026-10-16: "just put it at the bottom") */
   const vm=o.match(/<div class="verify">[\s\S]*?<\/div>/),vf=vm?vm[0]:"";if(vf)o=o.replace(vf,"");
-  return o+`<div id="sfacts"></div><div id="tbest"></div><div id="svid"></div>`+schoolArch(s)+schoolAbout(s,vf)+schoolExtra(s)+schoolMore(s)+brandNote(s,B)+`</div>`}
+  return o+`<div id="srank"></div><div id="sfacts"></div><div id="tbest"></div><div id="svid"></div>`+schoolArch(s)+schoolAbout(s,vf)+schoolExtra(s)+schoolMore(s)+brandNote(s,B)+`</div>`}
 /* parent capture (Ryan 2026-10-25, enterprise value: parents buy, but 71 of 100 athlete accounts had no parent contact).
    Signed-in athletes without a parent on file see one card under their results until they add one or close it.
    Saves parent name / email / phone to their own profile (RLS: owner only). No SMS consent is taken here: a parent's
@@ -664,6 +665,36 @@ let VIDS=null;
 function schoolVids(i){if(i==null)return;const fill=()=>{const el=document.getElementById("svid");if(!el||S.school!==i)return;const v=(VIDS||{})[SCH[i].n];if(!v){el.innerHTML="";return}
   el.innerHTML=`<details class="fold vfold"><summary>Videos<small>${(v.yt||[]).length+(v.ig||[]).length}</small></summary><div class="vids">${(v.yt||[]).map(x=>`<a class="vcard" href="https://www.youtube.com/watch?v=${esc(x.id)}" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/${esc(x.id)}/hqdefault.jpg" alt="" loading="lazy"><span>${esc(x.t)}</span><small>YouTube</small></a>`).join("")}${(v.ig||[]).map(x=>`<a class="vcard ig" href="https://www.instagram.com/reel/${esc(x.code)}/" target="_blank" rel="noopener"><span>${esc(SCH[i].n)} standards reel</span><small>Instagram · @preferredrecruit</small></a>`).join("")}</div></details>`};
   if(VIDS)return fill();fetch("/data/videos.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>{VIDS=d||{};fill()})}
+/* national ranking + "post this ranking" kit (Ryan 2026-11-02: "if a school wanted to post our rankings"). /share/index.json and the
+   card SVGs come from scripts/seo/share.mjs; the card becomes a PNG here, with Inter and the logo embedded so it draws like the link preview */
+let SHX=null,SHF=null;
+const shLine=(r,g)=>{const y=r.g[g];return `${r.nm} ${g==="m"?"men":"women"} are ranked No. ${y.rank}${y.of?` of ${y.of}`:""} in the ${r.d} Track & Field Power Rankings${y.crank&&y.crank<=10?` and No. ${y.crank} in the ${r.conf}`:""} (trackandfieldstandards.com, ${r.label}, updated ${r.upd}).`};
+function schoolRank(i){const slug=window.__prSlug?window.__prSlug(i):null;if(!slug||i==null)return;
+  const fill=()=>{const el=document.getElementById("srank");if(!el||S.school!==i)return;const r=(SHX||{})[slug];if(!r){el.innerHTML="";return}
+    const G=["m","w"].filter(g=>r.g[g]),gl=g=>g==="m"?"Men":"Women",site="https://trackandfieldstandards.com";
+    const embed=g=>`<a href="${site}/schools/${slug}"><img src="${site}/badge/${slug}-${g}.svg" alt="${esc(r.nm)} ${g==="m"?"men's":"women's"} track and field: #${r.g[g].rank} in the ${esc(r.d)} Power Rankings" width="340" height="112"></a>`;
+    el.innerHTML=`<div class="srk"><div class="srk-h"><b>National ranking</b><small>${esc(r.label)} · <a href="/?tab=rankings">Power Rankings</a></small></div>${G.map(g=>{const y=r.g[g];return `<div class="srk-r"><b class="srk-n">#${y.rank}</b><span><b>${gl(g)}</b><small>${y.of?`of ${y.of} in `:"in "}${esc(r.d)}${y.crank&&y.crank<=10?` · #${y.crank} in the ${esc(r.conf)}`:""}</small></span>${y.ovr!=null?`<em class="t-${y.ovr>=90?"a":y.ovr>=80?"b":y.ovr>=70?"c":"d"}">${y.ovr}<i>OVR</i></em>`:""}</div>`}).join("")}</div>
+    <details class="fold"><summary>Post this ranking<small>for coaches</small></summary><p class="tbp">Images for Instagram, a line for a news story and a badge for your team website. The ranking updates every Monday in season.</p>
+    ${G.map(g=>`<div class="srk-k">${G.length>1?`<h4>${gl(g)}</h4>`:""}<div class="srk-b"><button type="button" class="hbtn" data-rshare="${slug}|${g}|post">Instagram post</button><button type="button" class="hbtn" data-rshare="${slug}|${g}|story">Story</button><button type="button" class="hbtn" data-rcopy="${g}">Copy news line</button></div><p class="srk-l" data-rline="${g}">${esc(shLine(r,g))}</p></div>`).join("")}
+    <p class="tbp" style="margin-top:14px">Website badge (updates itself):</p>${G.map(g=>`<p><img src="/badge/${slug}-${g}.svg" alt="" width="340" height="112" loading="lazy" style="max-width:100%;height:auto"></p><textarea class="srk-c" readonly rows="3" aria-label="Badge code">${esc(embed(g))}</textarea>`).join("")}</details>`};
+  if(SHX)return fill();fetch("/share/index.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>{SHX=d||{};fill()})}
+const toData=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
+async function rankCard(slug,g,kind){
+  if(!SHF)SHF=Promise.all([["SemiBold",600],["Bold",700],["ExtraBold",800],["Black",900]].map(async([n,w])=>`@font-face{font-family:Inter;font-weight:${w};src:url(${await toData(await fetch("/fonts/share/Inter-"+n+".ttf").then(r=>r.blob()))}) format("truetype")}`)).then(a=>a.join(""));
+  let svg=await fetch(`/share/${slug}-${g}-${kind}.svg`).then(r=>r.text());const lg=svg.match(/href="(\/brand\/[^"]+)"/);
+  if(lg)svg=svg.replace(lg[0],`href="${await toData(await fetch(lg[1]).then(r=>r.blob()))}"`);
+  const ff=await SHF;svg=svg.replace(/^<svg[^>]*>/,m=>m+"<style>"+ff+"</style>");
+  const img=new Image(),u=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml"}));img.src=u;await img.decode();await new Promise(r=>setTimeout(r,60));
+  const c=document.createElement("canvas");c.width=img.naturalWidth||1080;c.height=img.naturalHeight||1350;c.getContext("2d").drawImage(img,0,0);URL.revokeObjectURL(u);
+  return new Promise(r=>c.toBlob(r,"image/png"))}
+document.addEventListener("click",async ev=>{const b=ev.target.closest("[data-rshare],[data-rcopy]");if(!b)return;ev.preventDefault();
+  if(b.dataset.rcopy){const p=document.querySelector(`[data-rline="${b.dataset.rcopy}"]`);try{await navigator.clipboard.writeText(p.textContent);b.textContent="Copied"}catch(e){getSelection().selectAllChildren(p)}log("rank_share",{kind:"line"});return}
+  const [slug,g,kind]=b.dataset.rshare.split("|"),was=b.textContent;b.textContent="Making image…";b.disabled=true;
+  try{const blob=await rankCard(slug,g,kind),name=`${slug.replace(/-track-standards$/,"")}-${g==="m"?"men":"women"}-ranking-${kind}.png`,file=new File([blob],name,{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})&&/Mobi|Android|iPhone|iPad/.test(navigator.userAgent)){try{await navigator.share({files:[file]})}catch(e){}}
+    else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+    log("rank_share",{kind,school:slug});b.textContent=was}catch(e){b.textContent="Try again"}b.disabled=false});
+document.addEventListener("click",ev=>{const t=ev.target.closest(".srk-c");if(t)t.select()});
 /* season bests (Ryan 2026-10-14 "optimize everything"): /data/teams/<slug>.json is written at build from the latest outdoor TFRRS lists */
 const TB={};
 function teamBest(i){const slug=window.__prSlug?window.__prSlug(i):null;if(!slug||i==null)return;

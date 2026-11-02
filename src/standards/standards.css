@@ -1376,3 +1376,15 @@ header .hd .acchd{flex:none;visibility:visible}
 @media (max-width:700px){.eval .evlg{padding:16px 14px 10px}.eval .evlr{height:62px}.eval .evlt{width:52px;height:52px;border-radius:16px}.eval .evlt:nth-child(3){width:62px;height:62px;border-radius:19px}.eval .evlc{margin-top:8px;font-size:13px}}
 /* lighter scrim, no blur over their results (UX audit 2026-10-31) */
 .evbg{background:rgba(12,10,24,.3)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+/* national ranking card + "post this ranking" kit on the school view (Ryan 2026-11-02), OVR tiles in the badge's tier colours */
+.srk{margin:18px 0 8px;border:1px solid var(--pr-line);border-radius:18px;background:var(--pr-card);overflow:hidden}
+.srk-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 18px;border-bottom:1px solid var(--pr-line)}.srk-h b{font-size:15px;color:var(--pr-ink);white-space:nowrap}.srk-h small{font-size:12px;color:var(--pr-mute);text-align:right}
+.srk-r{display:flex;align-items:center;gap:14px;padding:12px 18px}.srk-r+.srk-r{border-top:1px solid var(--pr-line)}
+.srk-n{font-size:32px;font-weight:800;letter-spacing:-.03em;min-width:76px;font-variant-numeric:tabular-nums;color:var(--pr-ink)}
+.srk-r span{display:flex;flex-direction:column;flex:1;min-width:0;color:var(--pr-ink)}.srk-r span small{color:var(--pr-mute);font-size:13px}
+.srk-r em{font-style:normal;font-weight:800;font-size:18px;border-radius:12px;padding:6px 10px 5px;text-align:center;line-height:1;color:#fff;background:linear-gradient(#C9C8D3,#8A8999)}.srk-r em i{display:block;font-size:8.5px;letter-spacing:.14em;font-style:normal;margin-top:3px}
+.srk-r em.t-a{background:linear-gradient(#FFE58A,#C98A00);color:#2A1B00}.srk-r em.t-b{background:linear-gradient(#9C82FF,#4B2BD6)}.srk-r em.t-c{background:linear-gradient(#7FB4FF,#1D5BBF)}
+.srk-k h4{margin:14px 0 8px;font-size:14px;color:var(--pr-ink)}.srk-b{display:flex;gap:8px;flex-wrap:wrap}
+.srk-b .hbtn{border:1px solid var(--pr-line);background:var(--pr-card);color:var(--pr-ink);border-radius:999px;padding:8px 14px;min-height:40px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}.srk-b .hbtn:disabled{opacity:.6;cursor:progress}
+.srk-l{margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--pr-ink2);background:var(--pr-soft);border-radius:12px;padding:10px 12px}
+.srk-c{width:100%;font:12px ui-monospace,monospace;border:1px solid var(--pr-line);border-radius:10px;padding:8px;background:var(--pr-card);color:var(--pr-ink);resize:vertical}
