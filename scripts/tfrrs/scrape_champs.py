@@ -31,7 +31,7 @@ def get(url):
     if not os.path.exists(f):
         while not online(): time.sleep(60)
         subprocess.run(["curl", "-sfL", "--max-time", "60", "-A", UA, url, "-o", f], check=True)
-        time.sleep(3)
+        time.sleep(float(os.environ.get("TFRRS_DELAY", "1.5")))   # 3 s until 2026-11-02 (Ryan: "can we speed it up")
     return open(f, encoding="utf8", errors="ignore").read()
 
 def clean(s):
