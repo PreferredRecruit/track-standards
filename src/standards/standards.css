@@ -1443,3 +1443,4 @@ header .hd .acchd{flex:none;visibility:visible}
 .lvplain{margin:4px 0 10px;font-size:13px;line-height:1.5;color:var(--pr-mute)}.lvplain b{color:var(--pr-ink);font-weight:700}
 .mafter{display:flex;flex-direction:column;gap:10px;margin:18px 0 4px}
 .radv{border:1px solid var(--pr-line);background:var(--pr-card);color:var(--pr-ink2);border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+body:has(#prnudge.on) #prhelp{bottom:96px}@media (max-width:640px){body:has(#prnudge.on) #prhelp{bottom:150px}}   /* Help steps above an account bar */
