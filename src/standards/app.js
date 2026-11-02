@@ -446,7 +446,7 @@ function standards(){
   let o=`<div class="sec"><p class="lede">Select your gender, event, and enter your time to find the colleges that match you.</p>
   <form id="mf" class="panel"><div class="row">${seg("g",S.g)}
     <div class="evw"><label class="sr" for="ev">Event</label><select class="in" id="ev">${(()=>{const hs=HSE(S.g).filter(e=>list.includes(e)),more=list.filter(e=>!hs.includes(e)),op=e=>`<option value="${esc(e)}" ${e===S.e?"selected":""}>${esc(hsName(e,S.g))}</option>`;return hs.map(op).join("")+(more.length?`<optgroup label="More events">${more.map(op).join("")}</optgroup>`:"")})()}</select>${CONV[S.e]?cinfo(S.e):S.g==="m"&&IMPL[S.e]?iinfo(S.e):""}</div>
-    <label class="sr" for="mk">Personal best</label><input class="in" id="mk" placeholder="PR, e.g. ${esc(ph(S.e))}" value="${esc(S.mark)}" autocomplete="off" inputmode="decimal">
+    <label class="sr" for="mk">Personal best</label><input class="in" id="mk" placeholder="Best time or mark, e.g. ${esc(ph(S.e))}" value="${esc(S.mark)}" autocomplete="off" inputmode="decimal">
     <div class="gseg" role="group" aria-label="Your grade"><span class="gl">Grade</span><div class="seg">${[9,10,11,12].map(n=>`<button type="button" data-grade="${n}" aria-pressed="${+S.gr===n}">${n}th</button>`).join("")}</div></div>
     <button class="go">Search colleges</button></div><div class="hint" id="hint"></div></form>`;
   /* order (Ryan 2026-10-13): search by stats · or · search one school · what the levels mean · results */
@@ -459,8 +459,8 @@ function standards(){
     const dd=(id,label,cur,list,fmt=x=>x)=>`<label class="dd${cur?" on":""}"><span class="sr">${label}</span><select id="${id}"><option value="">${label}</option>${list.map(x=>`<option value="${esc(x)}" ${x===cur?"selected":""}>${esc(fmt(x))}</option>`).join("")}</select></label>`;
     const cl=convLine(S.e,S.g,v), c=k=>all.filter(x=>x.t===k).length;LASTSUM={mark:S.mark,e:S.e,g:S.g,n:all.length,T:c("T"),R:c("R"),W:c("W")};
     o+=`<div class="mhead"><p class="sum">${esc(S.mark)} in the ${S.g==="m"?"men's":"women's"} ${esc(hsName(S.e,S.g))} fits <b>${all.length}</b> colleges${CONV[S.e]?cinfo(S.e,cl):S.g==="m"&&IMPL[S.e]?iinfo(S.e):""}</p>
-      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p>${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}${`<div class="hlp" id="hlp"><span>Were these results helpful?</span><button type="button" class="hbtn" data-hlp="up">Yes</button><button type="button" class="hbtn" data-hlp="down">No</button></div>`}</div>
-    ${readyLink()}${parentCard()}
+      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p><p class="lvplain"><b>Target</b> the full-scholarship range · <b>Recruit</b> where coaches start recruiting · <b>Walk-On</b> the minimum to make the team</p>${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}</div>
+    ${parentCard()}
     <section class="mtab" aria-label="Your college matches">
       <div class="mbar"><h3>Your college matches</h3><div class="dds">
         ${dd("fd","All divisions",S.div,DIVS.filter(d=>opts("d",x=>x.s.d).includes(d)))}
@@ -471,7 +471,8 @@ function standards(){
       <div class="mrow mh" aria-hidden="true"><span>School</span><span>Division</span><span>Conference</span><span class="mk">Mark to hit</span><span>Your level ${levelsInfo()}</span></div>
       ${sh.length?(()=>{const cap=ACC.member()?S.n:Math.min(S.n,ACC.LIMITS.standards);return `<div id="sgrid">${cards(sh,0,cap)}</div>${!ACC.member()&&sh.length>cap?ACC.wall("standards",sh.length):sh.length>cap?'<div class="sent" id="sent" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span></div>':""}`})():'<p class="empty">No colleges match these filters.</p>'}
       <p class="vnote"><span class="star">★</span> Official standards, published by the school and verified by Preferred Recruit. Most other colleges are set from their 2026 conference results; a few without either are marked as estimates.</p>
-    </section>`;
+    </section>
+    <div class="mafter">${`<div class="hlp" id="hlp"><span>Were these results helpful?</span><button type="button" class="hbtn" data-hlp="up">Yes</button><button type="button" class="hbtn" data-hlp="down">No</button></div>`}${readyLink()}</div>`;   /* below the list (Ryan 2026-11-02 audit: one next step at a time up top) */
   }
   return o+`</div>`;
 }
@@ -580,12 +581,12 @@ const brandNote=(s,B)=>B?`<p class="bnote">School names, logos and colours belon
 /* school-page offer (Ryan 2026-10-17: "use a pop-up for that content", keep the page surface clean). Opens once the visitor has
    scrolled past the standards table (held 1.2 s), once per visit, same modal + rules as everywhere else. */
 let SARM=null;
-function armSchoolOffer(i){clearInterval(SARM);const s=SCH[i];if(!s||s.j||EV.shown||EV.dismissed)return;let since=0;
+function armSchoolOffer(i){clearInterval(SARM);const s=SCH[i];if(!s||s.j||EV.shown||EV.dismissed)return;let since=0;const t0=Date.now();
   const nm=s.t||s.n;
   const bs={none:`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,some:`Interest is a good start. ${EVAL} how to turn it into an offer from ${nm}.`,offers:`Offers mean options. ${EVAL} if ${nm} would want you before you sign.`};
   SARM=setInterval(()=>{if(S.school!==i||EV.shown||EV.dismissed){clearInterval(SARM);return}
     const t=document.querySelector(".simple .scroll"),r=t&&t.getBoundingClientRect();if(!r)return;
-    if(r.bottom<innerHeight*.6){if(!since)since=Date.now();else if(Date.now()-since>1200){clearInterval(SARM);EV.force=true;
+    if(r.bottom<innerHeight*.6&&Date.now()-t0>20000&&!document.documentElement.classList.contains("onbon")){if(!since)since=Date.now();else if(Date.now()-since>1200){clearInterval(SARM);EV.force=true;
       const dv=INT.e&&INT.m?parse(INT.m,INT.e):null,d=dv!=null&&!BUCKET?dreamCopy(s,INT.g||S.g,INT.e,dv):null;
       if(d)evalIn(d.t,d.b,0,"school-dream-"+d.k+gsfx(),"school-scroll",dreamBs(d));
       else evalIn(`Does ${nm} know your name?`,`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,0,"school-page"+gsfx(),"school-scroll",bs)}}else since=0},300)}
@@ -668,24 +669,30 @@ function schoolVids(i){if(i==null)return;const fill=()=>{const el=document.getEl
   if(VIDS)return fill();fetch("/data/videos.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>{VIDS=d||{};fill()})}
 /* national ranking + "post this ranking" kit (Ryan 2026-11-02: "if a school wanted to post our rankings"). /share/index.json and the
    card SVGs come from scripts/seo/share.mjs; the card becomes a PNG here, with Inter and the logo embedded so it draws like the link preview */
-let SHX=null,SHF=null;
+let SHX=null,SHF=null,RKM="",RKPV=null;
+function rkOpen(){if(!RKM)return;let m=document.getElementById("rkm");if(!m){m=document.createElement("div");m.id="rkm";document.body.appendChild(m)}
+  m.innerHTML=`<div class="rkm-bg" data-rkx></div><div class="rkm-c" role="dialog" aria-modal="true" aria-label="National ranking">${RKM}</div>`;m.hidden=false;document.documentElement.classList.add("onbon");m.querySelector(".rkm-x").focus();RKPV&&RKPV()}
+function rkClose(){const m=document.getElementById("rkm");if(m){m.hidden=true;m.innerHTML=""}document.documentElement.classList.remove("onbon")}
+document.addEventListener("click",ev=>{if(ev.target.closest("[data-rkx]"))rkClose()});document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&document.getElementById("rkm")&&!document.getElementById("rkm").hidden)rkClose()});
 const shLine=(r,g)=>{const y=r.g[g];return `${r.nm} ${g==="m"?"men":"women"} are ranked No. ${y.rank}${y.of?` of ${y.of}`:""} in the ${r.d} Track & Field Power Rankings${y.crank&&y.crank<=10?` and No. ${y.crank} in the ${r.conf}`:""} (trackandfieldstandards.com, ${r.label}, updated ${r.upd}).`};
 function schoolRank(i){const slug=window.__prSlug?window.__prSlug(i):null;if(!slug||i==null)return;
-  const fill=()=>{const el=document.getElementById("srank");if(!el||S.school!==i)return;const r=(SHX||{})[slug];if(!r){el.innerHTML="";return}
+  const fill=()=>{const el=document.getElementById("srank");if(!el||S.school!==i)return;const r=(SHX||{})[slug];RKM="";if(!r){el.innerHTML="";return}
     const RG=["m","w"].filter(g=>r.g[g]),G=RG.filter(g=>r.g[g].post),gl=g=>g==="m"?"Men":"Women",site="https://trackandfieldstandards.com";
     const embed=g=>`<a href="${site}/schools/${slug}"><img src="${site}/badge/${slug}-${g}.svg" alt="${esc(r.nm)} ${g==="m"?"men's":"women's"} track and field: #${r.g[g].rank} in the ${esc(r.d)} Power Rankings" width="340" height="112"></a>`;
     const g0=G.includes(S.g)?S.g:G[0],y0=r.g[g0]||{},tr=o=>o>=90?"a":o>=80?"b":o>=70?"c":"d";
     /* header chip: the rank for the gender on screen, so Men / Women switch it (Ryan 2026-11-02) */
     const gc=(SCH[i].ng||[]).includes(S.g)&&RG.length?RG[0]:S.g,yc=r.g[gc];   /* a one-gender program shows its own rank */
-    const chips=document.getElementById("srchips");if(chips)chips.innerHTML=yc?`<button type="button" class="srchip" data-rgo="${gc}"${G.includes(gc)?"":" disabled"} aria-label="${gl(gc)}: number ${yc.rank} in the ${esc(r.d)} national rankings"><small class="srk-k0">National rank</small><b>#${yc.rank}</b><span>${gc==="m"?"Men's":"Women's"}<small>${yc.of?`of ${yc.of} in `:"in "}${esc(r.d)}</small></span></button>`:`<span class="srchip off"><span>${gc==="m"?"Men's":"Women's"}<small>Not ranked this season</small></span></span>`;
+    const chips=document.getElementById("srchips");if(chips)chips.innerHTML=yc?`<button type="button" class="srchip" data-rgo="${gc}"${G.includes(gc)?"":" disabled"} aria-label="${gl(gc)}: number ${yc.rank} in the ${esc(r.d)} national rankings"><b>#${yc.rank}</b><span>${gc==="m"?"Men":"Women"}<small>${esc(r.d)} rank</small></span></button>`:`<span class="srchip off"><span>${gc==="m"?"Men's":"Women's"}<small>Not ranked this season</small></span></span>`;
     if(!G.length){el.innerHTML="";return}
-    el.innerHTML=`<details class="fold srk-f"${S.rkOpen?" open":""}><summary>National ranking<small>${RG.map(g=>`#${r.g[g].rank} ${g==="m"?"men":"women"}`).join(" · ")}</small></summary>
+    /* the leaderboard and posting kit open from the header rank in a sheet (Ryan 2026-11-02: "the ranking at the bottom of the screen needs to be removed") */
+    el.innerHTML="";RKM=`<div class="rkm-h"><b>National ranking</b><button type="button" class="rkm-x" data-rkx aria-label="Close">×</button></div>
     <div class="srk"><div class="srk-h"><b>${esc(r.d)} ${g0==="m"?"men's":"women's"} rankings</b><small>${esc(r.label)} · <a href="/?tab=rankings">All rankings</a></small></div><ol class="srk-ls">${(y0.list||[]).map(t=>t?`<li${t[3]?' class="me"':""}><b>${t[0]}</b><span>${esc(t[1])}</span>${t[2]!=null?`<em class="t-${tr(t[2])}">${t[2]}</em>`:""}</li>`:`<li class="gap">···</li>`).join("")}</ol>${RG.filter(g=>g!==g0).map(g=>`<p class="srk-o">${esc(r.nm)} ${g==="m"?"men":"women"}: <b>#${r.g[g].rank}</b>${r.g[g].of?` of ${r.g[g].of}`:""} in ${esc(r.d)}</p>`).join("")}</div>
     <h4 class="srk-t">Post this ranking</h4><p class="tbp">Ready-to-post graphics for Instagram and a line for a news story. The ranking updates every Monday in season.</p><div class="srk-pv" data-rpv="${slug}|${g0}"></div>
     ${G.map(g=>`<div class="srk-k">${G.length>1?`<h4>${gl(g)}</h4>`:""}<div class="srk-b"><button type="button" class="hbtn" data-rshare="${slug}|${g}|post">Instagram post</button><button type="button" class="hbtn" data-rshare="${slug}|${g}|story">Story</button><button type="button" class="hbtn" data-rcopy="${g}">Copy news line</button></div><p class="srk-l" data-rline="${g}">${esc(shLine(r,g))}</p></div>`).join("")}
-    <details class="srk-bd"><summary>Badge for your team website</summary>${G.map(g=>`<p><img src="/badge/${slug}-${g}.svg" alt="" width="340" height="112" loading="lazy" style="max-width:100%;height:auto"></p><textarea class="srk-c" readonly rows="3" aria-label="Badge code">${esc(embed(g))}</textarea>`).join("")}</details></details>`};
-  const pv=()=>{const d=document.querySelector("#srank .srk-f"),p=document.querySelector("[data-rpv]");if(!d||!p)return;d.addEventListener("toggle",async()=>{S.rkOpen=d.open;if(!d.open||p.dataset.done)return;p.dataset.done=1;const [sl,g]=p.dataset.rpv.split("|");
-    try{const b=await rankCard(sl,g,"post"),img=new Image();img.src=URL.createObjectURL(b);img.alt="Instagram post preview";p.appendChild(img)}catch(e){}})};
+    <details class="srk-bd"><summary>Badge for your team website</summary>${G.map(g=>`<p><img src="/badge/${slug}-${g}.svg" alt="" width="340" height="112" loading="lazy" style="max-width:100%;height:auto"></p><textarea class="srk-c" readonly rows="3" aria-label="Badge code">${esc(embed(g))}</textarea>`).join("")}</details>`};
+  const pv=()=>{};
+  RKPV=async()=>{const p=document.querySelector("#rkm [data-rpv]");if(!p||p.dataset.done)return;p.dataset.done=1;const [sl,g]=p.dataset.rpv.split("|");
+    try{const b=await rankCard(sl,g,"post"),img=new Image();img.src=URL.createObjectURL(b);img.alt="Instagram post preview";p.appendChild(img)}catch(e){}};
   if(SHX){fill();return pv()}fetch("/share/index.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>{SHX=d||{};fill();pv()})}
 const toData=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
 async function rankCard(slug,g,kind){
@@ -702,7 +709,7 @@ document.addEventListener("click",async ev=>{const b=ev.target.closest("[data-rs
     if(navigator.canShare&&navigator.canShare({files:[file]})&&/Mobi|Android|iPhone|iPad/.test(navigator.userAgent)){try{await navigator.share({files:[file]})}catch(e){}}
     else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
     log("rank_share",{kind,school:slug});b.textContent=was}catch(e){b.textContent="Try again"}b.disabled=false});
-document.addEventListener("click",ev=>{const t=ev.target.closest(".srk-c");if(t)t.select();const c=ev.target.closest("[data-rgo]");if(c){const d=document.querySelector("#srank .srk-f");if(d){d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})}log("rank_chip",{})}});
+document.addEventListener("click",ev=>{const t=ev.target.closest(".srk-c");if(t)t.select();const c=ev.target.closest("[data-rgo]");if(c){rkOpen();log("rank_chip",{})}});
 /* season bests (Ryan 2026-10-14 "optimize everything"): /data/teams/<slug>.json is written at build from the latest outdoor TFRRS lists */
 const TB={};
 function teamBest(i){const slug=window.__prSlug?window.__prSlug(i):null;if(!slug||i==null)return;
@@ -780,6 +787,7 @@ const windSw=()=>(R.season||"").endsWith("outdoor")||TM.i!=null||CC.on?`<button 
 /* the note under a list when the toggle is on */
 const windNote=(L,g,ev)=>{if(!WIND||!WEV.has(ev))return "";const x=((L.wh||{})[g]||{})[ev];return `<p class="wnote">Wind-legal marks only (wind +2.0 or less).${x&&x.sw?` ${x.sw} wind-aided best${x.sw>1?"s":""} replaced by the athlete's legal best.`:""}${x&&x.hid?` ${x.hid} athlete${x.hid>1?"s":""} hidden: no legal mark found yet.`:""}</p>`};
 const DIVINFO={"NCAA D1":"NCAA D1","NCAA D2":"NCAA D2","NCAA D3":"NCAA D3",NAIA:"NAIA",NJCAA:"NJCAA",NCCAA:"NCCAA",NWAC:"NWAC",USCAA:"USCAA"};
+const DIVFULL={"NCAA D1":"NCAA Division I","NCAA D2":"NCAA Division II","NCAA D3":"NCAA Division III",NAIA:"NAIA (small colleges)",NJCAA:"NJCAA (junior colleges)",NCCAA:"NCCAA (Christian colleges)",NWAC:"NWAC (Northwest junior colleges)",USCAA:"USCAA (small colleges)"};   /* plain-word names on hover (Ryan 2026-11-02 audit) */
 const evLabel=e=>e.replace(/^(\d[\d,]*) Meters$/,"$1m").replace(/^(\d+) Hurdles$/,"$1m Hurdles").replace(/^(\d+) Steeplechase$/,"$1m Steeple").replace(/^4 x (\d+) Relay$/,"4×$1 Relay");
 const years=()=>[...new Set(RIDX.map(x=>x.year))].sort().reverse();
 const seasons=()=>[...new Set(RIDX.map(x=>x.year+"-"+x.season))].sort().reverse();
@@ -1045,9 +1053,10 @@ function compareViewOld(){
 function divTabs(){
   const divs=RIDX.filter(x=>x.year+"-"+x.season===R.season).map(x=>x.div).sort((a,b)=>Object.keys(DIVINFO).indexOf(a)-Object.keys(DIVINFO).indexOf(b));
   syncSel();const allOn=R.sel.length===divs.length&&divs.length>1;
-  return `<div class="dsel"><button type="button" class="cmpsw" data-rcmp aria-pressed="${!!R.cmp}" title="Show selected divisions side by side"><span class="sw" aria-hidden="true"></span>Compare</button>
-  <div class="divs multi" role="group" aria-label="Division"><button type="button" data-rdiv="ALL" aria-pressed="${allOn}"><b>All</b></button>${divs.map(d=>`<button type="button" data-rdiv="${d}" aria-pressed="${R.sel.includes(d)&&!allOn}" aria-label="${d}"><b>${d.replace(/^NCAA /,"")}</b></button>`).join("")}</div>
-  <button type="button" class="cmbsw" data-rmulti aria-pressed="${!!R.multi}" title="Pick more than one division"><span class="sw" aria-hidden="true"></span>Combine</button></div>`;
+  const adv=R.adv||R.cmp||R.multi;   /* Compare, Combine and Wind-legal only after "More options" (Ryan 2026-11-02 audit: too many switches for parents) */
+  return `<div class="dsel">${adv?`<button type="button" class="cmpsw" data-rcmp aria-pressed="${!!R.cmp}" title="Show selected divisions side by side"><span class="sw" aria-hidden="true"></span>Compare</button>`:""}
+  <div class="divs multi" role="group" aria-label="Division"><button type="button" data-rdiv="ALL" aria-pressed="${allOn}" title="Every division"><b>All</b></button>${divs.map(d=>`<button type="button" data-rdiv="${d}" aria-pressed="${R.sel.includes(d)&&!allOn}" aria-label="${esc(DIVFULL[d]||d)}" title="${esc(DIVFULL[d]||d)}"><b>${d.replace(/^NCAA /,"")}</b></button>`).join("")}</div>
+  ${adv?`<button type="button" class="cmbsw" data-rmulti aria-pressed="${!!R.multi}" title="Pick more than one division"><span class="sw" aria-hidden="true"></span>Combine</button>`:`<button type="button" class="radv" data-radv>More options</button>`}</div>`;
 }
 function hookRow(){const d=R.div;
   const t=d==="D1"?"Looking at D1 marks? See if you actually qualify.":`Could you compete in ${d}? See where you fit.`;
@@ -1232,7 +1241,7 @@ function multiResults(){
   const ready=ks.filter(x=>CACHE[x.key]&&!CACHE[x.key].err);
   const nm=R.sel.length===seasonDivs().length?"Every division":R.sel.map(d=>d.replace(/^NCAA /,"")).join(" + ");
   let o=`<div class="sec"><p class="lede">${CMPV?`${esc(nm)}, side by side.`:`${esc(nm)} in one ranking.`}</p><div class="rcard">${divTabs()}`;
-  const ctl=`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=x==="xc"||RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}${windSw()}`;
+  const ctl=`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=x==="xc"||RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}${R.adv||R.cmp||R.multi||!WIND?windSw():""}`;
   if(ready.length<ks.length)return o+ctl+`<span></span><span></span></div></div>`+skeleton()+`</div>`;
   const nat=D=>D.lists.find(l=>l.nat)||D.lists[0];
   const evNames=[...new Set(ready.flatMap(x=>Object.keys((nat(CACHE[x.key]).g||{})[R.g]||{})))];if(!evNames.includes(R.ev))R.ev=evNames[0];
@@ -1442,7 +1451,7 @@ function resultsCollege(){
   loadBrand();
   const fsum=`${esc(R.div||"All")} · ${esc(seasonLabel(R.season))} · ${R.g==="m"?"Men":"Women"}${R.st?" · "+esc(ST_NAME[R.st]||R.st):""}${WIND?" · wind-legal":""}`;
   let o=`<div class="sec"><p class="lede">The top marks in college track this season. Pick a level, then an event.</p><button type="button" class="rfsum" data-rfopen aria-expanded="${!!R.fopen}"><span>${fsum}</span><b>${R.fopen?"Done":"Filters"}</b></button><div class="rcard${R.fopen?" open":""}">${divTabs()}`;
-  const ctl=(L)=>`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=x==="xc"||RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}${windSw()}
+  const ctl=(L)=>`<div class="rctl"><label class="sr" for="ry">Year</label><select class="in" id="ry">${years().map(y=>`<option ${y===R.season.split("-")[0]?"selected":""}>${y}</option>`).join("")}</select><div class="seg" role="group" aria-label="Season">${["outdoor","indoor","xc"].filter(x=>x!=="xc"||RIDX.some(r=>r.season==="xc")).map(x=>{const ok=x==="xc"||RIDX.some(r=>r.year===R.season.split("-")[0]&&r.season===x);return `<button data-rsea="${x}" aria-pressed="${R.season.endsWith(x)}" ${ok?"":"disabled"}>${{outdoor:"Outdoor",indoor:"Indoor",xc:"XC"}[x]}</button>`}).join("")}</div>${seg("rg",R.g)}${R.adv||R.cmp||R.multi||!WIND?windSw():""}
     ${L?(()=>{const sts=[...new Set(D.teams.map(teamSt).filter(Boolean))].sort((a,b)=>(ST_NAME[a]||a).localeCompare(ST_NAME[b]||b));return `<label class="sr" for="rs">State</label><select class="in" id="rs"><option value="">All states</option>${sts.map(x=>`<option value="${x}" ${x===R.st?"selected":""}>${esc(ST_NAME[x]||x)}</option>`).join("")}</select>`})():""}
     <div class="search">${MAG}<label class="sr" for="rq">Search a school or athlete</label><input class="in" id="rq" placeholder="Search a school or athlete" value="${esc(R.q)}" autocomplete="off" enterkeyhint="go"><div id="rqd"></div></div></div></div>`;
   if(!D||D.err){o+=ctl(null)+(D&&D.err?`<div class="loading">These results aren't available in the preview.</div>`:skeleton());return o+`</div>`}
@@ -2264,6 +2273,7 @@ matchMedia("(min-width:761px)").addEventListener("change",()=>{if(S.tab==="resul
 document.addEventListener("click",ev=>{
   {const ci=ev.target.closest("[data-cinfo]");document.querySelectorAll(".ci.open").forEach(x=>{if(!ci||x!==ci.parentNode){x.classList.remove("open");x.querySelector("button").setAttribute("aria-expanded","false")}});if(ci){const w=ci.parentNode;w.classList.toggle("open");ci.setAttribute("aria-expanded",w.classList.contains("open"));return}}
   if(ev.target.closest("#evx")){evalOut();return}
+  if(ev.target.closest("[data-radv]")){R.adv=true;log("results_more",{});render();return}
   {const rb=S.tab==="rankings"&&ev.target.closest("#app [data-rk]");if(rb&&rb.tagName==="BUTTON"){const k=rb.dataset.rk,v=rb.dataset.val;   /* rankings explorer buttons */
     if(k==="all")RK.all=true;else{RK[k]=v;RK.all=false;if(k==="d")RK.key=null;}rkUrl();render();if(k==="c"){const t=document.querySelector(".rkcats");if(t&&t.getBoundingClientRect().top<0)t.scrollIntoView({block:"start"})}return}}
   const b=ev.target.closest("button,a[data-tpage],[data-ameet]");if(!b||(b.dataset.ameet!==undefined&&ev.target.closest("a[href]")))return;const d=b.dataset;

@@ -1428,3 +1428,18 @@ header .hd .acchd{flex:none;visibility:visible}
 .trnext{border:0;background:#7A45F0;color:#fff}.trback{border:1px solid var(--pr-line);background:var(--pr-card);color:var(--pr-ink)}.trskip{border:0;background:none;color:var(--pr-mute);padding-left:2px!important}
 @media (max-width:640px){#prhelp{bottom:84px;padding:8px 12px 8px 8px;font-size:13px}#prhelpp{bottom:136px}}
 @media (max-width:640px){#prhelp{font-size:0;gap:0;padding:4px;left:10px;bottom:84px}#prhelp span{width:34px;height:34px;font-size:17px}}
+/* rank in the band's top-right corner, small (Ryan 2026-11-02: "should not be on the same level as the logo") */
+.sband{position:relative}.srchips{position:absolute;top:12px;right:12px;margin:0;width:auto!important}
+.srchip{padding:6px 10px 6px 9px!important;gap:7px;border-radius:12px;flex:none!important}.srchip b{font-size:18px}.srchip span{font-size:11.5px}.srchip small{font-size:10px}
+.srchip .srk-k0{display:none}.srchip.off{padding:6px 10px!important}
+@media (min-width:641px){.sband>div:not(.srchips){padding-right:150px}}
+@media (max-width:640px){.srchips{top:14px;right:14px}}
+/* ranking sheet */
+#rkm{position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;padding:16px}#rkm[hidden]{display:none}
+.rkm-bg{position:absolute;inset:0;background:rgba(10,8,20,.55)}
+.rkm-c{position:relative;width:min(520px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:18px 18px 22px;border-radius:22px;background:var(--pr-page,var(--pr-card));color:var(--pr-ink);box-shadow:0 30px 80px -20px rgba(0,0,0,.5)}
+.rkm-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.rkm-h b{font-size:18px}.rkm-x{border:0;background:none;font-size:28px;line-height:1;color:var(--pr-mute);cursor:pointer;padding:0 4px}
+@media (max-width:640px){#rkm{align-items:flex-end;padding:0}.rkm-c{border-radius:22px 22px 0 0;max-height:88vh}}
+.lvplain{margin:4px 0 10px;font-size:13px;line-height:1.5;color:var(--pr-mute)}.lvplain b{color:var(--pr-ink);font-weight:700}
+.mafter{display:flex;flex-direction:column;gap:10px;margin:18px 0 4px}
+.radv{border:1px solid var(--pr-line);background:var(--pr-card);color:var(--pr-ink2);border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
