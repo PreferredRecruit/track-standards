@@ -1,0 +1,508 @@
+{
+"2016-indoor-d1": {
+"champ": "https://tf.tfrrs.org/results/44282/NCAA_Division_I_Indoor_Track__Field_Championships",
+"champName": "NCAA Division I Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1569/2015_2016_NCAA_Div_I_Indoor_Qualifying_FINAL",
+"listName": "2015 2016 NCAA Div I Indoor Qualifying FINAL"
+},
+"2016-indoor-d2": {
+"champ": "https://tf.tfrrs.org/results/43495/NCAA_Division_II_Indoor_Track__Field_Championships",
+"champName": "NCAA Division II Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1570/2015_2016_NCAA_Div_II_Indoor_Qualifying_FINAL",
+"listName": "2015 2016 NCAA Div II Indoor Qualifying FINAL"
+},
+"2016-indoor-d3": {
+"champ": "https://tf.tfrrs.org/results/43823/NCAA_Division_III_Indoor_Track__Field_Championships",
+"champName": "NCAA Division III Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1571/2015_2016_NCAA_Div_III_Indoor_Qualifying_FINAL",
+"listName": "2015 2016 NCAA Div III Indoor Qualifying FINAL"
+},
+"2016-indoor-naia": {
+"champ": "https://tf.tfrrs.org/results/43693/NAIA_Indoor_Track__Field_Championships",
+"champName": "NAIA Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1576/2015_2016_NAIA_Indoor_Qualifying_List_FINAL",
+"listName": "2015 2016 NAIA Indoor Qualifying List FINAL"
+},
+"2016-outdoor-d1": {
+"list": "https://tf.tfrrs.org/lists/1688/2016_NCAA_Division_I_Outdoor_Qualifying_FINAL",
+"listName": "2016 NCAA Division I Outdoor Qualifying FINAL"
+},
+"2016-outdoor-d2": {
+"champ": "https://tf.tfrrs.org/results/46388/NCAA_Division_II_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division II Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1685/2016_NCAA_Division_II_Outdoor_Qualifying_FINAL",
+"listName": "2016 NCAA Division II Outdoor Qualifying FINAL"
+},
+"2016-outdoor-d3": {
+"champ": "https://tf.tfrrs.org/results/46592/NCAA_Division_III_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division III Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1684/2016_NCAA_Division_III_Outdoor_Qualifying_FINAL",
+"listName": "2016 NCAA Division III Outdoor Qualifying FINAL"
+},
+"2016-outdoor-naia": {
+"champ": "https://tf.tfrrs.org/results/46602/NAIA_Outdoor_Track__Field_Championships",
+"champName": "NAIA Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1662/2016_NAIA_Outdoor_Qualifying_List_FINAL",
+"listName": "2016 NAIA Outdoor Qualifying List FINAL"
+},
+"2017-indoor-d1": {
+"champ": "https://tf.tfrrs.org/results/49567/NCAA_Division_I_Indoor_Track__Field_Championships",
+"champName": "NCAA Division I Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1797/2016_2017_NCAA_Div_I_Indoor_Qualifying_FINAL",
+"listName": "2016 2017 NCAA Div I Indoor Qualifying FINAL"
+},
+"2017-indoor-d2": {
+"champ": "https://tf.tfrrs.org/results/48785/NCAA_Division_II_Indoor_Track__Field_Championships",
+"champName": "NCAA Division II Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1798/2016_2017_NCAA_Div_II_Indoor_Qualifying_FINAL",
+"listName": "2016 2017 NCAA Div II Indoor Qualifying FINAL"
+},
+"2017-indoor-d3": {
+"champ": "https://tf.tfrrs.org/results/48918/NCAA_Division_III_Indoor_Track__Field_Championships",
+"champName": "NCAA Division III Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1799/2016_2017_NCAA_Div_III_Indoor_Qualifying_FINAL",
+"listName": "2016 2017 NCAA Div III Indoor Qualifying FINAL"
+},
+"2017-indoor-naia": {
+"champ": "https://tf.tfrrs.org/results/49302/NAIA_Indoor_Track__Field_Championships",
+"champName": "NAIA Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1868/2016_2017_NAIA_Indoor_Qualifying_List_FINAL",
+"listName": "2016 2017 NAIA Indoor Qualifying List FINAL"
+},
+"2017-outdoor-d1": {
+"champ": "https://tf.tfrrs.org/results/51935/NCAA_Division_I_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division I Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1912/2017_NCAA_Div_I_Outdoor_Qualifying_FINAL",
+"listName": "2017 NCAA Div I Outdoor Qualifying FINAL"
+},
+"2017-outdoor-d2": {
+"champ": "https://tf.tfrrs.org/results/51671/NCAA_Division_II_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division II Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1913/2017_NCAA_Div_II_Outdoor_Qualifying_FINAL",
+"listName": "2017 NCAA Div II Outdoor Qualifying FINAL"
+},
+"2017-outdoor-d3": {
+"champ": "https://tf.tfrrs.org/results/51752/NCAA_Division_III_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division III Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1914/2017_NCAA_Div_III_Outdoor_Qualifying_FINAL",
+"listName": "2017 NCAA Div III Outdoor Qualifying FINAL"
+},
+"2017-outdoor-naia": {
+"champ": "https://tf.tfrrs.org/results/51919/NAIA_Outdoor_Track__Field_Championships",
+"champName": "NAIA Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/1916/2017_NAIA_Outdoor_Qualifying_List_FINAL",
+"listName": "2017 NAIA Outdoor Qualifying List FINAL"
+},
+"2018-indoor-d1": {
+"champ": "https://tf.tfrrs.org/results/54721/NCAA_Division_I_Indoor_Track__Field_Championships",
+"champName": "NCAA Division I Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2124/2017_2018_NCAA_Div_I_Indoor_Qualifying_FINAL",
+"listName": "2017 2018 NCAA Div I Indoor Qualifying FINAL"
+},
+"2018-indoor-d2": {
+"champ": "https://tf.tfrrs.org/results/53918/NCAA_Division_II_Indoor_Track__Field_Championships",
+"champName": "NCAA Division II Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2125/2017_2018_NCAA_Div_II_Indoor_Qualifying_FINAL",
+"listName": "2017 2018 NCAA Div II Indoor Qualifying FINAL"
+},
+"2018-indoor-d3": {
+"champ": "https://tf.tfrrs.org/results/54020/NCAA_Division_III_Indoor_Track__Field_Championships",
+"champName": "NCAA Division III Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2126/2017_2018_NCAA_Div_III_Indoor_Qualifying_FINAL",
+"listName": "2017 2018 NCAA Div III Indoor Qualifying FINAL"
+},
+"2018-indoor-naia": {
+"champ": "https://tf.tfrrs.org/results/54513/NAIA_National_Indoor_Championships",
+"champName": "NAIA National Indoor Championships",
+"list": "https://tf.tfrrs.org/lists/2129/2017_2018_NAIA_Indoor_Qualifying_List_FINAL",
+"listName": "2017 2018 NAIA Indoor Qualifying List FINAL"
+},
+"2018-outdoor-d1": {
+"champ": "https://tf.tfrrs.org/results/57114/NCAA_Division_I_Outdoor_Championships",
+"champName": "NCAA Division I Outdoor Championships",
+"list": "https://tf.tfrrs.org/lists/2279/2018_NCAA_Division_I_Outdoor_Qualifying_FINAL",
+"listName": "2018 NCAA Division I Outdoor Qualifying FINAL"
+},
+"2018-outdoor-d2": {
+"champ": "https://tf.tfrrs.org/results/56803/NCAA_Division_II_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division II Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2282/2018_NCAA_Div_II_Outdoor_Qualifying_FINAL",
+"listName": "2018 NCAA Div II Outdoor Qualifying FINAL"
+},
+"2018-outdoor-d3": {
+"champ": "https://tf.tfrrs.org/results/56915/NCAA_Division_III_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division III Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2283/2018_NCAA_Div_III_Outdoor_Qualifying_FINAL",
+"listName": "2018 NCAA Div III Outdoor Qualifying FINAL"
+},
+"2018-outdoor-naia": {
+"champ": "https://tf.tfrrs.org/results/57098/NAIA_Outdoor_Track__Field_Championships",
+"champName": "NAIA Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2171/2018_NAIA_Outdoor_Qualifying_FINAL",
+"listName": "2018 NAIA Outdoor Qualifying FINAL"
+},
+"2019-indoor-d1": {
+"champ": "https://tf.tfrrs.org/results/60240/NCAA_Division_I_Indoor_Track__Field_Championships",
+"champName": "NCAA Division I Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2324/2018_2019_NCAA_Div_I_Indoor_Qualifying_FINAL",
+"listName": "2018 2019 NCAA Div I Indoor Qualifying FINAL"
+},
+"2019-indoor-d2": {
+"champ": "https://tf.tfrrs.org/results/59432/NCAA_Division_II_Indoor_Track__Field_Championships",
+"champName": "NCAA Division II Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2325/2018_2019_NCAA_Div_II_Indoor_Qualifying_FINAL",
+"listName": "2018 2019 NCAA Div II Indoor Qualifying FINAL"
+},
+"2019-indoor-d3": {
+"champ": "https://tf.tfrrs.org/results/59897/NCAA_Division_III_Indoor_Track__Field_Championships",
+"champName": "NCAA Division III Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2326/2018_2019_NCAA_Div_III_Indoor_Qualifying_FINAL",
+"listName": "2018 2019 NCAA Div III Indoor Qualifying FINAL"
+},
+"2019-indoor-naia": {
+"champ": "https://tf.tfrrs.org/results/60005/NAIA_Indoor_Track__Field_Championships",
+"champName": "NAIA Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2418/2018_2019_NAIA_Indoor_Qualifying_List_FINAL",
+"listName": "2018 2019 NAIA Indoor Qualifying List FINAL"
+},
+"2019-outdoor-d1": {
+"champ": "https://tf.tfrrs.org/results/62668/NCAA_Division_I_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division I Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2568/2019_NCAA_Division_I_Outdoor_Qualifying_FINAL",
+"listName": "2019 NCAA Division I Outdoor Qualifying FINAL"
+},
+"2019-outdoor-d2": {
+"champ": "https://tf.tfrrs.org/results/62377/NCAA_Division_II_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division II Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2571/2019_NCAA_Div_II_Outdoor_Qualifying_FINAL",
+"listName": "2019 NCAA Div II Outdoor Qualifying FINAL"
+},
+"2019-outdoor-d3": {
+"champ": "https://tf.tfrrs.org/results/62573/NCAA_Division_III_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division III Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2572/2019_NCAA_Div_III_Outdoor_Qualifying_FINAL",
+"listName": "2019 NCAA Div III Outdoor Qualifying FINAL"
+},
+"2019-outdoor-naia": {
+"champ": "https://tf.tfrrs.org/results/62649/NAIA_Outdoor_Track__Field_Championships",
+"champName": "NAIA Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2551/2019_NAIA_Outdoor_Qualifying_List_FINAL",
+"listName": "2019 NAIA Outdoor Qualifying List FINAL"
+},
+"2020-indoor-d1": {
+"list": "https://tf.tfrrs.org/lists/2770/2019_2020_NCAA_Div_I_Indoor_Qualifying_FINAL",
+"listName": "2019 2020 NCAA Div I Indoor Qualifying FINAL"
+},
+"2020-indoor-d2": {
+"list": "https://tf.tfrrs.org/lists/2771/2019_2020_NCAA_Div_II_Indoor_Qualifying_FINAL",
+"listName": "2019 2020 NCAA Div II Indoor Qualifying FINAL"
+},
+"2020-indoor-d3": {
+"list": "https://tf.tfrrs.org/lists/2772/2019_2020_NCAA_Div_III_Indoor_Qualifying_FINAL",
+"listName": "2019 2020 NCAA Div III Indoor Qualifying FINAL"
+},
+"2020-indoor-naia": {
+"champ": "https://tf.tfrrs.org/results/65773/NAIA_Indoor_Track__Field_Championships",
+"champName": "NAIA Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/2849/2019_2020_NAIA_Indoor_Qualifying_FINAL",
+"listName": "2019 2020 NAIA Indoor Qualifying FINAL"
+},
+"2020-outdoor-d1": {
+"list": "https://tf.tfrrs.org/lists/2909/2020_NCAA_Division_I_Outdoor_Qualifying",
+"listName": "2020 NCAA Division I Outdoor Qualifying"
+},
+"2020-outdoor-d2": {
+"list": "https://tf.tfrrs.org/lists/2908/2020_NCAA_Div_II_Outdoor_Qualifying",
+"listName": "2020 NCAA Div II Outdoor Qualifying"
+},
+"2020-outdoor-d3": {
+"list": "https://tf.tfrrs.org/lists/2907/2020_NCAA_Div_III_Outdoor_Qualifying",
+"listName": "2020 NCAA Div III Outdoor Qualifying"
+},
+"2020-outdoor-naia": {
+"list": "https://tf.tfrrs.org/lists/2912/2020_NAIA_Outdoor_Qualifying_List",
+"listName": "2020 NAIA Outdoor Qualifying List"
+},
+"2021-indoor-d1": {
+"champ": "https://tf.tfrrs.org/results/68220/NCAA_Division_I_Indoor_Track__Field_Championships",
+"champName": "NCAA Division I Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3157/2020_2021_NCAA_Div_I_Indoor_Qualifying_FINAL",
+"listName": "2020 2021 NCAA Div I Indoor Qualifying FINAL"
+},
+"2021-indoor-d2": {
+"champ": "https://tf.tfrrs.org/results/66697/NCAA_Division_II_Indoor_Track__Field_Championships",
+"champName": "NCAA Division II Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3158/2020_2021_NCAA_Div_II_Indoor_Qualifying_FINAL",
+"listName": "2020 2021 NCAA Div II Indoor Qualifying FINAL"
+},
+"2021-indoor-d3": {
+"list": "https://tf.tfrrs.org/lists/3161/2020_2021_NCAA_Division_III_Indoor_Qualifying_List",
+"listName": "2020 2021 NCAA Division III Indoor Qualifying List"
+},
+"2021-indoor-naia": {
+"champ": "https://tf.tfrrs.org/results/67999/NAIA_Indoor_Track__Field_Championships",
+"champName": "NAIA Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3156/2020_2021_NAIA_Indoor_Qualifying_FINAL",
+"listName": "2020 2021 NAIA Indoor Qualifying FINAL"
+},
+"2021-outdoor-d1": {
+"list": "https://tf.tfrrs.org/lists/3191/2021_NCAA_Division_I_Outdoor_Qualifying_FINAL",
+"listName": "2021 NCAA Division I Outdoor Qualifying FINAL"
+},
+"2021-outdoor-d2": {
+"champ": "https://tf.tfrrs.org/results/70105/NCAA_Division_II_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division II Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3194/2021_NCAA_Division_II_Outdoor_Qualifying_FINAL",
+"listName": "2021 NCAA Division II Outdoor Qualifying FINAL"
+},
+"2021-outdoor-d3": {
+"champ": "https://tf.tfrrs.org/results/70179/NCAA_Division_III_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division III Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3195/2021_NCAA_Division_III_Outdoor_Qualifying_FINAL",
+"listName": "2021 NCAA Division III Outdoor Qualifying FINAL"
+},
+"2021-outdoor-naia": {
+"list": "https://tf.tfrrs.org/lists/3196/2021_NAIA_Outdoor_Qualifying_List_FINAL",
+"listName": "2021 NAIA Outdoor Qualifying List FINAL"
+},
+"2022-indoor-d1": {
+"champ": "https://tf.tfrrs.org/results/73365/NCAA_Division_I_Indoor_Track__Field_Championships",
+"champName": "NCAA Division I Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3492/2021_2022_NCAA_Div_I_Indoor_Qualifying_FINAL",
+"listName": "2021 2022 NCAA Div I Indoor Qualifying FINAL"
+},
+"2022-indoor-d2": {
+"champ": "https://tf.tfrrs.org/results/72658/NCAA_Division_II_Indoor_Track__Field_Championships",
+"champName": "NCAA Division II Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3493/2021_2022_NCAA_Div_II_Indoor_Qualifying_FINAL",
+"listName": "2021 2022 NCAA Div II Indoor Qualifying FINAL"
+},
+"2022-indoor-d3": {
+"champ": "https://tf.tfrrs.org/results/72662/NCAA_Division_III_Indoor_Track__Field_Championships",
+"champName": "NCAA Division III Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3494/2021_2022_NCAA_Div_III_Indoor_Qualifying_FINAL",
+"listName": "2021 2022 NCAA Div III Indoor Qualifying FINAL"
+},
+"2022-indoor-naia": {
+"champ": "https://tf.tfrrs.org/results/73159/NAIA_Indoor_Track__Field_Championships",
+"champName": "NAIA Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3495/2021_2022_NAIA_Indoor_Qualifying_FINAL",
+"listName": "2021 2022 NAIA Indoor Qualifying FINAL"
+},
+"2022-outdoor-d1": {
+"champ": "https://tf.tfrrs.org/results/75224/NCAA_Division_I_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division I Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3711/2022_NCAA_Division_I_Outdoor_Qualifying_FINAL",
+"listName": "2022 NCAA Division I Outdoor Qualifying FINAL"
+},
+"2022-outdoor-d2": {
+"champ": "https://tf.tfrrs.org/results/75006/NCAA_Division_II_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division II Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3595/2022_NCAA_Division_II_Outdoor_Qualifying_FINAL",
+"listName": "2022 NCAA Division II Outdoor Qualifying FINAL"
+},
+"2022-outdoor-d3": {
+"champ": "https://tf.tfrrs.org/results/75041/NCAA_Division_III_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division III Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3714/2022_NCAA_Division_III_Outdoor_Qualifying_FINAL",
+"listName": "2022 NCAA Division III Outdoor Qualifying FINAL"
+},
+"2022-outdoor-naia": {
+"champ": "https://tf.tfrrs.org/results/75209/NAIA_Outdoor_Track__Field_Championships",
+"champName": "NAIA Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3596/2022_NAIA_Outdoor_Qualifying_List_FINAL",
+"listName": "2022 NAIA Outdoor Qualifying List FINAL"
+},
+"2023-indoor-d1": {
+"champ": "https://tf.tfrrs.org/results/78382/NCAA_Division_I_Indoor_Track__Field_Championships",
+"champName": "NCAA Division I Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3901/2022_2023_NCAA_Div_I_Indoor_Qualifying_FINAL",
+"listName": "2022 2023 NCAA Div I Indoor Qualifying FINAL"
+},
+"2023-indoor-d2": {
+"champ": "https://tf.tfrrs.org/results/77582/NCAA_Division_II_Indoor_Track__Field_Championships",
+"champName": "NCAA Division II Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3902/2022_2023_NCAA_Div_II_Indoor_Qualifying_FINAL",
+"listName": "2022 2023 NCAA Div II Indoor Qualifying FINAL"
+},
+"2023-indoor-d3": {
+"champ": "https://tf.tfrrs.org/results/77650/NCAA_Division_III_Indoor_Track__Field_Championships",
+"champName": "NCAA Division III Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3903/2022_2023_NCAA_Div_III_Indoor_Qualifying_FINAL",
+"listName": "2022 2023 NCAA Div III Indoor Qualifying FINAL"
+},
+"2023-indoor-naia": {
+"champ": "https://tf.tfrrs.org/results/78132/NAIA_Indoor_Track__Field_Championships",
+"champName": "NAIA Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/3904/2022_2023_NAIA_Indoor_Qualifying_List_FINAL",
+"listName": "2022 2023 NAIA Indoor Qualifying List FINAL"
+},
+"2023-outdoor-d1": {
+"champ": "https://tf.tfrrs.org/results/81300/NCAA_Division_I_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division I Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4044/2023_NCAA_Division_I_All_Schools_Rankings",
+"listName": "2023 NCAA Division I All Schools Rankings"
+},
+"2023-outdoor-d2": {
+"champ": "https://tf.tfrrs.org/results/80891/NCAA_Division_II_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division II Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4045/2023_NCAA_Division_II_Outdoor_Qualifying_FINAL",
+"listName": "2023 NCAA Division II Outdoor Qualifying FINAL"
+},
+"2023-outdoor-d3": {
+"champ": "https://tf.tfrrs.org/results/81073/NCAA_Division_III_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division III Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4043/2023_NCAA_Division_III_Outdoor_Qualifying_FINAL",
+"listName": "2023 NCAA Division III Outdoor Qualifying FINAL"
+},
+"2023-outdoor-naia": {
+"champ": "https://tf.tfrrs.org/results/81190/NAIA_Outdoor_Track__Field_Championships",
+"champName": "NAIA Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4046/2023_NAIA_Outdoor_Qualifying_FINAL",
+"listName": "2023 NAIA Outdoor Qualifying FINAL"
+},
+"2024-indoor-d1": {
+"champ": "https://tf.tfrrs.org/results/84380/NCAA_Division_I_Indoor_Track__Field_Championships",
+"champName": "NCAA Division I Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4364/2023_2024_NCAA_Div_I_Indoor_Qualifying_FINAL",
+"listName": "2023 2024 NCAA Div I Indoor Qualifying FINAL"
+},
+"2024-indoor-d2": {
+"champ": "https://tf.tfrrs.org/results/83659/NCAA_Division_II_Indoor_Track__Field_Championships",
+"champName": "NCAA Division II Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4365/2023_2024_NCAA_Div_II_Indoor_Qualifying_FINAL",
+"listName": "2023 2024 NCAA Div II Indoor Qualifying FINAL"
+},
+"2024-indoor-d3": {
+"champ": "https://tf.tfrrs.org/results/83845/NCAA_Division_III_Indoor_Track__Field_Championships",
+"champName": "NCAA Division III Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4366/2023_2024_NCAA_Div_III_Indoor_Qualifying_FINAL",
+"listName": "2023 2024 NCAA Div III Indoor Qualifying FINAL"
+},
+"2024-indoor-naia": {
+"champ": "https://tf.tfrrs.org/results/84173/NAIA_Indoor_Championships",
+"champName": "NAIA Indoor Championships",
+"list": "https://tf.tfrrs.org/lists/4368/2023_2024_NAIA_Indoor_Qualifying_List_FINAL",
+"listName": "2023 2024 NAIA Indoor Qualifying List FINAL"
+},
+"2024-outdoor-d1": {
+"champ": "https://tf.tfrrs.org/results/87017/NCAA_Division_I_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division I Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4515/2024_NCAA_Division_I_Rankings_FINAL",
+"listName": "2024 NCAA Division I Rankings FINAL"
+},
+"2024-outdoor-d2": {
+"champ": "https://tf.tfrrs.org/results/86612/NCAA_Division_II_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division II Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4516/2024_NCAA_Division_II_Outdoor_Qualifying_FINAL",
+"listName": "2024 NCAA Division II Outdoor Qualifying FINAL"
+},
+"2024-outdoor-d3": {
+"champ": "https://tf.tfrrs.org/results/86755/NCAA_Division_III_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division III Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4517/2024_NCAA_Division_III_Outdoor_Qualifying_FINAL",
+"listName": "2024 NCAA Division III Outdoor Qualifying FINAL"
+},
+"2024-outdoor-naia": {
+"champ": "https://tf.tfrrs.org/results/86757/NAIA_Outdoor_Track__Field_Championships",
+"champName": "NAIA Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4518/2024_NAIA_Outdoor_Qualifying_List_FINAL",
+"listName": "2024 NAIA Outdoor Qualifying List FINAL"
+},
+"2025-indoor-d1": {
+"champ": "https://tf.tfrrs.org/results/90189/NCAA_Division_I_Indoor_Championships",
+"champName": "NCAA Division I Indoor Championships",
+"list": "https://tf.tfrrs.org/lists/4867/2024_2025_NCAA_Division_I_Indoor_List_FINAL",
+"listName": "2024 2025 NCAA Division I Indoor List FINAL"
+},
+"2025-indoor-d2": {
+"champ": "https://tf.tfrrs.org/results/89320/NCAA_Division_II_Indoor_Track__Field_Championships",
+"champName": "NCAA Division II Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4868/2024_2025_NCAA_Division_II_Indoor_List_FINAL",
+"listName": "2024 2025 NCAA Division II Indoor List FINAL"
+},
+"2025-indoor-d3": {
+"champ": "https://tf.tfrrs.org/results/89327/NCAA_Division_III_Indoor_Track__Field_Championships",
+"champName": "NCAA Division III Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4869/2024_2025_NCAA_Division_III_Indoor_List_FINAL",
+"listName": "2024 2025 NCAA Division III Indoor List FINAL"
+},
+"2025-indoor-naia": {
+"champ": "https://tf.tfrrs.org/results/89322/NAIA_Indoor_Track__Field_Championships",
+"champName": "NAIA Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/4870/2024_2025_NAIA_Indoor_Qualifying_List_FINAL",
+"listName": "2024 2025 NAIA Indoor Qualifying List FINAL"
+},
+"2025-outdoor-d1": {
+"champ": "https://tf.tfrrs.org/results/92668/NCAA_Division_I_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division I Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/5018/2025_NCAA_Division_I_Outdoor_Qualifying_List",
+"listName": "2025 NCAA Division I Outdoor Qualifying List"
+},
+"2025-outdoor-d2": {
+"champ": "https://tf.tfrrs.org/results/92172/NCAA_Division_II_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division II Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/5019/2025_NCAA_Division_II_Outdoor_Qualifying_FINAL",
+"listName": "2025 NCAA Division II Outdoor Qualifying FINAL"
+},
+"2025-outdoor-d3": {
+"champ": "https://tf.tfrrs.org/results/92238/NCAA_Division_III_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division III Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/5020/2025_NCAA_Division_III_Outdoor_Qualifying_FINAL",
+"listName": "2025 NCAA Division III Outdoor Qualifying FINAL"
+},
+"2025-outdoor-naia": {
+"champ": "https://tf.tfrrs.org/results/92360/NAIA_Outdoor_Track__Field_Championships",
+"champName": "NAIA Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/5021/2025_NAIA_Outdoor_Qualifying_List_FINAL",
+"listName": "2025 NAIA Outdoor Qualifying List FINAL"
+},
+"2026-indoor-d1": {
+"champ": "https://tf.tfrrs.org/results/95736/NCAA_Division_I_Indoor_Track__Field_Championships",
+"champName": "NCAA Division I Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/5352/2025_2026_NCAA_Division_I_Indoor_List_FINAL",
+"listName": "2025 2026 NCAA Division I Indoor List FINAL"
+},
+"2026-indoor-d2": {
+"champ": "https://tf.tfrrs.org/results/95146/NCAA_Division_II_Indoor_Track__Field_Championships",
+"champName": "NCAA Division II Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/5353/2025_2026_NCAA_Division_II_Indoor_List_FINAL",
+"listName": "2025 2026 NCAA Division II Indoor List FINAL"
+},
+"2026-indoor-d3": {
+"champ": "https://tf.tfrrs.org/results/95147/NCAA_Division_III_Indoor_Track__Field_Championships",
+"champName": "NCAA Division III Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/5354/2025_2026_NCAA_Division_III_Indoor_List_FINAL",
+"listName": "2025 2026 NCAA Division III Indoor List FINAL"
+},
+"2026-indoor-naia": {
+"champ": "https://tf.tfrrs.org/results/94816/NAIA_Indoor_Track__Field_Championships",
+"champName": "NAIA Indoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/5351/2025_2026_NAIA_Indoor_Qualifying_List_FINAL",
+"listName": "2025 2026 NAIA Indoor Qualifying List FINAL"
+},
+"2026-outdoor-d1": {
+"champ": "https://tf.tfrrs.org/results/96875/NCAA_Division_I_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division I Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/5602/2026_NCAA_Division_I_Outdoor_Qualifying_FINAL",
+"listName": "2026 NCAA Division I Outdoor Qualifying FINAL"
+},
+"2026-outdoor-d2": {
+"champ": "https://tf.tfrrs.org/results/96683/NCAA_Division_II_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division II Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/5603/2026_NCAA_Division_II_Outdoor_Qualifying_FINAL",
+"listName": "2026 NCAA Division II Outdoor Qualifying FINAL"
+},
+"2026-outdoor-d3": {
+"champ": "https://tf.tfrrs.org/results/96718/NCAA_Division_III_Outdoor_Track__Field_Championships",
+"champName": "NCAA Division III Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/5604/2026_NCAA_Division_III_Outdoor_Qualifying_FINAL",
+"listName": "2026 NCAA Division III Outdoor Qualifying FINAL"
+},
+"2026-outdoor-naia": {
+"champ": "https://tf.tfrrs.org/results/96510/NAIA_Outdoor_Track__Field_Championships",
+"champName": "NAIA Outdoor Track & Field Championships",
+"list": "https://tf.tfrrs.org/lists/5605/2026_NAIA_Outdoor_Qualifying_List_FINAL",
+"listName": "2026 NAIA Outdoor Qualifying List FINAL"
+}
+}

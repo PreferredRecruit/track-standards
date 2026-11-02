@@ -22,7 +22,7 @@ import { hsLevel, hsRows, fmtXC, fmtHS } from "./hsconv.mjs";
 import { topicPages, EDITED } from "./topics.mjs";
 import { gapGuides } from "./gap-guides.mjs";
 import { morePages } from "./more-pages.mjs";
-import { computeSite, rankPath, eventPath, stdToList, eventSeason, evName, seasonLabel as seasonLabel2 } from "./power-site.mjs";
+import { computeSite, rankPath, seasonPath, eventPath, stdToList, eventSeason, evName, seasonLabel as seasonLabel2 } from "./power-site.mjs";
 import { markPrograms, stdGroup } from "./programs.mjs";
 import { rankingPages } from "./rankings.mjs";
 import { dailyPages } from "./daily.mjs";
@@ -407,6 +407,11 @@ export function generate(root, out) {
       const evs = [...new Set(R.seasons[d].flatMap(x => ["m", "w"].flatMap(g => Object.keys(x.P.events[g] || {}))))].filter(ev => !/Race Walk|Marathon/.test(ev));
       for (const ev of evs) { const x = eventSeason(R, d, ev); if (!x) continue; const M = (x.P.events.m[ev] || [])[0], W = (x.P.events.w[ev] || [])[0];
         L.push(`- [Best ${d} programs for the ${evName(ev)}, ${seasonLabel2(x)}](${SITE}${eventPath(d, ev)}):${M ? ` men ${nm(M)}` : ""}${M && W ? ";" : ""}${W ? ` women ${nm(W)}` : ""}`); } }
+    /* every finished season's #1 teams, 2016 on (Ryan 2026-11-02, AEO: "who won the 2019 D2 indoor title" answers) */
+    L.push("", "## Past seasons: #1 teams (national champion by official team score where the meet was held)", `- [Methodology](${SITE}/rankings/methodology.html)`);
+    for (const d of Object.keys(R.seasons)) for (const x of [...R.seasons[d]].reverse()) { if (x === R.cur[d]) continue;
+      const pt = r => x.P.final && r ? ` (${r.act} pts)` : "";
+      L.push(`- [${d} ${seasonLabel2(x)}](${SITE}${seasonPath(d, x.year, x.season)}): men ${nm(x.P.m[0])}${pt(x.P.m[0])}; women ${nm(x.P.w[0])}${pt(x.P.w[0])}${x.noMeet ? ` (no national meet on TFRRS: ranked on the lists)` : ""}`); }
     fs.appendFileSync(path.join(out, "llms.txt"), L.join("\n") + "\n"); } catch (e) { console.warn("llms rankings skipped:", e && e.message); }
   /* NJCAA marks by event (Ryan 2026-10-16, keyword gap "njcaa track standards"): this site sets no NJCAA levels (national, not
      conference, competition), so the page shows what it took to rank #1/#10/#25/#50/#100 on the newest NJCAA national list (TFRRS). */
