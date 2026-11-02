@@ -3,7 +3,7 @@
    school and conference pages show. Weekly / monthly movement: power_history.json (scripts/seo/power-snapshot.mjs, Monday workflow). */
 import fs from "node:fs";
 import path from "node:path";
-import { computePower, PGROUPS } from "./power.mjs";
+import { computePower, refMarks, PGROUPS } from "./power.mjs";
 import zlib from "node:zlib";
 
 export const PDIVS = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA"];
@@ -38,12 +38,15 @@ export function computeSite({ out, root, S }) {
     const keys = files.map(f => f.match(new RegExp(`^(\\d{4})-(indoor|outdoor)-${KEY[d]}\\.dat$`))).filter(Boolean).filter(m => +m[1] >= POWER_FROM)
       .map(m => ({ year: m[1], season: m[2] })).filter(k => !(k.year === "2020" && k.season === "outdoor")).sort((a, b) => a.year.localeCompare(b.year) || SO(a.season) - SO(b.season));
     R.seasons[d] = []; const lastFields = {};
+    const DAT = new Map(); for (const k of keys) { try { DAT.set(k, JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(out, "data", "rank", `${k.year}-${k.season}-${KEY[d]}.dat`))).toString())); } catch {} }
+    /* v3 (Ryan 2026-11-02 "send it"): marks also scored against the division's 2016-on average #1 / last qualifier / 2x field marks, per season type */
+    const REF = Object.fromEntries(["indoor", "outdoor"].map(se => [se, refMarks(keys.filter(k => k.season === se && DAT.has(k)).map(k => DAT.get(k)))]));
     for (const k of keys) {
       const key = `${k.year}-${k.season}-${KEY[d]}`;
-      let dat; try { dat = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(out, "data", "rank", key + ".dat"))).toString()); } catch { continue; }
+      const dat = DAT.get(k); if (!dat) continue;
       const legal = J(path.join(out, "data", "legal", key + ".json")) || J(path.join(root, "public", "data", "legal", key + ".json")) || {};
       const official = J(path.join(out, "data", "teamscores", key + ".json")) || J(path.join(root, "public", "data", "teamscores", key + ".json"));
-      const P = computePower({ dat, legal, official, fields: lastFields[k.season] });
+      const P = computePower({ dat, legal, official, fields: lastFields[k.season], ref: REF[k.season] });
       if (!P || !P.all || !P.all.length) continue;
       if (P.final) lastFields[k.season] = P.fields;
       for (const v of ["all", "m", "w"]) for (const r of P[v]) r.s = schoolOf(r.t, d);

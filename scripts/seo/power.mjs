@@ -81,7 +81,7 @@ export function computePower({ dat, legal, official, fields, ref = null }) {
         const sc = st == null ? sp : (sp + st) / 2;
         if (rel) { if (sc > 0 && !get(g, t).rel.some(z => z.ev === ev)) get(g, t).rel.push({ id: t + "|" + ev, nm: "Relay", ev, p, F, sc, mk: x.mk || x.r[4] }); return; }   /* a team's best relay per event */
         if (!C && p <= F) get(g, t).qual++;   /* in season: projected qualifiers (inside the field on the legal list) */
-        if (sc > 0) get(g, t).ath.push({ id: x.id, nm: x.r[1], ev, p, F, sc, ovr: ovr(sc, 100), grp: grp(ev), mk: x.mk || x.r[4] }); });
+        if (sc > 0) get(g, t).ath.push({ id: x.id, nm: x.r[1], ev, p, F, sc, sp, st, ovr: ovr(sc, 100), grp: grp(ev), mk: x.mk || x.r[4] }); });
     }
     /* actual points: the meet's official team scores when saved (they split ties and apply DQs/rescoring, which places alone can't:
        2026 D1 men Arkansas 56 official vs 58 from places); otherwise scored from the places */

@@ -116,7 +116,7 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, DEP
     return `<p class="answer" style="font-size:17px;background:#F4F1FF;border-radius:14px;padding:14px 16px"><b>Quick answer:</b> ${esc(shortOf(s))}'s ${lv} is ${s.o ? "" : "about "}${m.length ? `${join(m)} for men` : ""}${m.length && w.length ? ", and " : ""}${w.length ? `${join(w)} for women` : ""}.${fr ? ` ${esc(shortOf(s))}'s ${frg} freshmen ran a median ${esc(fr.med)} in the 100m in their first college season (${fr.n} freshmen since 2022).` : ""}</p>`;
   }
   /* PR Power Index rank (power-site.mjs, Ryan 2026-10-30): "#3 in the NCAA D1 Power Rankings and #1 of 18 in the Big Ten" */
-  const BADGE_LIVE = false;   /* embed box waits for Ryan to OK the badge design (preview first: schools will screenshot it) */
+  const BADGE_LIVE = true;   /* embed box: Ryan 2026-11-02 "send it" (with rankings v3) */
   const RP = { "NCAA D1": "ncaa-d1", "NCAA D2": "ncaa-d2", "NCAA D3": "ncaa-d3", NAIA: "naia" };
   const depthOf = s => { const x = DEPTH.bySchool.get(s); return x && (x.m || x.w) ? x : null; };   /* PR Power Index, men and women separately */
   const one = (s, x, g) => { const y = x[g]; if (!y) return ""; const w = g === "m" ? "men" : "women";
