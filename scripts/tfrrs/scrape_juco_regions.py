@@ -16,6 +16,8 @@ ROMAN = r"(?:[IVX]{1,5}|\d{1,2})"
 HS = re.compile(r"\buil\b|\bmsaa\b|fhsaa|cif\b|\bclass\b|district|\barea\b|high school|hsaa|cyo|\b[1-6]a\b|\bjr\.? high|middle school|youth|aau|usatf|masters|\bjv\b", re.I)
 BAD = re.compile(r"multi|combined|pentathlon|heptathlon|decathlon|invit|invite|relays|open\b|qualif|last chance|challenge|\bncaa division|\bdivision i+ (south|north|east|west)|cross country|\bxc\b", re.I)
 
+REG = {"nw": "North", "north": "North", "northern": "North", "sw": "South", "south": "South", "southern": "South", "east": "East", "eastern": "East", "ne": "East", "west": "West", "western": "West", "se": "East"}   # one name per NWAC region
+
 def roman(x):
     """region numbers in one style (TFRRS meet names use both "Region 12" and "Region XII")"""
     if not x.isdigit(): return x.upper()
@@ -30,7 +32,7 @@ def classify(name, tfrrs=True):
     if HS.search(n) or BAD.search(n): return None
     if re.search(r"\bnwac\b", n, re.I):
         r = re.search(r"\b(north|south|east|west|northern|southern|eastern|western|nw|sw|ne|se)\b", n, re.I)
-        return ("nwac", "NWAC" + (f" {r.group(1).upper() if len(r.group(1)) == 2 else r.group(1).title()} Region" if r else ""))
+        return ("nwac", "NWAC" + (f" {REG.get(r.group(1).lower(), r.group(1).title())} Region" if r else ""))
     for k in ("nccaa", "uscaa"):
         if re.search(rf"\b{k}\b", n, re.I):
             r = re.search(rf"\bregion(?:al)?\s+({ROMAN})\b", n, re.I)
@@ -88,6 +90,45 @@ def main(years, seasons):
                 print(f"  {M['conf']} ({M['div']}): {M['meet']}, {len(evs)} events", flush=True)
             json.dump(D, open(da_only, "w"), indent=0)
 
+def da_meet(M):
+    """a meet hosted only on DirectAthletics (older NWAC meets): event links carry the TFRRS-style event name, each event page has
+    "Men ..."/"Women ..." in its title and one table per round (Place, Overall, Name, Year, Team, mark, Score)"""
+    h = get(M["url"]); data = {"conf": M["conf"], "meet": M["meet"], "url": M["url"], "date": M["date"], "events": {}}; failed = 0
+    for u, ev in sorted(set(re.findall(r'href="(https://www\.directathletics\.com/results/track/\d+_\d+\.html)"[^>]*>(.*?)</a>', h, re.S))):
+        ev = clean(ev)
+        if re.search(r"athlon", ev): continue
+        try: e = get(u)
+        except Exception as x: print("    FAILED event", u, x, flush=True); failed += 1; continue
+        t = re.search(r"\b(Men|Women)\b[^<]{0,60}</span>", e); g = "w" if t and t.group(1) == "Women" else "m"
+        # running events head each round with <b id="white">Finals:</b>; field events have a single table and no round header
+        for m in re.finditer(r'<table class="tablesorter".*?</table>', e, re.S):
+            tb = m.group(0); rh = re.findall(r'<b id="white">([^<]*?)</b>', e[:m.start()]); rnd = rh[-1] if rh else "Finals"
+            heads = [clean(x).upper() for x in re.findall(r"<th[^>]*>(.*?)</th>", tb, re.S)]
+            mi = next((i for i, x in enumerate(heads) if x in ("TIME", "MARK", "HEIGHT", "DISTANCE", "POINTS")), None)
+            if mi is None or "NAME" not in heads: continue
+            ni, yi, ti, wi = heads.index("NAME"), heads.index("YEAR") if "YEAR" in heads else None, heads.index("TEAM") if "TEAM" in heads else None, heads.index("WIND") if "WIND" in heads else None
+            rows = []
+            for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", tb, re.S):
+                c = [clean(x) for x in re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)]
+                if len(c) <= mi or not c[ni]: continue
+                oi = heads.index("OVERALL") if "OVERALL" in heads else 0   # timed-final heats: "Overall" is the real place
+                rows.append({"place": c[oi] if oi < len(c) and c[oi] else c[0], "athlete": c[ni], "year": c[yi] if yi is not None else "", "team": c[ti] if ti is not None else c[ni],
+                             "mark": c[mi].split(" ")[0], "wind": c[wi] if wi is not None and wi < len(c) else "", "athlete_url": ""})
+            if rows: data["events"].setdefault(ev, {}).setdefault(g, []).append({"round": clean(rnd).rstrip(":").strip() or "Finals", "wind": "", "rows": rows})
+    data["complete"] = failed == 0 and bool(data["events"])
+    return data
+
+def main_da():
+    """the DirectAthletics-only meets listed by main() (juco_da_only.json)"""
+    for M in json.load(open(os.path.join(HERE, "juco_da_only.json"))).values():
+        slug = re.sub(r"[^a-z0-9]+", "-", M["conf"].lower()).strip("-")
+        out_p = os.path.join(OUT, str(M["year"]), M["season"], M["div"], slug + ".json")
+        if os.path.exists(out_p) and json.load(open(out_p)).get("complete") is not None: continue
+        data = da_meet(M); os.makedirs(os.path.dirname(out_p), exist_ok=True); json.dump(data, open(out_p, "w"), indent=0)
+        print(f"  {M['year']} {M['conf']} ({M['div']}, DirectAthletics): {M['meet']}, {len(data['events'])} events", flush=True)
+
+if __name__ == "__main__" and sys.argv[1:2] == ["--da"]:
+    main_da(); sys.exit()
 if __name__ == "__main__":
     a = sys.argv[1:]
     main([int(y) for y in a[0].split(",")], [a[1]] if len(a) > 1 else ["outdoor", "indoor"])
