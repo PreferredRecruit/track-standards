@@ -36,7 +36,25 @@ const val = (m, ev) => { const s = String(m || "").replace(/m$/, "").trim(); if 
 const wnum = w => { const x = parseFloat(String(w).replace("+", "")); return isNaN(x) ? null : x; };
 const clean = t => String(t || "").replace(/ \([B-H]\)$/, "");
 
-export function computePower({ dat, legal, official, fields }) {
+/* v3 (Ryan 2026-11-02, preview only until approved): "the times itself should hold some weight ... if groups are running faster, and there
+   are more athletes, it technically is more impressive". With ref (the division's 2016-on average #1, #F and #2F legal marks per event, from
+   refMarks), an athlete's score is half list place (beating this year's field) and half the mark itself against that multi-year scale, so
+   a faster year scores higher. Event-group and event rankings also count national meet points (half) once the meet is held, and the same
+   athlete listed under two spellings on one team counts once. */
+const nname = s => String(s || "").toLowerCase().normalize("NFD").replace(/[^a-z]/g, "");
+export function refMarks(dats) {
+  const acc = {};
+  for (const dat of dats) { const T = dat.teams, L = (dat.lists || []).find(l => l.nat), C = (dat.lists || []).find(l => /Championships$/.test(l.label || "") && !l.nat && !l.conf); if (!L) continue;
+    for (const g of ["m", "w"]) for (const [ev, rows0] of Object.entries((L.g || {})[g] || {})) { if (RELAY.test(ev)) continue;
+      const F = ((C && C.g && C.g[g] && C.g[g][ev]) || []).length || 24;
+      const v = rows0.filter(r => !(WIND.test(ev) && (wnum(r[5]) ?? 0) > 2.0)).map(r => val(r[4], ev)).filter(x => x != null).sort((a, b) => a - b);
+      if (v.length < 2 * F) continue; const k = g + "|" + ev; (acc[k] ||= []).push([v[0], v[F - 1], v[2 * F - 1]]); } }
+  const out = { m: {}, w: {} };
+  for (const [k, L] of Object.entries(acc)) { const [g, ev] = k.split("|"), m = i => L.reduce((s, x) => s + x[i], 0) / L.length; out[g][ev] = { b: m(0), f: m(1), z: m(2), n: L.length }; }
+  return out;
+}
+
+export function computePower({ dat, legal, official, fields, ref = null }) {
   const T = dat.teams, L = (dat.lists || []).find(l => l.nat), C = (dat.lists || []).find(l => /Championships$/.test(l.label || "") && !l.nat && !l.conf);   /* national meet, not a conference meet */
   const FS = { m: {}, w: {} };   /* field size per event: from this season's championship, else the newest one passed in (in season) */
   if (!L) return null;
@@ -55,9 +73,12 @@ export function computePower({ dat, legal, official, fields }) {
         const lg = LEG[ev] && LEG[ev][x.r[9]]; if (lg) { report.windSwapped++; return [{ ...x, v: val(lg[0], ev), mk: lg[0] }]; } report.windDropped++; return []; });
       rows = rows.filter(x => x.v != null).sort((a, b) => a.v - b.v);
       const seen = new Set(); rows = rows.filter(x => !seen.has(x.id) && seen.add(x.id));
+      if (ref) { const nt = new Set(); rows = rows.filter(x => { const k = nname(x.r[1]) + "|" + team(x.r); return RELAY.test(ev) || (!nt.has(k) && nt.add(k)); }); }
       rows.forEach((x, i) => { const p = i + 1, t = team(x.r); if (!t) return;
         if (p <= 8) get(g, t).proj += PTS[p - 1];
-        const sc = p <= F ? 100 - 50 * (p - 1) / Math.max(F - 1, 1) : p < 2 * F ? 50 * (2 * F - p) / F : 0;
+        const sp = p <= F ? 100 - 50 * (p - 1) / Math.max(F - 1, 1) : p < 2 * F ? 50 * (2 * F - p) / F : 0, R3 = !rel && ref && ref[g] && ref[g][ev];
+        const st = R3 ? (x.v <= R3.b ? Math.min(110, 100 + 50 * (R3.b - x.v) / Math.max(R3.f - R3.b, 1e-9)) : x.v <= R3.f ? 100 - 50 * (x.v - R3.b) / Math.max(R3.f - R3.b, 1e-9) : x.v < R3.z ? 50 * (R3.z - x.v) / Math.max(R3.z - R3.f, 1e-9) : 0) : null;
+        const sc = st == null ? sp : (sp + st) / 2;
         if (rel) { if (sc > 0 && !get(g, t).rel.some(z => z.ev === ev)) get(g, t).rel.push({ id: t + "|" + ev, nm: "Relay", ev, p, F, sc, mk: x.mk || x.r[4] }); return; }   /* a team's best relay per event */
         if (!C && p <= F) get(g, t).qual++;   /* in season: projected qualifiers (inside the field on the legal list) */
         if (sc > 0) get(g, t).ath.push({ id: x.id, nm: x.r[1], ev, p, F, sc, ovr: ovr(sc, 100), grp: grp(ev), mk: x.mk || x.r[4] }); });
@@ -67,6 +88,7 @@ export function computePower({ dat, legal, official, fields }) {
     const OFF = official && official[g];
     for (const [ev, rows] of Object.entries(CG)) for (const r of rows) { const t = team(r); if (!t) continue; const pl = +r[0];
       if (!OFF && pl >= 1 && pl <= 8) get(g, t).act += PTS[pl - 1];
+      if (ref && pl >= 1 && pl <= 8) { const o = get(g, t); (o.evp ||= {})[ev] = (o.evp[ev] || 0) + PTS[pl - 1]; const k = RELAY.test(ev) ? null : grp(ev); if (k) (o.gp ||= {})[k] = (o.gp[k] || 0) + PTS[pl - 1]; }
       if (!RELAY.test(ev)) get(g, t).qual++; }
     if (OFF) { for (const [t, v] of Object.entries(OFF)) get(g, clean(t)).act += +v; report.official = true; }
   }
@@ -88,7 +110,11 @@ export function computePower({ dat, legal, official, fields }) {
     rateList(R, "power"); for (const r of R) r.sub = Object.fromEntries(Object.keys(WEIGHTS).map(k => [k, ovr(r.part[k], 100)]));   /* OVR + attribute ratings */
     return R; };
   for (const g of ["m", "w"]) { const teams = [...per[g].values()]; for (const o of teams) o.sq = squads(o); out[g] = build(teams);
-    out.groups[g] = Object.fromEntries(PGROUPS.map(([k]) => { const R = teams.filter(o => o.sq[k]).map(o => ({ t: o.t, ...o.sq[k] })).sort((a, b) => b.score - a.score);
+    /* v3: after the national meet a group or event ranking is half squad, half national meet points (both scaled to the leader) */
+    const blend = (R, ptsOf) => { if (!ref || !C) return R; const ms = Math.max(...R.map(r => r.score), 1), mp = Math.max(...R.map(r => ptsOf(r.t)), 0);
+      if (!mp) return R; for (const r of R) { r.sq = r.score; r.pts = ptsOf(r.t); r.score = 100 * (0.5 * r.sq / ms + 0.5 * r.pts / mp); } return R; };
+    const P0 = new Map(teams.map(o => [o.t, o]));
+    out.groups[g] = Object.fromEntries(PGROUPS.map(([k]) => { const R = blend(teams.filter(o => o.sq[k]).map(o => ({ t: o.t, ...o.sq[k] })), t => (P0.get(t).gp || {})[k] || 0).sort((a, b) => b.score - a.score);
       let rk = 0, prev = null; R.forEach((r, i) => { const v = r.score.toFixed(1); if (v !== prev) { rk = i + 1; prev = v; } r.rank = rk; }); rateList(R, "score"); return [k, R]; }));
     /* per-event team rankings (Ryan 2026-10-30: "for each event"): the same squad rule inside one event; relays score the team's best relay */
     const EV = {}; for (const o of teams) for (const a of [...o.ath, ...o.rel]) { const e = (EV[a.ev] ||= new Map()); const L = e.get(o.t) || []; L.push(a); e.set(o.t, L); }
@@ -96,7 +122,7 @@ export function computePower({ dat, legal, official, fields }) {
       for (const [t, L] of M) { const best = new Map(); for (const a of L) if (!best.has(a.id) || best.get(a.id).sc < a.sc) best.set(a.id, a);
         const top = [...best.values()].sort((a, b) => b.sc - a.sc); if (!top.some(a => a.p <= a.F)) continue;
         R.push({ t, score: top.slice(0, 4).reduce((s, a, i) => s + a.sc * W[i], 0), size: Math.min(top.length, 4), ath: top.slice(0, 4) }); }
-      R.sort((a, b) => b.score - a.score); let rk = 0, prev = null; R.forEach((r, i) => { const v = r.score.toFixed(1); if (v !== prev) { rk = i + 1; prev = v; } r.rank = rk; }); rateList(R, "score"); return [ev, R]; })); }
+      blend(R, t => (P0.get(t).evp || {})[ev] || 0); R.sort((a, b) => b.score - a.score); let rk = 0, prev = null; R.forEach((r, i) => { const v = r.score.toFixed(1); if (v !== prev) { rk = i + 1; prev = v; } r.rank = rk; }); rateList(R, "score"); return [ev, R]; })); }
   /* combined: men + women summed per part, squads summed across both genders */
   const comb = new Map(); for (const g of ["m", "w"]) for (const o of per[g].values()) { const c = comb.get(o.t) || { t: o.t, proj: 0, act: 0, qual: 0, ath: [], sq: {} }; c.proj += o.proj; c.act += o.act; c.qual += o.qual;
     for (const [k] of PGROUPS) if (o.sq[k]) c.sq[k + g] = o.sq[k]; comb.set(o.t, c); }
