@@ -13,7 +13,7 @@ const GPA = [["3_5_plus","3.5 or higher"],["3_0_to_3_49","3.0 to 3.49"],["2_3_to
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
 const SEEN = new Set();
-let KIDS = [], MINE = [], RESENT = 0, CLS = null;
+let KIDS = [], MINE = [], RESENT = 0, CLS = null, PRV = null;
 let CFG = {}, SES = null, PRO = null, VIEW = "signup", MSG = "", BUSY = false, WHY = "";
 import * as ONB from "./onboard.js";
 const store = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v){ try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
@@ -76,7 +76,7 @@ async function loadProfile() {
   const rows = await api("/rest/v1/profiles?select=*&id=eq." + SES.user.id).catch(() => []);
   PRO = rows && rows[0] || null; KIDS = []; MINE = [];
   CLS = null; if (PRO) { const cr = await api("/rest/v1/account_classes?select=class&user_id=eq." + SES.user.id).catch(() => []); CLS = cr && cr[0] ? cr[0].class : null; }
-  cacheRank();
+  cacheRank(); prBadge();
   if (PRO && PRO.role === "athlete") { const ms = await api("/rest/v1/marks?select=event,mark&user_id=eq." + SES.user.id + "&athlete_id=is.null").catch(() => []); MINE = (ms || []).map(m => ({ e: m.event, v: +m.mark })); }
   if (PRO && PRO.role === "parent") {
     const [ks, ms] = await Promise.all([api("/rest/v1/athletes?select=id,first_name,gender,grad_year,grade,gpa,tier,dream_schools&parent_id=eq." + SES.user.id + "&order=created_at").catch(() => []), api("/rest/v1/marks?select=event,mark,athlete_id&user_id=eq." + SES.user.id).catch(() => [])]);
@@ -84,6 +84,21 @@ async function loadProfile() {
   }
   return PRO;
 }
+
+/* Preferred Recruit verified badge (Ryan 2026-11-02: "when the kids use their TPR email and verify it, then they get automatically
+   verified badge"). The badge row is written only by the pr-verify function, after TPR confirms this account's own confirmed email is
+   a Preferred Recruit athlete or parent email. Read the row; if there is none, ask pr-verify once per visit. Sends nothing to anyone. */
+async function prBadge() {
+  const id = SES && SES.user && SES.user.id; if (!id) { PRV = null; return; }
+  const rows = await api("/rest/v1/pr_verified?select=via&user_id=eq." + id).catch(() => []);
+  PRV = rows && rows[0] ? rows[0].via : null; if (PRV) return;
+  const k = "prVerChk:" + id; try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, "1"); } catch (e) {}
+  try { const r = await fetch(URL_ + "/functions/v1/pr-verify", { method: "POST", headers: { apikey: KEY, Authorization: "Bearer " + SES.access_token } }).then(x => x.json());
+    if (r && r.verified) { PRV = r.via; CFG.log && CFG.log("account", { detail: "pr-verified" }); changed(); } } catch (e) {}
+}
+export const prVerified = () => !!PRV;
+/* the badge itself: a check in a filled circle, with a plain-word tooltip */
+export const badge = (sz = 16) => PRV ? `<span class="prvb" title="Verified Preferred Recruit athlete" aria-label="Verified Preferred Recruit athlete"><svg width="${sz}" height="${sz}" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l2.6 2 3.3-.3 1 3.1 2.8 1.8-.9 3.2.9 3.2-2.8 1.8-1 3.1-3.3-.3-2.6 2-2.6-2-3.3.3-1-3.1-2.8-1.8.9-3.2-.9-3.2 2.8-1.8 1-3.1 3.3.3z"/><path d="M7.6 12.3l3 3 5.8-6.2" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : "";
 
 /* ---------- public helpers used by app.js ---------- */
 export const signedIn = () => !!SES;
@@ -130,7 +145,7 @@ export function ensureHead() {
   else if (!b.firstChild) headBtn();
 }
 function headBtn() { const b = document.getElementById("acchd"); if (!b) return; const t = SES ? (member() ? "My account" : "Finish account") : "Sign in";
-  b.setAttribute("aria-label", t); b.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>${t}</span>`; }
+  b.setAttribute("aria-label", t); b.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>${t}</span>${member() ? badge(14) : ""}`; }
 export const isOpen = () => { const el = document.getElementById("acc"); return !!(el && el.classList.contains("on")); };
 function open(v, why) { shell(); CFG.onOpen && CFG.onOpen(); VIEW = v; MSG = ""; if (why) WHY = why; draw(); const el = document.getElementById("acc"); el.classList.add("on"); el.setAttribute("aria-hidden", "false"); const bg = document.getElementById("accbg"); bg.hidden = false; requestAnimationFrame(() => bg.classList.add("on")); CFG.log && CFG.log("account", { detail: "open-" + v, placement: WHY || undefined }); setTimeout(() => { const f = el.querySelector("input,select"); f && f.focus(); }, 60); }
 function close() { const el = document.getElementById("acc"); if (!el) return; el.classList.remove("on"); el.setAttribute("aria-hidden", "true"); const bg = document.getElementById("accbg"); bg.classList.remove("on"); setTimeout(() => (bg.hidden = true), 300); }
@@ -346,7 +361,7 @@ function joinLater() {
     bar("prNudge-join", `<p><b>Make a free account.</b> <span>Save your athlete's times, see every college that fits and ask the Recruiting AI as much as you want.</span></p><button type="button" class="prnb" data-acc="signup" data-why="nudge">Create free account</button>`);
   }, 2000);
 }
-export const core = { URL: URL_, KEY, ST, api, fresh, loadProfile, changed, signOut, member, profile: () => PRO, ses: () => SES, cfg: () => CFG };
+export const core = { badge, prVerified, URL: URL_, KEY, ST, api, fresh, loadProfile, changed, signOut, member, profile: () => PRO, ses: () => SES, cfg: () => CFG };
 export async function init(cfg) {
   CFG = cfg || {}; SES = store.get(SK); shell(); headBtn();
   document.addEventListener("click", e => {

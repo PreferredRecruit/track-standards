@@ -1444,3 +1444,9 @@ header .hd .acchd{flex:none;visibility:visible}
 .mafter{display:flex;flex-direction:column;gap:10px;margin:18px 0 4px}
 .radv{border:1px solid var(--pr-line);background:var(--pr-card);color:var(--pr-ink2);border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 body:has(#prnudge.on) #prhelp{bottom:96px}@media (max-width:640px){body:has(#prnudge.on) #prhelp{bottom:150px}}   /* Help steps above an account bar */
+/* Preferred Recruit verified badge (2026-11-02) */
+.prvb{display:inline-flex;vertical-align:-2px;margin-left:5px;color:var(--pr-violet,#7A45F0);flex:none}
+.prid h1 .prvb{vertical-align:-1px;margin-left:8px}
+.pchd b .prvb{vertical-align:-2px}
+.prvl{margin:2px 0 0;font-size:12.5px;font-weight:600;color:var(--pr-violet,#7A45F0)}
+.acchd .prvb{margin-left:0}
