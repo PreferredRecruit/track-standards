@@ -1914,6 +1914,10 @@ async function answer(raw){const a=await answerCore(raw);
 async function answerCore(raw){
   raw=raw.replace(/\s*\(([^()]*?),\s*\d{4} (Outdoor|Indoor)\)\s*$/,"");   /* the "(School, 2026 Outdoor)" label on athlete chips */
   const d=detect(raw), q=d.q;
+  /* outreach questions (2026-11-03, Ryan: don't hand families the outreach kit): what coaches look for, then the evaluation */
+  if(/\b(email|e-mail|message|dm|write|letter|contact|reach out|reaching out|get in touch)\b[^.?!]{0,40}\b(coach|coaches|program|school)s?\b|\b(coach|coaches)\b[^.?!]{0,30}\b(email|contact|reach|list)\b|\b(target list|who should i (email|contact)|recruiting email|questionnaire)s?\b/i.test(raw)){
+    log("chat",{detail:"outreach-q"});
+    return {html:`<p>Coaches answer athletes who reach the right event coach at the right time, with a mark that already fits their program, and who keep them updated after every new mark. Most athlete emails go unanswered because one of those is missing.</p><p>Preferred Recruit does this for track and field athletes: personalized emails to coaches from the athlete's own inbox, follow-ups, and help with every reply. Preferred Recruit athletes have earned $10M+ in scholarships. Guaranteed genuine interest or a full refund.</p>`+QL(),f:["Which colleges fit my mark?","What does Recruit level mean?"]}}
   {const a=await smartQ(raw,d);if(a)return a}
   {const a=await programQ(raw,d);if(a)return a}
   {const a=await athleteQ(raw,d);if(a)return a}

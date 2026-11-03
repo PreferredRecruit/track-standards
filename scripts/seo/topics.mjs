@@ -190,67 +190,30 @@ export function topicPages({ S, CT, write, page, parse, esc, slug, evPath, FIELD
   }
 
   /* 10 */
-  art({ p: GP("how-to-email-college-track-coaches"), crumb: "Emailing coaches (templates)",
-    title: "How to Email College Track Coaches (Free Templates)", h1: "How to email college track coaches",
-    desc: "Free email templates for high school track and field athletes to email college coaches: the first email, the PR update and the follow-up, plus what coaches want to see.",
-    answer: "Email the event coach and the head coach at every program where your best mark reaches at least that school's Walk-On level. Write it yourself from your own address, put your event, mark, graduation year and results link in the subject and first two lines, and send an update after every PR.",
-    how: [["Pick the right coach", "Find the event coach (sprints, distance, jumps or throws) on the school's staff page, and copy the head coach."],
-      ["Lead with marks", "Put your best marks and the results link in the first two lines. Coaches decide quickly."],
-      ["Keep it short", "Five to eight lines. Add grades, test scores if you have them, and a video link."],
-      ["Send it yourself", "Coaches want to hear from the athlete, from the athlete's own email address."],
-      ["Follow up", "Send a short update after every new PR, and a polite follow-up if two weeks pass with no reply."]],
-    sections: [["Template: the first email", `<div class="tpl">Subject: [Grad year] [Event] [Best mark] | [Your name], [High school, State]
-
-Coach [Last name],
-
-My name is [Name], a [grade] at [High school] in [City, State]. I run the [event] with a best of [mark] ([meet, date, results link]).
-I'm interested in [School] because [one real reason].
-GPA: [GPA]. Video: [link]. Next meet: [meet, date].
-
-Thank you,
-[Name] · [phone] · [results profile link]</div>`],
-      ["Template: the PR update", `<div class="tpl">Subject: New PR: [Event] [mark] | [Name], [Grad year]
-
-Coach [Last name],
-
-I ran [mark] in the [event] at [meet] on [date] ([results link]), down from [old mark]. I'm still very interested in [School].
-
-Thank you,
-[Name]</div>`],
-      ["Template: the follow-up", `<div class="tpl">Subject: Following up | [Name], [Grad year] [Event]
-
-Coach [Last name],
-
-I wanted to follow up on my email from [date]. My best [event] is [mark], and I'd love to know what you look for in a recruit for your program.
-
-Thank you,
-[Name]</div>`],
-      ["Which coaches to email", `<p>Type your event and best mark into the <a href="/">standards finder</a>. Every school where your mark is at the Walk-On level or better belongs on your list, across D1, D2, D3 and NAIA. The longer the list, the more replies you get.</p>`],
-      ["What a coach checks first", "<ol><li><b>The subject line:</b> grad year, event and mark tell them in one glance whether to open it.</li><li><b>Your mark against their standard:</b> they compare it with what their athletes run.</li><li><b>Proof:</b> a results link they can click to confirm the mark.</li><li><b>Grades:</b> GPA decides academic aid and admission, which matters as much as the athletic money.</li></ol>"],
-      ["Emails that get ignored", "<ul><li>The same email sent to many schools in one BCC.</li><li>No marks, or marks without a results link.</li><li>A parent writing as if they were the athlete.</li><li>\"I love your program\" with no real reason that fits that school.</li><li>A long life story before the marks.</li></ul>"],
-      ["When to email, by grade", "<p>You can email any coach at any age. Freshmen and sophomores introduce themselves and send PR updates. Juniors email their whole list in the fall and again after indoor and outdoor PRs. Seniors email right away, because coaches are still filling their class.</p>"],
-      ["Finding the right coach", `<p>Every school page on this site links to that program's roster and staff or athletics pages. See <a href="${GP("college-track-coach-contact-list-by-state")}">college track programs by state</a>.</p>`]],
-    faq: [["When is the best time to email college track coaches?", "Any time is allowed, but the fall of junior year and right after every new PR are the moments coaches pay most attention."],
-      ["Should my parent email the coach?", "Coaches prefer to hear from the athlete. A parent can help write it and stay copied."],
-      ["How many coaches should I email?", "Every program where your marks fit, across divisions, so your list should be long."],
-      ["What if a coach never replies?", "Follow up after your next PR. No reply usually means the timing or the fit isn't there yet, not a final no."]],
-    related: [[GP("how-to-get-recruited-for-track-and-field"), "How to get recruited"], [GP("how-to-build-a-track-and-field-recruiting-profile"), "Build a recruiting profile"], ...CORE.slice(0, 1)],
+  /* rewritten 2026-11-03 (Ryan: don't hand families the outreach kit): what coaches read and why emails go unanswered; no templates */
+  art({ p: GP("how-to-email-college-track-coaches"), crumb: "Emailing coaches",
+    title: "How to Email College Track Coaches: What Coaches Read", h1: "How to email college track coaches",
+    desc: "What college track coaches look for in a recruiting email, when athletes should start, and why most athlete emails to coaches never get a reply.",
+    answer: "College track coaches answer recruiting emails that lead with the athlete's event, best mark, graduation year and results, come from the athlete's own address, reach the right event coach, and keep coming after every new mark. Most athlete emails go unanswered because they miss one of those.",
+    sections: [["What a coach checks first", `<p>Whether the mark already reaches the program's level. Coaches compare it with their own standard before they read anything else, so check where your mark fits on the <a href="/">standards search</a> first. Then graduation year, how the marks have improved, and grades.</p>`],
+      ["Why most athlete emails get no reply", "<p>They go to the head coach instead of the event coach, they arrive after the class is mostly filled, they are sent once with no follow-up, or they read like a copy sent to a hundred schools. Coaches get a lot of email, and the ones they answer are specific, timely and persistent.</p>"],
+      ["How Preferred Recruit handles it", `<p>Preferred Recruit works only with track and field athletes. The team sends personalized emails to coaches from the athlete's own inbox, follows up, and guides the family through replies, visits and offers. Preferred Recruit athletes have earned $10M+ in scholarships. Guaranteed genuine interest or a full refund. <a href="${QUIZ}">Get a free recruitment evaluation</a> to see which programs fit and which coaches to contact first.</p>`]],
+    faq: [["Should the athlete or the parent email coaches?", "Coaches want to hear from the athlete, from the athlete's own email address."],
+      ["When should athletes start emailing coaches?", "NCAA D1 and D2 coaches can contact recruits from June 15 after sophomore year, so most families start before junior year."],
+      ["What if a coach never replies?", "No reply usually means the timing or the fit isn't there yet, not a final no. A new mark is the best reason to write again."]],
+    related: [[QUIZ, "Free recruitment evaluation"], [GP("track-and-field-recruiting-timeline-by-grade"), "Recruiting timeline by grade"], ...CORE.slice(0, 1)],
     sources: [[NCAA, "NCAA recruiting resources"]] });
 
-  /* 11 */
-  {
-    const confs = new Map(); for (const s of S) if (s.d === "NCAA D1" && s.ws) { const k = s.c; if (!confs.has(k)) confs.set(k, []); confs.get(k).push(s); }
-    const list = [...confs.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([c, L]) => `<h3>${esc(c)} (${L.length})</h3><div class="links">${L.sort((a, b) => a.n.localeCompare(b.n)).map(s => `<a href="${esc(s.ws)}" rel="noopener nofollow">${esc(s.t || s.n)} athletics</a>`).join("")}</div>`).join("");
-    art({ p: GP("track-and-field-recruiting-questionnaires-by-conference"), crumb: "Recruiting questionnaires",
-      title: "Track and Field Recruiting Questionnaires by Conference (NCAA D1)", h1: "Track and field recruiting questionnaires by conference",
-      desc: "Where to find NCAA D1 track and field recruiting questionnaires, grouped by conference, and how to fill one out so the coaching staff actually sees it.",
-      answer: "Most college track programs post a recruiting questionnaire on their official athletics site, usually on the track and field page under Recruiting or Prospective Student-Athletes. Fill it out, then email the event coach so a person sees your name, not only a form.",
-      sections: [["How to fill one out", "<p>Use the same email you send coaches from, list your best marks with results links, and add your graduation year, GPA and video. Then email the coach and mention that you completed the questionnaire.</p>"],
-        ["NCAA D1 athletics sites by conference", list]],
-      faq: [["Is a questionnaire enough to get recruited?", "Rarely on its own. It adds you to the program's list, but a direct email to the event coach is what gets read."],
-        ["Do D2, D3 and NAIA schools have questionnaires?", "Many do, on the same kind of page. Find any school with the standards search and open its athletics site link."]],
-      related: [[GP("how-to-email-college-track-coaches"), "How to email coaches"], ...CORE.slice(0, 1)], sources: [[NCAA, "NCAA recruiting resources"]] });
-  }
+  /* 11 (rewritten 2026-11-03: no athletics-site link list) */
+  art({ p: GP("track-and-field-recruiting-questionnaires-by-conference"), crumb: "Recruiting questionnaires",
+    title: "Track and Field Recruiting Questionnaires: Do They Work?", h1: "Track and field recruiting questionnaires",
+    desc: "What a college track recruiting questionnaire does, where programs post them, and why filling one out rarely gets an athlete recruited on its own.",
+    answer: "Most college track programs post a recruiting questionnaire on their official athletics site, under Recruiting or Prospective Student-Athletes. It adds the athlete to the program's database. On its own it rarely gets read: coaches recruit the athletes who reach out to them directly and keep them updated.",
+    sections: [["What a questionnaire does", "<p>It puts the athlete's name, marks, grades and contact details in the program's recruiting database, which coaches search when they need an event filled. Thousands of athletes fill them out, so a form alone rarely stands out.</p>"],
+      ["What actually gets an athlete noticed", `<p>Preferred Recruit works only with track and field athletes. The team sends personalized emails to coaches from the athlete's own inbox, follows up, and guides the family through replies, visits and offers. Preferred Recruit athletes have earned $10M+ in scholarships. Guaranteed genuine interest or a full refund. <a href="${QUIZ}">Get a free recruitment evaluation</a> to see which programs fit and which coaches to contact first.</p>`]],
+    faq: [["Is a questionnaire enough to get recruited?", "Rarely on its own. It adds you to the program's list, but direct contact with the event coach is what gets read."],
+      ["Do D2, D3 and NAIA schools have questionnaires?", "Many do, on the same kind of page on their athletics site."]],
+    related: [[QUIZ, "Free recruitment evaluation"], [GP("how-to-email-college-track-coaches"), "How to email coaches"], ...CORE.slice(0, 1)], sources: [[NCAA, "NCAA recruiting resources"]] });
 
   /* 12 (official claims only, brand brief section 0) */
   art({ p: GP("ncsa-vs-preferred-recruit-track-and-field"), crumb: "NCSA vs Preferred Recruit",
@@ -342,7 +305,7 @@ Thank you,
       ["Video", "Add a recent race or competition video, plus a short training clip for field events."],
       ["Academics", "GPA, test scores if you have them, and your intended major."],
       ["Basics", "Graduation year, high school, club, height and weight for throwers and jumpers, and your contact info."]],
-    sections: [["Where to host it", "<p>A simple page, a shared document or a results profile link all work, as long as one link has everything. Put that link in every coach email.</p>"]],
+    sections: [["A profile is only half of it", "<p>A profile answers a coach's questions once the coach is looking. Getting coaches to look is the hard part.</p>" + `<p>Preferred Recruit works only with track and field athletes. The team sends personalized emails to coaches from the athlete's own inbox, follows up, and guides the family through replies, visits and offers. Preferred Recruit athletes have earned $10M+ in scholarships. Guaranteed genuine interest or a full refund. <a href="${QUIZ}">Get a free recruitment evaluation</a> to see which programs fit and which coaches to contact first.</p>`]],
     faq: [["Do I need a paid profile?", "No. A free page or document with the right information works."],
       ["Should I include meets where I ran slower?", "Include your bests and your progression. Coaches understand off days."]],
     related: [[GP("how-to-email-college-track-coaches"), "How to email coaches"], [GP("understanding-track-and-field-prs-for-recruiting"), "Understanding PRs"], ...CORE.slice(0, 1)], sources: [[ELIG, "NCAA Eligibility Center"]] });
@@ -417,14 +380,14 @@ Thank you,
     const rows = [...by.entries()].sort((a, b) => a[0].localeCompare(b[0]));
     const staff = rows.map(([st, L]) => { const W = L.filter(s => s.cu); return W.length ? `<h3>${esc(st)}</h3><div class="links">${W.sort((a, b) => a.n.localeCompare(b.n)).map(s => `<a href="${esc(s.cu)}" rel="noopener nofollow">${esc(s.t || s.n)} coaching staff</a>`).join("")}</div>` : ""; }).join("");
     art({ p: GP("college-track-coach-contact-list-by-state"), crumb: "College track coaches by state",
-      title: "College Track and Field Coaches by State: Programs and Staff Pages", h1: "College track coach contact list by state",
-      desc: `Find college track and field coaches in every state: ${S.length.toLocaleString()} programs grouped by state, with links to each program's official roster, athletics and coaching staff pages.`,
-      answer: "Every college program publishes its track and field coaching staff on its official athletics website, usually with each event coach's contact details. Use the state lists below to find the programs, then email the event coach from the athlete's own address.",
+      title: "College Track and Field Programs and Coaches by State", h1: "College track programs and coaches by state",
+      desc: `College track and field programs in every state: ${S.length.toLocaleString()} programs grouped by state, and how athletes get the right coaches to answer.`,
+      answer: "Every college program publishes its track and field coaching staff on its official athletics website. Finding a coach's name is the easy part; getting the right event coach to answer, at the right time, is what gets an athlete recruited. The state lists below show every program by state.",
       sections: [["Programs by state", tbl(["State", "Programs"], rows.map(([st, L]) => [`<a href="${statePath(L[0].s)}">${esc(st)}</a>`, String(L.length)]))],
-        ["Coaching staff pages", `<p>Direct links to the official staff pages this site has on file. For every other school, open its school page for the athletics site and roster links.</p>${staff}`]],
+        ["Finding coaches is the easy part", `<p>Preferred Recruit works only with track and field athletes. The team sends personalized emails to coaches from the athlete's own inbox, follows up, and guides the family through replies, visits and offers. Preferred Recruit athletes have earned $10M+ in scholarships. Guaranteed genuine interest or a full refund. <a href="${QUIZ}">Get a free recruitment evaluation</a> to see which programs fit and which coaches to contact first.</p>`]],
       faq: [["Why doesn't this page list coach email addresses?", "Coaches change jobs often, so the school's own staff page is the reliable source. Each school page links to it."],
         ["Who should I email, the head coach or the event coach?", "The event coach, with the head coach copied."]],
-      related: [[GP("how-to-email-college-track-coaches"), "How to email coaches (templates)"], ["/explore.html", "Every conference and state"]], sources: [[TFRRS, "TFRRS team pages"]] });
+      related: [[QUIZ, "Free recruitment evaluation"], [GP("how-to-email-college-track-coaches"), "How to email coaches"], ["/explore.html", "Every conference and state"]], sources: [[TFRRS, "TFRRS team pages"]] });
   }
 
   /* 24 */
