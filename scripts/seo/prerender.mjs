@@ -232,7 +232,7 @@ export function generate(root, out) {
   const evAvail = (list, g) => EVENTS.filter(e => list.some(s => raw(s, g, e)));
 
   /* PR Power Index (power-site.mjs): computed once from dist/data/rank (repo copy + Monday data) for every page that shows a rank */
-  let R = { seasons: {}, cur: {}, bySchool: new Map(), conf: new Map(), hist: [] }; try { R = computeSite({ out, root, S: S.filter(x => !x.j) }); } catch (e) { console.warn("rankings skipped:", e && e.message); }
+  let R = { seasons: {}, cur: {}, bySchool: new Map(), conf: new Map(), hist: [] }; try { R = computeSite({ out, root, S });   /* junior colleges included since 2026-11-03 (NJCAA Power Rankings) */ } catch (e) { console.warn("rankings skipped:", e && e.message); }
 
   /* conferences */
   for (const [k, list] of confs) {

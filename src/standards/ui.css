@@ -71,6 +71,6 @@ h1,h2,h3,.sname{text-wrap:balance}p,li,.intro,.sub{text-wrap:pretty}
 .skrows{display:grid;gap:12px;padding:18px 4px}.skrows .skel{height:16px}
 body:has(#prnudge.on) .evpill{display:none}   /* one prompt at a time: the account bar wins over the evaluation pill */
 /* phones: every form field at 16px or more, or iOS zooms the page when it's tapped (found by scripts/design/shots.mjs: the results filters were 14px) */
-@media (max-width:640px){.dd select,select.in,input.in,.chk select,.chk input{font-size:16px}}
+@media (max-width:640px){.dd select,select.in,input.in,.chk select,.chk input,.pr-pick select,.rkbar select{font-size:16px}}
 /* home headline on phones: one balanced sentence instead of three forced lines (Ryan 2026-11-03 headline) */
 @media (max-width:640px){.hero h1 em{display:inline}.hero h1 em+em::before{content:" "}.hero h1{text-wrap:balance}}

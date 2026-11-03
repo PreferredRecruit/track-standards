@@ -117,7 +117,7 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, SHA
   }
   /* PR Power Index rank (power-site.mjs, Ryan 2026-10-30): "#3 in the NCAA D1 Power Rankings and #1 of 18 in the Big Ten" */
   const BADGE_LIVE = true;   /* embed box: Ryan 2026-11-02 "send it" (with rankings v3) */
-  const RP = { "NCAA D1": "ncaa-d1", "NCAA D2": "ncaa-d2", "NCAA D3": "ncaa-d3", NAIA: "naia" };
+  const RP = { "NCAA D1": "ncaa-d1", "NCAA D2": "ncaa-d2", "NCAA D3": "ncaa-d3", NAIA: "naia", NJCAA: "njcaa", NWAC: "nwac" };
   const depthOf = s => { const x = DEPTH.bySchool.get(s); return x && (x.m || x.w) ? x : null; };   /* PR Power Index, men and women separately */
   const one = (s, x, g) => { const y = x[g]; if (!y) return ""; const w = g === "m" ? "men" : "women";
     return `${esc(shortOf(s))} ${w} are #${y.rank} of ${y.of} in the ${esc(x.d)} Power Rankings${y.crank ? ` (#${y.crank} of ${y.cof} in the ${esc(s.c)})` : ""}${y.ovr ? `, rated ${y.ovr} overall (out of 99, within ${esc(x.d)})` : ""}${y.act ? `, with ${y.act} points at the national meet` : ""}${y.prev ? `, ${y.prev > y.rank ? `up from #${y.prev}` : y.prev < y.rank ? `down from #${y.prev}` : `the same rank as`} in ${+x.year - 1}` : ""}.`; };

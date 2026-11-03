@@ -57,10 +57,11 @@ export const RANK_CSS = `<style>
 /* restraint pass (2026-11-02, preview): the data carries the colour. Scores are flat tiles (ink for 90+, violet tint below), no gloss or
    glow; one ink for rank numbers (top 3 just bolder); no colour bar per row (the logo already carries the school colour); the hero keeps
    one title (the page H1) and a plain-case line. Share images keep their own tier colours. */
-.ov{box-shadow:none;border-radius:10px}.ov::after{display:none}
+.ov{box-shadow:none;border-radius:10px}.ov::after{display:none}.ov b,.pr-pc .ov b,.pr-tr .ov b{color:inherit}   /* the podium card styles every <b> as ink; the score keeps its tile's colour */
 .ov-a{background:#12111A;color:#fff}.ov-b{background:#EEE8FF;color:#4B2BD6}.ov-c{background:#EAF2FE;color:#1D5BBF}.ov-d{background:#F1F0F5;color:#5E5D6B}
 .pr-rk,.pr-rk.g,.pr-rk.s,.pr-rk.b{color:#5E5D6B;font-weight:700}.pr-rk.g,.pr-rk.s,.pr-rk.b{color:#12111A;font-weight:800}
 .pr-tr::before,.rkcr::before{display:none}
+@media (max-width:640px){.pr-pick select{font-size:16px}}   /* iOS zooms on fields under 16px (found by design:shots) */
 .pr-hero{background:#FFFFFF;border-radius:20px}.pr-title{display:none}
 .pr-kick{text-transform:none;letter-spacing:0;font-size:14px;font-weight:600;color:#5E5D6B;margin-bottom:6px}
 @media (prefers-color-scheme:dark){#app .ov-a{background:#F5F5F7;color:#12111A}#app .ov-b{background:#2A2142;color:#CDB6FF}#app .ov-c{background:#162338;color:#9CC4FF}#app .ov-d{background:#24232B;color:#C8C8D0}#app .pr-hero{background:#121117}#app .pr-rk.g,#app .pr-rk.s,#app .pr-rk.b{color:#F5F5F7}}   /* the app has dark mode; the static guide pages don't */
@@ -82,7 +83,9 @@ const RKX_CSS = `.rkbar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:fl
 const TABS_JS = `<script>if(location.hash==="#women"){var wb=document.querySelector('.pr-tabs[data-k="v"] button[data-v="w"]');if(wb)setTimeout(function(){wb.click()},0)}document.querySelectorAll(".pr-tabs").forEach(function(t){t.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;t.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b)});var k=t.dataset.k;document.querySelectorAll("[data-"+k+"]").forEach(function(v){if(v.classList.contains("pr-tabs"))return;v.hidden=v.getAttribute("data-"+k)!==b.dataset.v})})})</script>`;
 
 export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
-  if (!PDIVS.every(d => R.cur[d])) return [];
+  /* the four NCAA/NAIA divisions must all be there; junior colleges show when their data is (2026-11-03) */
+  if (!["NCAA D1", "NCAA D2", "NCAA D3", "NAIA"].every(d => R.cur[d])) return [];
+  const DV = PDIVS.filter(d => R.cur[d]);
   fs.writeFileSync(path.join(out, "rankings.css"), RANK_CSS.replace(/<\/?style>/g, "") + RKX_CSS);   /* the app's Rankings tab uses the same styles */
   let brand = {}; try { brand = JSON.parse(fs.readFileSync(path.join(out, "brand", "brand.json"), "utf8")); } catch { }
   const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.com", logo: SITE + "/icon-512.png" };
@@ -154,7 +157,7 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
       + method(c)
       + (current && evPages[d].length ? `<h2>${esc(d)} team rankings by event</h2><div class="links">${evPages[d].map(([ev]) => `<a href="${eventPath(d, ev)}">${esc(evName(ev))}</a>`).join("")}</div>` : "")
       + (current && arch.length ? `<h2>Past seasons</h2><div class="links">${arch.map(x => `<a href="${seasonPath(d, x.year, x.season)}">${esc(d)} ${esc(seasonLabel(x))}</a>`).join("")}</div>` : "")
-      + `<h2>Other divisions</h2><div class="links">${PDIVS.filter(x => x !== d).map(x => `<a href="${rankPath(x)}">${esc(x)} Power Rankings</a>`).join("")}<a href="/rankings.html">All rankings</a></div>`;
+      + `<h2>Other divisions</h2><div class="links">${DV.filter(x => x !== d).map(x => `<a href="${rankPath(x)}">${esc(x)} Power Rankings</a>`).join("")}<a href="/rankings.html">All rankings</a></div>`;
     const t3 = g => c.P[g].slice(0, 3).map(nmOf);
     art({ p, date: dateOf(c), crumbs: current ? [["Home", "/"], ["Rankings", "/rankings.html"], [d, p]] : [["Home", "/"], ["Rankings", "/rankings.html"], [d, rankPath(d)], [seasonLabel(c), p]],
       title: current ? `${d} Track and Field Rankings ${c.year} (${c.season === "indoor" ? "Indoor" : "Outdoor"})` : `${d} Track and Field Rankings: ${seasonLabel(c)} Final`,
@@ -173,7 +176,7 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
      that ranks it, men and women; each row shows the athletes, their national list place and mark */
   const GRP = ev => (PGROUPS.find(([, , re]) => re.test(ev)) || [])[0] || "relays";
   const evOf = {}, evPages = {};
-  for (const d of PDIVS) { evOf[d] = {}; evPages[d] = [];
+  for (const d of DV) { evOf[d] = {}; evPages[d] = [];
     const all = [...new Set(R.seasons[d].flatMap(x => ["m", "w"].flatMap(g => Object.keys(x.P.events[g] || {}))))].filter(ev => !EV_SKIP.test(ev));
     for (const ev of all) { const x = eventSeason(R, d, ev); if (!x) continue; evPages[d].push([ev, x]); (evOf[d][GRP(ev)] ||= []).push(ev); } }
   const evTbl = rows => `<div class="pr-tbl">${rows.map(r => { const i = info(r);
@@ -202,7 +205,7 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
         return [`What is the best ${d} ${gw} ${nm} program?`, `${esc(nmOf(L[0]))} in ${esc(seasonLabel(x))}${L[1] ? `, ahead of ${esc(nmOf(L[1]))}${L[2] ? ` and ${esc(nmOf(L[2]))}` : ""}` : ""}. ${L.length} ${esc(d)} programs had an athlete inside the national championship field.`]; }) });
     done.push(p); } };
 
-  for (const d of PDIVS) {
+  for (const d of DV) {
     const c = R.cur[d];
     eventPages(d);
     seasonPage(d, c, rankPath(d), true);
@@ -226,8 +229,8 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
      Rankings tab, plus an index. Rows are [team, rank, power, natPts, projPts, qualifiers, squads, prevYearRank, lastWeek, lastMonth];
      squads [team, rank, score, size, [[athlete, event, list position, mark]...]]; weeks = the Monday snapshots of that season. */
   { const dir = path.join(out, "data", "power"); fs.mkdirSync(dir, { recursive: true });
-    const idx = { divs: PDIVS, seasons: {} };
-    for (const d of PDIVS) { idx.seasons[d] = [];
+    const idx = { divs: DV, seasons: {} };
+    for (const d of DV) { idx.seasons[d] = [];
       for (const x of [...R.seasons[d]].reverse()) {
         const T = {}, tid = r => { if (!T[r.t]) { const i = info(r); T[r.t] = [i.nm, i.conf, i.url, i.logo, i.col]; } return r.t; };
         const rows = g => x.P[g].map(r => [tid(r), r.rank, r.ovr, x.P.final ? r.act : null, r.proj, r.qual, Math.round(r.squad), r.prev ?? null, r.wk ?? null, r.mo ?? null, +r.power.toFixed(1), [x.P.final ? r.sub.act : null, r.sub.proj, r.sub.squad, r.sub.qual]]);
@@ -268,28 +271,28 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
     art({ p: "/rankings/methodology.html", date: dateOf(c), crumbs: [["Home", "/"], ["Rankings", "/rankings.html"], ["Methodology", "/rankings/methodology.html"]],
       title: "How the Track and Field Power Rankings Work", desc: "The PR Power Index methodology: how college track and field teams are ranked from TFRRS national lists and national championship results, with weights, formulas and a worked example.",
       kick: "Methodology · PR Power Index v3", h1: "How the college track and field Power Rankings work",
-      sub: `The PR Power Index ranks every NCAA D1, D2, D3 and NAIA program from two TFRRS sources: the wind-legal national performance list and the national championship results. National meet points count ${WEIGHTS.act}%, projected points ${WEIGHTS.proj}%, event-group squads ${WEIGHTS.squad}% and qualifiers ${WEIGHTS.qual}%. After the national meet, the official team scores set the final order.`,
-      body: `<h2>The four parts</h2><ul><li><b>National meet points (${WEIGHTS.act}%)</b>: the official TFRRS team scores from the NCAA or NAIA championship, 10-8-6-5-4-3-2-1 for places 1 to 8, relays included.</li><li><b>Projected points (${WEIGHTS.proj}%)</b>: the same scoring applied to the top 8 on each wind-legal national list, so in-season rankings reward the marks that would score.</li><li><b>Event-group squads (${WEIGHTS.squad}%)</b>: sprints, hurdles, distance, jumps, throws and multi-events for men and women. Each squad counts its best four athletes, weighted 1.0, 0.75, 0.5 and 0.25. After the national meet, each event-group and event ranking is half squad strength and half the points that group scored at the national meet.</li><li><b>Qualifiers (${WEIGHTS.qual}%)</b>: individual entrants at the national meet (in season: athletes inside each event's championship field on the list).</li></ul>`
+      sub: `The PR Power Index ranks every NCAA D1, D2, D3, NAIA, NJCAA and NWAC program from two TFRRS sources: the wind-legal national performance list and the national championship results. National meet points count ${WEIGHTS.act}%, projected points ${WEIGHTS.proj}%, event-group squads ${WEIGHTS.squad}% and qualifiers ${WEIGHTS.qual}%. After the national meet, the official team scores set the final order.`,
+      body: `<h2>The four parts</h2><ul><li><b>National meet points (${WEIGHTS.act}%)</b>: the official TFRRS team scores from the NCAA, NAIA, NJCAA or NWAC championship, 10-8-6-5-4-3-2-1 for places 1 to 8, relays included.</li><li><b>Projected points (${WEIGHTS.proj}%)</b>: the same scoring applied to the top 8 on each wind-legal national list, so in-season rankings reward the marks that would score.</li><li><b>Event-group squads (${WEIGHTS.squad}%)</b>: sprints, hurdles, distance, jumps, throws and multi-events for men and women. Each squad counts its best four athletes, weighted 1.0, 0.75, 0.5 and 0.25. After the national meet, each event-group and event ranking is half squad strength and half the points that group scored at the national meet.</li><li><b>Qualifiers (${WEIGHTS.qual}%)</b>: individual entrants at the national meet (in season: athletes inside each event's championship field on the list).</li></ul>`
         + `<h2>How an athlete is scored</h2><p>Each athlete's score is half <b>place</b> and half <b>mark</b>. The place score compares their spot on the wind-legal national list with that event's real championship field size F (counted from the championship results): 100 at #1, 50 at #F, 0 at twice the field, straight-line in between. The mark score compares the mark itself with that division's average marks since 2016 for the #1 athlete, the last qualifier and twice the field depth (100, 50 and 0), so a faster, deeper year scores higher than a slow one at the same list place. A mark better than the average #1 can score up to 110. Wind-aided marks are replaced with the athlete's legal best, or dropped if there is none. Each athlete counts once per event, and B and C squads count for their school.</p>`
         + `<h2>Ratings out of 99</h2><p>Each part is scaled against the division leader and combined with the weights above. The best team in a division is 99; everyone else is 60 + 39 × (their score ÷ the leader's)^0.6, and a rating never rises as you go down a list. 90+ elite, 80s national-level, 70s strong, 60s ranked.</p>`
         + ex
-        + `<h2>Data sources</h2><p>Every number comes from <a href="https://www.tfrrs.org/" rel="noopener">TFRRS</a>, the official results system of NCAA and NAIA track and field: the final national qualifying lists and the national championship results, ${Object.keys(SRC).length} division seasons from 2016 on. Each ranking page links the exact list and meet it uses. Seasons with no national meet on TFRRS (2020, cancelled; a few 2016 and 2021 meets) are ranked on the lists and labelled.</p>`
+        + `<h2>Data sources</h2><p>Every number comes from <a href="https://www.tfrrs.org/" rel="noopener">TFRRS</a>, the official results system of college track and field: the final national qualifying lists and the national championship results, ${Object.keys(SRC).length} division seasons from 2016 on. Each ranking page links the exact list and meet it uses. Seasons with no national meet on TFRRS (2020, cancelled; a few 2016 and 2021 meets) are ranked on the lists and labelled.</p>`
         + `<h2>What changed in v3 (November 2026)</h2><p>Athlete scores now count the mark as well as the list place, so faster and deeper seasons count for more; event-group and event rankings now count national meet points after the meet; and an athlete listed twice under different spellings is counted once.</p><h2>What is coming next</h2><p>Conference championship results (being added for 2016 to 2026) will join as a small part, weighted by each conference's measured depth on the national lists.</p>`
-        + `<h2>Rankings</h2><div class="links">${PDIVS.map(x => `<a href="${rankPath(x)}">${esc(x)} Power Rankings</a>`).join("")}<a href="/rankings.html">All rankings</a></div>`,
+        + `<h2>Rankings</h2><div class="links">${DV.map(x => `<a href="${rankPath(x)}">${esc(x)} Power Rankings</a>`).join("")}<a href="/rankings.html">All rankings</a></div>`,
       faq: [["How are college track and field teams ranked?", `By the PR Power Index: national meet points (${WEIGHTS.act}%), projected points from the wind-legal national list (${WEIGHTS.proj}%), event-group squads (${WEIGHTS.squad}%) and national qualifiers (${WEIGHTS.qual}%), all from TFRRS. After the national meet, the official team scores set the order.`],
-        ["Where does the data come from?", "TFRRS national qualifying lists and national championship results for NCAA D1, D2, D3 and NAIA, every season from 2016."],
+        ["Where does the data come from?", "TFRRS national qualifying lists and national championship results for NCAA D1, D2, D3, NAIA and the NJCAA and NWAC junior colleges, every season from 2016."],
         ["Are wind-aided marks counted?", "No. An aided mark is replaced with the athlete's best legal mark, or left out if there is none."]] });
     done.push("/rankings/methodology.html"); }
 
   /* hub: men's and women's top 5 per division, side by side */
-  const H = PDIVS.map(d => R.cur[d]);
+  const H = DV.map(d => R.cur[d]);
   art({ p: "/rankings.html", date: H.map(dateOf).sort().pop(), crumbs: [["Home", "/"], ["Rankings", "/rankings.html"]],
-    title: `College Track and Field Rankings ${H[0].year}: D1, D2, D3, NAIA`, desc: `${H[0].year} college track and field Power Rankings for NCAA D1, D2, D3 and NAIA men and women: national meet points, projected points, qualifiers and event-group squads. Updated every Monday in season.`,
-    kick: "NCAA D1 · D2 · D3 · NAIA · Men and women", h1: "College track and field Power Rankings",
-    sub: `Men: ${PDIVS.map((d, i) => `${esc(d.replace("NCAA ", ""))} <b>${esc(nmOf(H[i].P.m[0]))}</b>`).join(", ")}. Women: ${PDIVS.map((d, i) => `${esc(d.replace("NCAA ", ""))} <b>${esc(nmOf(H[i].P.w[0]))}</b>`).join(", ")}.`,
-    body: PDIVS.map((d, i) => { const c = H[i]; return `<h2>${esc(d)} · ${esc(seasonLabel(c))}</h2><div class="pr-duo">${["m", "w"].map(g => `<div><h3>${g === "m" ? "Men" : "Women"}</h3><div class="pr-slim">${table(c, g, 5)}</div><a class="pr-more" href="${rankPath(d)}${g === "w" ? "#women" : ""}">All ${esc(d)} ${g === "m" ? "men" : "women"} ›</a></div>`).join("")}</div>`; }).join("") + `<p><a href="/rankings/methodology.html">How the rankings work: formula, weights and sources ›</a></p>`,
-    lists: PDIVS.flatMap((d, i) => [[`${d} men's track and field Power Rankings`, H[i].P.m.slice(0, 5)], [`${d} women's track and field Power Rankings`, H[i].P.w.slice(0, 5)]]),
-    faq: [["What are the best college track and field programs?", `Men: ${PDIVS.map((d, i) => `${esc(nmOf(H[i].P.m[0]))} in ${esc(d)}`).join(", ")}. Women: ${PDIVS.map((d, i) => `${esc(nmOf(H[i].P.w[0]))} in ${esc(d)}`).join(", ")}.`], ["How often are the rankings updated?", "Every Monday during the indoor (December to March) and outdoor (March to June) seasons."]] });
+    title: `College Track and Field Rankings ${H[0].year}: D1, D2, D3, NAIA, JUCO`, desc: `${H[0].year} college track and field Power Rankings for NCAA D1, D2, D3, NAIA and junior college (NJCAA, NWAC) men and women: national meet points, projected points, qualifiers and event-group squads. Updated every Monday in season.`,
+    kick: "NCAA D1 · D2 · D3 · NAIA · NJCAA · NWAC · Men and women", h1: "College track and field Power Rankings",
+    sub: `Men: ${DV.map((d, i) => `${esc(d.replace("NCAA ", ""))} <b>${esc(nmOf(H[i].P.m[0]))}</b>`).join(", ")}. Women: ${DV.map((d, i) => `${esc(d.replace("NCAA ", ""))} <b>${esc(nmOf(H[i].P.w[0]))}</b>`).join(", ")}.`,
+    body: DV.map((d, i) => { const c = H[i]; return `<h2>${esc(d)} · ${esc(seasonLabel(c))}</h2><div class="pr-duo">${["m", "w"].map(g => `<div><h3>${g === "m" ? "Men" : "Women"}</h3><div class="pr-slim">${table(c, g, 5)}</div><a class="pr-more" href="${rankPath(d)}${g === "w" ? "#women" : ""}">All ${esc(d)} ${g === "m" ? "men" : "women"} ›</a></div>`).join("")}</div>`; }).join("") + `<p><a href="/rankings/methodology.html">How the rankings work: formula, weights and sources ›</a></p>`,
+    lists: DV.flatMap((d, i) => [[`${d} men's track and field Power Rankings`, H[i].P.m.slice(0, 5)], [`${d} women's track and field Power Rankings`, H[i].P.w.slice(0, 5)]]),
+    faq: [["What are the best college track and field programs?", `Men: ${DV.map((d, i) => `${esc(nmOf(H[i].P.m[0]))} in ${esc(d)}`).join(", ")}. Women: ${DV.map((d, i) => `${esc(nmOf(H[i].P.w[0]))} in ${esc(d)}`).join(", ")}.`], ["How often are the rankings updated?", "Every Monday during the indoor (December to March) and outdoor (March to June) seasons."]] });
   done.push("/rankings.html");
   return done;
 }

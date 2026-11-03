@@ -104,7 +104,7 @@ export async function renderer() {
 /* build step (prerender.mjs, after the school pages): /share/<slug>.png link preview, /share/<slug>-<m|w>-<post|story>.svg for the
    browser, /share/index.json (what the school view shows, with the same list) and the Inter files the browser embeds when it draws a card */
 export async function writeShare(out, jobs) {
-  const R = await renderer(), dir = path.join(out, "share"), fdir = path.join(out, "fonts", "share"), SUF = { "NCAA D1": "d1", "NCAA D2": "d2", "NCAA D3": "d3", NAIA: "naia" };
+  const R = await renderer(), dir = path.join(out, "share"), fdir = path.join(out, "fonts", "share"), SUF = { "NCAA D1": "d1", "NCAA D2": "d2", "NCAA D3": "d3", NAIA: "naia", NJCAA: "njcaa", NWAC: "nwac" };
   fs.mkdirSync(dir, { recursive: true }); fs.mkdirSync(fdir, { recursive: true });
   for (const [n, b] of R.fonts()) fs.writeFileSync(path.join(fdir, n), b);
   const upd = v => { const d = new Date(String(v || "").slice(0, 10) + "T12:00:00Z"); return isNaN(d) ? String(v || "") : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }); };

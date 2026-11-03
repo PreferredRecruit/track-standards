@@ -1,15 +1,17 @@
 /* Power Index for the whole site (Ryan 2026-10-30: v2 rankings approved, "push the current rankings live"). Runs power.mjs on every
-   NCAA D1/D2/D3/NAIA indoor and outdoor season from POWER_FROM, maps TFRRS team names to school pages, and returns what the rankings,
+   NCAA D1/D2/D3/NAIA/NJCAA/NWAC indoor and outdoor season from POWER_FROM, maps TFRRS team names to school pages, and returns what the rankings,
    school and conference pages show. Weekly / monthly movement: power_history.json (scripts/seo/power-snapshot.mjs, Monday workflow). */
 import fs from "node:fs";
 import path from "node:path";
 import { computePower, refMarks, PGROUPS } from "./power.mjs";
 import zlib from "node:zlib";
 
-export const PDIVS = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA"];
+/* junior colleges joined 2026-11-03 (Ryan: "build juco"): NJCAA (outdoor = the Division I national list + DI championships, which hold
+   only DI teams; indoor = the single NJCAA list + championships) and NWAC (its own qualifying list + championships). Same Power Index. */
+export const PDIVS = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA", "NJCAA", "NWAC"];
 export const POWER_FROM = 2016;   /* every season with TFRRS lists (Ryan 2026-10-30: "everything since 2016") */
-const KEY = { "NCAA D1": "d1", "NCAA D2": "d2", "NCAA D3": "d3", NAIA: "naia" };
-const DS = d => KEY[d] === "naia" ? "naia" : "ncaa-" + KEY[d];
+const KEY = { "NCAA D1": "d1", "NCAA D2": "d2", "NCAA D3": "d3", NAIA: "naia", NJCAA: "njcaa", NWAC: "nwac" };
+const DS = d => /^NCAA /.test(d) ? "ncaa-" + KEY[d] : KEY[d];
 export const rankPath = d => `/rankings/${DS(d)}-track-and-field-rankings.html`;
 export const seasonPath = (d, year, season) => `/rankings/${year}-${season}-${DS(d)}-track-and-field-rankings.html`;
 export const groupPath = (d, k) => `/rankings/${DS(d)}-${k}-rankings.html`;
@@ -39,6 +41,11 @@ export function computeSite({ out, root, S }) {
       .map(m => ({ year: m[1], season: m[2] })).filter(k => !(k.year === "2020" && k.season === "outdoor")).sort((a, b) => a.year.localeCompare(b.year) || SO(a.season) - SO(b.season));
     R.seasons[d] = []; const lastFields = {};
     const DAT = new Map(); for (const k of keys) { try { DAT.set(k, JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(out, "data", "rank", `${k.year}-${k.season}-${KEY[d]}.dat`))).toString())); } catch {} }
+    /* NWAC is one association, so its championship is the national meet (TFRRS tags it as a conference meet), and before 2023 its
+       season list is titled plain "NWAC" instead of a qualifying list. Treat them as the national meet and list (2026-11-03). */
+    if (d === "NWAC") for (const dat of DAT.values()) { const L = dat.lists || [];
+      for (const l of L) if (/^NWAC Championships$/.test(l.label || "") && l.conf === "NWAC") delete l.conf;
+      if (!L.some(l => l.nat)) { const n = L.find(l => (l.label || "") === "NWAC"); if (n) n.nat = true; } }
     /* v3 (Ryan 2026-11-02 "send it"): marks also scored against the division's 2016-on average #1 / last qualifier / 2x field marks, per season type */
     const REF = Object.fromEntries(["indoor", "outdoor"].map(se => [se, refMarks(keys.filter(k => k.season === se && DAT.has(k)).map(k => DAT.get(k)))]));
     for (const k of keys) {
@@ -74,7 +81,7 @@ export function computeSite({ out, root, S }) {
       b[g] = { rank: r.rank, of: c.P[g].length, prev: r.prev, act: r.act, qual: r.qual, power: r.power, ovr: r.ovr, groups: gr }; R.bySchool.set(r.s, b); }
   }
   /* conference tables: every conference school, ranked by its division Power rank, men and women separately */
-  const confs = new Map(); for (const s of S) if (R.cur[s.d]) { const k = s.d + "|" + s.c; if (!confs.has(k)) confs.set(k, []); confs.get(k).push(s); }
+  const confs = new Map(); for (const s of S) if (R.cur[s.d] && s.c !== s.d) {   /* junior colleges have no conferences (s.c is NJCAA) */ const k = s.d + "|" + s.c; if (!confs.has(k)) confs.set(k, []); confs.get(k).push(s); }
   for (const [k, list] of confs) {
     const T = {};
     for (const g of ["m", "w"]) {

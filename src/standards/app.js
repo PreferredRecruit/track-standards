@@ -632,8 +632,8 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   ${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} track &amp; field only</p>`:seg("g",g)}${s.j?"":youStrip(s,g)}`;   /* school checker removed (Ryan 2026-10-16: "is that even necessary, the kids can clearly see") */
   if(s.j){
     o+=`<div class="verify" style="margin-top:16px"><b>No recruiting levels for junior colleges</b><span>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: junior colleges compete nationally rather than in conferences, so there's no reliable way to predict a program's marks. Below are ${esc(s.n)}'s best marks this season; the full national list, by event, is in Results.</span><a href="/?tab=results&div=NJCAA">NJCAA national list ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
-    setTimeout(()=>teamBest(S.school),0);
-    return o+`<div id="tbest"></div>`+schoolExtra(s)+`</div>`}
+    setTimeout(()=>teamBest(S.school),0);setTimeout(()=>schoolRank(S.school),0);   /* NJCAA Power Rankings (2026-11-03) */
+    return o+`<div id="srank"></div><div id="tbest"></div>`+schoolExtra(s)+`</div>`}
   const off=s.o&&(s.off||{})[g];
   if(off){
     o+=`<div class="scroll" style="margin-top:16px"><table><thead><tr><th>Event</th>${off.tiers.map(t=>`<th class="num" title="${esc(t)}">${esc(String(t).replace(/^(men's|women's|men|women)\s+/i,"").replace(/\s+standards?$/i,"")||t)}</th>`).join("")}</tr></thead><tbody>${off.rows.map(r=>`<tr><td>${esc(r[0])}</td>${off.tiers.map((_,i)=>`<td class="num">${r[i+1]?twoLine(r[i+1]):"–"}</td>`).join("")}</tr>`).join("")}</tbody></table></div>${oldChart(s)?`<p class="oldnote">Most recent standards ${esc(s.t||s.n)} has published (${esc(s.yr)}). Current requirements may differ, so confirm with the coaching staff.</p>`:""}
@@ -2477,9 +2477,9 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
       if (q.get("m") && q.get("e")) { if (!S.run || S.mark !== q.get("m") || S.e !== q.get("e")) { S.g = q.get("g") === "w" ? "w" : "m"; S.e = q.get("e"); S.mark = q.get("m"); S.run = true; S.tab = "standards"; } }
       else if (S.run) { S.run = false; S.mark = ""; S.f = S.div = S.conf = S.st = ""; }
       if (q.get("tab") === "rankings") { S.tab = "rankings";   /* explorer state from the URL; old ?rk=<page> links open that division */
-        const rk = q.get("rk") || "", dv = { "ncaa-d1": "NCAA D1", "ncaa-d2": "NCAA D2", "ncaa-d3": "NCAA D3", naia: "NAIA" }, m = rk.match(/(ncaa-d[123]|naia)-/);
-        RK.d = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA"].includes(q.get("d")) ? q.get("d") : m ? dv[m[1]] : "NCAA D1";
-        RK.g = q.get("g") === "w" || /#women/.test(rk) ? "w" : "m"; RK.key = /^\d{4}-(indoor|outdoor)-(d[123]|naia)$/.test(q.get("s") || "") ? q.get("s") : null;
+        const rk = q.get("rk") || "", dv = { "ncaa-d1": "NCAA D1", "ncaa-d2": "NCAA D2", "ncaa-d3": "NCAA D3", naia: "NAIA", njcaa: "NJCAA", nwac: "NWAC" }, m = rk.match(/(ncaa-d[123]|naia|njcaa|nwac)-/);
+        RK.d = ["NCAA D1", "NCAA D2", "NCAA D3", "NAIA", "NJCAA", "NWAC"].includes(q.get("d")) ? q.get("d") : m ? dv[m[1]] : "NCAA D1";
+        RK.g = q.get("g") === "w" || /#women/.test(rk) ? "w" : "m"; RK.key = /^\d{4}-(indoor|outdoor)-(d[123]|naia|njcaa|nwac)$/.test(q.get("s") || "") ? q.get("s") : null;
         RK.tf = "season";   /* weekly / monthly views retired (Ryan 2026-11-01) */ RK.wk = /^\d{4}-\d\d-\d\d$/.test(q.get("w") || "") ? q.get("w") : null; RK.mo = /^\d{4}-\d\d$/.test(q.get("mo") || "") ? q.get("mo") : null;
         const cv = q.get("c") || q.get("v") || ""; RK.c = /^(home|overall|grp:[a-z]+|ev:[\w ,]+)$/.test(cv) ? cv : rk.match(/-(sprints|hurdles|distance|jumps|throws|multis)-rankings/) ? "grp:" + rk.match(/-(sprints|hurdles|distance|jumps|throws|multis)-rankings/)[1] : rk ? "overall" : "home"; RK.all = false; }
       else if (q.get("tab") === "ask" && !(q.get("m") && q.get("e"))) S.tab = "ask";
