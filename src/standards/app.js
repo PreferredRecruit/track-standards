@@ -2407,20 +2407,24 @@ document.addEventListener("change",ev=>{const t=ev.target;
   if(t.id==="hsy"){HS.y=t.value;R.swap=true;render();return}
   if(t.id==="tsea"){TM.sea=t.value;TM.ath=null;TM.open={};R.swap=true;render();return}
   if(t.id==="rconf"){R.conf=t.value;R.team=null;R.ath=null;R.swap=true;render();if(t.value)log("results_event",{detail:"conf-list",list:t.value})}});
-document.addEventListener("submit",ev=>{ev.preventDefault();
-  if(ev.target.id==="youf"){const s=SCH[S.school];if(!s)return;SCK.e=$("ye").value;SCK.mark=$("ym").value.trim();const r=schoolResult(s,S.g);
-    if(r.cls==="bad"){$("yerr").textContent=r.html.replace(/<[^>]+>/g,"");return}
-    intent(SCK.e,S.g,SCK.mark);S.youEdit=false;log("school",{school:s.n,division:s.d,event:SCK.e,mark:SCK.mark,g:S.g,detail:"you-"+(r.t?TN[r.t]:"none")});render();return}
-  if(ev.target.id==="schk"){const s=SCH[S.school];if(!s)return;SCK.e=$("schke").value;SCK.mark=$("schkm").value;SCK.res=schoolResult(s,S.g);
-    const box=ev.target.querySelector(".schkr")||ev.target.appendChild(document.createElement("p"));box.className="schkr "+SCK.res.cls;box.innerHTML=SCK.res.html;
-    if(SCK.res.cls==="bad")return;
-    intent(SCK.e,S.g,SCK.mark.trim());log("school",{school:s.n,division:s.d,event:SCK.e,mark:SCK.mark.trim(),g:S.g,detail:"check-"+(SCK.res.t?TN[SCK.res.t]:"none")});
-    const nm=s.t||s.n,vb=VERB(SCK.e),mk=SCK.mark.trim(),es=evSay(SCK.e),hk=vb==="run"?`You run a ${mk} ${es}?!`:`You ${vb} ${mk} in the ${es}?!`;
+/* the evaluation offer right after an athlete checks their mark at one school (the moment of intent). The old checker forced it
+   open; the "your time" line respects a pop-up closed earlier in the visit (2026-11-03). */
+function schoolOffer(s,force,v){
+const nm=s.t||s.n,vb=VERB(SCK.e),mk=SCK.mark.trim(),es=evSay(SCK.e),hk=vb==="run"?`You run a ${mk} ${es}?!`:`You ${vb} ${mk} in the ${es}?!`;
     const t=SCK.res.t?`That's ${TN[SCK.res.t]} level at ${nm}. Do their coaches know you exist?`:`Not on ${nm}'s chart yet? That doesn't mean you're not good enough.`;
     const vv=parse(mk,SCK.e),fitN=SCH.filter(x=>tier(x,S.g,SCK.e,vv)).length.toLocaleString(),hit=!!SCK.res.t;
     const ask=hit?`Find out whether ${nm}'s coaches would want your ${mk}.`:`Your ${mk} still fits ${fitN} colleges. Find out which of their coaches would want you.`;
     const bs={none:`Coaches can't recruit an athlete they've never heard of. ${ask}`,some:`A few emails is a start, but it isn't an offer. ${hit?`Find out how to turn that interest into an offer from ${nm}.`:"Find out how to turn that interest into real offers."}`,offers:`Offers give you leverage. ${hit?`Find out whether ${nm} would want your ${mk} before you sign.`:`Find out who else would want your ${mk} before you sign.`}`};
-    EV.hook=hk;setTimeout(()=>{EV.shown=false;EV.dismissed=false;EV.force=true;evalIn(t,ask,0,"school-check"+gsfx(),"school-check",bs)},900);return}
+    EV.hook=hk;setTimeout(()=>{if(force)EV.dismissed=false;if(EV.dismissed)return;EV.shown=false;EV.force=true;evalIn(t,ask,0,v+gsfx(),"school-check",bs)},900)}
+document.addEventListener("submit",ev=>{ev.preventDefault();
+  if(ev.target.id==="youf"){const s=SCH[S.school];if(!s)return;SCK.e=$("ye").value;SCK.mark=$("ym").value.trim();const r=schoolResult(s,S.g);
+    if(r.cls==="bad"){$("yerr").textContent=r.html.replace(/<[^>]+>/g,"");return}
+    intent(SCK.e,S.g,SCK.mark);S.youEdit=false;log("school",{school:s.n,division:s.d,event:SCK.e,mark:SCK.mark,g:S.g,detail:"you-"+(r.t?TN[r.t]:"none")});render();SCK.res=r;schoolOffer(s,false,"school-you");return}
+  if(ev.target.id==="schk"){const s=SCH[S.school];if(!s)return;SCK.e=$("schke").value;SCK.mark=$("schkm").value;SCK.res=schoolResult(s,S.g);
+    const box=ev.target.querySelector(".schkr")||ev.target.appendChild(document.createElement("p"));box.className="schkr "+SCK.res.cls;box.innerHTML=SCK.res.html;
+    if(SCK.res.cls==="bad")return;
+    intent(SCK.e,S.g,SCK.mark.trim());log("school",{school:s.n,division:s.d,event:SCK.e,mark:SCK.mark.trim(),g:S.g,detail:"check-"+(SCK.res.t?TN[SCK.res.t]:"none")});
+    schoolOffer(s,true,"school-check");return}
   if(ev.target.id==="cf"){send($("ct").value);return}
   if(parse(S.mark,S.e)==null){$("hint").textContent=`Enter a mark like ${ph(S.e)}`;return}
   if(!S.gr){$("hint").textContent="Pick your grade to see your colleges.";const gs=document.querySelector(".gseg");if(gs){gs.classList.remove("need");void gs.offsetWidth;gs.classList.add("need");gs.querySelector("button").focus()}return}
