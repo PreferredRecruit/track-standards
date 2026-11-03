@@ -457,7 +457,7 @@ function standards(){
     <div class="gseg" role="group" aria-label="Your grade"><span class="gl">Grade</span><div class="seg">${[9,10,11,12].map(n=>`<button type="button" data-grade="${n}" aria-pressed="${+S.gr===n}">${n}th</button>`).join("")}</div></div>
     <button class="go">Search colleges</button></div><div class="hint" id="hint"></div></form>`;
   /* order (Ryan 2026-10-13): search by stats · or · search one school · what the levels mean · results */
-  o+=`<div class="orsep" role="separator"><span>or</span></div><div class="one"><h4>Search for one school</h4><p>${NSTD.toLocaleString()} colleges across NCAA D1, D2, D3 and NAIA, plus every NJCAA junior college.</p><div class="search">${MAG}<label class="sr" for="q">Search colleges</label><input class="in" id="q" placeholder="Try USC, Oregon or Ole Miss" autocomplete="off" value="${esc(S.q)}"><div id="drop"></div></div></div>`;
+  o+=`<div class="orsep" role="separator"><span>or</span></div><div class="one${S.run?" sm":""}"><h4>Search for one school</h4><p>${NSTD.toLocaleString()} colleges across NCAA D1, D2, D3 and NAIA, plus every NJCAA junior college.</p><div class="search">${MAG}<label class="sr" for="q">Search colleges</label><input class="in" id="q" placeholder="Try USC, Oregon or Ole Miss" autocomplete="off" value="${esc(S.q)}"><div id="drop"></div></div></div>`;
   if(S.run){
     const v=parse(S.mark,S.e),all=[];SCH.forEach((s,i)=>{const t=tier(s,S.g,S.e,v);if(t)all.push({s,i,t})});
     const ok=(x,skip)=>(skip==="d"||!S.div||x.s.d===S.div)&&(skip==="c"||!S.conf||x.s.c===S.conf)&&(skip==="t"||!S.f||x.t===S.f)&&(skip==="s"||!S.st||x.s.s===S.st);
@@ -567,6 +567,26 @@ function schoolCheck(s,g){const list=evs(g).filter(e=>s[g][e]||(CONV[e]&&s[g][CO
   if(!list.includes(SCK.e))SCK.e=list.includes(INT.e)?INT.e:list.includes(S.e)?S.e:list[0];
   const nm=s.t||s.n,r=SCK.res;
   return `<form class="schk" id="schk"><b>Where do you stand at ${esc(nm)}?</b><div><label class="sr" for="schke">Event</label><select id="schke" class="in">${list.map(e=>`<option value="${esc(e)}" ${e===SCK.e?"selected":""}>${esc(hsName(e,g))}</option>`).join("")}</select><label class="sr" for="schkm">Your mark</label><input id="schkm" class="in" placeholder="Your PR, e.g. ${esc(ph(SCK.e))}" value="${esc(SCK.mark)}" autocomplete="off" inputmode="decimal"><button class="go">Check</button></div>${r?`<p class="schkr ${r.cls}">${r.html}</p>`:""}</form>`}
+/* "your time" on school pages (Ryan 2026-11-02 UX pass: 14,400 Google landings on school pages, 4.6% ever typed a time, and
+   people who search come back 6x as often). One slim line, not the old checker form: once a mark is known (from any search on the
+   site), it shows that mark's level here and lights up its row in the table; with no mark, one inline question. */
+/* the lowest level this school lists for an event, as shown in its high school table (Walk-On, else Recruit for Power 4) */
+function lowLevel(s,g,e){const x=hsLevels(s,g,e);if(!x||!x.t)return null;const L=x.t.filter(Boolean);return L.length?String(L[L.length-1]).replace(/\s*\(.*$/,""):null}
+const myMark=g=>INT.me&&INT.m&&INT.mg===g?{e:INT.me,m:INT.m}:null;
+const meRow=(e,g)=>{const k=myMark(g);return k&&k.e===e?' class="me"':""};
+function meChip(s,e,g){const k=myMark(g);if(!k||k.e!==e)return "";SCK.e=k.e;SCK.mark=k.m;const r=schoolResult(s,g);
+  return r.cls==="bad"?"":`<span class="mechip ${r.t||"X"}">You · ${esc(k.m)}${r.t?" · "+TN[r.t]:""}</span>`}
+function youStrip(s,g){const k=myMark(g);
+  if(k&&!S.youEdit){SCK.e=k.e;SCK.mark=k.m;const r=schoolResult(s,g);
+    if(r.cls!=="bad"){let txt=r.html.replace(/^Your /,`Your ${esc(hsName(k.e,g))} `);
+      if(!r.t){/* below every level here: name where this school starts and what the mark already fits elsewhere (never-hater framing) */
+        const v=parse(k.m,k.e),lo=lowLevel(s,g,k.e),n=SCH.filter(x=>tier(x,g,k.e,v)).length,nm=esc(s.t||s.n.replace(/\s*\(.*?\)\s*/g," ").trim());
+        txt=(lo?`${nm} starts recruiting at <b>${esc(lo)}</b> in the ${esc(hsName(k.e,g))}. `:"")+(n?`Your ${esc(k.m)} already fits <b>${n.toLocaleString()}</b> other colleges.`:`Keep chasing it: every mark has a path.`)}
+      return `<div class="you" role="status"><span class="ylv ${r.t||"X"}">${r.t?TN[r.t]:"Your mark"}</span><p>${txt}</p><button type="button" class="ych" data-yedit>Change</button></div>`}}
+  const e0=k?k.e:(INT.e&&HSE(g).includes(INT.e)?INT.e:HSE(g)[3]);
+  return `<form class="you ask" id="youf" novalidate><label for="ye">Where do you stand at ${esc(s.t||s.n.replace(/\s*\(.*?\)\s*/g," ").trim())}?</label><div class="yrow"><select class="in" id="ye" aria-label="Event">${HSE(g).map(e=>`<option value="${esc(e)}"${e===e0?" selected":""}>${esc(hsName(e,g))}</option>`).join("")}</select><input class="in" id="ym" aria-label="Your best time or mark" placeholder="e.g. ${esc(ph(e0))}" inputmode="decimal" autocomplete="off" value="${k?esc(k.m):""}"><button class="go">Check</button></div><p class="yerr" id="yerr" role="alert"></p></form>`}
+document.addEventListener("click",ev=>{if(ev.target.closest&&ev.target.closest("[data-yedit]")){S.youEdit=true;render();const m=$("ym");if(m)m.focus()}});
+document.addEventListener("change",ev=>{if(ev.target.id==="ye"){const m=$("ym");if(m)m.placeholder="e.g. "+ph(ev.target.value)}});
 function schoolResult(s,g){const e=SCK.e,v=parse(SCK.mark,e);if(v==null)return {cls:"bad",html:`Enter a mark like ${esc(ph(e))}.`};
   const direct=s[g][e],cv=!direct&&CONV[e]?convert(e,g,v):null,std=direct||(cv&&s[g][cv[0].e]),ev2=direct?e:cv&&cv[0].e,vv=direct?toCol(s,g,e,v):cv&&cv[0].v;
   if(!std)return {cls:"bad",html:"No standard listed for that event here."};
@@ -607,7 +627,7 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   const still=BRQ;BRQ=false;
   let o=`<div class="sec branded simple${still?" still":""}" style="padding-top:0;${bv}"><button class="back" data-back>‹ Back</button>
   <div class="sband">${mark}<div><small>${/\(/.test(s.n)?esc(s.n.replace(/^.*?\((.*?)\).*$/,"$1"))+" · ":""}${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(s.s):""}</small><h1 class="sname">${esc(s.n.replace(/\s*\(.*?\)\s*/g," ").trim())} Track &amp; Field${s.j?" (NJCAA)":" Standards"}</h1>${s.j?`<a class="tplink1" href="/teams/${tslug(S.school)}" data-tpage="${S.school}">Team results &amp; roster ›</a>`:tsw(S.school,"std")}${s.o?`<span class="offpill">★ Official standards${s.yr?` · ${esc(s.yr)}`:""}${oldChart(s)?" (latest published)":""}</span>`:""}</div><div class="srchips" id="srchips"></div></div>
-  ${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} track &amp; field only</p>`:seg("g",g)}`;   /* school checker removed (Ryan 2026-10-16: "is that even necessary, the kids can clearly see") */
+  ${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} track &amp; field only</p>`:seg("g",g)}${s.j?"":youStrip(s,g)}`;   /* school checker removed (Ryan 2026-10-16: "is that even necessary, the kids can clearly see") */
   if(s.j){
     o+=`<div class="verify" style="margin-top:16px"><b>No recruiting levels for junior colleges</b><span>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: junior colleges compete nationally rather than in conferences, so there's no reliable way to predict a program's marks. Below are ${esc(s.n)}'s best marks this season; the full national list, by event, is in Results.</span><a href="/?tab=results&div=NJCAA">NJCAA national list ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
     setTimeout(()=>teamBest(S.school),0);
@@ -625,7 +645,7 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
     /* high school events by default (1600m from the 1500m, 3200m from the 3000m/5000m, 300mH from the 400mH, 39" hurdles from 42"), college events one tap away */
     const hsr=HSE(g).map(e=>[e,hsLevels(s,g,e)]).filter(([e,x])=>x.t&&!noGrp(s,g,e)),tg=`<div class="seg evtg" role="group" aria-label="Events"><button type="button" data-cev="0" aria-pressed="${!S.cev}">High school events</button><button type="button" data-cev="1" aria-pressed="${!!S.cev}">College events</button></div>`;
     o+=`${hsr.length?tg:""}<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Event</th><th class="num">Target</th><th class="num">Recruit${p4?" "+levelsInfo():""}</th>${p4?"":`<th class="num">Walk‑On ${levelsInfo()}</th>`}</tr></thead><tbody>
-    ${(S.cev||!hsr.length?ev.map(e=>`<tr><td>${e}</td><td class="num">${disp(s,g,e,0)}</td><td class="num">${disp(s,g,e,1)}</td>${p4?"":`<td class="num">${disp(s,g,e,2)}</td>`}</tr>`):hsr.map(([e,x])=>x.from?`<tr title="Converted from the college ${esc(x.from)}: ${x.orig.slice(0,p4?2:3).map(v=>esc(v||"–")).join(" / ")}"><td>${esc(hsName(e,g))}</td>${(p4?[0,1]:[0,1,2]).map(i=>`<td class="num">${(x.t[i]?twoLine(x.t[i]):"–")}</td>`).join("")}</tr>`:`<tr><td>${esc(hsName(e,g))}</td><td class="num">${disp(s,g,e,0)}</td><td class="num">${disp(s,g,e,1)}</td>${p4?"":`<td class="num">${disp(s,g,e,2)}</td>`}</tr>`)).join("")||'<tr><td>No marks listed for this team yet.</td></tr>'}</tbody></table></div>
+    ${(S.cev||!hsr.length?ev.map(e=>`<tr${meRow(e,g)}><td>${e}${meChip(s,e,g)}</td><td class="num">${disp(s,g,e,0)}</td><td class="num">${disp(s,g,e,1)}</td>${p4?"":`<td class="num">${disp(s,g,e,2)}</td>`}</tr>`):hsr.map(([e,x])=>x.from?`<tr${meRow(e,g)} title="Converted from the college ${esc(x.from)}: ${x.orig.slice(0,p4?2:3).map(v=>esc(v||"–")).join(" / ")}"><td>${esc(hsName(e,g))}${meChip(s,e,g)}</td>${(p4?[0,1]:[0,1,2]).map(i=>`<td class="num">${(x.t[i]?twoLine(x.t[i]):"–")}</td>`).join("")}</tr>`:`<tr${meRow(e,g)}><td>${esc(hsName(e,g))}${meChip(s,e,g)}</td><td class="num">${disp(s,g,e,0)}</td><td class="num">${disp(s,g,e,1)}</td>${p4?"":`<td class="num">${disp(s,g,e,2)}</td>`}</tr>`)).join("")||'<tr><td>No marks listed for this team yet.</td></tr>'}</tbody></table></div>
     ${nfNote(s,g)}<div class="verify"><b>How these are set</b><span>${ruleText(s)} ${esc(s.n)} doesn't publish an official chart we could verify.${EVENTS.some(e=>["m","w"].some(g=>((((CT[s.ck]||{})[g]||{})[e])||[]).some(v=>v&&v[2])))?" Levels marked est: the conference has too few athletes in that event to set a level, so it uses the median of the same level across its division.":""} High school events show the matching college standard in high school terms (for example the 1600m from the college 1500m); tap College events for the original marks.</span>${src?`<a href="${esc(src)}" target="_blank" rel="noopener">See the ${esc(s.c)} list on TFRRS ›</a>`:""}${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
   }
   setTimeout(()=>teamBest(S.school),0);
@@ -2264,7 +2284,7 @@ function slide(sel,indId,key){const a=document.querySelector(sel+' [aria-selecte
 function render(){
   const onSchool=S.school!=null;
   $("hero").hidden=onSchool||(S.tab==="results"&&TM.i!=null);
-  $("hero").classList.toggle("compact",S.tab!=="standards");   /* UX audit 2026-10-31: the big headline only on Standards, data first elsewhere */
+  $("hero").classList.toggle("compact",S.tab!=="standards"||!!S.run);   /* UX pass 2026-11-02: also once a search has results, so the matches start on the first screen */   /* UX audit 2026-10-31: the big headline only on Standards, data first elsewhere */
   {const pl=$("evpill");if(pl)pl.hidden=onSchool||!EV.dismissed||EV.shown&&$("eval").classList.contains("on");}
   document.querySelectorAll(".switch button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));
   $("app").className=(S.tab==="results"||S.tab==="rankings")&&!onSchool?"wide":"";
@@ -2386,6 +2406,9 @@ document.addEventListener("change",ev=>{const t=ev.target;
   if(t.id==="tsea"){TM.sea=t.value;TM.ath=null;TM.open={};R.swap=true;render();return}
   if(t.id==="rconf"){R.conf=t.value;R.team=null;R.ath=null;R.swap=true;render();if(t.value)log("results_event",{detail:"conf-list",list:t.value})}});
 document.addEventListener("submit",ev=>{ev.preventDefault();
+  if(ev.target.id==="youf"){const s=SCH[S.school];if(!s)return;SCK.e=$("ye").value;SCK.mark=$("ym").value.trim();const r=schoolResult(s,S.g);
+    if(r.cls==="bad"){$("yerr").textContent=r.html.replace(/<[^>]+>/g,"");return}
+    intent(SCK.e,S.g,SCK.mark);S.youEdit=false;log("school",{school:s.n,division:s.d,event:SCK.e,mark:SCK.mark,g:S.g,detail:"you-"+(r.t?TN[r.t]:"none")});render();return}
   if(ev.target.id==="schk"){const s=SCH[S.school];if(!s)return;SCK.e=$("schke").value;SCK.mark=$("schkm").value;SCK.res=schoolResult(s,S.g);
     const box=ev.target.querySelector(".schkr")||ev.target.appendChild(document.createElement("p"));box.className="schkr "+SCK.res.cls;box.innerHTML=SCK.res.html;
     if(SCK.res.cls==="bad")return;
