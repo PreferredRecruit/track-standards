@@ -23,6 +23,12 @@ const PERSON = '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5
 let NEWPR = null;
 let D = null, KIDS = [], K = null, MODE = "onboard", SEL = 0, STEP = 0, MSG = "", BUSY = false, TAB = "profile", BANNER = false, IMGERR = "", IMGBUSY = "";
 let ADM = null, ADMQ = "", ADMT = "", IS_ADMIN = null;
+/* admin "view as" (Ryan 2026-11-02: "click into individual user accounts ... view the specific user's dashboard exactly as they have
+   customized it"): {uid, email, name, done, ver}. Read-only: their data is loaded into the same page they see, every edit, upload and
+   sign-out control is hidden and blocked (row-level security would refuse the writes anyway). */
+let VIEW_AS = null;
+const RO = new Set(["edit", "editkid", "quick", "addkid", "rmkid", "banner", "theme", "pick", "out", "dreamx", "add", "rm", "skip", "back", "cancel"]);
+const vb = sz => VIEW_AS ? (VIEW_AS.ver ? core.badgeSvg(sz) : "") : core.badge(sz);
 const IMG = {};   // storage path → blob URL
 
 const par = () => D.role === "parent";
@@ -47,17 +53,16 @@ const scholDivs = d => (d || []).some(x => ["D1", "D2", "NAIA", "JUCO"].includes
 
 const fmtM = (e, v) => core.cfg().fmt ? core.cfg().fmt(e, +v) : String(v);
 function blankKid() { const I = core.cfg().intent || {}; return { id: null, first: "", last: "", gender: I.g || "", year: I.gr ? SENIOR + (12 - +I.gr) : "", state: D && D.state || "", school: "", gpa: "", email: "", phone: "", dream: [], marks: [[I.e || "", I.m || ""]], avatar: null, banner: null, theme: null }; }
-function selfDraft() {
-  const p = core.profile() || {}, I = core.cfg().intent || {};
+function selfDraft(p = core.profile() || {}) {
+  const I = VIEW_AS ? {} : core.cfg().intent || {};
   return { id: null, role: p.role || "", first: p.first_name || "", last: p.last_name || "", phone: p.phone || "", sms: !!p.sms_consent,
     gender: p.gender || I.g || "", year: p.grad_year || (I.gr ? SENIOR + (12 - +I.gr) : ""), state: p.state || "", school: p.high_school || "", gpa: p.gpa != null ? String(p.gpa) : "",
     pname: p.parent_name || "", pemail: p.parent_email || "", pphone: p.parent_phone || "", age: !!p.age_13_plus,
     divs: p.target_divisions || [], schol: p.scholarship_priority || "",
     avatar: p.avatar_path || null, banner: p.banner_path || null, theme: p.banner_theme || null, marks: [], dream: p.dream_schools || [] };
 }
-async function loadAll() {
-  const uid = core.ses().user.id;
-  D = selfDraft();
+async function loadAll(uid = core.ses().user.id, prof) {
+  D = selfDraft(prof);
   const ms = await core.api("/rest/v1/marks?select=event,mark,athlete_id&user_id=eq." + uid + "&order=id").catch(() => []) || [];
   D.marks = ms.filter(m => !m.athlete_id).map(m => [m.event, fmtM(m.event, m.mark)]); D.marks0 = D.marks.map(m => m.slice());
   KIDS = [];
@@ -66,7 +71,7 @@ async function loadAll() {
     KIDS = ks.map(a => ({ id: a.id, first: a.first_name || "", last: a.last_name || "", gender: a.gender || "", year: a.grad_year || "", state: a.state || "", school: a.high_school || "",
       gpa: a.gpa != null ? String(a.gpa) : "", email: a.email || "", phone: a.phone || "", dream: a.dream_schools || [], avatar: a.avatar_path, banner: a.banner_path, theme: a.banner_theme, marks: ms.filter(m => m.athlete_id === a.id).map(m => [m.event, fmtM(m.event, m.mark)]) }));
   }
-  if (!D.marks.length) { const I = core.cfg().intent || {}; D.marks = [[I.e || "", I.m || ""]]; }
+  if (!D.marks.length) { const I = VIEW_AS ? {} : core.cfg().intent || {}; D.marks = [[I.e || "", I.m || ""]]; }
   SEL = Math.min(SEL, Math.max(0, KIDS.length - 1));
   K = KIDS[SEL] ? clone(KIDS[SEL]) : blankKid();
 }
@@ -96,7 +101,7 @@ function card() {
   const best = marks.map(m => [m, fitsFor(sub, m[0], m[1])]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1])[0];
   const cls = CLASSES.find(c => c[0] === +sub.year), S2 = stepsFor(), pct = Math.round(Math.min(STEP, S2.length) / S2.length * 100);
   const row = (k, v) => `<div class="pcr"><span>${k}</span><b>${v ? esc(v) : '<i>Not added yet</i>'}</b></div>`;
-  return `<aside class="pcard" aria-label="Recruiting profile"><div class="pchd"><div class="pcav">${avatarHtml(sub)}</div><div><b>${esc(nameOf(sub) || (par() ? "Your athlete" : "Your name"))}${core.badge(15)}</b><small>${esc([cls ? "Class of " + cls[0] : "", sub.gender ? (sub.gender === "m" ? "Men's" : "Women's") + " track" : "", core.ST[sub.state] || ""].filter(Boolean).join(" · ") || "Recruiting profile")}</small></div>
+  return `<aside class="pcard" aria-label="Recruiting profile"><div class="pchd"><div class="pcav">${avatarHtml(sub)}</div><div><b>${esc(nameOf(sub) || (par() ? "Your athlete" : "Your name"))}${vb(15)}</b><small>${esc([cls ? "Class of " + cls[0] : "", sub.gender ? (sub.gender === "m" ? "Men's" : "Women's") + " track" : "", core.ST[sub.state] || ""].filter(Boolean).join(" · ") || "Recruiting profile")}</small></div>
     <div class="pcring" style="--p:${pct}"><span>${pct}%</span></div></div>
     <div class="pcev">${marks.length ? marks.map(m => `<span class="pcchip"><b>${evName(m[0], sub.gender)}</b>${esc(m[1])}</span>`).join("") : '<span class="pcempty">Events and PRs show here</span>'}</div>
     ${best ? `<div class="pcfit"><b>${best[1].toLocaleString()}</b><span>college programs fit ${par() ? esc(sub.first || "their") + (sub.first ? "'s" : "") : "your"} ${evName(best[0][0], sub.gender)}</span></div>` : ""}
@@ -159,6 +164,10 @@ function wizard() {
 
 /* ---------- profile pages ---------- */
 function doneView() {
+  if (VIEW_AS) return top(`<button type="button" class="onbtab on" data-onb="vaback">‹ Back to accounts</button>`) +
+    `<div class="vabar" role="status"><span>${svg('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', 17)}Viewing <b>${esc(VIEW_AS.name || VIEW_AS.email)}</b>'s account exactly as they see it. Read only.</span>${VIEW_AS.done ? "" : "<em>Profile not finished</em>"}<button type="button" data-onb="vaback">Back to accounts</button></div>` +
+    (!D.role ? `<div class="onbwrap one"><section class="onbmain onbdone"><h1>Nothing set up yet</h1><p class="onbsub">This account was created but hasn't started the profile steps.</p></section></div>`
+      : D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`);
   return top(NAV + (IS_ADMIN ? `<button type="button" class="onbtab${TAB === "admin" ? " on" : ""}" data-onb="tab" data-v="admin">Accounts</button><button type="button" class="onbtab${TAB === "profile" ? " on" : ""}" data-onb="tab" data-v="profile">My profile</button>` : "")) +
     `<div class="onbhome"><button type="button" class="onbhb" data-onb="home" data-v="standards">‹ Back to the site</button></div>` + (TAB === "admin" && IS_ADMIN ? adminView() : D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`);
 }
@@ -168,15 +177,16 @@ function simpleDone() {
     <div class="onbcta"><button type="button" class="acbtn" data-onb="exit">Go to the standards</button><button type="button" class="onbback" data-onb="edit">Edit account</button><button type="button" class="onbback" data-onb="out">Sign out</button></div>
     <p class="onbmail">Signed in as ${esc(core.ses() ? core.ses().user.email : "")}</p></section></div>`;
 }
-const footer = () => `<section class="prmore"><div></div><div class="prfoot"><p class="onbmail">Signed in as ${esc(core.ses() ? core.ses().user.email : "")}. Profiles are private: only you and the Preferred Recruit team can see them.</p><button type="button" class="onbback" data-onb="out">Sign out</button></div></section>`;
+const who = () => VIEW_AS ? "Account email: " + esc(VIEW_AS.email) : "Signed in as " + esc(core.ses() ? core.ses().user.email : "");
+const footer = () => `<section class="prmore"><div></div><div class="prfoot"><p class="onbmail">${who()}. Profiles are private: only you and the Preferred Recruit team can see them.</p><button type="button" class="onbback" data-onb="out">Sign out</button></div></section>`;
 function parentView() {
   const kid = KIDS[SEL];
-  return `<div class="prwrap"><div class="prkids"><div class="prkh"><h2>Your athletes</h2><span>${KIDS.length} on this account</span></div><div class="prkl">
+  return `<div class="prwrap"><div class="prkids"><div class="prkh"><h2>${VIEW_AS ? "Athletes" : "Your athletes"}</h2><span>${KIDS.length} on this account</span></div><div class="prkl">
     ${KIDS.map((k2, i) => `<button type="button" class="prkid${i === SEL ? " on" : ""}" data-onb="kid" data-i="${i}"><span class="pcav sm">${avatarHtml(k2, 18)}</span><span><b>${esc(nameOf(k2))}</b><small>${esc([CLASSES.find(c => c[0] === +k2.year) ? "Class of " + k2.year : "", k2.marks[0] ? (core.cfg().evName ? core.cfg().evName(k2.marks[0][0], k2.gender) : k2.marks[0][0]) : ""].filter(Boolean).join(" · "))}</small></span></button>`).join("")}
     <button type="button" class="prkid add" data-onb="addkid"><span class="pcav sm">+</span><span><b>Add another athlete</b><small>Brother, sister, any of your kids</small></span></button></div></div>
     ${kid ? profileCard(kid) : `<section class="onbmain onbdone"><h1>Add your first athlete</h1><p class="onbsub">Their PRs, GPA and college matches live here.</p><button type="button" class="acbtn" data-onb="addkid">Add athlete</button></section>`}
     <section class="prmore"><div><h2 class="prh2">You</h2><div class="pcr"><span>Name</span><b>${esc(nameOf(D)) || "<i>Not added yet</i>"}</b></div><div class="pcr"><span>Phone</span><b>${esc(D.phone) || "<i>Not added yet</i>"}</b></div><button type="button" class="onbback" data-onb="edit">Edit your details</button></div>
-      <div class="prfoot"><p class="onbmail">Signed in as ${esc(core.ses() ? core.ses().user.email : "")}. Profiles are private: only you and the Preferred Recruit team can see them.</p><button type="button" class="onbback" data-onb="out">Sign out</button></div></section></div>`;
+      <div class="prfoot"><p class="onbmail">${who()}. Profiles are private: only you and the Preferred Recruit team can see them.</p><button type="button" class="onbback" data-onb="out">Sign out</button></div></section></div>`;
 }
 /* one athlete's page: banner (theme or photo), photo, basics, stats per event */
 function profileCard(sub, lite) {
@@ -200,10 +210,10 @@ function profileCard(sub, lite) {
         <label class="prup">${svg(CAM, 16)}Upload a banner photo<input type="file" accept="image/jpeg,image/png,image/webp" data-onb-file="banner" hidden></label>${IMGBUSY === "banner" ? "<small>Uploading…</small>" : "<small>Wide photos work best.</small>"}</div>` : ""}</div>
     <div class="prhead"><div class="prav${IMGBUSY === "avatar" ? " busy" : ""}">${sub.avatar && IMG[sub.avatar] ? `<img src="${IMG[sub.avatar]}" alt="${esc(nameOf(sub))}">` : `<span>${esc(initials(sub) || "PR")}</span>`}
         <label class="prcam" title="${sub.avatar ? "Change photo" : "Add a photo"}">${svg(CAM, 18)}<input type="file" accept="image/jpeg,image/png,image/webp" data-onb-file="avatar" hidden></label></div>
-      <div class="prid"><h1>${esc(nameOf(sub))}${core.badge(22)}</h1>${core.prVerified() ? `<p class="prvl">Verified Preferred Recruit athlete</p>` : ""}<p>${lite ? (D.role === "coach" ? "Coach" : "Fan") : esc([cls ? "Class of " + cls[0] : sub.year ? "In college" : "", sub.gender ? (sub.gender === "m" ? "Men's" : "Women's") + " track and field" : "", sub.school, core.ST[sub.state]].filter(Boolean).join(" · "))}</p>
+      <div class="prid"><h1>${esc(nameOf(sub))}${vb(22)}</h1>${(VIEW_AS ? VIEW_AS.ver : core.prVerified()) ? `<p class="prvl">Verified Preferred Recruit athlete</p>` : ""}<p>${lite ? (D.role === "coach" ? "Coach" : "Fan") : esc([cls ? "Class of " + cls[0] : sub.year ? "In college" : "", sub.gender ? (sub.gender === "m" ? "Men's" : "Women's") + " track and field" : "", sub.school, core.ST[sub.state]].filter(Boolean).join(" · "))}</p>
         ${IMGERR ? `<p class="acerr">${esc(IMGERR)}</p>` : !sub.avatar ? `<button type="button" class="aclnk" data-onb="pick" data-v="avatar">Add a profile photo</button>` : ""}</div>
       <div class="pract"><button type="button" class="onbx" data-onb="${par() ? "editkid" : "edit"}">Edit profile</button></div></div>
-    ${lite ? `<div class="prlite"><p>${D.role === "coach" ? "Coach account" : "Fan account"}${IS_ADMIN ? " · Admin" : ""}. Every standard, full results list and unlimited Recruiting AI is open to you.</p><div class="onbcta"><button type="button" class="acbtn" data-onb="exit">Go to the standards</button>${IS_ADMIN ? `<button type="button" class="onbback" data-onb="tab" data-v="admin">Open the Accounts dashboard</button>` : ""}</div><p class="onbmail">Want a recruiting profile with PRs and college matches? Tap Edit profile and choose athlete or parent.</p></div></section>` : `
+    ${lite ? `<div class="prlite"><p>${D.role === "coach" ? "Coach account" : "Fan account"}${IS_ADMIN && !VIEW_AS ? " · Admin" : ""}. Every standard, full results list and unlimited Recruiting AI is open to you.</p><div class="onbcta"><button type="button" class="acbtn" data-onb="exit">Go to the standards</button>${IS_ADMIN ? `<button type="button" class="onbback" data-onb="tab" data-v="admin">Open the Accounts dashboard</button>` : ""}</div><p class="onbmail">Want a recruiting profile with PRs and college matches? Tap Edit profile and choose athlete or parent.</p></div></section>` : `
     <div class="prtiles">${tile(marks.length, marks.length === 1 ? "Event" : "Events")}${tile(best ? best.st.n.toLocaleString() : "–", `Programs ${own} best mark fits`)}${tile(esc(sub.gpa) || "–", `GPA <button type="button" class="aclnk prtl" data-onb="quick" data-v="gpa">Update</button>`)}${tile(cls ? esc(cls[1]) : sub.year ? "College" : "–", "Class")}</div></section>
     <div class="prh2row"><h2 class="prh2">${par() ? esc(sub.first) + "'s" : "Your"} events and PRs</h2><button type="button" class="onbx" data-onb="quick" data-v="events">${svg('<path d="M12 5v14M5 12h14"/>', 14)} Update PRs</button></div><div class="prgrid">${stats.map(evCard).join("") || `<p class="onbsub">No events yet.</p>`}</div>
     ${par() ? `<p class="prrm"><button type="button" class="aclnk" data-onb="rmkid">Remove ${esc(sub.first)} from this account</button></p>` : ""}`}`;
@@ -215,8 +225,8 @@ function flat() {
   for (const r of ADM.rows) {
     const contact = [r.email, r.phone && (r.phone + (r.sms_consent ? " (texts OK)" : "")), r.parent_name && "Parent: " + r.parent_name, r.parent_email, r.parent_phone].filter(Boolean);
     const acct = [r.first_name, r.last_name].filter(Boolean).join(" ");
-    if (r.role === "parent" && (r.athletes || []).length) for (const a of r.athletes) out.push({ dream: a.dream_schools || [], kidContact: [a.email, a.phone && "Athlete: " + a.phone].filter(Boolean), name: [a.first_name, a.last_name].filter(Boolean).join(" "), sub: "Parent: " + (acct || r.email), role: "parent's athlete", gender: a.gender, state: a.state, school: a.high_school, year: a.grad_year, gpa: a.gpa, tier: a.tier, done: !!r.finished_at, confirmed: r.confirmed, marks: a.marks || [], contact, email: r.email, opted: r.opted_in_at, created: r.created_at, confirmed: r.confirmed });
-    else out.push({ dream: r.dream_schools || [], kidContact: [], name: acct, sub: r.role || "no profile yet", role: r.role, gender: r.gender, state: r.state, school: r.high_school, year: r.grad_year, gpa: r.gpa, tier: r.tier, done: !!r.finished_at, marks: r.marks || [], contact, email: r.email, opted: r.opted_in_at, created: r.created_at, confirmed: r.confirmed });
+    if (r.role === "parent" && (r.athletes || []).length) r.athletes.forEach((a, ki) => out.push({ uid: r.id, ki, dream: a.dream_schools || [], kidContact: [a.email, a.phone && "Athlete: " + a.phone].filter(Boolean), name: [a.first_name, a.last_name].filter(Boolean).join(" "), sub: "Parent: " + (acct || r.email), role: "parent's athlete", gender: a.gender, state: a.state, school: a.high_school, year: a.grad_year, gpa: a.gpa, tier: a.tier, done: !!r.finished_at, confirmed: r.confirmed, marks: a.marks || [], contact, email: r.email, opted: r.opted_in_at, created: r.created_at, confirmed: r.confirmed }));
+    else out.push({ uid: r.id, ki: -1, dream: r.dream_schools || [], kidContact: [], name: acct, sub: r.role || "no profile yet", role: r.role, gender: r.gender, state: r.state, school: r.high_school, year: r.grad_year, gpa: r.gpa, tier: r.tier, done: !!r.finished_at, marks: r.marks || [], contact, email: r.email, opted: r.opted_in_at, created: r.created_at, confirmed: r.confirmed });
   }
   for (const x of out) {
     const athleteRow = x.role === "athlete" || x.role === "parent's athlete";
@@ -248,12 +258,32 @@ function adminView() {
     <div class="admst">${[["", "All", all.length], ...GROUPS.map(([k, l]) => [k, l, n(k)])].map(([k, l, c]) => `<button type="button" data-onb="adt" data-v="${k}" class="${ADMT === k ? "on" : ""}"><b>${c}</b><span>${l}</span></button>`).join("")}</div>
     <div class="admbar"><input class="in" id="admq" data-in="admq" placeholder="Search name, email, school or state" value="${esc(ADMQ)}"><button type="button" class="onbback" data-onb="csv">Download CSV</button><button type="button" class="onbback" data-onb="reload">Refresh</button></div>
     <div class="admtbl"><table><thead><tr><th>Athlete</th><th>Tier</th><th>Profile</th><th>Class</th><th>Events and PRs</th><th>GPA</th><th>High school</th><th>Contact</th><th>Joined</th></tr></thead><tbody>
-    ${(ADMT ? [[ADMT, ""]] : GROUPS).map(([gk, gl]) => { const G = rows.filter(r => r.group === gk); if (!G.length) return ""; return (gl ? `<tr class="admgrp"><td colspan="9">${esc(gl)} <span>${G.length}</span></td></tr>` : "") + G.map(r => `<tr><td><b>${esc(r.name || "–")}</b>${r.dream.length ? `<small class="admdream">Dream: ${esc(r.dream.join(", "))}</small>` : ""}<small>${esc(r.sub)}${r.state ? " · " + esc(r.state) : ""}${r.gender ? " · " + (r.gender === "m" ? "Men" : "Women") : ""}</small></td>
+    ${(ADMT ? [[ADMT, ""]] : GROUPS).map(([gk, gl]) => { const G = rows.filter(r => r.group === gk); if (!G.length) return ""; return (gl ? `<tr class="admgrp"><td colspan="9">${esc(gl)} <span>${G.length}</span></td></tr>` : "") + G.map(r => `<tr><td><button type="button" class="admname" data-onb="viewas" data-u="${esc(r.uid)}" data-i="${r.ki}" title="View this account as they see it">${esc(r.name || r.email || "–")}</button>${r.dream.length ? `<small class="admdream">Dream: ${esc(r.dream.join(", "))}</small>` : ""}<small>${esc(r.sub)}${r.state ? " · " + esc(r.state) : ""}${r.gender ? " · " + (r.gender === "m" ? "Men" : "Women") : ""}</small></td>
       <td><span class="admtier t${esc(r.done ? r.tier : "x")}">${r.done ? esc(r.tier) : "–"}</span>${r.opted ? '<small>clicked evaluation</small>' : ""}</td>
       <td class="admprof"><b class="${r.have === r.need ? "full" : ""}">${r.have}/${r.need}</b><small>${r.have === r.need ? "Complete" : "Missing: " + esc(r.missing.join(", "))}</small>${!r.confirmed || !r.done ? (SENT[r.email] ? `<small class="admsent">Reminder ${esc(SENT[r.email])}</small>` : `<button type="button" class="admnudge" data-onb="nudge" data-e="${esc(r.email)}" data-k="${r.confirmed ? "profile" : "confirm"}">${r.confirmed ? "Send finish-profile link" : "Resend confirm email"}</button>`) : ""}</td>
       <td>${r.year ? esc(r.year) : "–"}</td><td>${mk(r) || "–"}</td><td>${r.gpa != null ? esc(r.gpa) : "–"}</td><td>${esc(r.school || "–")}</td>
       <td class="admc">${[...r.kidContact, ...r.contact].map(esc).join("<br>")}${r.confirmed ? "" : '<small class="admwarn">email not confirmed</small>'}</td><td>${esc(new Date(r.created).toLocaleDateString())}</td></tr>`).join(""); }).join("") || `<tr><td colspan="9">No accounts match.</td></tr>`}
     </tbody></table></div></div>`;
+}
+/* open one account read-only, exactly as its owner sees /account; ki = which of a parent's athletes was clicked */
+async function viewAs(uid, ki) {
+  const r = ADM && ADM.rows.find(x => x.id === uid); if (!r) return;
+  const kid = ki >= 0 && r.athletes && r.athletes[ki], nm = kid ? [kid.first_name, kid.last_name].filter(Boolean).join(" ") : [r.first_name, r.last_name].filter(Boolean).join(" ");
+  VIEW_AS = { uid, email: r.email, name: nm, done: !!r.finished_at, ver: false };
+  layer().innerHTML = top() + `<div class="onbwrap one"><section class="onbmain"><p class="onbsub">Opening ${esc(nm || r.email)}'s account…</p></section></div>`;
+  try {
+    const [pr, vr] = await Promise.all([core.api("/rest/v1/profiles?select=*&id=eq." + uid), core.api("/rest/v1/pr_verified?select=via&user_id=eq." + uid).catch(() => [])]);
+    VIEW_AS.ver = !!(vr && vr[0]);
+    await loadAll(uid, (pr && pr[0]) || {});
+    SEL = Math.max(0, Math.min(ki, KIDS.length - 1)); K = KIDS[SEL] ? clone(KIDS[SEL]) : blankKid();
+    BANNER = false; IMGERR = ""; MODE = "onboard"; STEP = 0; TAB = "profile"; NEWPR = null;
+    await loadImgs();
+  } catch (e) { VIEW_AS = null; ADM.err = "Couldn't open that account. " + e.message; }
+  document.documentElement.classList.toggle("onbva", !!VIEW_AS); render(); window.scrollTo(0, 0); layer().scrollTo(0, 0);
+}
+async function viewAsEnd() {
+  VIEW_AS = null; document.documentElement.classList.remove("onbva");
+  await loadAll(); await loadImgs(); SEL = 0; K = KIDS[0] ? clone(KIDS[0]) : blankKid(); TAB = "admin"; render(); window.scrollTo(0, 0); layer().scrollTo(0, 0);
 }
 async function loadAdmin() { try { const r = await core.api("/rest/v1/rpc/admin_accounts", { method: "POST", body: {} }); ADM = { rows: r || [] }; } catch (e) { ADM = { err: "Couldn't load accounts. " + e.message }; } render(); }
 function csv() {
@@ -301,7 +331,7 @@ async function upload(kind, file) {
 async function setTheme(v) { const sub = subNow(); if (!sub) return; sub.theme = v; sub.banner = null; BANNER = false; render(); try { await patchSub(sub, { banner_theme: v, banner_path: null }); } catch (e) { IMGERR = "Couldn't save the banner."; render(); } }
 
 /* ---------- render + save ---------- */
-const onWizard = () => !(core.member() && location.pathname === "/account" && MODE === "onboard") && !(IS_ADMIN && TAB === "admin" && location.pathname === "/account");
+const onWizard = () => !VIEW_AS && !(core.member() && location.pathname === "/account" && MODE === "onboard") && !(IS_ADMIN && TAB === "admin" && location.pathname === "/account");
 function render() {
   const el = layer(); if (!D) return;
   const html = onWizard() ? wizard() : doneView();
@@ -390,6 +420,7 @@ async function next() {
 }
 
 export async function show() {
+  VIEW_AS = null; document.documentElement.classList.remove("onbva");
   const el = layer(); document.documentElement.classList.add("onbon"); el.hidden = false;
   if (!document.querySelector('meta[name="robots"][data-onb]')) document.head.insertAdjacentHTML("beforeend", '<meta name="robots" content="noindex, nofollow" data-onb>');
   if (!core.ses()) { el.innerHTML = top() + `<div class="onbwrap one"><section class="onbmain onbdone"><h1>Build your recruiting profile</h1><p class="onbsub">Create a free account first. It takes about two minutes and shows every college your marks fit.</p><div class="onbcta"><button type="button" class="acbtn" data-acc="signup" data-why="onboarding">Create free account</button><button type="button" class="onbback" data-acc="signin" data-why="onboarding">I already have an account</button></div></section></div>`; return; }
@@ -424,6 +455,9 @@ export function bind() {
       if (k === "gender") sub.marks = sub.marks.map(m => [core.cfg().events(v).includes(m[0]) ? m[0] : "", m[1]]);
       return render(); }
     const b = e.target.closest("[data-onb]"); if (!b) return; const a = b.dataset.onb; e.preventDefault();
+    if (VIEW_AS && RO.has(a)) return;
+    if (a === "viewas") return viewAs(b.dataset.u, +b.dataset.i);
+    if (a === "vaback") return viewAsEnd();
     if (a === "home") { const v = b.dataset.v || "standards"; history.pushState({}, "", v === "results" ? "/?tab=results" : "/"); hide(); core.changed(); window.__prStandardsRoute && window.__prStandardsRoute(null); const t = document.querySelector(`.switch [data-tab="${v}"]`) || document.querySelector(`[data-tab="${v}"]:not(.logo)`); if (t) t.click(); window.scrollTo(0, 0); return; }
     if (a === "exit") { if (core.ses() && !core.member() && location.pathname !== "/account") { MSG = "Finish your profile to use the site. It takes about two minutes."; return render(); } history.pushState({}, "", "/"); hide(); core.changed(); return; }
     if (a === "skip") { read(); const sub = S(), k2 = stepsFor()[STEP]; if (k2 === "events") sub.marks = sub.marks.filter(m => m[0] && m[1] && core.cfg().parse(m[1], m[0]) != null); if (!sub.marks.length) sub.marks = [["", ""]]; if (k2 === "gpa" && (sub.gpa === "" || isNaN(+sub.gpa))) sub.gpa = ""; MSG = ""; return next(); }
@@ -463,7 +497,7 @@ export function bind() {
     else if (e.target.dataset.in) { read(); const c = el.querySelector(".pcard"); if (c) c.outerHTML = card(); }
   });
   document.addEventListener("change", e => {
-    if (e.target.matches && e.target.matches("[data-onb-file]")) { upload(e.target.dataset.onbFile, e.target.files && e.target.files[0]); e.target.value = ""; return; }
+    if (e.target.matches && e.target.matches("[data-onb-file]") && !VIEW_AS) { upload(e.target.dataset.onbFile, e.target.files && e.target.files[0]); e.target.value = ""; return; }
     const el = document.getElementById("onb"); if (el && !el.hidden && el.contains(e.target) && (e.target.dataset.mk === "e" || e.target.dataset.in === "state")) { read(); render(); }
   });
 }

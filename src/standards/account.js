@@ -98,7 +98,8 @@ async function prBadge() {
 }
 export const prVerified = () => !!PRV;
 /* the badge itself: a check in a filled circle, with a plain-word tooltip */
-export const badge = (sz = 16) => PRV ? `<span class="prvb" title="Verified Preferred Recruit athlete" aria-label="Verified Preferred Recruit athlete"><svg width="${sz}" height="${sz}" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l2.6 2 3.3-.3 1 3.1 2.8 1.8-.9 3.2.9 3.2-2.8 1.8-1 3.1-3.3-.3-2.6 2-2.6-2-3.3.3-1-3.1-2.8-1.8.9-3.2-.9-3.2 2.8-1.8 1-3.1 3.3.3z"/><path d="M7.6 12.3l3 3 5.8-6.2" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : "";
+export const badge = (sz = 16) => PRV ? badgeSvg(sz) : "";
+export const badgeSvg = (sz = 16) => `<span class="prvb" title="Verified Preferred Recruit athlete" aria-label="Verified Preferred Recruit athlete"><svg width="${sz}" height="${sz}" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l2.6 2 3.3-.3 1 3.1 2.8 1.8-.9 3.2.9 3.2-2.8 1.8-1 3.1-3.3-.3-2.6 2-2.6-2-3.3.3-1-3.1-2.8-1.8.9-3.2-.9-3.2 2.8-1.8 1-3.1 3.3.3z"/><path d="M7.6 12.3l3 3 5.8-6.2" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
 
 /* ---------- public helpers used by app.js ---------- */
 export const signedIn = () => !!SES;
@@ -361,7 +362,7 @@ function joinLater() {
     bar("prNudge-join", `<p><b>Make a free account.</b> <span>Save your athlete's times, see every college that fits and ask the Recruiting AI as much as you want.</span></p><button type="button" class="prnb" data-acc="signup" data-why="nudge">Create free account</button>`);
   }, 2000);
 }
-export const core = { badge, prVerified, URL: URL_, KEY, ST, api, fresh, loadProfile, changed, signOut, member, profile: () => PRO, ses: () => SES, cfg: () => CFG };
+export const core = { badge, badgeSvg, prVerified, URL: URL_, KEY, ST, api, fresh, loadProfile, changed, signOut, member, profile: () => PRO, ses: () => SES, cfg: () => CFG };
 export async function init(cfg) {
   CFG = cfg || {}; SES = store.get(SK); shell(); headBtn();
   document.addEventListener("click", e => {

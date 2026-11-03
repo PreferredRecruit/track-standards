@@ -1450,3 +1450,13 @@ body:has(#prnudge.on) #prhelp{bottom:96px}@media (max-width:640px){body:has(#prn
 .pchd b .prvb{vertical-align:-2px}
 .prvl{margin:2px 0 0;font-size:12.5px;font-weight:600;color:var(--pr-violet,#7A45F0)}
 .acchd .prvb{margin-left:0}
+/* admin "view as" (2026-11-02): clickable names on Accounts, read-only bar, edit controls hidden while viewing */
+.admname{all:unset;cursor:pointer;font-weight:700;color:var(--pr-ink);border-bottom:1px solid transparent;transition:color .15s,border-color .15s}
+.admname:hover,.admname:focus-visible{color:var(--pr-violet,#7A45F0);border-bottom-color:currentColor}
+.admname:focus-visible{outline:2px solid var(--pr-violet,#7A45F0);outline-offset:3px;border-radius:3px}
+.vabar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;max-width:1120px;margin:0 auto 14px;padding:11px 16px;border-radius:14px;background:var(--pr-violet,#7A45F0);color:#fff;font-size:14px}
+.vabar span{display:inline-flex;align-items:center;gap:8px;flex:1;min-width:220px}.vabar svg{flex:none}
+.vabar em{font-style:normal;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.18)}
+.vabar button{font:inherit;font-size:13px;font-weight:700;padding:7px 14px;border-radius:999px;border:0;background:#fff;color:var(--pr-violet,#7A45F0);cursor:pointer}
+html.onbva .onb :is([data-onb="edit"],[data-onb="editkid"],[data-onb="quick"],[data-onb="addkid"],[data-onb="rmkid"],[data-onb="banner"],[data-onb="pick"],[data-onb="out"],.prcam,.prbbtn,.prrm,.pract){display:none!important}
+@media(max-width:640px){.vabar{margin:0 16px 12px;font-size:13px}.vabar button{width:100%}}
