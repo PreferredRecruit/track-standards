@@ -79,3 +79,20 @@ body:has(#prnudge.on) .evpill{display:none}   /* one prompt at a time: the accou
 .preval b{display:block;font-size:var(--fs-17);line-height:var(--lh-snug)}.preval p{margin:4px 0 0;font-size:var(--fs-14);color:var(--pr-mute)}
 .preval .acbtn{flex:none;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;height:44px;padding:0 18px;border-radius:var(--r-2)}
 @media (max-width:640px){.preval{flex-direction:column;align-items:stretch}.preval .acbtn{justify-content:center}}
+
+/* ===== parent mode (2026-11-03): "I'm looking up: My child / Myself"; parents get bigger type and the one-sentence box ===== */
+.aud{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 auto 14px;font-size:var(--fs-15);color:var(--pr-mute)}
+.aud button{height:40px;padding:0 16px;border-radius:var(--r-pill);border:1px solid var(--pr-line);background:var(--pr-card);color:var(--pr-ink);font:inherit;font-weight:600;cursor:pointer;transition:border-color var(--dur-1),background var(--dur-1)}
+.aud button[aria-pressed="true"]{background:var(--pr-black);color:var(--pr-card);border-color:var(--pr-black)}
+.obox{max-width:736px;margin:0 auto 10px;padding:18px;border-radius:var(--r-3);background:var(--pr-card);border:1px solid var(--pr-line);box-shadow:var(--sh-2)}
+.obox label{display:block;font-size:var(--fs-17);font-weight:700;margin:0 0 10px;color:var(--pr-ink)}
+.obrow{display:grid;grid-template-columns:1fr auto;gap:10px}
+.obrow .in{height:54px;font-size:var(--fs-17);min-width:0}
+.obrow .go{height:54px;padding:0 22px;border:0;border-radius:var(--r-2);background:var(--pr-violet);color:#fff;font-weight:650;font-size:var(--fs-17);cursor:pointer}
+.obh{margin:8px 0 0;font-size:var(--fs-14);color:#B42318}.obh:empty{display:none}
+.lede.pml{margin-top:8px}
+html.pm .panel .in,html.pm .panel .seg button,html.pm .panel .go{font-size:var(--fs-17)}
+html.pm .panel .seg button{min-height:48px}
+html.pm .sum{font-size:var(--fs-24)}
+html.pm .lvplain{font-size:var(--fs-15)}
+@media (max-width:640px){.obrow{grid-template-columns:1fr}.obrow .go{width:100%}.obox{padding:14px;margin:0 0 8px}}

@@ -67,6 +67,11 @@ const INT=(()=>{try{return JSON.parse(localStorage.getItem("prIntent"))||{}}catc
 const SID=(()=>{try{let v=localStorage.getItem("prSid");if(!v){v=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36));localStorage.setItem("prSid",v)}return v}catch(e){return "anon-"+Math.random().toString(36).slice(2,12)}})();
 /* A/B bucket per browser: 0 = data-driven copy (near-miss, school), 1 = plain intent copy (control) */
 const BUCKET=0;   /* A/B test closed 2026-10-25: data-driven copy (dream 11.5%, near-miss 5.6%) beat plain intent copy; everyone gets it */
+/* who is searching (2026-11-03, Ryan: parents find the site too technical; parents buy). "parent" turns on parent mode: bigger type,
+   Boy/Girl, "your child" wording, the one-sentence search box and parent pop-up copy. Remembered on this device only. */
+let AUD=(()=>{try{return localStorage.getItem("prAud")||""}catch(e){return ""}})();
+document.documentElement.classList.toggle("pm",AUD==="parent");
+const isPar=()=>AUD==="parent";
 const saveInt=()=>{try{localStorage.setItem("prIntent",JSON.stringify(INT))}catch(e){}try{keepQ()}catch(e){}};
 function intent(e,g,mark){if(!e)return;const grp=GRP(e);INT.e=e;INT.grp=grp;if(g)INT.g=g;if(mark){INT.m=mark;INT.me=e;INT.mg=g||INT.g}   /* the mark's own event + gender: SEO pages and likely-A checks only reuse a mark for those */INT.c=INT.c||{};INT.c[grp]=(INT.c[grp]||0)+1;INT.t=Date.now();saveInt()}
 const topGrp=()=>{const c=INT.c||{};return Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||INT.grp};
@@ -195,7 +200,7 @@ function nearMiss(g,e,v){if(v==null)return {n:0};const F=FIELD.has(e),tol=F?0.03
   return {n:ds.length,lvl,gap}}
 const better=(e,a,b)=>FIELD.has(e)?b-a:a-b;
 const S={tab:"standards",school:null,g:"m",e:"100m",mark:"",run:false,f:"",div:"",n:15,q:"",gr:INT.gr||""};
-const seg=(k,v)=>`<div class="seg" role="group" aria-label="Team"><button type="button" data-${k}="m" aria-pressed="${v==="m"}">Men</button><button type="button" data-${k}="w" aria-pressed="${v==="w"}">Women</button></div>`;
+const seg=(k,v,L=["Men","Women"])=>`<div class="seg" role="group" aria-label="Team"><button type="button" data-${k}="m" aria-pressed="${v==="m"}">${L[0]}</button><button type="button" data-${k}="w" aria-pressed="${v==="w"}">${L[1]}</button></div>`;
 const evs=g=>EVENTS.filter(e=>CONV[e]||SCH.some(s=>s[g][e])).filter(e=>!(g==="m"&&e==="100m Hurdles")&&!(g==="w"&&e.startsWith("110m Hurdles")));
 const PH={"100m":"10.85","200m":"22.10","400m":"49.50","800m":"1:58.00","1500m":"4:05.00","1600m":"4:21.50","Mile":"4:23.00","3000m":"8:50.00","3200m":"9:20.00","5000m":"15:30.00","10000m":"32:00.00","100m Hurdles":"14.20","110m Hurdles":"14.80",'110m Hurdles (39")':"14.80","300m Hurdles":"38.50","400m Hurdles":"54.20","3000m Steeplechase":"9:45.00","High Jump":"6'6\"","Pole Vault":"14'6\"","Long Jump":"22'6\"","Triple Jump":"46'0\"","Shot Put":"52'0\"","Discus":"150'0\"","Hammer":"160'0\"","Javelin":"180'0\""};
 const ph=e=>PH[e]||(FIELD.has(e)?"22'6\"":"4:21.50");
@@ -253,10 +258,18 @@ function readyOffer(n,sfx){let done=false;try{done=!!localStorage.getItem("prRea
   if(done)return n?null:{n,v:"nofit"+sfx,t:"Not on the chart yet? You are not the problem.",b:`Coaches recruit the athletes they know about. ${EVAL} which programs fit you today.`};
   return {n,v:"ready-"+(n?"early":"nofit")+sfx,ready:true,t:n?"You're early, and that's an advantage.":"Not on the chart yet? You are not the problem.",
     b:n?`Your ${S.mark.trim()} already meets the standard at ${n.toLocaleString()} programs. The 2-minute readiness check shows what to work on before coaches start calling.`:"The 2-minute readiness check shows where you stand today and what to work on next."}}
+const PARB=()=>{const h=String(SID).replace(/[^0-9a-f]/gi,"").slice(-4);return (parseInt(h||"0",16)%2)===1};   /* stable 50/50 for the parent test */
 function offerCopy(){const v=parse(S.mark,S.e);if(v==null)return null;
   const all=SCH.filter(s=>tier(s,S.g,S.e,v)),n=all.length,T=all.filter(s=>tier(s,S.g,S.e,v)==="T").length,Rr=all.filter(s=>tier(s,S.g,S.e,v)==="R").length;
   const mk=S.mark.trim(), sfx=gsfx(), N=n.toLocaleString();
   if(!n||+S.gr===9){const r=readyOffer(n,sfx);if(r)return r}
+  /* parents (2026-11-03, Isaac method: a parent of a junior/senior wants their kid recruited but believes coaches find fast kids on
+     their own). 50/50 against the existing copy on a stable browser bucket; variants start "par-". */
+  if(isPar()&&PARB()){const gr=+S.gr,pb={none:`In track, coaches rarely find athletes on their own. Families reach out first. ${EVAL} which of these programs would want your child.`,
+      some:`Interest is a good start. ${EVAL} how to turn it into offers for your child.`,offers:`Offers mean options. ${EVAL} who else would want your child before you sign.`};
+    if(gr===11)return {n,v:"par-junior"+sfx,bs:pb,t:"Junior year is when college coaches build their lists.",b:`Your child's ${mk} already fits ${N} programs. ${EVAL} which of those coaches to contact this season.`};
+    if(gr===12)return {n,v:"par-senior"+sfx,bs:pb,t:`Senior year still counts. Your child's ${mk} fits ${N} programs.`,b:`Many programs are still filling their rosters. ${EVAL} which of them would want your child and who to contact first.`};
+    return {n,v:"par-main"+sfx,bs:pb,t:`Is your child's ${mk} enough for college? It fits ${N} programs.`,b:pb.none}}
   const nm=nearMiss(S.g,S.e,v), ls=(()=>{const x=INT.sch&&SCH.find(y=>y.n===INT.sch);return x&&tier(x,S.g,S.e,v)?x:null})();
   const bs={none:`Coaches recruit the athletes they know about. ${EVAL} which of these programs would want you.`,
     some:`Interest is a good start. ${EVAL} how to turn it into offers.`,
@@ -402,7 +415,7 @@ function openEval(log1){const el=$("eval");if(document.documentElement.classList
   if(EV.ready)a.removeAttribute("target");else a.target="_blank";{const g=document.querySelector("#evs small");if(g)g.style.display=EV.ready?"none":""}
   const ck=S.run||S.school!=null?clock():"";$("evk").textContent=ck;$("evk").hidden=!ck||!!EV.ready;
   const ask=!INT.rs&&!EV.ready;$("evq").hidden=!ask;$("evs").hidden=ask;
-  {const kid=pickKid(),ql=document.querySelector("#evq .evql"),o3=document.querySelector('[data-evq="offers"]');if(ql)ql.textContent=kid?`Have college coaches contacted ${kid.first_name} yet?`:"Have college coaches contacted you yet?";if(o3)o3.textContent=kid?"Offers already":"I have offers"}
+  {const kid=pickKid(),ql=document.querySelector("#evq .evql"),o3=document.querySelector('[data-evq="offers"]');if(ql)ql.textContent=kid?`Have college coaches contacted ${kid.first_name} yet?`:isPar()?"Have college coaches contacted your child yet?":"Have college coaches contacted you yet?";if(o3)o3.textContent=kid||isPar()?"Offers already":"I have offers"}
   if(!ask&&!EV.ready&&likelyA()&&!INT.gpa)askGpa();
   el.classList.add("on");el.setAttribute("aria-hidden","false");$("evbg").hidden=false;requestAnimationFrame(()=>$("evbg").classList.add("on"));$("evpill").hidden=true;EV.shown=true;
   if(log1)log("popup_shown",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig});
@@ -452,8 +465,9 @@ const iinfo=e=>`<span class="ci"><button type="button" class="cib" data-cinfo ar
 const cinfo=(e,cl)=>`<span class="ci"><button type="button" class="cib" data-cinfo aria-expanded="false" aria-label="How we convert the ${esc(e)}">i</button><span class="cpop" role="tooltip"><b>${esc(e)} → ${esc(CONV[e].next?CONV[e].to+" / "+CONV[e].next.to:CONV[e].to)}</b>${esc(CONV[e].how)}${cl?`<span class="cvx2">Your mark in college terms: ${cl}</span>`:""}<small>College teams race different events, so we convert behind the scenes and show every standard as its ${esc(hsName(e,S.g))} equivalent. Schools that publish their own ${esc(hsName(e,S.g))} standard are shown with their own number.</small></span></span>`;
 function standards(){
   const list=evs(S.g); if(!list.includes(S.e)) S.e=list[0];
-  let o=`<div class="sec"><p class="lede">Select your gender, event, and enter your time to find the colleges that match you.</p>
-  <form id="mf" class="panel"><div class="row">${seg("g",S.g)}
+  let o=`<div class="sec"><div class="aud" role="group" aria-label="Who are you looking up?"><span>I'm looking up</span><button type="button" data-aud="parent" aria-pressed="${isPar()}">My child</button><button type="button" data-aud="athlete" aria-pressed="${AUD==="athlete"}">Myself</button></div>
+  ${isPar()?`<form id="obf" class="obox" novalidate><label for="obq">Tell us your child's event and best time</label><div class="obrow"><input class="in" id="obq" placeholder="e.g. son, junior, 400m in 52.3" autocomplete="off" enterkeyhint="search"><button class="go">Find colleges</button></div><p class="obh" id="obh" role="alert"></p></form><p class="lede pml">Or pick them step by step:</p>`:`<p class="lede">Select your gender, event, and enter your time to find the colleges that match you.</p>`}
+  <form id="mf" class="panel"><div class="row">${seg("g",S.g,isPar()?["Boy","Girl"]:undefined)}
     <div class="evw"><label class="sr" for="ev">Event</label><select class="in" id="ev">${(()=>{const hs=HSE(S.g).filter(e=>list.includes(e)),more=list.filter(e=>!hs.includes(e)),op=e=>`<option value="${esc(e)}" ${e===S.e?"selected":""}>${esc(hsName(e,S.g))}</option>`;return hs.map(op).join("")+(more.length?`<optgroup label="More events">${more.map(op).join("")}</optgroup>`:"")})()}</select>${CONV[S.e]?cinfo(S.e):S.g==="m"&&IMPL[S.e]?iinfo(S.e):""}</div>
     <label class="sr" for="mk">Personal best</label><input class="in" id="mk" placeholder="${FIELD.has(S.e)?"Best mark":"Best time"}, e.g. ${esc(ph(S.e))}" value="${esc(S.mark)}" autocomplete="off" inputmode="decimal">
     <div class="gseg" role="group" aria-label="Your grade"><span class="gl">Grade</span><div class="seg">${[9,10,11,12].map(n=>`<button type="button" data-grade="${n}" aria-pressed="${+S.gr===n}">${n}th</button>`).join("")}</div></div>
@@ -467,8 +481,8 @@ function standards(){
     const opts=(skip,key)=>[...new Set(all.filter(x=>ok(x,skip)).map(key))].filter(Boolean);
     const dd=(id,label,cur,list,fmt=x=>x)=>`<label class="dd${cur?" on":""}"><span class="sr">${label}</span><select id="${id}"><option value="">${label}</option>${list.map(x=>`<option value="${esc(x)}" ${x===cur?"selected":""}>${esc(fmt(x))}</option>`).join("")}</select></label>`;
     const cl=convLine(S.e,S.g,v), c=k=>all.filter(x=>x.t===k).length;LASTSUM={mark:S.mark,e:S.e,g:S.g,n:all.length,T:c("T"),R:c("R"),W:c("W")};
-    o+=`<div class="mhead"><p class="sum">${esc(S.mark)} in the ${S.g==="m"?"men's":"women's"} ${esc(hsName(S.e,S.g))} fits <b>${all.length}</b> colleges${CONV[S.e]?cinfo(S.e,cl):S.g==="m"&&IMPL[S.e]?iinfo(S.e):""}</p>
-      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p><p class="lvplain"><b>Target</b> the full-scholarship range · <b>Recruit</b> where coaches start recruiting · <b>Walk-On</b> the minimum to make the team</p>${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>Share my results</button>':""}</div>
+    o+=`<div class="mhead"><p class="sum">${isPar()?"Your child's ":""}${esc(S.mark)} in the ${isPar()?(S.g==="m"?"boys'":"girls'"):(S.g==="m"?"men's":"women's")} ${esc(hsName(S.e,S.g))} fits <b>${all.length}</b> colleges${CONV[S.e]?cinfo(S.e,cl):S.g==="m"&&IMPL[S.e]?iinfo(S.e):""}</p>
+      <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p><p class="lvplain"><b>Target</b> the full-scholarship range · <b>Recruit</b> where coaches start recruiting · <b>Walk-On</b> the minimum to make the team</p>${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>'+(isPar()?"Send to the other parent":"Share my results")+'</button>':""}</div>
     ${parentCard()}
     <section class="mtab" aria-label="Your college matches">
       <div class="mbar"><h3>Your college matches</h3><div class="dds">
@@ -2416,7 +2430,17 @@ const nm=s.t||s.n,vb=VERB(SCK.e),mk=SCK.mark.trim(),es=evSay(SCK.e),hk=vb==="run
     const ask=hit?`Find out whether ${nm}'s coaches would want your ${mk}.`:`Your ${mk} still fits ${fitN} colleges. Find out which of their coaches would want you.`;
     const bs={none:`Coaches can't recruit an athlete they've never heard of. ${ask}`,some:`A few emails is a start, but it isn't an offer. ${hit?`Find out how to turn that interest into an offer from ${nm}.`:"Find out how to turn that interest into real offers."}`,offers:`Offers give you leverage. ${hit?`Find out whether ${nm} would want your ${mk} before you sign.`:`Find out who else would want your ${mk} before you sign.`}`};
     EV.hook=hk;setTimeout(()=>{if(force)EV.dismissed=false;if(EV.dismissed)return;EV.shown=false;EV.force=true;evalIn(t,ask,0,v+gsfx(),"school-check",bs)},900)}
+/* grade from plain words: "junior", "11th grade", "class of 2027" */
+function gradeOf(raw){const q=" "+String(raw).toLowerCase()+" ";if(/\b(freshman|freshmen|9th|ninth)\b/.test(q))return 9;if(/\b(sophomore|10th|tenth)\b/.test(q))return 10;if(/\b(junior|11th|eleventh)\b/.test(q))return 11;if(/\b(senior|12th|twelfth)\b/.test(q))return 12;
+  const c=q.match(/class of (20\d\d)/);if(c){const now=new Date(),sy=now.getMonth()>=6?now.getFullYear()+1:now.getFullYear(),g=12-(+c[1]-sy);if(g>=9&&g<=12)return g}return 0}
+document.addEventListener("click",ev=>{const a=ev.target.closest&&ev.target.closest("[data-aud]");if(!a)return;AUD=a.dataset.aud;try{localStorage.setItem("prAud",AUD)}catch(e){}
+  document.documentElement.classList.toggle("pm",isPar());log("feedback",{detail:"aud-"+AUD});render();if(isPar()){const q=$("obq");if(q)q.focus()}});
 document.addEventListener("submit",ev=>{ev.preventDefault();
+  if(ev.target.id==="obf"){const raw=$("obq").value,d=detect(raw),gr=gradeOf(raw),h=$("obh");
+    if(d.g)S.g=d.g;const list=evs(S.g);
+    if(!d.e||!list.includes(d.e)||!d.mark||parse(d.mark,d.e)==null){h.textContent="Add the event and the time, like: my daughter runs the 1600 in 5:20, she's a sophomore.";log("feedback",{detail:"onebox-miss"});return}
+    S.e=d.e;S.mark=d.mark;if(gr)S.gr=gr;log("feedback",{detail:"onebox-ok"});render();
+    const f=$("mf");if(f){if(S.gr)f.requestSubmit();else{const hh=$("hint");if(hh)hh.textContent="Pick your child's grade to see the colleges.";const gs=document.querySelector(".gseg");if(gs){gs.classList.add("need");const b=gs.querySelector("button");if(b)b.focus()}}}return}
   if(ev.target.id==="youf"){const s=SCH[S.school];if(!s)return;SCK.e=$("ye").value;SCK.mark=$("ym").value.trim();const r=schoolResult(s,S.g);
     if(r.cls==="bad"){$("yerr").textContent=r.html.replace(/<[^>]+>/g,"");return}
     intent(SCK.e,S.g,SCK.mark);S.youEdit=false;log("school",{school:s.n,division:s.d,event:SCK.e,mark:SCK.mark,g:S.g,detail:"you-"+(r.t?TN[r.t]:"none")});render();SCK.res=r;schoolOffer(s,false,"school-you");return}
@@ -2432,7 +2456,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
   /* each search gets its own URL: shareable, back button returns to the form, and analytics counts it as a page view (Ryan 2026-10-15: bounce rate) */
   try{const u=`/?g=${S.g}&e=${encodeURIComponent(S.e)}&m=${encodeURIComponent(S.mark.trim())}`;if(location.pathname+location.search!==u)history.pushState({},"",u)}catch(e){}{const el=document.querySelector(".sum");if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-74,behavior:"smooth"})}
   const v=parse(S.mark,S.e), n=SCH.filter(s=>tier(s,S.g,S.e,v)).length;
-  intent(S.e,S.g,S.mark.trim()); log("search",{g:S.g,event:S.e,mark:S.mark.trim(),n_fits:n});
+  intent(S.e,S.g,S.mark.trim()); log("search",{g:S.g,event:S.e,mark:S.mark.trim(),n_fits:n,detail:AUD||undefined});
   armOffer();});
 
   /* return visit (new session, last search 30+ min ago): remind them of their own mark once, 15 s in, unless they search again */
