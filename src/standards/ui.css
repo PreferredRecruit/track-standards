@@ -1,0 +1,67 @@
+/* Preferred Recruit Track Standards: shared design system (2026-11-02 consolidation, preview branch ux-preview).
+   Loaded by the app (index.html) and by every prerendered guide page, after their own styles, so both share one font, one token set,
+   one header, one button style. Tokens:
+     type    Inter (official variable font, Latin, self-hosted from @fontsource-variable/inter 5.3.0, OFL): 12 13 15 17 20 24 32 44 60
+     radius  10 (inputs, chips) · 14 (cards) · 20 (large panels) · 999 (pills)
+     shadow  --sh-1 (resting) · --sh-2 (raised)
+     colour  ink · ink2 · mute · faint · line · soft · card · violet (one accent) · T/R/W level colours
+     breakpoints 640 (phone) · 960 (tablet) */
+@font-face{font-family:"Inter";src:url(/fonts/inter-var-latin.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+:root{
+  --pr-font:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  --r-1:10px;--r-2:14px;--r-3:20px;--r-pill:999px;
+  --sh-1:0 1px 2px rgba(16,12,40,.06),0 1px 1px rgba(16,12,40,.03);
+  --sh-2:0 1px 2px rgba(16,12,40,.05),0 16px 40px -20px rgba(30,20,80,.28);
+  --pr-violet:#7A45F0;--pr-violet-press:#6633E0;--pr-black:#0B0B0F;
+  --pr-rim:0 0 0 1px rgba(16,12,40,.06),0 16px 40px -24px rgba(30,20,80,.25)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--pr-violet:#8F63FF;--pr-violet-press:#7A45F0;--pr-black:#F5F5F7;
+  --sh-1:0 1px 2px rgba(0,0,0,.5);--sh-2:0 18px 44px -20px rgba(0,0,0,.85);--pr-rim:0 0 0 1px rgba(255,255,255,.06),0 18px 44px -24px rgba(0,0,0,.9)}}
+:root[data-theme="dark"]{--pr-violet:#8F63FF;--pr-violet-press:#7A45F0;--pr-black:#F5F5F7;--sh-1:0 1px 2px rgba(0,0,0,.5);--sh-2:0 18px 44px -20px rgba(0,0,0,.85);--pr-rim:0 0 0 1px rgba(255,255,255,.06),0 18px 44px -24px rgba(0,0,0,.9)}
+html,body{font-family:var(--pr-font);font-optical-sizing:auto}
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+h1,h2,h3,.sname{text-wrap:balance}p,li,.intro,.sub{text-wrap:pretty}
+
+/* one header everywhere: logo · section links · Sign in · Free evaluation */
+.prh{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--pr-card,#fff) 82%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--pr-line,#E4E3EA)}
+.prh .hd{max-width:1040px;height:58px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:16px}
+.prh .logo{display:flex;align-items:center;gap:11px;border:0;background:none;padding:0;cursor:pointer;color:var(--pr-ink,#0B0B0F);text-decoration:none;font:inherit;line-height:1.15}
+.prh .logo svg,.prh .logo img{width:34px;height:34px;border-radius:10px;flex:none}
+.prh .logo b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.prh .logo small{display:block;font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--pr-faint,#66666F)}
+.prnav{display:flex;align-items:center;gap:4px;margin-left:8px}
+.prnav a,.prnav button{border:0;background:none;cursor:pointer;font-family:inherit;padding:8px 12px;border-radius:var(--r-1);font-size:14px;font-weight:550;color:var(--pr-mute,#4A4A52);text-decoration:none;transition:color .15s,background .15s}
+.prnav a:hover,.prnav button:hover{color:var(--pr-ink,#0B0B0F);background:var(--pr-soft,#F3F2F7)}
+.prnav [aria-current="page"]{color:var(--pr-ink,#0B0B0F)}
+.prh .acchd,.prh .prsign{margin-left:auto;height:36px;padding:0 14px;border-radius:var(--r-pill);border:1px solid var(--pr-line,#E4E3EA);background:var(--pr-card,#fff);color:var(--pr-ink,#0B0B0F);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:7px;text-decoration:none;cursor:pointer;white-space:nowrap}
+.prh .acchd:hover,.prh .prsign:hover{border-color:var(--pr-violet)}
+.prh .pill,.prh .prcta{height:36px;padding:0 16px;border-radius:var(--r-pill);background:var(--pr-violet);color:#fff;font-size:14px;font-weight:650;display:inline-flex;align-items:center;gap:8px;text-decoration:none;box-shadow:none;white-space:nowrap;transition:background .15s}
+.prh .pill:hover,.prh .prcta:hover{background:var(--pr-violet-press)}
+.prh .pill:active,.prh .prcta:active{transform:translateY(1px)}
+.prh .pl-short{display:none}
+@media (max-width:960px){.prnav{display:none}}
+@media (max-width:640px){.prh .hd{padding:0 14px;gap:10px}.prh .logo span{display:none}.prh .pl-long{display:none}.prh .pl-short{display:inline}.prh .acchd span,.prh .prsign span{display:none}.prh .acchd,.prh .prsign{padding:0 11px}}
+
+/* buttons: flat violet for the one main action, ink for secondary; no gradients, no glows */
+.acbtn,.go,.shr,.cta a.btn{box-shadow:none!important}
+.acbtn,.shr{background:var(--pr-violet)!important;color:#fff!important}
+.acbtn:hover,.shr:hover{background:var(--pr-violet-press)!important}
+
+/* focus is always visible; motion respects the system setting */
+:where(a,button,input,select,textarea,summary,[tabindex]):focus-visible{outline:2px solid var(--pr-violet);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* loading placeholders (replace plain "Loading…" text) */
+.skel{display:block;height:14px;border-radius:6px;background:linear-gradient(90deg,var(--pr-soft,#F3F2F7) 25%,color-mix(in srgb,var(--pr-soft,#F3F2F7) 60%,var(--pr-line,#E4E3EA)) 50%,var(--pr-soft,#F3F2F7) 75%);background-size:200% 100%;animation:skel 1.2s linear infinite}
+@keyframes skel{to{background-position:-200% 0}}
+
+/* guide pages: the "check your mark" form uses the app's controls (same field style, same ink "Search colleges" button) */
+.chk{border-radius:var(--r-3);box-shadow:var(--sh-1);padding:16px}
+.chk b{font-size:15px;font-weight:700}
+.chk select,.chk input{height:46px;border-radius:var(--r-2);border:1px solid var(--pr-line,#E4E3EA);background-color:var(--pr-soft,#F3F2F7);font-size:16px}
+.chk select{-webkit-appearance:none;appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234A4A52' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.chk button{height:46px;border-radius:var(--r-2);background:var(--pr-black);color:#fff;padding:0 20px;font-weight:650}
+.chk button:hover{opacity:.9}
+/* hero: one solid accent instead of gradient text */
+.hero h1 span{background:none!important;-webkit-text-fill-color:currentColor;color:var(--pr-violet)}
+.skrows{display:grid;gap:12px;padding:18px 4px}.skrows .skel{height:16px}
+body:has(#prnudge.on) .evpill{display:none}   /* one prompt at a time: the account bar wins over the evaluation pill */

@@ -15,7 +15,12 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt
 const SEEN = new Set();
 let KIDS = [], MINE = [], RESENT = 0, CLS = null, PRV = null;
 let CFG = {}, SES = null, PRO = null, VIEW = "signup", MSG = "", BUSY = false, WHY = "";
-import * as ONB from "./onboard.js";
+/* the account pages load on demand (2026-11-02 speed pass: 59 KB most visitors never use). Same calls as before. */
+let ONBM = null;
+const onb = () => ONBM || (ONBM = import("./onboard.js").then(m => { m.bind(); return m; }));
+const ONB = { isPage: () => location.pathname === "/onboarding" || location.pathname === "/account",
+  go: p => onb().then(m => m.go(p)), show: () => onb().then(m => m.show()),
+  bind: () => addEventListener("popstate", () => { if (!ONBM && ONB.isPage()) ONB.show(); }) };
 const store = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v){ try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
 /* ---------- staying signed in (Ryan 2026-10-20: "I should not have to log in every single time I visit") ----------

@@ -24,7 +24,9 @@ async function getRank(key){
   throw new Error("browser too old to unpack results");
 }
 import * as ACC from "./account.js";
-import * as READY from "./readiness.js";
+/* the readiness check loads on demand (2026-11-02 speed pass) */
+let READYM=null;const rdy=()=>READYM||(READYM=import("./readiness.js").then(m=>{m.bind();return m}));
+const READY={go:()=>rdy().then(m=>m.go()),isPage:()=>location.pathname==="/readiness",show:()=>rdy().then(m=>m.show()),bind:()=>{addEventListener("popstate",()=>{if(!READYM&&location.pathname==="/readiness")rdy().then(m=>m.show())})}};
 import * as TOUR from "./tour.js";
 const slugOf = n => n.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim() + "-track-standards";
 export async function mount(opts = {}) {
@@ -453,7 +455,7 @@ function standards(){
   let o=`<div class="sec"><p class="lede">Select your gender, event, and enter your time to find the colleges that match you.</p>
   <form id="mf" class="panel"><div class="row">${seg("g",S.g)}
     <div class="evw"><label class="sr" for="ev">Event</label><select class="in" id="ev">${(()=>{const hs=HSE(S.g).filter(e=>list.includes(e)),more=list.filter(e=>!hs.includes(e)),op=e=>`<option value="${esc(e)}" ${e===S.e?"selected":""}>${esc(hsName(e,S.g))}</option>`;return hs.map(op).join("")+(more.length?`<optgroup label="More events">${more.map(op).join("")}</optgroup>`:"")})()}</select>${CONV[S.e]?cinfo(S.e):S.g==="m"&&IMPL[S.e]?iinfo(S.e):""}</div>
-    <label class="sr" for="mk">Personal best</label><input class="in" id="mk" placeholder="Best time or mark, e.g. ${esc(ph(S.e))}" value="${esc(S.mark)}" autocomplete="off" inputmode="decimal">
+    <label class="sr" for="mk">Personal best</label><input class="in" id="mk" placeholder="${FIELD.has(S.e)?"Best mark":"Best time"}, e.g. ${esc(ph(S.e))}" value="${esc(S.mark)}" autocomplete="off" inputmode="decimal">
     <div class="gseg" role="group" aria-label="Your grade"><span class="gl">Grade</span><div class="seg">${[9,10,11,12].map(n=>`<button type="button" data-grade="${n}" aria-pressed="${+S.gr===n}">${n}th</button>`).join("")}</div></div>
     <button class="go">Search colleges</button></div><div class="hint" id="hint"></div></form>`;
   /* order (Ryan 2026-10-13): search by stats · or · search one school · what the levels mean · results */
@@ -998,7 +1000,7 @@ function cmPair(e,na,nb,ra,rb){const N=Math.max(ra.length,rb.length),show=Math.m
   return `<div class="cmpair"><div class="cmr cmh"><span class="cmk">#</span><div class="ca"><i>A</i><span>${esc(na)}</span></div><div class="cb"><i>B</i><span>${esc(nb)}</span></div></div>${rows}</div>
     ${N>10?`<button type="button" class="cmmore" data-cmopen>${CM.open?"Show the top 10":`Show the top ${Math.min(N,25)}`}</button>`:""}<p class="cmkey"><span class="sw1"></span>Highlighted = the better mark at that spot</p>`}
 function cmResults(){const sd=cmSides(),A=cmData(sd[0]),B=cmData(sd[1]);
-  if(!A||!B)return `<div class="cmload">Loading the lists…</div>`;
+  if(!A||!B)return `<div class="skrows" role="status" aria-label="Loading the lists"><span class="skel" style="width:92%"></span><span class="skel" style="width:78%"></span><span class="skel" style="width:85%"></span><span class="skel" style="width:70%"></span><span class="skel" style="width:88%"></span><span class="skel" style="width:64%"></span></div>`;
   if(CM.t==="years"&&CM.conf&&(!A.err&&!A.L||!B.err&&!B.L))return `<p class="ccmsg">${esc(CM.conf)} has no list for ${esc(!A.L?sd[0].name:sd[1].name)}. Try another year.</p>`;
   if(A.err||B.err||!A.L||!B.L)return `<p class="ccmsg">${A.err||!A.L?esc(sd[0].name):esc(sd[1].name)} has no list for this pick. Try another one.</p>`;
   const ra=(A.L.g[CM.g]||{})[CM.e]||[],rb=(B.L.g[CM.g]||{})[CM.e]||[];
@@ -1022,7 +1024,7 @@ function cmTeams(){if(CM.sa==null){csSeed();const f=re=>SCH.findIndex(x=>!x.j&&r
   const ss=seaOf(A.d).filter(k=>seaOf(B.d).includes(k));if(!ss.includes(CM.tsea))CM.tsea=ss.includes(R.season)?R.season:ss[0];
   const evs=[...new Set([...teamEvents(CM.sa,CM.tsea,g),...teamEvents(CM.sb,CM.tsea,g)])];if(evs.length&&!evs.includes(CM.te))CM.te=evs.includes("400 Meters")?"400 Meters":evs[0];
   const e=CM.te,ta=teamRows(CM.sa,CM.tsea,e,g),tb=teamRows(CM.sb,CM.tsea,e,g),na=A.t||A.n,nb=B.t||B.n;
-  if(!ta||!tb)return {html:'<div class="cmload">Loading the teams…</div>',evs,ss};
+  if(!ta||!tb)return {html:'<div class="skrows" role="status" aria-label="Loading the teams"><span class="skel" style="width:92%"></span><span class="skel" style="width:78%"></span><span class="skel" style="width:85%"></span><span class="skel" style="width:70%"></span><span class="skel" style="width:88%"></span><span class="skel" style="width:64%"></span></div>',evs,ss};
   const miss=[[ta,na],[tb,nb]].filter(([t])=>t.err||!t.rows.length).map(([t,n])=>n);
   const ra=ta.rows||[],rb=tb.rows||[],N=Math.max(ra.length,rb.length,1),show=CM.open?Math.min(N,25):Math.min(N,5);
   const cell=(t,k)=>{const x=(t.rows||[])[k];return x?`<td><b>${esc(x.r[4])}</b><small>${esc(x.r[1]||"")}${x.r[2]?" · "+esc(yr(x.r[2])):""}</small></td>`:"<td>–</td>"};
@@ -2204,10 +2206,10 @@ function rkName(i){return i.url?`<a href="${i.url}">${esc(i.nm)}</a>`:esc(i.nm)}
 const rkMv=(now,then)=>then==null?"":then>now?`<span class="pr-mv u">▲${then-now}</span>`:then<now?`<span class="pr-mv d">▼${now-then}</span>`:"";
 const rkMed=r=>r===1?"g":r===2?"s":r===3?"b":"";
 function rankings(){rkCss();
-  if(!rkLoad("/data/power/index.json","idx"))return `<div class="rkwrap"><p class="rkload">Loading rankings…</p></div>`;
+  if(!rkLoad("/data/power/index.json","idx"))return `<div class="rkwrap"><div class="skrows" role="status" aria-label="Loading rankings"><span class="skel" style="width:92%"></span><span class="skel" style="width:78%"></span><span class="skel" style="width:85%"></span><span class="skel" style="width:70%"></span><span class="skel" style="width:88%"></span><span class="skel" style="width:64%"></span></div></div>`;
   if(RK.idx.err)return `<div class="rkwrap"><p class="rkload">Rankings could not load. <a href="/rankings.html">Open them here ›</a></p></div>`;
   const L=RK.idx.seasons[RK.d]||[];if(!RK.key||!L.some(x=>x.key===RK.key))RK.key=L[0]&&L[0].key;
-  if(!rkLoad("/data/power/"+RK.key+".json",RK.key))return `<div class="rkwrap">${rkTop(null)}<p class="rkload">Loading ${esc(RK.d)}…</p></div>`;
+  if(!rkLoad("/data/power/"+RK.key+".json",RK.key))return `<div class="rkwrap">${rkTop(null)}<div class="skrows" role="status" aria-label="Loading ${esc(RK.d)}"><span class="skel" style="width:92%"></span><span class="skel" style="width:78%"></span><span class="skel" style="width:85%"></span><span class="skel" style="width:70%"></span><span class="skel" style="width:88%"></span><span class="skel" style="width:64%"></span></div></div>`;
   const J=RK.data[RK.key];if(J.err)return `<div class="rkwrap">${rkTop(null)}<p class="rkload">This season could not load.</p></div>`;
   const W=J.weeks||[];if(RK.tf==="week"&&!W.some(w=>w.date===RK.wk))RK.wk=W.length?W[W.length-1].date:null;
   const mos=[...new Set(W.map(w=>w.date.slice(0,7)))];if(RK.tf==="month"&&!mos.includes(RK.mo))RK.mo=mos.length?mos[mos.length-1]:null;
@@ -2286,7 +2288,7 @@ function render(){
   $("hero").hidden=onSchool||(S.tab==="results"&&TM.i!=null);
   $("hero").classList.toggle("compact",S.tab!=="standards"||!!S.run);   /* UX pass 2026-11-02: also once a search has results, so the matches start on the first screen */   /* UX audit 2026-10-31: the big headline only on Standards, data first elsewhere */
   {const pl=$("evpill");if(pl)pl.hidden=onSchool||!EV.dismissed||EV.shown&&$("eval").classList.contains("on");}
-  document.querySelectorAll(".switch button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));
+  document.querySelectorAll(".switch button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));document.querySelectorAll(".prnav button").forEach(b=>b.dataset.tab===S.tab&&S.school==null?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
   $("app").className=(S.tab==="results"||S.tab==="rankings")&&!onSchool?"wide":"";
   const ae=document.activeElement,fid=ae&&/^(tq|tq2|q|rq|cmsa|cmsb)$/.test(ae.id)?ae.id:null,fpos=fid?ae.selectionStart:0,fval=fid?ae.value:"";
   $("app").innerHTML=onSchool?school():{standards,rankings,results,ask}[S.tab]();

@@ -53,6 +53,17 @@ export const RANK_CSS = `<style>
 .pr-slim .hide{display:none}.pr-slim .pr-th,.pr-slim .pr-tr{grid-template-columns:34px 1fr 64px}
 @media (max-width:760px){.pr-duo{grid-template-columns:1fr}.pr .hide{display:none}.pr-th,.pr-tr{grid-template-columns:34px 1fr 70px}.pr-pod{grid-template-columns:1fr}.pr-pc.p1{order:-1}.pr-note{grid-template-columns:1fr}.pr-tr.g{grid-template-columns:34px 1fr 56px}.pr-sq{display:none}.pr-tr.g small{display:none}
 .pr-pc{display:grid;grid-template-columns:auto 1fr auto;text-align:left;gap:0 14px;align-items:center;padding:14px 16px!important}.pr-pc .pr-lg{margin:0;grid-row:span 2;width:52px!important;height:52px!important}.pr-pc b{margin:0;font-size:16px}.pr-pc small{grid-column:2}.pr-ps{grid-column:3;grid-row:1/3;margin:0;font-size:26px;text-align:right}.pr-pd{display:none}.pr-pm{top:8px;left:8px;width:22px;height:22px;font-size:12px}.pr-card{width:100%;max-width:360px}}
+
+/* restraint pass (2026-11-02, preview): the data carries the colour. Scores are flat tiles (ink for 90+, violet tint below), no gloss or
+   glow; one ink for rank numbers (top 3 just bolder); no colour bar per row (the logo already carries the school colour); the hero keeps
+   one title (the page H1) and a plain-case line. Share images keep their own tier colours. */
+.ov{box-shadow:none;border-radius:10px}.ov::after{display:none}
+.ov-a{background:#12111A;color:#fff}.ov-b{background:#EEE8FF;color:#4B2BD6}.ov-c{background:#EAF2FE;color:#1D5BBF}.ov-d{background:#F1F0F5;color:#5E5D6B}
+.pr-rk,.pr-rk.g,.pr-rk.s,.pr-rk.b{color:#5E5D6B;font-weight:700}.pr-rk.g,.pr-rk.s,.pr-rk.b{color:#12111A;font-weight:800}
+.pr-tr::before,.rkcr::before{display:none}
+.pr-hero{background:#FFFFFF;border-radius:20px}.pr-title{display:none}
+.pr-kick{text-transform:none;letter-spacing:0;font-size:14px;font-weight:600;color:#5E5D6B;margin-bottom:6px}
+@media (prefers-color-scheme:dark){#app .ov-a{background:#F5F5F7;color:#12111A}#app .ov-b{background:#2A2142;color:#CDB6FF}#app .ov-c{background:#162338;color:#9CC4FF}#app .ov-d{background:#24232B;color:#C8C8D0}#app .pr-hero{background:#121117}#app .pr-rk.g,#app .pr-rk.s,#app .pr-rk.b{color:#F5F5F7}}   /* the app has dark mode; the static guide pages don't */
 </style>`;
 /* explorer controls (app Rankings tab) */
 const RKX_CSS = `.rkbar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;margin:6px 0 14px}.rkseg{display:flex;gap:4px;background:#F4F2FA;border:1px solid #ECEAF3;padding:4px;border-radius:12px}

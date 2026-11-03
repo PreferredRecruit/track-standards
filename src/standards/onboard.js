@@ -247,7 +247,7 @@ async function sendNudge(email, kind) {
   render();
 }
 function adminView() {
-  if (!ADM) { loadAdmin(); return `<div class="onbwrap one"><section class="onbmain"><p class="onbsub">Loading accounts…</p></section></div>`; }
+  if (!ADM) { loadAdmin(); return `<div class="onbwrap one"><section class="onbmain"><div class="skrows" role="status" aria-label="Loading accounts"><span class="skel" style="width:92%"></span><span class="skel" style="width:78%"></span><span class="skel" style="width:85%"></span><span class="skel" style="width:70%"></span><span class="skel" style="width:88%"></span><span class="skel" style="width:64%"></span></div></section></div>`; }
   if (ADM.err) return `<div class="onbwrap one"><section class="onbmain"><p class="acerr">${esc(ADM.err)}</p></section></div>`;
   const all = flat(), q = ADMQ.trim().toLowerCase();
   const rows = all.filter(r => (!ADMT || r.group === ADMT) && (!q || [r.email, r.name, r.sub, r.state, r.school].join(" ").toLowerCase().includes(q)));
