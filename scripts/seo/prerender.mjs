@@ -132,6 +132,11 @@ var m=location.pathname.match(/(?:^|[\/-])(boys|girls|mens|womens)-([a-z0-9-]+?)
 if(m){var EVS=${SEO_EVS};for(var k in EVS){if(m[2]===k||m[2].indexOf(k+"-")===0){ev=EVS[k];break}}}
 if(ev){g=/^(boys|mens)$/.test(m[1])?"m":"w";I.e=ev;I.grp=grp(ev);I.g=g;I.c=I.c||{};I.c[I.grp]=(I.c[I.grp]||0)+1;try{localStorage.setItem("prIntent",JSON.stringify(I))}catch(e){}}
 prLog("seo_page",{event:ev||undefined,g:g||undefined});
+/* retention: one "leave" beacon per hide/close with total + active seconds (same as the app) */
+var ACT=0,LIN=Date.now(),LEFT=-1;["pointerdown","keydown","scroll","touchstart"].forEach(function(t){addEventListener(t,function(){LIN=Date.now()},{passive:true,capture:true})});
+setInterval(function(){if(document.visibilityState==="visible"&&Date.now()-LIN<30000)ACT+=5},5000);
+function bye(){if(ACT===LEFT)return;LEFT=ACT;prLog("leave",{active_secs:ACT,detail:"seo_page"})}
+addEventListener("pagehide",bye);document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden")bye()});
 /* bottom bar removed (2026-10-25: 0.2% click rate on 3,881 views, and Ryan wants landing pages clean); the page view + intent above stay */
 /* SEO-page pop-up (Ryan 2026-10-29: "yeah we need more pop ups"; 3 days: ~1,039 SEO-page visits, ~210 ever saw an offer). Same centre
    format as the app (6.4% vs the old bar's 0.2%): after 50% scroll or 25 s, once per visit, never on arrival, shares the app's dismiss
