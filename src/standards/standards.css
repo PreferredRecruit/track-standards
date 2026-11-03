@@ -1418,7 +1418,7 @@ header .hd .acchd{flex:none;visibility:visible}
 .hpq p{margin:0 0 12px 18px;font-size:14px;line-height:1.55;color:var(--pr-ink2)}
 .hpai{display:block;width:100%;margin-top:6px;padding:12px 2px 2px;border:0;border-top:1px solid var(--pr-line);background:none;color:#7A45F0;font:inherit;font-weight:700;text-align:left;cursor:pointer}
 #prtour{position:fixed;inset:0;z-index:1000}#prtour[hidden]{display:none}
-.trhole{position:fixed;border-radius:var(--r-2);box-shadow:0 0 0 9999px rgba(10,8,20,.62);transition:all .25s ease;pointer-events:none}
+.trhole{position:fixed;border-radius:var(--r-2);box-shadow:0 0 0 9999px rgba(10,8,20,.62);transition:top var(--dur-3) var(--ease-out),left var(--dur-3) var(--ease-out),width var(--dur-3) var(--ease-out),height var(--dur-3) var(--ease-out),opacity var(--dur-2);pointer-events:none}
 .trcard{position:fixed;z-index:1001;padding:18px 18px 14px;border-radius:var(--r-3);background:var(--pr-card);color:var(--pr-ink);box-shadow:var(--sh-2);transition:top .25s ease,left .25s ease}
 .trcard.mid{left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,calc(100vw - 32px))}
 .trcard.dock{left:12px;right:12px;bottom:12px;top:auto}.trcard.dock.top{top:12px;bottom:auto}

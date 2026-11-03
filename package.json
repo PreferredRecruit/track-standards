@@ -8,7 +8,9 @@
     "build": "node scripts/seo/coach-feed.mjs && vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "design:check": "node scripts/design/check.mjs",
+    "design:shots": "node scripts/design/shots.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

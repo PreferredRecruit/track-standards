@@ -33,3 +33,4 @@ scripts/tfrrs/rank/
 scripts/tfrrs/rank_tmp/
 scripts/tfrrs/__pycache__/
 public/data/coach-standards.json
+design-shots/
