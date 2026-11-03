@@ -26,6 +26,7 @@ import { morePages } from "./more-pages.mjs";
 import { computeSite, rankPath, seasonPath, eventPath, stdToList, eventSeason, evName, seasonLabel as seasonLabel2 } from "./power-site.mjs";
 import { markPrograms, stdGroup } from "./programs.mjs";
 import { rankingPages } from "./rankings.mjs";
+import { releasePages } from "./rank-release.mjs";
 import { dailyPages } from "./daily.mjs";
 import { athleteIndex, athletePages } from "./athletes.mjs";
 const SITE = "https://trackandfieldstandards.com";
@@ -407,6 +408,8 @@ export function generate(root, out) {
   /* missing pages found in Search Console 2026-10-30: XC times, best colleges, printable sheet (scripts/seo/more-pages.mjs) */
   try { TOPICS.push(...morePages({ root, out, S: S.filter(x => !x.j), CT, write, page, parse, esc, sl, evPath, FIELD, SITE, gName, QUIZ, fmtXC })); } catch (e) { console.warn("more pages skipped:", e && e.message); }
   try { rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }); } catch (e) { console.warn("ranking pages skipped:", e && e.message); }
+  /* CSV downloads + dated weekly releases (scripts/seo/rank-release.mjs, 2026-11-03) */
+  try { const n = releasePages({ R, out, write, page, esc, sl, SITE }); console.log(`rankings data + weekly pages: ${n.length}`); } catch (e) { console.warn("ranking downloads/weekly skipped:", e && e.message); }
   /* AEO: the rankings' answers in llms.txt (who is #1 per division and per event), regenerated every build */
   try { const nm = r => r ? (r.s ? (r.s.t && !/\./.test(r.s.t.replace(/\(.*?\)/g, "")) ? r.s.t : r.s.n) : r.t) : "–";
     const L = ["", "## College track and field Power Rankings (PR Power Index: national meet points, wind-legal national lists, qualifiers, event-group squads; updated Mondays in season)", `- [All divisions](${SITE}/rankings.html)`];
@@ -416,7 +419,7 @@ export function generate(root, out) {
       for (const ev of evs) { const x = eventSeason(R, d, ev); if (!x) continue; const M = (x.P.events.m[ev] || [])[0], W = (x.P.events.w[ev] || [])[0];
         L.push(`- [Best ${d} programs for the ${evName(ev)}, ${seasonLabel2(x)}](${SITE}${eventPath(d, ev)}):${M ? ` men ${nm(M)}` : ""}${M && W ? ";" : ""}${W ? ` women ${nm(W)}` : ""}`); } }
     /* every finished season's #1 teams, 2016 on (Ryan 2026-11-02, AEO: "who won the 2019 D2 indoor title" answers) */
-    L.push("", "## Past seasons: #1 teams (national champion by official team score where the meet was held)", `- [Methodology](${SITE}/rankings/methodology.html)`);
+    L.push("", "## Past seasons: #1 teams (national champion by official team score where the meet was held)", `- [Methodology](${SITE}/rankings/methodology.html)`, `- [Rankings data, CSV downloads for every division and season (free with credit)](${SITE}/rankings/downloads.html)`);
     for (const d of Object.keys(R.seasons)) for (const x of [...R.seasons[d]].reverse()) { if (x === R.cur[d]) continue;
       const pt = r => x.P.final && r ? ` (${r.act} pts)` : "";
       L.push(`- [${d} ${seasonLabel2(x)}](${SITE}${seasonPath(d, x.year, x.season)}): men ${nm(x.P.m[0])}${pt(x.P.m[0])}; women ${nm(x.P.w[0])}${pt(x.P.w[0])}${x.noMeet ? ` (no national meet on TFRRS: ranked on the lists)` : ""}`); }
