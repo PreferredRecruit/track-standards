@@ -604,7 +604,7 @@ function loadBrand(){if(BRL)return;BRL=true;fetch("/brand/brand.json").then(r=>r
 let BRQ=false;   /* the re-render after brand data arrives skips the entrance fade (no double fade) */
 if(/^\/schools\//.test(location.pathname))loadBrand();
 function brandOf(s){if(BR===null){loadBrand();return null}
-  const b=BR[(s.os&&s.os[0])||slugOf(s.n)];return b&&b.primary?b:null}
+  const b=BR[(s.os&&s.os[0])||slugOf(s.n)];return b&&(b.primary||b.logo)?b:null}   /* a logo with no colours still shows (2026-11-03: JUCO logos from Wikipedia often have no colours) */
 const schoolAbout=(s,vf="")=>`<section class="sabout"><details class="fold"><summary>About ${esc(s.n)}</summary><p class="intro">${esc(s.n)} is ${/^(NCAA|NAIA|NJCAA)/.test(s.d)?"an":"a"} ${esc(s.d)}${s.j?" junior college":""} track and field program${s.c!==s.d?` in the ${esc(s.c)}`:""}${s.s?`, based in ${esc(ST_NAME[s.s]||s.s)}`:""}. ${s.j?"Junior colleges compete nationally rather than in conferences, so this site shows its season results instead of predicted recruiting levels.":`These are the marks it takes to be a Target recruit, a Recruit or a Walk-On for ${(s.ng||[])[0]?((s.ng[0]==="m")?"women":"men"):"men and women"} in every event${s.o?", taken from the school's own published standards":""}.`}</p>${vf}</details></section>`;   /* link-button row removed (Ryan 2026-10-25: "not clogging the website with ... visible links"); the static page keeps them */
 const brandNote=(s,B)=>B?`<p class="bnote">School names, logos and colours belong to their institutions and are used only to identify the program. Preferred Recruit is not affiliated with or endorsed by ${esc(s.n)}.</p>`:"";
 /* school-page offer (Ryan 2026-10-17: "use a pop-up for that content", keep the page surface clean). Opens once the visitor has
@@ -1360,7 +1360,7 @@ function bandBits(s){const B=brandOf(s);
   const lum=h=>{const c=String(h||"").replace("#","");if(c.length!==6)return 0;const f=x=>{x=parseInt(x,16)/255;return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4)};return .2126*f(c.slice(0,2))+.7152*f(c.slice(2,4))+.0722*f(c.slice(4,6))};
   const cr=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
   let bb=B&&B.primary,bo=B&&(B.on||"#ffffff");if(B&&cr(bb,bo)<4.5){bb=B.ink||bb;bo=cr(bb,"#ffffff")>=cr(bb,"#0B0B0F")?"#ffffff":"#0B0B0F"}
-  const bv=B?`--sb:${bb};--sbi:${B.ink||B.primary};--sbo:${bo}`:"--sb:#1B1A25;--sbi:#4E33DB;--sbo:#fff";
+  const bv=B&&B.primary?`--sb:${bb};--sbi:${B.ink||B.primary};--sbo:${bo}`:"--sb:#1B1A25;--sbi:#4E33DB;--sbo:#fff";
   const ini=(s.t||s.n).replace(/\(.*?\)/g,"").split(/[^A-Za-z&]+/).filter(w=>w&&!/^(of|the|at|and|in|for|university|college)$/i.test(w)).map(w=>w[0]).join("").slice(0,3).toUpperCase()||"PR";
   const mark=B&&B.logo&&!B.hide_logo?`<img src="${esc(B.logo)}" alt="${esc(s.n)} logo" width="72" height="72" loading="eager">`:`<span class="sini" aria-hidden="true">${esc(ini)}</span>`;
   return {B,bv,mark}}

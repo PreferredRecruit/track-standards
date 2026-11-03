@@ -1,0 +1,122 @@
+{
+ "NWAC|Chemeketa (Ore.) CC": {
+  "conf": "medium",
+  "logo": null,
+  "primary": "#005a9c",
+  "src": "https://www.chemeketa.edu/"
+ },
+ "NWAC|Chemeketa CC": {
+  "conf": "medium",
+  "logo": null,
+  "primary": "#005a9c",
+  "src": "https://www.chemeketa.edu/"
+ },
+ "NWAC|Clackamas CC": {
+  "conf": "medium",
+  "logo": "/brand/logos/team-nwac-clackamas-community-college.webp",
+  "primary": "#c52033",
+  "src": "https://www.clackamas.edu/"
+ },
+ "NWAC|Clark College": {
+  "conf": "low",
+  "logo": null,
+  "primary": "#c60f13",
+  "src": "https://www.clark.edu/"
+ },
+ "NWAC|Edmonds College": {
+  "conf": "low",
+  "logo": "/brand/logos/team-nwac-edmonds-college.webp",
+  "primary": "#014e6d",
+  "src": "https://www.edmonds.edu/"
+ },
+ "NWAC|Everett CC": {
+  "conf": "medium",
+  "logo": "/brand/logos/team-nwac-everett-community-college.webp",
+  "primary": "#3182ce",
+  "src": "https://www.everettcc.edu/"
+ },
+ "NWAC|Everett Community College": {
+  "conf": "medium",
+  "logo": "/brand/logos/team-nwac-everett-community-college.webp",
+  "primary": "#3182ce",
+  "src": "https://www.everettcc.edu/"
+ },
+ "NWAC|Green River": {
+  "conf": "low",
+  "logo": null,
+  "primary": "#2c882b",
+  "src": "https://www.greenriver.edu//"
+ },
+ "NWAC|Green River CC": {
+  "conf": "low",
+  "logo": null,
+  "primary": "#2c882b",
+  "src": "https://www.greenriver.edu//"
+ },
+ "NWAC|Green River College": {
+  "conf": "low",
+  "logo": null,
+  "primary": "#2c882b",
+  "src": "https://www.greenriver.edu//"
+ },
+ "NWAC|Lane CC": {
+  "conf": "medium",
+  "logo": "/brand/logos/team-nwac-lane-community-college.webp",
+  "primary": "#ffd776",
+  "src": "https://www.lanecc.edu/"
+ },
+ "NWAC|Mt. Hood CC": {
+  "conf": "medium",
+  "logo": "/brand/logos/team-nwac-mt-hood-community-college.webp",
+  "primary": "#c80f2e",
+  "src": "https://www.mhcc.edu/"
+ },
+ "NWAC|Olympic College": {
+  "conf": "medium",
+  "logo": "/brand/logos/team-nwac-olympic-college.webp",
+  "primary": "#c3002b",
+  "src": "https://www.olympic.edu:443/"
+ },
+ "NWAC|Pierce College (WA)": {
+  "conf": null,
+  "logo": null,
+  "primary": null,
+  "src": null
+ },
+ "NWAC|Rogue CC": {
+  "conf": null,
+  "logo": null,
+  "primary": null,
+  "src": null
+ },
+ "NWAC|SW Oregon CC": {
+  "conf": "low",
+  "logo": null,
+  "primary": "#1966a0",
+  "src": "https://www.socc.edu/"
+ },
+ "NWAC|Skagit Valley": {
+  "conf": "medium",
+  "logo": "/brand/logos/team-nwac-skagit-valley-college.webp",
+  "primary": "#ba372a",
+  "src": "https://www.skagit.edu/"
+ },
+ "NWAC|Spokane CC": {
+  "conf": "medium",
+  "logo": "/brand/logos/team-nwac-spokane-community-college.webp",
+  "primary": "#049c5a",
+  "src": "https://scc.spokane.edu/"
+ },
+ "NWAC|Treasure Valley CC": {
+  "conf": null,
+  "logo": null,
+  "primary": null,
+  "src": null
+ },
+ "NWAC|Umpqua CC": {
+  "conf": "medium",
+  "logo": "/brand/logos/team-nwac-umpqua-community-college.webp",
+  "primary": "#da532c",
+  "src": "https://umpqua.edu/"
+ }
+}

@@ -8941,19 +8941,85 @@
  "carroll-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208426,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      38,
+      "#003a70"
+     ],
+     [
+      26,
+      "#2e76cd"
+     ],
+     [
+      14,
+      "#991e66"
+     ],
+     [
+      13,
+      "#009ca6"
+     ],
+     [
+      3,
+      "#185ea8"
+     ],
+     [
+      2,
+      "#f0b323"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.337,
+     "#1b3664"
+    ],
+    [
+     0.294,
+     "#2d67b2"
+    ]
+   ],
+   "logo_kind": "apple-touch-icon",
+   "logo_url": "https://www.carrollcc.edu/wp-content/themes/carroll/favicons/apple-touch-icon-114x114.png",
+   "meta": {
+    "tile": "#ffffff"
+   },
+   "page": "https://www.carrollcc.edu/",
+   "status": "ok",
+   "t": 1793727285,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.carrollcc.edu/wp-content/themes/carroll/favicons/apple-touch-icon-57x57.png",
+     "too-small",
+     57,
+     57,
+     0.95,
+     0.65
+    ],
+    [
+     "apple-touch-icon",
+     "https://www.carrollcc.edu/wp-content/themes/carroll/favicons/apple-touch-icon-114x114.png",
+     "ok",
+     114,
+     114,
+     0.94,
+     0.66
+    ]
+   ],
+   "ws": "https://www.carrollcc.edu/"
   },
   "name": "Carroll CC",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
-   "secondary": null,
-   "src": null
+   "conf": "medium",
+   "ink": "#003a70",
+   "logo": "/brand/logos/carroll-cc-track-standards.webp",
+   "on": "#ffffff",
+   "primary": "#003a70",
+   "secondary": "#2d67b2",
+   "src": "https://www.carrollcc.edu/"
   }
  },
  "carroll-mont-track-standards": {
@@ -11198,19 +11264,70 @@
  "cleveland-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208432,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      5,
+      "#81c336"
+     ],
+     [
+      5,
+      "#00133e"
+     ],
+     [
+      1,
+      "#7a00df"
+     ],
+     [
+      1,
+      "#007cba"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.363,
+     "#02559d"
+    ],
+    [
+     0.333,
+     "#008cd9"
+    ],
+    [
+     0.303,
+     "#81c336"
+    ]
+   ],
+   "logo_kind": "icon",
+   "logo_url": "https://clevelandcc.edu/wp-content/uploads/2026/06/cropped-CCC-icon-512x512-1-300x300.png",
+   "meta": {},
+   "page": "https://clevelandcc.edu/",
+   "status": "ok",
+   "t": 1793727285,
+   "tried": [
+    [
+     "icon",
+     "https://clevelandcc.edu/wp-content/uploads/2026/06/cropped-CCC-icon-512x512-1-300x300.png",
+     "ok",
+     279,
+     280,
+     1.0,
+     1.0
+    ]
+   ],
+   "ws": "http://www.clevelandcc.edu"
   },
   "name": "Cleveland CC",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
-   "secondary": null,
-   "src": null
+   "conf": "medium",
+   "ink": "#547f23",
+   "logo": "/brand/logos/cleveland-cc-track-standards.webp",
+   "on": "#0b0b0f",
+   "primary": "#81c336",
+   "secondary": "#02559d",
+   "src": "https://clevelandcc.edu/"
   }
  },
  "cleveland-state-university-track-standards": {
@@ -14287,19 +14404,78 @@
  "crowder-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208442,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      4,
+      "#bad538"
+     ],
+     [
+      2,
+      "#ff9900"
+     ],
+     [
+      2,
+      "#ff5600"
+     ],
+     [
+      2,
+      "#ff4500"
+     ],
+     [
+      2,
+      "#f6405f"
+     ],
+     [
+      2,
+      "#f45800"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.188,
+     "#192752"
+    ],
+    [
+     0.119,
+     "#1a479b"
+    ],
+    [
+     0.049,
+     "#4b5678"
+    ]
+   ],
+   "logo_kind": "icon",
+   "logo_url": "https://crowder.wpenginepowered.com/wp-content/uploads/2025/03/cropped-Belltower-Full-Color-Transparent-1-300x300.png",
+   "meta": {},
+   "page": "http://www.crowder.edu",
+   "status": "ok",
+   "t": 1793727285,
+   "tried": [
+    [
+     "icon",
+     "https://crowder.wpenginepowered.com/wp-content/uploads/2025/03/cropped-Belltower-Full-Color-Transparent-1-300x300.png",
+     "ok",
+     152,
+     298,
+     0.78,
+     0.48
+    ]
+   ],
+   "ws": "http://www.crowder.edu"
   },
   "name": "Crowder CC",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
-   "secondary": null,
-   "src": null
+   "conf": "medium",
+   "ink": "#192752",
+   "logo": "/brand/logos/crowder-cc-track-standards.webp",
+   "on": "#ffffff",
+   "primary": "#192752",
+   "secondary": "#1a479b",
+   "src": "http://www.crowder.edu"
   }
  },
  "crown-track-standards": {
@@ -19587,9 +19763,10 @@
  "fort-hays-tech-northwest-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208459,
-   "ws": null
+   "err": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+   "status": "fetch-error",
+   "t": 1793727285,
+   "ws": "http://www.nwktc.edu"
   },
   "name": "Fort Hays Tech Northwest",
   "rec": {
@@ -22908,19 +23085,95 @@
  "harper-college-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208468,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      34,
+      "#003366"
+     ],
+     [
+      3,
+      "#ce2121"
+     ],
+     [
+      3,
+      "#076ab0"
+     ],
+     [
+      3,
+      "#006600"
+     ],
+     [
+      2,
+      "#f7981b"
+     ],
+     [
+      2,
+      "#002e5b"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [],
+   "meta": {},
+   "page": "https://www.harpercollege.edu/",
+   "status": "ok",
+   "t": 1793727285,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.harpercollege.edu/apple-touch-icon.png",
+     "err"
+    ],
+    [
+     "header-img",
+     "https://www.harpercollege.edu/_resources/images/logo_white.png",
+     "white-logo",
+     290,
+     42,
+     1.0,
+     0.0
+    ],
+    [
+     "header-img",
+     "https://www.harpercollege.edu/images/hsi-logo.png",
+     "too-wide",
+     281,
+     90,
+     0.88,
+     1.0
+    ],
+    [
+     "header-img",
+     "https://www.harpercollege.edu/_resources/images/harperlogoblack.png",
+     "photo-like",
+     269,
+     39,
+     1.0,
+     1.0
+    ],
+    [
+     "favicon",
+     "https://www.harpercollege.edu/favicon.ico",
+     "photo-like",
+     16,
+     16,
+     1.0,
+     1.0
+    ]
+   ],
+   "ws": "http://www.harpercollege.edu"
   },
   "name": "Harper College",
   "rec": {
-   "conf": null,
-   "ink": null,
+   "conf": "low",
+   "ink": "#003366",
    "logo": null,
-   "on": null,
-   "primary": null,
+   "on": "#ffffff",
+   "primary": "#003366",
    "secondary": null,
-   "src": null
+   "src": "https://www.harpercollege.edu/"
   }
  },
  "harris-stowe-state-university-track-standards": {
@@ -25579,19 +25832,85 @@
  "iowa-central-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208477,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      26,
+      "#00255b"
+     ],
+     [
+      19,
+      "#003e7e"
+     ],
+     [
+      9,
+      "#002868"
+     ],
+     [
+      2,
+      "#001a4e"
+     ],
+     [
+      1,
+      "#ffff00"
+     ],
+     [
+      1,
+      "#c5daf4"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.593,
+     "#003876"
+    ],
+    [
+     0.047,
+     "#8aa4c2"
+    ],
+    [
+     0.042,
+     "#5c81a9"
+    ],
+    [
+     0.03,
+     "#255489"
+    ]
+   ],
+   "logo_kind": "apple-touch-icon",
+   "logo_url": "https://www.iowacentral.edu/apple-touch-icon.png?v1",
+   "meta": {
+    "theme": "#ffffff",
+    "tile": "#da532c"
+   },
+   "page": "https://www.iowacentral.edu/",
+   "status": "ok",
+   "t": 1793727285,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.iowacentral.edu/apple-touch-icon.png?v1",
+     "ok",
+     176,
+     129,
+     0.88,
+     0.68
+    ]
+   ],
+   "ws": "http://www.iowacentral.edu"
   },
   "name": "Iowa Central CC",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
-   "secondary": null,
-   "src": null
+   "conf": "medium",
+   "ink": "#ce4a24",
+   "logo": "/brand/logos/iowa-central-cc-track-standards.webp",
+   "on": "#0b0b0f",
+   "primary": "#da532c",
+   "secondary": "#003876",
+   "src": "https://www.iowacentral.edu/"
   }
  },
  "iowa-state-university-track-standards": {
@@ -30411,19 +30730,88 @@
  "louisburg-college-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208496,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      9,
+      "#ed9c28"
+     ],
+     [
+      9,
+      "#d2322d"
+     ],
+     [
+      9,
+      "#5bc0de"
+     ],
+     [
+      9,
+      "#47a447"
+     ],
+     [
+      7,
+      "#04446c"
+     ],
+     [
+      4,
+      "#05446b"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [],
+   "meta": {
+    "theme": "#05446b"
+   },
+   "page": "https://www.louisburg.edu/",
+   "status": "ok",
+   "t": 1793727285,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.louisburg.edu/apple-touch-icon.png",
+     "err"
+    ],
+    [
+     "header-img",
+     "https://www.louisburg.edu/_resources/img/logos/louisburg-logo-2019.png",
+     "white-logo",
+     239,
+     58,
+     1.0,
+     0.0
+    ],
+    [
+     "header-img",
+     "https://www.louisburg.edu/_resources/img/logos/lc-seal.png",
+     "white-logo",
+     502,
+     518,
+     1.0,
+     0.0
+    ],
+    [
+     "favicon",
+     "https://www.louisburg.edu/favicon.ico",
+     "photo-like",
+     48,
+     33,
+     1.0,
+     0.0
+    ]
+   ],
+   "ws": "http://www.louisburg.edu"
   },
   "name": "Louisburg College",
   "rec": {
-   "conf": null,
-   "ink": null,
+   "conf": "medium",
+   "ink": "#05446b",
    "logo": null,
-   "on": null,
-   "primary": null,
+   "on": "#ffffff",
+   "primary": "#05446b",
    "secondary": null,
-   "src": null
+   "src": "https://www.louisburg.edu/"
   }
  },
  "louisiana-state-university-track-standards": {
@@ -33083,19 +33471,95 @@
  "meridian-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208506,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      57,
+      "#047940"
+     ],
+     [
+      9,
+      "#003718"
+     ],
+     [
+      6,
+      "#007a33"
+     ],
+     [
+      5,
+      "#00662b"
+     ],
+     [
+      3,
+      "#d4f0b0"
+     ],
+     [
+      3,
+      "#c10922"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [],
+   "meta": {},
+   "page": "https://meridiancc.edu/",
+   "status": "ok",
+   "t": 1793727285,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://meridiancc.edu/apple-touch-icon.png",
+     "err"
+    ],
+    [
+     "header-img",
+     "https://meridiancc.edu/_resources/img/logos/logo.png",
+     "too-wide",
+     336,
+     102,
+     1.0,
+     1.0
+    ],
+    [
+     "header-img",
+     "https://meridiancc.edu/_resources/img/logos/merdian-logo-mobile.png",
+     "too-wide",
+     200,
+     61,
+     1.0,
+     1.0
+    ],
+    [
+     "favicon",
+     "https://meridiancc.edu/_resources/img/favicon.ico",
+     "photo-like",
+     16,
+     16,
+     1.0,
+     1.0
+    ],
+    [
+     "favicon",
+     "https://meridiancc.edu/favicon.ico",
+     "photo-like",
+     16,
+     16,
+     1.0,
+     1.0
+    ]
+   ],
+   "ws": "http://www.meridiancc.edu"
   },
   "name": "Meridian CC",
   "rec": {
-   "conf": null,
-   "ink": null,
+   "conf": "low",
+   "ink": "#047940",
    "logo": null,
-   "on": null,
-   "primary": null,
+   "on": "#ffffff",
+   "primary": "#047940",
    "secondary": null,
-   "src": null
+   "src": "https://meridiancc.edu/"
   }
  },
  "merrimack-college-track-standards": {
@@ -33323,19 +33787,91 @@
  "metropolitan-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208507,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      126,
+      "#004b8d"
+     ],
+     [
+      94,
+      "#001140"
+     ],
+     [
+      32,
+      "#007bff"
+     ],
+     [
+      31,
+      "#f2b22b"
+     ],
+     [
+      26,
+      "#dc3545"
+     ],
+     [
+      26,
+      "#28a745"
+     ]
+    ],
+    "primary": "#007bff",
+    "secondary": "#6c757d"
+   },
+   "logo_colours": [
+    [
+     0.312,
+     "#004b8d"
+    ]
+   ],
+   "logo_kind": "apple-touch-icon",
+   "logo_url": "https://www.mcckc.edu/_resources/favicons/apple-icon-72x72.png",
+   "meta": {
+    "theme": "#ffffff",
+    "tile": "#ffffff"
+   },
+   "page": "https://www.mcckc.edu/",
+   "status": "ok",
+   "t": 1793727285,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.mcckc.edu/_resources/favicons/apple-icon-57x57.png",
+     "too-small",
+     49,
+     49,
+     0.85,
+     0.63
+    ],
+    [
+     "apple-touch-icon",
+     "https://www.mcckc.edu/_resources/favicons/apple-icon-60x60.png",
+     "too-small",
+     52,
+     52,
+     0.85,
+     0.63
+    ],
+    [
+     "apple-touch-icon",
+     "https://www.mcckc.edu/_resources/favicons/apple-icon-72x72.png",
+     "ok",
+     62,
+     62,
+     0.87,
+     0.63
+    ]
+   ],
+   "ws": "https://www.mcckc.edu/"
   },
   "name": "Metropolitan CC",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
-   "secondary": null,
-   "src": null
+   "conf": "medium",
+   "ink": "#0071eb",
+   "logo": "/brand/logos/metropolitan-cc-track-standards.webp",
+   "on": "#0b0b0f",
+   "primary": "#007bff",
+   "secondary": "#6c757d",
+   "src": "https://www.mcckc.edu/"
   }
  },
  "miami-university-oh-track-standards": {
@@ -34076,19 +34612,54 @@
  "mineral-area-college-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208509,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      1,
+      "#0000ee"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.4,
+     "#cf1f3f"
+    ],
+    [
+     0.146,
+     "#fec846"
+    ]
+   ],
+   "logo_kind": "apple-touch-icon",
+   "logo_url": "https://framerusercontent.com/images/d2g5grpquh64NpSM5vVnvY6Ig.png",
+   "meta": {},
+   "page": "https://mineralarea.edu/",
+   "status": "ok",
+   "t": 1793727286,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://framerusercontent.com/images/d2g5grpquh64NpSM5vVnvY6Ig.png",
+     "ok",
+     1430,
+     1445,
+     0.9,
+     0.99
+    ]
+   ],
+   "ws": "http://www.mineralarea.edu"
   },
   "name": "Mineral Area College",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
-   "secondary": null,
-   "src": null
+   "conf": "medium",
+   "ink": "#cf1f3f",
+   "logo": "/brand/logos/mineral-area-college-track-standards.webp",
+   "on": "#ffffff",
+   "primary": "#cf1f3f",
+   "secondary": "#fec846",
+   "src": "https://mineralarea.edu/"
   }
  },
  "minnesota-morris-track-standards": {
@@ -36895,19 +37466,74 @@
  "muskegon-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208518,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      8,
+      "#c02b0a"
+     ],
+     [
+      6,
+      "#005daa"
+     ],
+     [
+      4,
+      "#03246a"
+     ],
+     [
+      3,
+      "#2f4054"
+     ],
+     [
+      2,
+      "#ffd100"
+     ],
+     [
+      2,
+      "#6246d7"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.847,
+     "#005daa"
+    ],
+    [
+     0.108,
+     "#ffd300"
+    ]
+   ],
+   "logo_kind": "icon",
+   "logo_url": "https://www.muskegoncc.edu/wp-content/uploads/2025/03/icon-small-1.svg",
+   "meta": {},
+   "page": "https://www.muskegoncc.edu/",
+   "status": "ok",
+   "t": 1793727286,
+   "tried": [
+    [
+     "icon",
+     "https://www.muskegoncc.edu/wp-content/uploads/2025/03/icon-small-1.svg",
+     "ok",
+     488,
+     488,
+     0.96,
+     1.0
+    ]
+   ],
+   "ws": "https://www.muskegoncc.edu/"
   },
   "name": "Muskegon CC",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
-   "secondary": null,
-   "src": null
+   "conf": "medium",
+   "ink": "#005daa",
+   "logo": "/brand/logos/muskegon-cc-track-standards.webp",
+   "on": "#ffffff",
+   "primary": "#005daa",
+   "secondary": "#ffd300",
+   "src": "https://www.muskegoncc.edu/"
   }
  },
  "muskingum-university-track-standards": {
@@ -37102,19 +37728,70 @@
  "ncmc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208519,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      139,
+      "#cf202e"
+     ],
+     [
+      6,
+      "#d9534f"
+     ],
+     [
+      6,
+      "#5eead4"
+     ],
+     [
+      5,
+      "#dd3333"
+     ],
+     [
+      4,
+      "#e64235"
+     ],
+     [
+      4,
+      "#cf2834"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.057,
+     "#cf202e"
+    ]
+   ],
+   "logo_kind": "apple-touch-icon",
+   "logo_url": "https://www.ncmissouri.edu/wp-content/uploads/2018/02/anchorlogo.png",
+   "meta": {},
+   "page": "https://www.ncmissouri.edu/",
+   "status": "ok",
+   "t": 1793727287,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.ncmissouri.edu/wp-content/uploads/2018/02/anchorlogo.png",
+     "ok",
+     464,
+     464,
+     0.92,
+     0.4
+    ]
+   ],
+   "ws": "http://www.ncmissouri.edu"
   },
   "name": "NCMC",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
+   "conf": "medium",
+   "ink": "#cf202e",
+   "logo": "/brand/logos/ncmc-track-standards.webp",
+   "on": "#ffffff",
+   "primary": "#cf202e",
    "secondary": null,
-   "src": null
+   "src": "https://www.ncmissouri.edu/"
   }
  },
  "nebraska-wesleyan-university-track-standards": {
@@ -38710,19 +39387,116 @@
  "northeast-alabama-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208524,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      6,
+      "#0c3b5d"
+     ],
+     [
+      4,
+      "#c4d9e6"
+     ],
+     [
+      4,
+      "#092467"
+     ],
+     [
+      3,
+      "#1a2f64"
+     ],
+     [
+      3,
+      "#0a253e"
+     ],
+     [
+      2,
+      "#175e91"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [],
+   "meta": {
+    "theme": "#ffffff"
+   },
+   "page": "https://www.nacc.edu/",
+   "status": "ok",
+   "t": 1793727287,
+   "tried": [
+    [
+     "header-img",
+     "https://www.nacc.edu/Content/Uploads/NACC/images/header-icon1.png",
+     "too-wide",
+     559,
+     191,
+     0.78,
+     0.89
+    ],
+    [
+     "apple-touch-icon",
+     "https://www.nacc.edu/Content/Uploads/NACC/images/__thumbs/apple-icon-72x72.png",
+     "too-small",
+     72,
+     54,
+     0.88,
+     0.92
+    ],
+    [
+     "apple-touch-icon",
+     "https://www.nacc.edu/Content/Uploads/NACC/images/android-chrome-72x72.png",
+     "err"
+    ],
+    [
+     "icon",
+     "https://www.nacc.edu/Content/Uploads/NACC/files/safari-pinned-tab.svg",
+     "err"
+    ],
+    [
+     "apple-touch-icon",
+     "https://www.nacc.edu/apple-touch-icon.png",
+     "err"
+    ],
+    [
+     "header-img",
+     "https://www.nacc.edu/Content/Uploads/NACC/images/ACCS%20Seal%20-%20White.png",
+     "white-logo",
+     3762,
+     3762,
+     1.0,
+     0.0
+    ],
+    [
+     "header-img",
+     "https://www.nacc.edu/Content/Uploads/NACC/images/footer-logo.png",
+     "white-logo",
+     233,
+     203,
+     1.0,
+     0.0
+    ],
+    [
+     "favicon",
+     "https://www.nacc.edu/Content/Uploads/NACC/images/__thumbs/favicon-32x32.png",
+     "photo-like",
+     32,
+     24,
+     0.84,
+     0.93
+    ]
+   ],
+   "ws": "http://www.nacc.edu"
   },
   "name": "Northeast Alabama CC",
   "rec": {
-   "conf": null,
-   "ink": null,
+   "conf": "low",
+   "ink": "#0c3b5d",
    "logo": null,
-   "on": null,
-   "primary": null,
+   "on": "#ffffff",
+   "primary": "#0c3b5d",
    "secondary": null,
-   "src": null
+   "src": "https://www.nacc.edu/"
   }
  },
  "northeastern-university-track-standards": {
@@ -40724,19 +41498,70 @@
  "olive-harvey-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208529,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      20,
+      "#0055b8"
+     ],
+     [
+      4,
+      "#284dd2"
+     ],
+     [
+      3,
+      "#cddb00"
+     ],
+     [
+      3,
+      "#2f4f4f"
+     ],
+     [
+      2,
+      "#25a6e1"
+     ],
+     [
+      2,
+      "#003399"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.722,
+     "#0055b6"
+    ]
+   ],
+   "logo_kind": "icon",
+   "logo_url": "https://www.ccc.edu/wp-content/uploads/cropped-favicon180x180-1-192x192.png",
+   "meta": {},
+   "page": "https://www.ccc.edu/olive-harvey/home/",
+   "status": "ok",
+   "t": 1793727287,
+   "tried": [
+    [
+     "icon",
+     "https://www.ccc.edu/wp-content/uploads/cropped-favicon180x180-1-192x192.png",
+     "ok",
+     186,
+     186,
+     0.98,
+     0.75
+    ]
+   ],
+   "ws": "http://ccc.edu/colleges/olive-harvey/pages/default.aspx"
   },
   "name": "Olive Harvey",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
+   "conf": "medium",
+   "ink": "#0055b8",
+   "logo": "/brand/logos/olive-harvey-track-standards.webp",
+   "on": "#ffffff",
+   "primary": "#0055b8",
    "secondary": null,
-   "src": null
+   "src": "https://www.ccc.edu/olive-harvey/home/"
   }
  },
  "olivet-college-track-standards": {
@@ -44425,19 +45250,68 @@
  "roane-state-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208539,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      5,
+      "#8c1101"
+     ],
+     [
+      5,
+      "#007ac7"
+     ],
+     [
+      3,
+      "#004682"
+     ],
+     [
+      2,
+      "#9d4f57"
+     ],
+     [
+      2,
+      "#8cb98f"
+     ],
+     [
+      2,
+      "#0464a0"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [],
+   "meta": {},
+   "page": "https://www.roanestate.edu/",
+   "status": "ok",
+   "t": 1793727287,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.roanestate.edu/apple-touch-icon.png",
+     "err"
+    ],
+    [
+     "favicon",
+     "https://www.roanestate.edu/favicon.ico",
+     "photo-like",
+     31,
+     31,
+     0.46,
+     0.67
+    ]
+   ],
+   "ws": "http://www.roanestate.edu"
   },
   "name": "Roane State",
   "rec": {
-   "conf": null,
-   "ink": null,
+   "conf": "low",
+   "ink": "#8c1101",
    "logo": null,
-   "on": null,
-   "primary": null,
+   "on": "#ffffff",
+   "primary": "#8c1101",
    "secondary": null,
-   "src": null
+   "src": "https://www.roanestate.edu/"
   }
  },
  "roanoke-college-track-standards": {
@@ -46674,19 +47548,58 @@
  "sauk-valley-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208545,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      1,
+      "#c8102e"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.438,
+     "#d42313"
+    ],
+    [
+     0.215,
+     "#db3d3a"
+    ],
+    [
+     0.031,
+     "#e05a55"
+    ]
+   ],
+   "logo_kind": "apple-touch-icon",
+   "logo_url": "https://www.svcc.edu/apple-touch-icon.png",
+   "meta": {},
+   "page": "https://www.svcc.edu/",
+   "status": "ok",
+   "t": 1793727288,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.svcc.edu/apple-touch-icon.png",
+     "ok",
+     164,
+     162,
+     0.91,
+     0.7
+    ]
+   ],
+   "ws": "https://www.svcc.edu/"
   },
   "name": "Sauk Valley CC",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
+   "conf": "medium",
+   "ink": "#d42313",
+   "logo": "/brand/logos/sauk-valley-cc-track-standards.webp",
+   "on": "#ffffff",
+   "primary": "#d42313",
    "secondary": null,
-   "src": null
+   "src": "https://www.svcc.edu/"
   }
  },
  "savannah-state-university-track-standards": {
@@ -48276,19 +49189,70 @@
  "southeastern-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208550,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      90,
+      "#9e0303"
+     ],
+     [
+      30,
+      "#6c0202"
+     ],
+     [
+      4,
+      "#ff6600"
+     ],
+     [
+      3,
+      "#3a0101"
+     ],
+     [
+      2,
+      "#ffff00"
+     ],
+     [
+      2,
+      "#ee0000"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.158,
+     "#e31a28"
+    ]
+   ],
+   "logo_kind": "icon",
+   "logo_url": "https://www.scciowa.edu/_resources/favicon/favicon-512.png",
+   "meta": {},
+   "page": "https://www.scciowa.edu/",
+   "status": "ok",
+   "t": 1793727288,
+   "tried": [
+    [
+     "icon",
+     "https://www.scciowa.edu/_resources/favicon/favicon-512.png",
+     "ok",
+     447,
+     195,
+     0.96,
+     0.99
+    ]
+   ],
+   "ws": "http://www.scciowa.edu"
   },
   "name": "Southeastern CC",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
+   "conf": "medium",
+   "ink": "#e31a28",
+   "logo": "/brand/logos/southeastern-cc-track-standards.webp",
+   "on": "#ffffff",
+   "primary": "#e31a28",
    "secondary": null,
-   "src": null
+   "src": "https://www.scciowa.edu/"
   }
  },
  "southeastern-louisiana-university-track-standards": {
@@ -49422,37 +50386,123 @@
  "southwestern-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208553,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      1,
+      "#cf102d"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.135,
+     "#cb2030"
+    ],
+    [
+     0.049,
+     "#e49c8b"
+    ],
+    [
+     0.04,
+     "#f5dbd3"
+    ]
+   ],
+   "logo_kind": "apple-touch-icon",
+   "logo_url": "https://www.swcciowa.edu/icon.png",
+   "meta": {
+    "theme": "#cf102d"
+   },
+   "page": "https://www.swcciowa.edu/",
+   "status": "ok",
+   "t": 1793727288,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.swcciowa.edu/icon.png",
+     "ok",
+     156,
+     117,
+     0.89,
+     0.41
+    ]
+   ],
+   "ws": "https://www.swcciowa.edu/"
   },
   "name": "Southwestern CC",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
+   "conf": "medium",
+   "ink": "#cf102d",
+   "logo": "/brand/logos/southwestern-cc-track-standards.webp",
+   "on": "#ffffff",
+   "primary": "#cf102d",
    "secondary": null,
-   "src": null
+   "src": "https://www.swcciowa.edu/"
   }
  },
  "southwestern-christian-college-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208553,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      1,
+      "#d5ab57"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.533,
+     "#1a2037"
+    ]
+   ],
+   "logo_kind": "header-img",
+   "logo_url": "https://www.swcc.edu/assets/images/logo-shield-light.png",
+   "meta": {},
+   "page": "https://www.swcc.edu/",
+   "status": "ok",
+   "t": 1793727288,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.swcc.edu/apple-touch-icon.png",
+     "err"
+    ],
+    [
+     "header-img",
+     "https://www.swcc.edu/assets/images/logo-full-light.png",
+     "too-wide",
+     1446,
+     560,
+     0.84,
+     0.67
+    ],
+    [
+     "header-img",
+     "https://www.swcc.edu/assets/images/logo-shield-light.png",
+     "ok",
+     540,
+     560,
+     0.91,
+     0.6
+    ]
+   ],
+   "ws": "http://www.swcc.edu"
   },
   "name": "Southwestern Christian College",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
+   "conf": "medium",
+   "ink": "#1a2037",
+   "logo": "/brand/logos/southwestern-christian-college-track-standards.webp",
+   "on": "#ffffff",
+   "primary": "#1a2037",
    "secondary": null,
-   "src": null
+   "src": "https://www.swcc.edu/"
   }
  },
  "southwestern-christian-track-standards": {
@@ -49733,19 +50783,74 @@
  "spoon-river-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208554,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      87,
+      "#6fa088"
+     ],
+     [
+      70,
+      "#001f60"
+     ],
+     [
+      45,
+      "#d5bb8d"
+     ],
+     [
+      11,
+      "#790000"
+     ],
+     [
+      4,
+      "#09205c"
+     ],
+     [
+      3,
+      "#1d295e"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.724,
+     "#001f60"
+    ],
+    [
+     0.276,
+     "#6fa088"
+    ]
+   ],
+   "logo_kind": "header-img",
+   "logo_url": "https://www.src.edu/wp-content/uploads/2022/06/header-spoon-river-logo.png",
+   "meta": {},
+   "page": "https://www.src.edu/",
+   "status": "ok",
+   "t": 1793727288,
+   "tried": [
+    [
+     "header-img",
+     "https://www.src.edu/wp-content/uploads/2022/06/header-spoon-river-logo.png",
+     "ok",
+     170,
+     101,
+     1.0,
+     1.0
+    ]
+   ],
+   "ws": "http://www.src.edu"
   },
   "name": "Spoon River",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
-   "secondary": null,
-   "src": null
+   "conf": "medium",
+   "ink": "#537e69",
+   "logo": "/brand/logos/spoon-river-track-standards.webp",
+   "on": "#0b0b0f",
+   "primary": "#6fa088",
+   "secondary": "#001f60",
+   "src": "https://www.src.edu/"
   }
  },
  "spring-arbor-university-track-standards": {
@@ -50137,19 +51242,91 @@
  "st-clair-county-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208555,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      96,
+      "#ffcd00"
+     ],
+     [
+      46,
+      "#002c4f"
+     ],
+     [
+      8,
+      "#005571"
+     ],
+     [
+      6,
+      "#ff0000"
+     ],
+     [
+      4,
+      "#fcb900"
+     ],
+     [
+      4,
+      "#cc0000"
+     ]
+    ],
+    "primary": "#3182ce",
+    "secondary": "#2b6cb0"
+   },
+   "logo_colours": [
+    [
+     0.675,
+     "#002c4f"
+    ],
+    [
+     0.184,
+     "#ffd200"
+    ],
+    [
+     0.045,
+     "#656c2f"
+    ],
+    [
+     0.042,
+     "#bca314"
+    ]
+   ],
+   "logo_kind": "icon",
+   "logo_url": "https://sc4.edu/wp-content/uploads/2024/06/cropped-SC4-logo-Outlined-for-Website-branding-512x512-01-192x192.png",
+   "meta": {},
+   "page": "https://sc4.edu/",
+   "status": "ok",
+   "t": 1793727289,
+   "tried": [
+    [
+     "header-img",
+     "https://sc4.edu/wp-content/uploads/2024/01/SC4-simple-logo-yellow-WebHeader.svg",
+     "too-wide",
+     482,
+     169,
+     1.0,
+     1.0
+    ],
+    [
+     "icon",
+     "https://sc4.edu/wp-content/uploads/2024/06/cropped-SC4-logo-Outlined-for-Website-branding-512x512-01-192x192.png",
+     "ok",
+     188,
+     70,
+     0.9,
+     1.0
+    ]
+   ],
+   "ws": "http://www.sc4.edu"
   },
   "name": "St. Clair County CC",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
-   "secondary": null,
-   "src": null
+   "conf": "medium",
+   "ink": "#2d78be",
+   "logo": "/brand/logos/st-clair-county-cc-track-standards.webp",
+   "on": "#0b0b0f",
+   "primary": "#3182ce",
+   "secondary": "#002c4f",
+   "src": "https://sc4.edu/"
   }
  },
  "st-cloud-state-track-standards": {
@@ -52000,19 +53177,74 @@
  "suny-broome-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208561,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      16,
+      "#65bc7b"
+     ],
+     [
+      6,
+      "#c594c5"
+     ],
+     [
+      3,
+      "#e0284f"
+     ],
+     [
+      3,
+      "#dd464c"
+     ],
+     [
+      3,
+      "#c85e7c"
+     ],
+     [
+      3,
+      "#6d5312"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.466,
+     "#edb21f"
+    ],
+    [
+     0.034,
+     "#f5e0ad"
+    ]
+   ],
+   "logo_kind": "icon",
+   "logo_url": "https://sunybroome.edu/wp-content/uploads/2025/06/cropped-B-Lettermark-Gold-scaled-1-192x192.png",
+   "meta": {},
+   "page": "https://sunybroome.edu/",
+   "status": "ok",
+   "t": 1793727289,
+   "tried": [
+    [
+     "icon",
+     "https://sunybroome.edu/wp-content/uploads/2025/06/cropped-B-Lettermark-Gold-scaled-1-192x192.png",
+     "ok",
+     156,
+     169,
+     0.9,
+     0.81
+    ]
+   ],
+   "ws": "http://www.sunybroome.edu"
   },
   "name": "SUNY Broome",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
+   "conf": "medium",
+   "ink": "#956d0c",
+   "logo": "/brand/logos/suny-broome-track-standards.webp",
+   "on": "#0b0b0f",
+   "primary": "#edb21f",
    "secondary": null,
-   "src": null
+   "src": "https://sunybroome.edu/"
   }
  },
  "suny-cobleskill-track-standards": {
@@ -52270,19 +53502,73 @@
  "sw-michigan-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208561,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      651,
+      "#00853f"
+     ],
+     [
+      255,
+      "#f9e04c"
+     ],
+     [
+      96,
+      "#1779ba"
+     ],
+     [
+      51,
+      "#cc4b37"
+     ],
+     [
+      36,
+      "#0c3d5d"
+     ],
+     [
+      33,
+      "#ffae00"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [],
+   "meta": {},
+   "page": "https://www.swmich.edu/",
+   "status": "ok",
+   "t": 1793727289,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.swmich.edu/apple-touch-icon.png",
+     "err"
+    ],
+    [
+     "favicon",
+     "https://www.swmich.edu/media/website/site-assets/images/favicon.ico",
+     "photo-like",
+     16,
+     16,
+     0.82,
+     0.3
+    ],
+    [
+     "favicon",
+     "https://www.swmich.edu/favicon.ico",
+     "err"
+    ]
+   ],
+   "ws": "http://www.swmich.edu"
   },
   "name": "SW Michigan",
   "rec": {
-   "conf": null,
-   "ink": null,
+   "conf": "low",
+   "ink": "#00853f",
    "logo": null,
-   "on": null,
-   "primary": null,
+   "on": "#ffffff",
+   "primary": "#00853f",
    "secondary": null,
-   "src": null
+   "src": "https://www.swmich.edu/"
   }
  },
  "swarthmore-college-track-standards": {
@@ -54318,19 +55604,86 @@
  "trinidad-state-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208568,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      104,
+      "#003763"
+     ],
+     [
+      72,
+      "#f0bf2e"
+     ],
+     [
+      47,
+      "#003663"
+     ],
+     [
+      23,
+      "#3c78b3"
+     ],
+     [
+      6,
+      "#1a5a9a"
+     ],
+     [
+      4,
+      "#193565"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [],
+   "meta": {},
+   "page": "https://www.trinidadstate.edu/",
+   "status": "ok",
+   "t": 1793727289,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.trinidadstate.edu/apple-touch-icon.png",
+     "err"
+    ],
+    [
+     "header-img",
+     "https://www.trinidadstate.edu/_resources/images/logo-retina.png",
+     "too-wide",
+     281,
+     66,
+     0.9,
+     1.0
+    ],
+    [
+     "header-img",
+     "https://www.trinidadstate.edu/images/tsc_logo_white_cropped.png",
+     "white-logo",
+     1018,
+     284,
+     1.0,
+     0.0
+    ],
+    [
+     "favicon",
+     "https://www.trinidadstate.edu/favicon.ico",
+     "photo-like",
+     16,
+     16,
+     0.51,
+     0.7
+    ]
+   ],
+   "ws": "http://www.trinidadstate.edu/"
   },
   "name": "Trinidad State",
   "rec": {
-   "conf": null,
-   "ink": null,
+   "conf": "low",
+   "ink": "#003763",
    "logo": null,
-   "on": null,
-   "primary": null,
+   "on": "#ffffff",
+   "primary": "#003763",
    "secondary": null,
-   "src": null
+   "src": "https://www.trinidadstate.edu/"
   }
  },
  "trinity-christian-track-standards": {
@@ -55851,19 +57204,73 @@
  "umpqua-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208572,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      21,
+      "#1e87f0"
+     ],
+     [
+      6,
+      "#f0506e"
+     ],
+     [
+      5,
+      "#32d296"
+     ],
+     [
+      5,
+      "#034712"
+     ],
+     [
+      4,
+      "#faa05a"
+     ],
+     [
+      3,
+      "#ffcc00"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.058,
+     "#00430c"
+    ]
+   ],
+   "logo_kind": "apple-touch-icon",
+   "logo_url": "https://umpqua.edu/wp-content/themes/c5v-client/assets/images/favicons/apple-touch-icon.png",
+   "meta": {
+    "theme": "#ffffff",
+    "tile": "#da532c"
+   },
+   "page": "https://umpqua.edu/",
+   "status": "ok",
+   "t": 1793727289,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://umpqua.edu/wp-content/themes/c5v-client/assets/images/favicons/apple-touch-icon.png",
+     "ok",
+     155,
+     103,
+     0.9,
+     0.2
+    ]
+   ],
+   "ws": "https://www.umpqua.edu/"
   },
   "name": "Umpqua CC",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
+   "conf": "medium",
+   "ink": "#ce4a24",
+   "logo": "/brand/logos/umpqua-cc-track-standards.webp",
+   "on": "#0b0b0f",
+   "primary": "#da532c",
    "secondary": null,
-   "src": null
+   "src": "https://umpqua.edu/"
   }
  },
  "unc-pembroke-track-standards": {
@@ -55940,19 +57347,83 @@
  "union-cc-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208573,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      2,
+      "#ff9900"
+     ],
+     [
+      2,
+      "#ff5600"
+     ],
+     [
+      2,
+      "#ff4500"
+     ],
+     [
+      2,
+      "#f6405f"
+     ],
+     [
+      2,
+      "#f45800"
+     ],
+     [
+      2,
+      "#f00075"
+     ]
+    ],
+    "primary": null,
+    "secondary": null
+   },
+   "logo_colours": [
+    [
+     0.204,
+     "#dd1a32"
+    ],
+    [
+     0.162,
+     "#ab1d3c"
+    ]
+   ],
+   "logo_kind": "icon",
+   "logo_url": "https://www.ucc.edu/wp-content/uploads/2025/10/cropped-favicon-192x192.png",
+   "meta": {},
+   "page": "https://www.ucc.edu/",
+   "status": "ok",
+   "t": 1793727290,
+   "tried": [
+    [
+     "header-img",
+     "https://www.ucc.edu/images/assets/logo/Union_College_Logo_Horizontal_UCNJ_White-730x160.png",
+     "white-logo",
+     5650,
+     1128,
+     1.0,
+     0.0
+    ],
+    [
+     "icon",
+     "https://www.ucc.edu/wp-content/uploads/2025/10/cropped-favicon-192x192.png",
+     "ok",
+     125,
+     192,
+     0.92,
+     0.61
+    ]
+   ],
+   "ws": "http://www.ucc.edu"
   },
   "name": "Union CC",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
+   "conf": "medium",
+   "ink": "#dd1a32",
+   "logo": "/brand/logos/union-cc-track-standards.webp",
+   "on": "#ffffff",
+   "primary": "#dd1a32",
    "secondary": null,
-   "src": null
+   "src": "https://www.ucc.edu/"
   }
  },
  "union-college-track-standards": {
@@ -65303,19 +66774,70 @@
  "usc-sumter-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208590,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      21,
+      "#73000a"
+     ],
+     [
+      3,
+      "#b6bf00"
+     ],
+     [
+      2,
+      "#d3131b"
+     ],
+     [
+      1,
+      "#ffffcc"
+     ],
+     [
+      1,
+      "#ffff99"
+     ],
+     [
+      1,
+      "#ffff00"
+     ]
+    ],
+    "primary": "#73000a",
+    "secondary": "#000000"
+   },
+   "logo_colours": [
+    [
+     0.623,
+     "#73000a"
+    ]
+   ],
+   "logo_kind": "apple-touch-icon",
+   "logo_url": "https://www.sc.edu/apple-touch-icon.png",
+   "meta": {},
+   "page": "https://www.sc.edu/about/system_and_campuses/sumter/index.php",
+   "status": "ok",
+   "t": 1793727290,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.sc.edu/apple-touch-icon.png",
+     "ok",
+     180,
+     180,
+     0.95,
+     0.65
+    ]
+   ],
+   "ws": "http://www.uscsumter.edu/"
   },
   "name": "USC Sumter",
   "rec": {
-   "conf": null,
-   "ink": null,
-   "logo": null,
-   "on": null,
-   "primary": null,
+   "conf": "medium",
+   "ink": "#73000a",
+   "logo": "/brand/logos/usc-sumter-track-standards.webp",
+   "on": "#ffffff",
+   "primary": "#73000a",
    "secondary": null,
-   "src": null
+   "src": "https://www.sc.edu/about/system_and_campuses/sumter/index.php"
   }
  },
  "usc-upstate-track-standards": {
@@ -69314,19 +70836,64 @@
  "western-texas-college-track-standards": {
   "d": "NJCAA",
   "dbg": {
-   "status": "no-ws",
-   "t": 1792208602,
-   "ws": null
+   "css": {
+    "freq": [
+     [
+      610,
+      "#004fa3"
+     ],
+     [
+      248,
+      "#078141"
+     ],
+     [
+      12,
+      "#0000ff"
+     ],
+     [
+      4,
+      "#014990"
+     ],
+     [
+      3,
+      "#cc0000"
+     ],
+     [
+      3,
+      "#b45300"
+     ]
+    ],
+    "primary": "#004fa3",
+    "secondary": "#078141"
+   },
+   "logo_colours": [],
+   "meta": {},
+   "page": "https://www.wtc.edu/",
+   "status": "ok",
+   "t": 1793727290,
+   "tried": [
+    [
+     "apple-touch-icon",
+     "https://www.wtc.edu/apple-touch-icon.png",
+     "err"
+    ],
+    [
+     "favicon",
+     "https://www.wtc.edu/favicon.ico",
+     "not-image"
+    ]
+   ],
+   "ws": "http://www.wtc.edu"
   },
   "name": "Western Texas College",
   "rec": {
-   "conf": null,
-   "ink": null,
+   "conf": "medium",
+   "ink": "#004fa3",
    "logo": null,
-   "on": null,
-   "primary": null,
-   "secondary": null,
-   "src": null
+   "on": "#ffffff",
+   "primary": "#004fa3",
+   "secondary": "#078141",
+   "src": "https://www.wtc.edu/"
   }
  },
  "western-washington-university-track-standards": {

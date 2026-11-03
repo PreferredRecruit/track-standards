@@ -88,13 +88,15 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
   const DV = PDIVS.filter(d => R.cur[d]);
   fs.writeFileSync(path.join(out, "rankings.css"), RANK_CSS.replace(/<\/?style>/g, "") + RKX_CSS);   /* the app's Rankings tab uses the same styles */
   let brand = {}; try { brand = JSON.parse(fs.readFileSync(path.join(out, "brand", "brand.json"), "utf8")); } catch { }
+  /* ranked teams with no school page (NWAC): logos from scripts/brand/team_logos.py, keyed "<division>|<TFRRS team name>" */
+  let tlogo = {}; try { for (const [k, v] of Object.entries(JSON.parse(fs.readFileSync(path.join(out, "brand", "teams.json"), "utf8")))) if (v && v.logo && v.conf !== "low") tlogo[k.split("|").slice(1).join("|")] = v; } catch { }
   const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.com", logo: SITE + "/icon-512.png" };
   const LG = Object.fromEntries(PGROUPS.map(([k, l]) => [k, l]));
   /* the TFRRS national list + national meet behind each season (scripts/tfrrs/build_rank_sources.py), cited on the page and in the data */
   let SRC = {}; try { SRC = JSON.parse(fs.readFileSync(path.join(out, "data", "rank_sources.json"), "utf8")); } catch { }
   const srcOf = c => SRC[c.key] || {};
   const srcLinks = c => { const x = srcOf(c); return [x.list && `<a href="${x.list}" rel="noopener">${esc(x.listName || "TFRRS national list")}</a>`, x.champ && `<a href="${x.champ}" rel="noopener">${esc(x.champName || "national championship results")}</a>`].filter(Boolean); };
-  const info = r => { const s = r.s, b = s ? brand[sl(s).split("/").pop()] : null;
+  const info = r => { const s = r.s, b = s ? brand[sl(s).split("/").pop()] : tlogo[r.t] || null;
     return { nm: s ? (s.t && !/\./.test(s.t.replace(/\(.*?\)/g, "")) ? s.t : s.n) : r.t, conf: s ? s.c : "", url: s ? sl(s) : null, logo: b && b.logo && b.conf !== "low" ? b.logo : null, col: (b && b.primary) || "#6C47FF" }; };
   const logo = (i, z = 36) => i.logo ? `<span class="pr-lg" style="width:${z}px;height:${z}px"><img src="${i.logo}" alt="" loading="lazy" width="${z}" height="${z}"></span>` : `<span class="pr-lg ph" style="width:${z}px;height:${z}px;background:${i.col}">${esc(i.nm[0])}</span>`;
   const nmLink = i => i.url ? `<a href="${i.url}">${esc(i.nm)}</a>` : esc(i.nm);

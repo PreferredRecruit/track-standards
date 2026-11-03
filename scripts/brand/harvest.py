@@ -581,8 +581,19 @@ def css_colours(texts):
 
 
 # ----------------------------------------------------------------------------- per-school
+# junior colleges have no athletics site in db.json; their official college sites come from Wikidata (2026-11-03, juco-sites.json)
+EXTRA_WS = None
+
+
+def extra_ws(slug):
+    global EXTRA_WS
+    if EXTRA_WS is None:
+        EXTRA_WS = {k: v for k, v in (load_json(os.path.join(HERE, "juco-sites.json"), {}) or {}).items() if not k.startswith("_")}
+    return EXTRA_WS.get(slug)
+
+
 def harvest_one(school, slug):
-    ws = school.get("ws")
+    ws = school.get("ws") or extra_ws(slug)
     rec = {"logo": None, "primary": None, "secondary": None, "ink": None, "on": None,
            "src": None, "conf": None}
     dbg = {"ws": ws, "t": int(time.time())}
@@ -793,6 +804,10 @@ def merge_and_write(state, schools):
             if w.get("primary") and (not rec.get("primary") or rec.get("conf") == "low"):
                 rec["primary"], rec["secondary"] = w["primary"], w.get("secondary")
             rec["conf"] = w.get("conf") or "medium"
+        # junior colleges harvested from the main college site (juco-sites.json): its palette is marketing, so the official
+        # school colours from Wikipedia win whenever Wikipedia has them (2026-11-03: Iowa Central came out orange, not navy)
+        if extra_ws(slug) and w.get("primary"):
+            rec["primary"], rec["secondary"] = w["primary"], w.get("secondary")
         if rec.get("primary"):
             rec["ink"] = make_ink(hex_to_rgb(rec["primary"]))
             rec["on"] = make_on(hex_to_rgb(rec["primary"]))
