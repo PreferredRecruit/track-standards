@@ -74,3 +74,8 @@ body:has(#prnudge.on) .evpill{display:none}   /* one prompt at a time: the accou
 @media (max-width:640px){.dd select,select.in,input.in,.chk select,.chk input,.pr-pick select,.rkbar select{font-size:16px}}
 /* home headline on phones: one balanced sentence instead of three forced lines (Ryan 2026-11-03 headline) */
 @media (max-width:640px){.hero h1 em{display:inline}.hero h1 em+em::before{content:" "}.hero h1{text-wrap:balance}}
+/* profile evaluation card (2026-11-03): the one violet action on the profile */
+.preval{display:flex;align-items:center;gap:18px;margin:16px 0 6px;padding:18px 20px;border-radius:var(--r-3);background:color-mix(in srgb,var(--pr-violet) 7%,var(--pr-card,#fff));border:1px solid color-mix(in srgb,var(--pr-violet) 22%,transparent)}
+.preval b{display:block;font-size:var(--fs-17);line-height:var(--lh-snug)}.preval p{margin:4px 0 0;font-size:var(--fs-14);color:var(--pr-mute)}
+.preval .acbtn{flex:none;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;height:44px;padding:0 18px;border-radius:var(--r-2)}
+@media (max-width:640px){.preval{flex-direction:column;align-items:stretch}.preval .acbtn{justify-content:center}}

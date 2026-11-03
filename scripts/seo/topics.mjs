@@ -264,6 +264,29 @@ Thank you,
       ["Who is Preferred Recruit for?", "Track and field athletes whose marks already fit college programs. Athletes need to meet qualifying marks before outreach starts."]],
     related: [[QUIZ, "Free recruitment evaluation"], [GP("how-to-get-recruited-for-track-and-field"), "How to get recruited"]], sources: [["https://thepreferredrecruit.com", "Preferred Recruit"], ["https://www.ncsasports.org/", "NCSA"]] });
 
+  /* 12b (2026-11-03, Search Console: "runcruit" 7,788 impressions + "runrecruit"/"run recruit"/"runcruit login" ~3,000 more, position
+     2-5, 0.6% CTR; the homepage was the result shown). Factual comparison only: Runcruit facts from runcruit.com/about; official PR claims. */
+  { const nOff = S.filter(x => x.o).length, nJ = S.filter(x => x.j).length, n4 = S.filter(x => !x.j).length;
+  art({ p: GP("runcruit-vs-track-standards"), crumb: "Runcruit vs Track Standards",
+    title: "Runcruit vs Track Standards: College Track Fit Compared", h1: "Runcruit vs Track Standards",
+    desc: "Runcruit vs Track Standards: both match your marks to college track programs for free. How each sets its levels, and how to check any prediction.",
+    answer: `Runcruit and Track Standards both match a high school athlete's marks to college track and field programs for free. Runcruit covers 1,800+ U.S. and Canadian colleges with its own prediction tools. Track Standards sets every level from real conference results and ${nOff} official school charts checked mark for mark, and shows where each number comes from.`,
+    sections: [["How each site predicts a fit", `<p>Runcruit describes its matching tools as proprietary, so the formula behind a match isn't published. Track Standards sets three levels for every program and event (Target, Recruit and Walk-On) from the marks it takes to place in that school's conference, or from the school's own published chart when it has one. The <a href="/rankings/methodology.html">methodology</a> and each school page's sources show exactly where a number comes from.</p>`],
+      ["Side by side", `<table><thead><tr><th></th><th>Runcruit</th><th>Track Standards</th></tr></thead><tbody>
+        <tr><td>Programs covered</td><td>1,800+ U.S. and Canadian colleges</td><td>${n4.toLocaleString()} NCAA D1, D2, D3 and NAIA programs plus ${nJ} NJCAA junior colleges</td></tr>
+        <tr><td>Events</td><td>Track and field and cross country</td><td>Track and field and cross country, in high school events (1600m, 3200m, 300m hurdles)</td></tr>
+        <tr><td>Where levels come from</td><td>Its own prediction tools</td><td>Conference results on TFRRS, plus ${nOff} official school charts verified mark for mark</td></tr>
+        <tr><td>Extras</td><td>PR progression calculator; a free Pro account with exposure to coaches</td><td>Power Rankings for every division since 2016, every NCAA result since 2016, a Recruiting AI</td></tr>
+        <tr><td>Cost</td><td>Free to search</td><td>Free to search; a free account opens every list</td></tr></tbody></table>`],
+      ["Check any prediction yourself", `<p>Whichever site you use, check the match against real results. Open the school's conference championship on <a href="https://www.tfrrs.org/" rel="noopener">TFRRS</a> and see where your mark would have placed. If it scores at the conference meet, coaches will take it seriously. On Track Standards, every school page links its conference list so you can do this in one tap.</p>`],
+      ["When you need more than a prediction", `<p>A prediction tells you where you fit. Getting recruited still means coaches hearing from you. Preferred Recruit works only with track and field athletes and emails coaches from the athlete's own inbox. Preferred Recruit athletes have earned $10M+ in scholarships. Guaranteed genuine interest or a full refund.</p>`]],
+    faq: [["Is Runcruit legit?", "Yes. Runcruit is a real, free college track and cross country matching site. Like any prediction tool, treat its matches as a starting point and check them against the school's conference results on TFRRS."],
+      ["Is this the Runcruit login?", `No. This site is Track Standards, made by Preferred Recruit, and it isn't connected to Runcruit. To sign in to Runcruit, go to runcruit.com. To save your marks here, create a free account on the <a href="/">Track Standards home page</a>.`],
+      ["Which one is more accurate?", "It depends on the data behind each level. Track Standards publishes the source of every number (conference results or the school's own chart), so you can check any level against TFRRS yourself."],
+      ["Can I use both?", `Yes. Compare what each says for your event, then check the schools you care about on their <a href="/">school pages</a>, which show the levels event by event.`]],
+    related: [[QUIZ, "Free recruitment evaluation"], ["/rankings/methodology.html", "How the levels and rankings work"], [GP("ncsa-vs-preferred-recruit-track-and-field"), "NCSA vs Preferred Recruit"], [GP("target-recruit-walk-on-explained"), "Target, Recruit and Walk-On explained"]],
+    sources: [["https://runcruit.com/about", "Runcruit: About"], ["https://www.tfrrs.org/", "TFRRS"]] }); }
+
   /* 13 */
   art({ p: GP("high-school-long-jump-recruiting-marks-d1"), crumb: "Long jump marks for D1",
     title: "High School Long Jump Recruiting Marks for D1 (and Every Division)", h1: "High school long jump recruiting marks for D1",

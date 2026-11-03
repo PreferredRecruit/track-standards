@@ -357,7 +357,10 @@ export function generate(root, out) {
       + `<h2>Other divisions</h2>${groupLinks(DIVS.filter(x => x !== d).map(x => [divPath(x), `${x} track and field recruiting standards`]).concat([["/how-fast.html", "How fast do you need to run in college?"], ["/guides/ncaa-d1-vs-d2-vs-d3-vs-naia-track-and-field.html", "D1 vs D2 vs D3 vs NAIA"]]))}`
       + `<h2>Every ${esc(d)} track &amp; field program (${list.length})</h2>${groupLinks(list.map(s => [sl(s), s.n + (s.o ? " ★" : "")]))}`;
     write(p, page({ title: `${d} Track & Field Recruiting Standards ${SEASON}`,
-      desc: `${d} track and field recruiting standards ${SEASON}: the typical ${levelWords(d)} mark in every event, men and women, from all ${list.length} ${d} programs.`,
+      /* answer-first snippet (2026-11-03: "d1/d2/d3 track and field recruiting standards" at position 4.5, 7-13% CTR) */
+      desc: (() => { const a = lead ? lead.replace(/\s*\([^)]*for a mile\)/g, "").replace(/ Division III gives[\s\S]*$/, "").trim() : "";
+        const c = [a && `${a} Every event, ${SEASON}, from all ${list.length} programs.`, a, `${d} track and field recruiting standards ${SEASON}: the typical ${levelWords(d)} mark in every event, men and women, from all ${list.length} ${d} programs.`].filter(Boolean);
+        return c.find(x => x.length <= 158) || c[c.length - 1]; })(),
       pathname: p, crumbs: [["Home", "/"], ["Explore", "/explore.html"], [d, p]], h1: `${esc(d)} Track &amp; Field Recruiting Standards ${SEASON}`,
       intro: `${lead ? `<b>${esc(lead.trim())}</b> ` : ""}What it takes to run, jump or throw in ${esc(d)} track and field: the median Target, Recruit and Walk-On mark in every event across all ${list.length} ${esc(d)} programs. ${nOff} programs publish official standards (★).`,
       body, ld: [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: q.map(([a, b]) => ({ "@type": "Question", name: a, acceptedAnswer: { "@type": "Answer", text: b } })) },

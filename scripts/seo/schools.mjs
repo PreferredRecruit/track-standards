@@ -216,9 +216,23 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, SHA
     const p4 = (CT[s.ck] || {}).rule === "p4" && !s.o, lw = p4 ? "recruit and scholarship-level" : s.c === "Ivy League" ? "walk-on and recruit" : levelWords(s.d), ofc = s.o ? ", from the official team chart" : "", conf = s.c !== s.d ? ", " + s.c : "";
     const exTxt = ex.length ? " " + ex.map(([g, e, v]) => `${g === "m" ? "Men's" : "Women's"} ${e} walk-on: ${v}.`).join(" ") : "";
     const weekly = B ? [" Season bests updated weekly.", " Free, no sign-up.", " Free."] : [" Free, no sign-up.", " Free to use.", " Free."];
+    /* answer-first snippet (2026-11-03, Search Console: big schools at position 4-7 with 3-10% CTR on a generic description). The
+       description is the school's own marks: Recruit level for D1/D2 (Walk-On for D3/NAIA, which have no Recruit level), 100m and
+       1500m, men then women. Estimated levels (thin conference fields) are never quoted. */
+    const lvI = s.d === "NCAA D3" || s.d === "NAIA" ? 2 : 1;
+    const mkd = (g, e) => { const t = std(s, g, e), v = t && t[lvI]; return v && !/est\./.test(v) ? v : null; };
+    const pr = g => { if ((s.ng || []).includes(g)) return null; const a = mkd(g, "100m"), b = mkd(g, "1500m"); return a && b ? [a, b] : null; };
+    const PM = pr("m"), PW = pr("w"), goal = lvI === 1 ? "get recruited" : "walk on";
+    /* official charts use their own columns and high school events: quote the chart's first listed mark, as "the chart lists" */
+    const om = s.o && s.om ? s.om : null, ov = (g, es) => { const o = (om || {})[g] || {}; for (const e of es) { const v = (o[e] || []).find(Boolean); if (v) return [e, String(v)]; } return null; };
+    const op = g => { if ((s.ng || []).includes(g)) return null; const a = ov(g, ["100m"]), b = ov(g, ["1600m", "1500m", "Mile", "800m"]); return a && b ? [a, b] : null; };
+    const OM = om && op("m"), OW = om && op("w");
+    const oans = OM || OW ? `${short}'s official recruiting chart lists ${OM ? `${OM[0][1]} in the men's 100m and ${OM[1][1]} in the ${OM[1][0]}` : ""}${OM && OW ? `; women ${OW[0][1]} and ${OW[1][1]}` : OW ? `${OW[0][1]} in the women's 100m and ${OW[1][1]} in the ${OW[1][0]}` : ""}.` : "";
+    const ans = oans || (PM || PW ? `To ${goal} at ${short}, ${PM ? `men need about ${PM[0]} in the 100m and ${PM[1]} in the 1500m` : ""}${PM && PW ? `; women ${PW[0]} and ${PW[1]}` : PW ? `women need about ${PW[0]} in the 100m and ${PW[1]} in the 1500m` : ""}.` : "");
     const desc = J ? pickDesc([`${s.n} (NJCAA) junior college track and field: ${B ? `${B.y} season bests in every event, ` : ""}roster and TFRRS links, and how junior college recruiting works.`,
         `${short} (NJCAA) junior college track and field: season bests, roster and TFRRS links.`], weekly)
-      : pickDesc([`${s.n} track and field recruiting standards ${SEASON} (${s.d}${conf}): ${lw} marks for every ${MW} event${ofc}.${exTxt}`,
+      : pickDesc([...(ans ? [`${ans} Every event, ${SEASON} (${s.d}${conf}).`, `${ans} Every event, ${SEASON}.`, ans] : []),
+        `${s.n} track and field recruiting standards ${SEASON} (${s.d}${conf}): ${lw} marks for every ${MW} event${ofc}.${exTxt}`,
         `${s.n} track and field recruiting standards ${SEASON} (${s.d}${conf}): ${lw} marks for every ${MW} event${ofc}.`,
         `${s.n} track and field recruiting standards ${SEASON} (${s.d}): ${lw} marks for every ${MW} event${ofc}.`,
         `${short} track and field recruiting standards ${SEASON} (${s.d}): ${lw} marks for every event, ${MAW}.`,

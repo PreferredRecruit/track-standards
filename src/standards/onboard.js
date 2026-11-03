@@ -8,7 +8,7 @@
    Each athlete (self or a parent's kid) is graded in the database; the parent account takes its best athlete's tier.
    Athletes are asked for a parent's contact, never their own phone (recruiting contact for minors goes to a parent).
    Photos and banners are private (bucket "avatars", owner + admins only). Admins also get the Accounts dashboard. */
-import { core } from "./account.js";
+import { core, optIn } from "./account.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 const NOW = new Date(), SENIOR = NOW.getMonth() >= 6 ? NOW.getFullYear() + 1 : NOW.getFullYear();   // class of the current seniors
@@ -215,9 +215,22 @@ function profileCard(sub, lite) {
       <div class="pract"><button type="button" class="onbx" data-onb="${par() ? "editkid" : "edit"}">Edit profile</button></div></div>
     ${lite ? `<div class="prlite"><p>${D.role === "coach" ? "Coach account" : "Fan account"}${IS_ADMIN && !VIEW_AS ? " · Admin" : ""}. Every standard, full results list and unlimited Recruiting AI is open to you.</p><div class="onbcta"><button type="button" class="acbtn" data-onb="exit">Go to the standards</button>${IS_ADMIN ? `<button type="button" class="onbback" data-onb="tab" data-v="admin">Open the Accounts dashboard</button>` : ""}</div><p class="onbmail">Want a recruiting profile with PRs and college matches? Tap Edit profile and choose athlete or parent.</p></div></section>` : `
     <div class="prtiles">${tile(marks.length, marks.length === 1 ? "Event" : "Events")}${tile(best ? best.st.n.toLocaleString() : "–", `Programs ${own} best mark fits`)}${tile(esc(sub.gpa) || "–", `GPA <button type="button" class="aclnk prtl" data-onb="quick" data-v="gpa">Update</button>`)}${tile(cls ? esc(cls[1]) : sub.year ? "College" : "–", "Class")}</div></section>
-    <div class="prh2row"><h2 class="prh2">${par() ? esc(sub.first) + "'s" : "Your"} events and PRs</h2><button type="button" class="onbx" data-onb="quick" data-v="events">${svg('<path d="M12 5v14M5 12h14"/>', 14)} Update PRs</button></div><div class="prgrid">${stats.map(evCard).join("") || `<p class="onbsub">No events yet.</p>`}</div>
+    ${evalCard(sub, best)}<div class="prh2row"><h2 class="prh2">${par() ? esc(sub.first) + "'s" : "Your"} events and PRs</h2><button type="button" class="onbx" data-onb="quick" data-v="events">${svg('<path d="M12 5v14M5 12h14"/>', 14)} Update PRs</button></div><div class="prgrid">${stats.map(evCard).join("") || `<p class="onbsub">No events yet.</p>`}</div>
     ${par() ? `<p class="prrm"><button type="button" class="aclnk" data-onb="rmkid">Remove ${esc(sub.first)} from this account</button></p>` : ""}`}`;
 }
+
+/* evaluation card on the athlete's own profile (2026-11-03: qualified accounts saw every college their marks fit and no next step;
+   104 of 672 accounts had ever clicked the evaluation). Not for Tier C (no sales offer, same rule as the pop-ups), not in admin view. */
+function evalCard(sub, best) {
+  if (VIEW_AS || !best || !core.member()) return "";
+  const tier = par() ? sub.tier || core.profile().tier : core.profile().tier; if (tier === "C") return "";
+  const C = core.cfg(), gy = +sub.year, grade = gy >= SENIOR && gy <= SENIOR + 3 ? 12 - (gy - SENIOR) : null;
+  const url = C.evalUrl ? C.evalUrl({ e: best.e, m: best.m, grade: sub.grade || grade || "" }) : "#";
+  const who = par() ? (sub.first || "your athlete") : "you", whose = par() ? `${esc(sub.first || "Your athlete")}'s` : "Your";
+  return `<section class="preval"><div><b>${whose} ${evName(best.e, sub.gender)} fits ${best.st.n.toLocaleString()} college programs.</b><p>A free evaluation from Preferred Recruit shows which of those coaches would want ${esc(who)} and who to contact first. It takes about a minute.</p></div>
+    <a class="acbtn" href="${esc(url)}" target="_blank" rel="noopener" data-preval>Get the free evaluation</a></section>`;
+}
+document.addEventListener("click", e => { if (!e.target.closest || !e.target.closest("[data-preval]")) return; const C = core.cfg(); C.log && C.log("popup_click", { placement: "profile", variant: "profile-card" }); optIn(); });
 
 /* ---------- admin dashboard (read-only): one row per athlete, parents' kids included ---------- */
 function flat() {
