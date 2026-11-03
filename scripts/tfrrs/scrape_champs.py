@@ -29,9 +29,19 @@ def online():
 def get(url):
     f = os.path.join(CACHE, re.sub(r"[^A-Za-z0-9]+", "_", url)[-180:] + ".html")
     if not os.path.exists(f):
-        while not online(): time.sleep(60)
-        subprocess.run(["curl", "-sfL", "--max-time", "60", "-A", UA, url, "-o", f], check=True)
-        time.sleep(float(os.environ.get("TFRRS_DELAY", "1.5")))   # 3 s until 2026-11-02 (Ryan: "can we speed it up")
+        # 2026-11-02 fixes: download to .part and keep it only when complete (a timeout used to leave a cut-off page cached as if
+        # whole); retry timeouts and dropped connections 3 times (10/30/60 s, longer limit); 403/429 = TFRRS pushing back: wait 5 min
+        for i, back in enumerate((10, 30, 60, None)):
+            while not online(): time.sleep(60)
+            r = subprocess.run(["curl", "-sL", "--max-time", str(60 + 30 * i), "-A", UA, "-w", "%{http_code}", "-o", f + ".part", url], capture_output=True, text=True)
+            time.sleep(float(os.environ.get("TFRRS_DELAY", "1.5")))   # 3 s until 2026-11-02 (Ryan: "can we speed it up")
+            code = r.stdout.strip()[-3:]
+            if r.returncode == 0 and code.startswith("2"): os.replace(f + ".part", f); break
+            if os.path.exists(f + ".part"): os.remove(f + ".part")
+            if code in ("403", "429"): print("  TFRRS pushback", code, "waiting 5 min", flush=True); time.sleep(300)
+            elif code == "404" or back is None: raise subprocess.CalledProcessError(r.returncode or 22, ["curl", url])
+            else: time.sleep(back)
+        else: raise subprocess.CalledProcessError(22, ["curl", url])   # still blocked after the last try
     return open(f, encoding="utf8", errors="ignore").read()
 
 def clean(s):
