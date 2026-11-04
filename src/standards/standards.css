@@ -25,7 +25,7 @@ a{color:inherit;text-decoration:none}
 
 /* header + logo */
 header{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--pr-card) 70%,transparent);backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px);border-bottom:1px solid color-mix(in srgb,var(--pr-line) 70%,transparent)}
-.hd{max-width:1040px;height:58px;margin:0 auto;padding:0 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.hd{max-width:1200px;height:58px;margin:0 auto;padding:0 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .logo{display:flex;align-items:center;gap:11px;border:0;background:none;padding:0;cursor:pointer}
 .logo svg{flex:none;filter:drop-shadow(0 4px 10px rgba(122,69,240,.35))}
 .logo b{font-size:17px;font-weight:650;letter-spacing:-.025em;line-height:1}
@@ -50,7 +50,7 @@ h1 span{display:block;background:linear-gradient(90deg,#A98BFF 0%,#8A5CF5 32%,#7
 
 /* sections */
 main{max-width:780px;margin:0 auto;padding:0 22px 110px}
-main.wide{max-width:1040px}
+main.wide{max-width:1200px}
 .sec{padding-top:34px;animation:rise .55s cubic-bezier(.2,.7,.2,1) both}
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 .lede{text-align:center;color:var(--pr-mute);font-size:17px;margin:0 auto 22px;max-width:34em}
@@ -1504,3 +1504,9 @@ tr.me td:first-child{box-shadow:inset 3px 0 0 var(--pr-accent);font-weight:700}
 .you .yall{color:var(--pr-violet);font-weight:600;white-space:nowrap}
 /* the sheets are white in both modes, so everything inside them reads with light tokens (UX audit 2026-11-03: dark mode made the sign-in labels 1.09:1) */
 .eval{--pr-ink:#0B0B0F;--pr-ink2:#1D1D1F;--pr-mute:#4A4A52;--pr-faint:#66666F;--pr-line:#E4E3EA;--pr-soft:#F3F2F7;--pr-card:#FFFFFF;--pr-black:#0B0B0F;color-scheme:light}
+
+/* progression chart folded away under the athlete page (2026-11-04) */
+.pgfold{margin-top:28px;border-top:1px solid var(--pr-line);padding-top:6px}
+.pgfold>summary{cursor:pointer;list-style:none;font-weight:600;font-size:15px;color:var(--pr-accent);padding:12px 2px}
+.pgfold>summary::-webkit-details-marker{display:none}.pgfold>summary::after{content:" \203A"}.pgfold[open]>summary::after{content:""}
+.pgfold .ah2{display:none}

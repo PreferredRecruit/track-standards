@@ -28,7 +28,7 @@ h1,h2,h3,.sname{text-wrap:balance}p,li,.intro,.sub{text-wrap:pretty}
 
 /* one header everywhere: logo · section links · Sign in · Free evaluation */
 .prh{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--pr-card,#fff) 82%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--pr-line,#E4E3EA)}
-.prh .hd{max-width:1040px;height:58px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:16px}
+.prh .hd{max-width:1200px;height:58px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:16px}
 .prh .logo{display:flex;align-items:center;gap:11px;border:0;background:none;padding:0;cursor:pointer;color:var(--pr-ink,#0B0B0F);text-decoration:none;font:inherit;line-height:1.15}
 .prh .logo svg,.prh .logo img{width:34px;height:34px;border-radius:10px;flex:none}
 .prh .logo b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em}
