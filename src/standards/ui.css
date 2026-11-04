@@ -19,7 +19,7 @@
   --sh-2:0 1px 2px rgba(16,12,40,.05),0 16px 40px -20px rgba(30,20,80,.28);
   --pr-violet:#7A45F0;--pr-violet-press:#6633E0;--pr-black:#0B0B0F;
   --pr-rim:0 0 0 1px rgba(16,12,40,.06),0 16px 40px -24px rgba(30,20,80,.25)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--pr-violet:#8F63FF;--pr-violet-press:#7A45F0;--pr-black:#F5F5F7;
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not(.pg){--pr-violet:#8F63FF;--pr-violet-press:#7A45F0;--pr-black:#F5F5F7;
   --sh-1:0 1px 2px rgba(0,0,0,.5);--sh-2:0 18px 44px -20px rgba(0,0,0,.85);--pr-rim:0 0 0 1px rgba(255,255,255,.06),0 18px 44px -24px rgba(0,0,0,.9)}}
 :root[data-theme="dark"]{--pr-violet:#8F63FF;--pr-violet-press:#7A45F0;--pr-black:#F5F5F7;--sh-1:0 1px 2px rgba(0,0,0,.5);--sh-2:0 18px 44px -20px rgba(0,0,0,.85);--pr-rim:0 0 0 1px rgba(255,255,255,.06),0 18px 44px -24px rgba(0,0,0,.9)}
 html,body{font-family:var(--pr-font);font-optical-sizing:auto}

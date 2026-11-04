@@ -281,6 +281,9 @@ async function submit(id) {
     try {
       if (VIEW === "signup") {
         const r = await api("/auth/v1/signup?redirect_to=" + encodeURIComponent(location.origin + "/onboarding"), { method: "POST", body: { email, password: pw }, auth: false });
+        /* an email that already has an account gets an obfuscated user with no identities and no email is sent (UX audit 2026-11-03) */
+        const idn = r && (r.user ? r.user.identities : r.identities);
+        if (r && !r.access_token && Array.isArray(idn) && !idn.length) { BUSY = false; VIEW = "signin"; CFG.log && CFG.log("account", { detail: "signup-existing" }); return fail("That email already has an account. Sign in, or use Email me a sign-in link below."); }
         CFG.log && CFG.log("account", { detail: "signup", placement: WHY || undefined });
         if (r && r.access_token) { keep(r); await loadProfile(); BUSY = false; close(); changed(); ONB.go("/onboarding"); return; }
         FORM._email = email; BUSY = false; VIEW = "check"; draw(); try { localStorage.setItem("prPending", JSON.stringify({ e: email, t: Date.now() })); } catch (e2) {} return;

@@ -121,9 +121,14 @@ function parseMark(str,e){
   var one=function(seg){var t=seg.replace(/[^0-9:.]/g,"");if(!t)return null;
   var c=(t.match(/:/g)||[]).length,d=(t.match(/\./g)||[]).length,p,a,b;
   if(c===0&&d===2){p=t.split(".");return +p[0]*60+ +(p[1]+"."+p[2])}
-  if(c===0){var v=+t;if(isNaN(v))return null;if(R&&!inR(v,R)&&d===1){p=t.split(".");var mm=+p[0]*60+ +p[1];if(p[1].length===2&&inR(mm,R))return mm}return v}
+  if(c===0){var v=+t;if(isNaN(v))return null;
+    /* phone keypads have no colon (UX audit 2026-11-03): 421 -> 4:21, 1035 -> 10:35, 4.2150 -> 4:21.50 for events timed in minutes */
+    if(R&&R[0]>=60&&d===0&&/^\d{3,4}$/.test(t)){var m0=+t.slice(0,-2)*60+ +t.slice(-2);if(inR(m0,R))return m0}
+    if(R&&!inR(v,R)&&d===1){p=t.split(".");var mm=+p[0]*60+ +p[1];if(p[1].length===2&&inR(mm,R))return mm;if(p[1].length>=3){var m2=+p[0]*60+ +(p[1].slice(0,2)+"."+p[1].slice(2));if(inR(m2,R))return m2}}
+    /* below the event's floor (faster than any human) it is not a mark for this event: 5.3 is not a 1600m, 49.8 is not an 800m (UX audit 2026-11-03) */
+    if(R&&v<R[0])return null;return v}
   p=t.split(":");if(p.some(function(x){return x===""||isNaN(+x)}))return null;
-  if(c===1)return +p[0]*60+ +p[1];
+  if(c===1){var s1=+p[0]*60+ +p[1];return R&&s1<R[0]?null:s1}
   if(c===2){a=+p[0]*3600+ +p[1]*60+ +p[2];b=+p[0]*60+ +(p[1]+"."+p[2].replace(".",""));if(R&&!inR(a,R)&&inR(b,R))return b;return a}
   return null};
   var first=null;for(var i=0;i<alts.length;i++){var v2=one(alts[i]);if(v2==null)continue;if(first==null)first=v2;if(!R||inR(v2,R))return v2}return first}
@@ -204,6 +209,8 @@ const seg=(k,v,L=["Men","Women"])=>`<div class="seg" role="group" aria-label="Te
 const evs=g=>EVENTS.filter(e=>CONV[e]||SCH.some(s=>s[g][e])).filter(e=>!(g==="m"&&e==="100m Hurdles")&&!(g==="w"&&e.startsWith("110m Hurdles")));
 const PH={"100m":"10.85","200m":"22.10","400m":"49.50","800m":"1:58.00","1500m":"4:05.00","1600m":"4:21.50","Mile":"4:23.00","3000m":"8:50.00","3200m":"9:20.00","5000m":"15:30.00","10000m":"32:00.00","100m Hurdles":"14.20","110m Hurdles":"14.80",'110m Hurdles (39")':"14.80","300m Hurdles":"38.50","400m Hurdles":"54.20","3000m Steeplechase":"9:45.00","High Jump":"6'6\"","Pole Vault":"14'6\"","Long Jump":"22'6\"","Triple Jump":"46'0\"","Shot Put":"52'0\"","Discus":"150'0\"","Hammer":"160'0\"","Javelin":"180'0\""};
 const ph=e=>PH[e]||(FIELD.has(e)?"22'6\"":"4:21.50");
+/* what to say when the typed value can't be a mark for this event (UX audit 2026-11-03: the parser now rejects values below the floor) */
+const badMark=e=>{const x=ph(e);return FIELD.has(e)?`Enter a mark like ${x}.`:`That doesn't look like a ${e} time. Type it like ${x}${/:/.test(x)?` (${x.replace(":",".")} works on a phone keypad)`:""}.`};
 
 /* ---------- the results offer (Ryan 2026-10-16) ----------
    Copy ladder from the athlete's own result; fires at the moment they have seen it (results list scrolled into view and held for
@@ -289,7 +296,8 @@ function armOffer(){const o=offerCopy();if(!o||EV.shown||EV.dismissed)return;if(
   ARM.iv=setInterval(()=>{if(!ARM)return;if(!S.run||S.school!=null){clearInterval(ARM.iv);clearTimeout(ARM.t);ARM=null;return}
     /* fires once they reach the end of the list they can see (UX audit 2026-10-31: not mid-scroll through their own results) */
     const el=document.querySelector(".mtab"),r=el&&el.getBoundingClientRect(),atEnd=r&&r.top<innerHeight*0.5&&r.bottom<innerHeight*1.02;
-    if(atEnd){if(!ARM.since)ARM.since=Date.now();else if(Date.now()-ARM.since>=900)fire("results-end")}else ARM.since=0},250)}
+    const w=document.querySelector(".acwall"),wOut=!w||w.getBoundingClientRect().bottom<0;   /* never on top of the account wall (UX audit 2026-11-03) */
+    if(atEnd&&wOut){if(!ARM.since)ARM.since=Date.now();else if(Date.now()-ARM.since>=900)fire("results-end")}else ARM.since=0},250)}
 /* ---------- leaving? one last offer (Duolingo-style churn catch) ----------
    Desktop: the mouse heads for the tab bar. Phones: a fast scroll back up or 45 s idle on the results. Once per visit, never if an
    offer was already shown or dismissed, never in the first 20 s unless they searched. */
@@ -474,6 +482,8 @@ function standards(){
     <button class="go">Search colleges</button></div><div class="hint" id="hint"></div></form>`;
   /* order (Ryan 2026-10-13): search by stats · or · search one school · what the levels mean · results */
   o+=`<div class="orsep" role="separator"><span>or</span></div><div class="one${S.run?" sm":""}"><h4>Search for one school</h4><p>${NSTD.toLocaleString()} colleges across NCAA D1, D2, D3 and NAIA, plus every NJCAA junior college.</p><div class="search">${MAG}<label class="sr" for="q">Search colleges</label><input class="in" id="q" placeholder="Try USC, Oregon or Ole Miss" autocomplete="off" value="${esc(S.q)}"><div id="drop"></div></div></div>`;
+  if(S.run&&parse(S.mark,S.e)==null){   /* a shared or typed URL with a value that can't be a mark (UX audit 2026-11-03): say so instead of searching */
+    return o.replace('<div class="hint" id="hint"></div>',`<div class="hint" id="hint">${esc(badMark(S.e))}</div>`)+`</div>`}
   if(S.run){
     const v=parse(S.mark,S.e),all=[];SCH.forEach((s,i)=>{const t=tier(s,S.g,S.e,v);if(t)all.push({s,i,t})});
     const ok=(x,skip)=>(skip==="d"||!S.div||x.s.d===S.div)&&(skip==="c"||!S.conf||x.s.c===S.conf)&&(skip==="t"||!S.f||x.t===S.f)&&(skip==="s"||!S.st||x.s.s===S.st);
@@ -481,6 +491,14 @@ function standards(){
     const opts=(skip,key)=>[...new Set(all.filter(x=>ok(x,skip)).map(key))].filter(Boolean);
     const dd=(id,label,cur,list,fmt=x=>x)=>`<label class="dd${cur?" on":""}"><span class="sr">${label}</span><select id="${id}"><option value="">${label}</option>${list.map(x=>`<option value="${esc(x)}" ${x===cur?"selected":""}>${esc(fmt(x))}</option>`).join("")}</select></label>`;
     const cl=convLine(S.e,S.g,v), c=k=>all.filter(x=>x.t===k).length;LASTSUM={mark:S.mark,e:S.e,g:S.g,n:all.length,T:c("T"),R:c("R"),W:c("W")};
+    if(!all.length){   /* zero fits (11% of searches, UX audit 2026-11-03): say how far the chart is, never 'no colleges match these filters' */
+      const F=FIELD.has(S.e),gw=isPar()?(S.g==="m"?"boys'":"girls'"):(S.g==="m"?"men's":"women's");let near=null;
+      for(const s of SCH){const t=s[S.g]&&s[S.g][S.e];if(!t)continue;for(const i of [2,1,0]){if(!t[i])continue;const th=parse(t[i],S.e);if(th==null)break;if(!near||(F?th<near.th:th>near.th))near={th,s,i,n:1};else if(th===near.th)near.n++;break}}
+      const gap=near?fmtGap(S.e,Math.abs(near.th-v)):"",lvl=near?TN["TRW"[near.i]]:"",nm=near?esc(near.s.t||near.s.n):"",hf=`/how-fast/${S.g==="m"?"mens":"womens"}-${S.e.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}.html`;
+      o+=`<div class="mhead"><p class="sum">${isPar()?"Your child's ":""}${esc(S.mark)} in the ${gw} ${esc(hsName(S.e,S.g))} ${near?`is <b>${esc(gap)}</b> from the chart`:"isn't on a college chart yet"}</p>
+        <p class="lvplain">${near?`No college lists a level this far yet. The nearest is ${lvl} <b>${esc(near.s[S.g][S.e][near.i])}</b> at ${nm}${near.n>1?` and ${near.n-1} other${near.n>2?"s":""}`:""}. `:""}Many D3 and NAIA teams take walk-ons below their listed marks: ask the coach.</p>
+        <p class="zfl"><a href="${hf}">See what each level takes ›</a></p></div>${parentCard()}<div class="mafter">${readyLink()}</div>`;
+      return o+`</div>`}
     o+=`<div class="mhead"><p class="sum">${isPar()?"Your child's ":""}${esc(S.mark)} in the ${isPar()?(S.g==="m"?"boys'":"girls'"):(S.g==="m"?"men's":"women's")} ${esc(hsName(S.e,S.g))} fits <b>${all.length}</b> colleges${CONV[S.e]?cinfo(S.e,cl):S.g==="m"&&IMPL[S.e]?iinfo(S.e):""}</p>
       <p class="mcount"><span class="lv T">${c("T")} Target</span><span class="lv R">${c("R")} Recruit</span><span class="lv W">${c("W")} Walk-On</span>${levelsInfo("left")}</p><p class="lvplain"><b>Target</b> the full-scholarship range · <b>Recruit</b> where coaches start recruiting · <b>Walk-On</b> the minimum to make the team</p>${all.length?'<button type="button" class="shr" data-share><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>'+(isPar()?"Send to the other parent":"Share my results")+'</button>':""}</div>
     ${parentCard()}
@@ -587,6 +605,10 @@ function schoolCheck(s,g){const list=evs(g).filter(e=>s[g][e]||(CONV[e]&&s[g][CO
    people who search come back 6x as often). One slim line, not the old checker form: once a mark is known (from any search on the
    site), it shows that mark's level here and lights up its row in the table; with no mark, one inline question. */
 /* the lowest level this school lists for an event, as shown in its high school table (Walk-On, else Recruit for Power 4) */
+/* one caption under every conference-set table: where the numbers come from and which levels exist (UX audit 2026-11-03) */
+function tableCap(s){const r=isP4(s)?RULES.P4:RULES[s.d];if(!r)return "";const yr=(CT[s.ck]||{}).yr||2026,p=[`Target = ${r[0]}th best`,r[1]?`Recruit = ${r[1]}th`:null,r[2]?`Walk-On = ${r[2]}th`:null].filter(Boolean);
+  const note=isP4(s)?"no Walk-On level in Power 4 conferences":!r[1]?"no Recruit level is set for D3 and NAIA conferences":"";
+  return `<p class="tcap">Set from the ${esc(String(yr))} ${esc(s.c)} results on TFRRS · ${p.join(" · ")}${note?" · "+note:""}</p>`}
 function lowLevel(s,g,e){const x=hsLevels(s,g,e);if(!x||!x.t)return null;const L=x.t.filter(Boolean);return L.length?String(L[L.length-1]).replace(/\s*\(.*$/,""):null}
 const myMark=g=>INT.me&&INT.m&&INT.mg===g?{e:INT.me,m:INT.m}:null;
 const meRow=(e,g)=>{const k=myMark(g);return k&&k.e===e?' class="me"':""};
@@ -598,12 +620,13 @@ function youStrip(s,g){const k=myMark(g);
       if(!r.t){/* below every level here: name where this school starts and what the mark already fits elsewhere (never-hater framing) */
         const v=parse(k.m,k.e),lo=lowLevel(s,g,k.e),n=SCH.filter(x=>tier(x,g,k.e,v)).length,nm=esc(s.t||s.n.replace(/\s*\(.*?\)\s*/g," ").trim());
         txt=(lo?`${nm} starts recruiting at <b>${esc(lo)}</b> in the ${esc(hsName(k.e,g))}. `:"")+(n?`Your ${esc(k.m)} already fits <b>${n.toLocaleString()}</b> other colleges.`:`Keep chasing it: every mark has a path.`)}
+      {const vv=parse(k.m,k.e),nAll=vv==null?0:SCH.filter(x=>tier(x,g,k.e,vv)).length;if(nAll)txt+=` <a class="yall" href="/?g=${g}&e=${encodeURIComponent(k.e)}&m=${encodeURIComponent(k.m)}${S.gr?"&gr="+S.gr:""}">See all ${nAll.toLocaleString()} ›</a>`}   /* UX audit 2026-11-03: the count had no link */
       return `<div class="you" role="status"><span class="ylv ${r.t||"X"}">${r.t?TN[r.t]:"Your mark"}</span><p>${txt}</p><button type="button" class="ych" data-yedit>Change</button></div>`}}
   const e0=k?k.e:(INT.e&&HSE(g).includes(INT.e)?INT.e:HSE(g)[3]);
   return `<form class="you ask" id="youf" novalidate><label for="ye">Where do you stand at ${esc(s.t||s.n.replace(/\s*\(.*?\)\s*/g," ").trim())}?</label><div class="yrow"><select class="in" id="ye" aria-label="Event">${HSE(g).map(e=>`<option value="${esc(e)}"${e===e0?" selected":""}>${esc(hsName(e,g))}</option>`).join("")}</select><input class="in" id="ym" aria-label="Your best time or mark" placeholder="e.g. ${esc(ph(e0))}" inputmode="decimal" autocomplete="off" value="${k?esc(k.m):""}"><button class="go">Check</button></div><p class="yerr" id="yerr" role="alert"></p></form>`}
 document.addEventListener("click",ev=>{if(ev.target.closest&&ev.target.closest("[data-yedit]")){S.youEdit=true;render();const m=$("ym");if(m)m.focus()}});
 document.addEventListener("change",ev=>{if(ev.target.id==="ye"){const m=$("ym");if(m)m.placeholder="e.g. "+ph(ev.target.value)}});
-function schoolResult(s,g){const e=SCK.e,v=parse(SCK.mark,e);if(v==null)return {cls:"bad",html:`Enter a mark like ${esc(ph(e))}.`};
+function schoolResult(s,g){const e=SCK.e,v=parse(SCK.mark,e);if(v==null)return {cls:"bad",html:esc(badMark(e))};
   const direct=s[g][e],cv=!direct&&CONV[e]?convert(e,g,v):null,std=direct||(cv&&s[g][cv[0].e]),ev2=direct?e:cv&&cv[0].e,vv=direct?toCol(s,g,e,v):cv&&cv[0].v;
   if(!std)return {cls:"bad",html:"No standard listed for that event here."};
   const t=tier0(std,ev2,vv),F=FIELD.has(ev2),nx=t===null?2:t==="W"?1:t==="R"?0:-1,nm=esc(s.t||s.n);
@@ -657,11 +680,11 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
       return `<h3 class="othev">Other events · ${esc(s.c)} levels</h3><p class="othnote">${esc(s.n)}'s chart doesn't list these events, so they use the ${esc(s.c)} levels set from conference results.</p><div class="scroll"><table><thead><tr><th>Event</th><th class="num">Target</th><th class="num">Recruit</th>${p4?"":`<th class="num">Walk‑On</th>`}</tr></thead><tbody>${rest.map(e=>{const c=CL[e]||[],v=i=>c[i]?(c[i][1]?`${esc(c[i][1])} <small>${esc(c[i][0])}</small>`:esc(c[i][0])):"–";return `<tr><td>${e}</td><td class="num">${v(0)}</td><td class="num">${v(1)}</td>${p4?"":`<td class="num">${v(2)}</td>`}</tr>`}).join("")}</tbody></table></div>`+nfNote(s,g)})()}
     <div class="verify"><b>★ Official standards</b><span>${s.via?`From ${esc(s.via)}, in use by ${esc(s.yr)}. Checked mark for mark by Preferred Recruit. The women's chart adds that marks must be met on at least 2 occasions for consideration.`:`Published by ${esc(s.n)} (${esc(s.yr)}) and checked mark for mark by Preferred Recruit.${esc(OLDNOTE(s))}`}</span><a href="${esc(s.src)}" target="_blank" rel="noopener">${s.via?"See the chart ›":"View the official source ›"}</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
   } else {
-    const ev=EVENTS.filter(e=>s[g][e]&&!noGrp(s,g,e)),p4=isP4(s);
+    const ev=EVENTS.filter(e=>s[g][e]&&!noGrp(s,g,e)),p4=isP4(s),d3=!p4&&!(RULES[s.d]||[])[1];   /* D3 and NAIA set no Recruit level (UX audit 2026-11-03: no column of dashes) */
     /* high school events by default (1600m from the 1500m, 3200m from the 3000m/5000m, 300mH from the 400mH, 39" hurdles from 42"), college events one tap away */
     const hsr=HSE(g).map(e=>[e,hsLevels(s,g,e)]).filter(([e,x])=>x.t&&!noGrp(s,g,e)),tg=`<div class="seg evtg" role="group" aria-label="Events"><button type="button" data-cev="0" aria-pressed="${!S.cev}">High school events</button><button type="button" data-cev="1" aria-pressed="${!!S.cev}">College events</button></div>`;
-    o+=`${hsr.length?tg:""}<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Event</th><th class="num">Target</th><th class="num">Recruit${p4?" "+levelsInfo():""}</th>${p4?"":`<th class="num">Walk‑On ${levelsInfo()}</th>`}</tr></thead><tbody>
-    ${(S.cev||!hsr.length?ev.map(e=>`<tr${meRow(e,g)}><td>${e}${meChip(s,e,g)}</td><td class="num">${disp(s,g,e,0)}</td><td class="num">${disp(s,g,e,1)}</td>${p4?"":`<td class="num">${disp(s,g,e,2)}</td>`}</tr>`):hsr.map(([e,x])=>x.from?`<tr${meRow(e,g)} title="Converted from the college ${esc(x.from)}: ${x.orig.slice(0,p4?2:3).map(v=>esc(v||"–")).join(" / ")}"><td>${esc(hsName(e,g))}${meChip(s,e,g)}</td>${(p4?[0,1]:[0,1,2]).map(i=>`<td class="num">${(x.t[i]?twoLine(x.t[i]):"–")}</td>`).join("")}</tr>`:`<tr${meRow(e,g)}><td>${esc(hsName(e,g))}${meChip(s,e,g)}</td><td class="num">${disp(s,g,e,0)}</td><td class="num">${disp(s,g,e,1)}</td>${p4?"":`<td class="num">${disp(s,g,e,2)}</td>`}</tr>`)).join("")||'<tr><td>No marks listed for this team yet.</td></tr>'}</tbody></table></div>
+    o+=`${hsr.length?tg:""}<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Event</th><th class="num">Target</th>${d3?"":`<th class="num">Recruit${p4?" "+levelsInfo():""}</th>`}${p4?"":`<th class="num">Walk‑On ${levelsInfo()}</th>`}</tr></thead><tbody>
+    ${(S.cev||!hsr.length?ev.map(e=>`<tr${meRow(e,g)}><td>${e}${meChip(s,e,g)}</td><td class="num">${disp(s,g,e,0)}</td>${d3?"":`<td class="num">${disp(s,g,e,1)}</td>`}${p4?"":`<td class="num">${disp(s,g,e,2)}</td>`}</tr>`):hsr.map(([e,x])=>x.from?`<tr${meRow(e,g)} title="Converted from the college ${esc(x.from)}: ${x.orig.slice(0,p4?2:3).map(v=>esc(v||"–")).join(" / ")}"><td>${esc(hsName(e,g))}${meChip(s,e,g)}</td>${(p4?[0,1]:d3?[0,2]:[0,1,2]).map(i=>`<td class="num">${(x.t[i]?twoLine(x.t[i]):"–")}</td>`).join("")}</tr>`:`<tr${meRow(e,g)}><td>${esc(hsName(e,g))}${meChip(s,e,g)}</td><td class="num">${disp(s,g,e,0)}</td>${d3?"":`<td class="num">${disp(s,g,e,1)}</td>`}${p4?"":`<td class="num">${disp(s,g,e,2)}</td>`}</tr>`)).join("")||'<tr><td>No marks listed for this team yet.</td></tr>'}</tbody></table></div>${tableCap(s)}
     ${nfNote(s,g)}<div class="verify"><b>How these are set</b><span>${ruleText(s)} ${esc(s.n)} doesn't publish an official chart we could verify.${EVENTS.some(e=>["m","w"].some(g=>((((CT[s.ck]||{})[g]||{})[e])||[]).some(v=>v&&v[2])))?" Levels marked est: the conference has too few athletes in that event to set a level, so it uses the median of the same level across its division.":""} High school events show the matching college standard in high school terms (for example the 1600m from the college 1500m); tap College events for the original marks.</span>${src?`<a href="${esc(src)}" target="_blank" rel="noopener">See the ${esc(s.c)} list on TFRRS ›</a>`:""}${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
   }
   setTimeout(()=>teamBest(S.school),0);
@@ -2454,7 +2477,7 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     intent(SCK.e,S.g,SCK.mark.trim());log("school",{school:s.n,division:s.d,event:SCK.e,mark:SCK.mark.trim(),g:S.g,detail:"check-"+(SCK.res.t?TN[SCK.res.t]:"none")});
     schoolOffer(s,true,"school-check");return}
   if(ev.target.id==="cf"){send($("ct").value);return}
-  if(parse(S.mark,S.e)==null){$("hint").textContent=`Enter a mark like ${ph(S.e)}`;return}
+  if(parse(S.mark,S.e)==null){$("hint").textContent=badMark(S.e);return}
   if(!S.gr){$("hint").textContent="Pick your grade to see your colleges.";const gs=document.querySelector(".gseg");if(gs){gs.classList.remove("need");void gs.offsetWidth;gs.classList.add("need");gs.querySelector("button").focus()}return}
   S.run=true;S.f="";S.div="";S.conf="";S.st="";S.n=24;render();
   /* each search gets its own URL: shareable, back button returns to the form, and analytics counts it as a page view (Ryan 2026-10-15: bounce rate) */

@@ -511,7 +511,7 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 /* helpful? -> send to a parent (Ryan 2026-10-16) */
 .hlp{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;font-size:14px;color:var(--pr-mute)}
 .hlp .hbtn{border:1px solid var(--pr-line);background:var(--pr-card);color:var(--pr-ink);border-radius:var(--r-pill);padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
-.hlp .hbtn:hover{background:var(--pr-soft)}.hlp .hbtn.pri{background:var(--pr-black,#0B0B0F);color:#fff;border-color:transparent;font-weight:650}
+.hlp .hbtn:hover{background:var(--pr-soft)}.hlp .hbtn.pri{background:var(--pr-black,#0B0B0F);color:var(--pr-card,#fff);border-color:transparent;font-weight:650}
 /* centre modal (Ryan 2026-10-16, e-commerce benchmark data: centre > bottom corner, multi-step, click-to-reopen pill) */
 .evbg{position:fixed;inset:0;z-index:60;background:rgba(11,11,15,.42);opacity:0;transition:opacity .3s}.evbg.on{opacity:1}.evbg[hidden]{display:none}
 .eval{position:fixed;left:50%;top:50%;right:auto;bottom:auto;z-index:61;width:min(420px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto;
@@ -525,7 +525,7 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .eval .evo{display:grid;gap:8px}
 .eval .evo button{height:46px;border-radius:var(--r-2);border:1px solid var(--pr-line);background:var(--pr-card);color:var(--pr-ink);font:inherit;font-size:15px;font-weight:600;cursor:pointer;text-align:left;padding:0 16px}
 .eval .evo button:hover,.eval .evo button:focus-visible{border-color:var(--pr-violet,#7A45F0);background:var(--pr-soft)}
-.evpill{position:fixed;right:16px;bottom:16px;z-index:45;border:0;border-radius:var(--r-pill);background:var(--pr-black,#0B0B0F);color:#fff;font:inherit;font-size:14px;font-weight:650;padding:11px 16px;box-shadow:var(--sh-2);cursor:pointer}
+.evpill{position:fixed;right:16px;bottom:16px;z-index:45;border:0;border-radius:var(--r-pill);background:var(--pr-black,#0B0B0F);color:var(--pr-card,#fff);font:inherit;font-size:14px;font-weight:650;padding:11px 16px;box-shadow:var(--sh-2);cursor:pointer}
 .evpill[hidden]{display:none}
 @media (max-width:760px){
   .eval{left:50%;right:auto;bottom:auto;top:50%;width:calc(100vw - 32px);transform:translate(-50%,-46%) scale(.96)}
@@ -728,7 +728,7 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .dsel .divs{flex:1;min-width:0}
 .divs.multi .dind{display:none}
 .divs.multi button{transition:background .2s var(--spring,ease),color .2s}
-.divs.multi button[aria-pressed="true"]{background:var(--pr-black,#0B0B0F);color:#fff}
+.divs.multi button[aria-pressed="true"]{background:var(--pr-black,#0B0B0F);color:var(--pr-card,#fff)}
 .divs.multi button[aria-pressed="true"] b{color:#fff}
 .cmpsw{flex:none;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--pr-line);background:var(--pr-card);border-radius:var(--r-pill);padding:9px 14px 9px 10px;font:inherit;font-size:14px;font-weight:600;color:var(--pr-ink);cursor:pointer}
 .cmpsw .sw{width:30px;height:18px;border-radius:var(--r-pill);background:#D1D1D6;position:relative;transition:background .2s}
@@ -1356,7 +1356,7 @@ header .hd .acchd{flex:none;visibility:visible}
 .rfsum{display:none}
 @media (max-width:760px){
   .rfsum{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;margin:0 0 12px;padding:0 6px 0 16px;border:1px solid var(--pr-line);border-radius:var(--r-2);background:var(--pr-card);font:inherit;font-size:15px;font-weight:600;color:var(--pr-ink);cursor:pointer;text-align:left;box-shadow:var(--sh-1)}
-  .rfsum span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rfsum b{flex:none;background:var(--pr-black,#0B0B0F);color:#fff;border-radius:var(--r-1);padding:8px 14px;font-size:14px}
+  .rfsum span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rfsum b{flex:none;background:var(--pr-black,#0B0B0F);color:var(--pr-card,#fff);border-radius:var(--r-1);padding:8px 14px;font-size:14px}
   .rcard:not(.open),.rkbar:not(.open){display:none}.sec>.lede{display:none}
 }
 /* pop-up logo row (Ryan 2026-10-31: appealing to kids, school logos enticing them) */
@@ -1493,3 +1493,11 @@ tr.me td:first-child{box-shadow:inset 3px 0 0 var(--pr-accent);font-weight:700}
 @media (max-width:640px){.rfsum span{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;padding:6px 0}}
 /* the time box is narrow on phones: smaller example text so "Best time or mark, e.g. 10.85" isn't cut off */
 @media (max-width:420px){#mk::placeholder{font-size:14px;letter-spacing:-.01em}#ym::placeholder{font-size:14px}}
+
+/* UX audit 2026-11-03: table caption + no header wrap on phones; zero-fit link; checker strip link */
+.tcap{margin:8px 2px 0;font-size:13px;line-height:1.4;color:var(--pr-faint)}
+.scroll thead th{white-space:nowrap}
+.zfl{margin:4px 0 0}.zfl a{color:var(--pr-violet);font-weight:600}
+.you .yall{color:var(--pr-violet);font-weight:600;white-space:nowrap}
+/* the sheets are white in both modes, so everything inside them reads with light tokens (UX audit 2026-11-03: dark mode made the sign-in labels 1.09:1) */
+.eval{--pr-ink:#0B0B0F;--pr-ink2:#1D1D1F;--pr-mute:#4A4A52;--pr-faint:#66666F;--pr-line:#E4E3EA;--pr-soft:#F3F2F7;--pr-card:#FFFFFF;--pr-black:#0B0B0F;color-scheme:light}
