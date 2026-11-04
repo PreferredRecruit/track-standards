@@ -352,6 +352,10 @@ function schoolIntent(i){const s=SCH[i];if(!s)return;let seen=[];try{seen=JSON.p
 /* readiness entry under the search results, until the check is done on this browser */
 const readyLink=()=>{try{if(localStorage.getItem("prReadyDone"))return ""}catch(e){}return `<button type="button" class="rqlink" data-ready>How ready are you for recruiting? Take the 2-minute check ›</button>`};
 document.addEventListener("click",ev=>{if(ev.target.closest&&ev.target.closest("[data-ready]")){log("feedback",{detail:"readiness-link"});READY.go()}});
+/* whole-row hit area (Ryan 2026-11-04: "only the text itself is clickable"): a click anywhere on a results, event or top-list row
+   opens that row's athlete, unless it lands on another control in the row (team link, TFRRS link, a second button). */
+document.addEventListener("click",ev=>{const t=ev.target;if(!t.closest||t.closest("a,button,input,select,label,summary,[role=option]"))return;const row=t.closest(".gr,.tpcard li");if(!row)return;
+  const b=row.querySelector("button.gath,button.tpnm,button[data-gath],button[data-rath]");if(b&&!b.disabled)b.click()});
 function evalIn(title,body,delay,v,trig,bs){
   if(EV.shown||EV.dismissed||ACC.tier()==="C"||ACC.isOpen()||document.getElementById("prnudge")||document.documentElement.classList.contains("onbon")||(ACC.signedIn()&&!ACC.member())) return; clearTimeout(EV.t);
   /* qualified accounts (Tier A/A+) hear about their own level (Ryan 2026-10-25: "copy that resonates with their specific recruitment level") */
@@ -851,6 +855,10 @@ function setWind(on){WIND=on;try{localStorage.setItem("prWind",on?"1":"0")}catch
   log("wind",{legal:on})}
 const windSw=()=>(R.season||"").endsWith("outdoor")||TM.i!=null||CC.on?`<button type="button" class="cmpsw windsw" data-wind aria-pressed="${WIND}" title="Only wind-legal marks (wind +2.0 or less) in the 100m, 200m, hurdles, long jump and triple jump"><span class="sw" aria-hidden="true"></span>Wind-legal</button>`:"";
 /* the note under a list when the toggle is on */
+/* 2016-2019: TFRRS archived only a top slice of each national list (2016 ~340, 2017 200, 2018-2019 1,000 per event) and no
+   conference lists, so older seasons are shallower than 2021 onward (checked against TFRRS 2026-11-04: ?limit= cannot go deeper). */
+const ARCH={2016:"about 340",2017:"200",2018:"1,000",2019:"1,000"};
+const archNote=(L)=>{const y=+String(R.season).slice(0,4);if(!L||!L.nat||!ARCH[y])return "";return `<p class="wnote">TFRRS archived only the top ${ARCH[y]} marks per event for ${y}, so older lists stop there. From 2021 on, every athlete with a mark is listed.</p>`};
 const windNote=(L,g,ev)=>{if(!WIND||!WEV.has(ev))return "";const x=((L.wh||{})[g]||{})[ev];return `<p class="wnote">Wind-legal marks only (wind +2.0 or less).${x&&x.sw?` ${x.sw} wind-aided best${x.sw>1?"s":""} replaced by the athlete's legal best.`:""}${x&&x.hid?` ${x.hid} athlete${x.hid>1?"s":""} hidden: no legal mark found yet.`:""}</p>`};
 const DIVINFO={"NCAA D1":"NCAA D1","NCAA D2":"NCAA D2","NCAA D3":"NCAA D3",NAIA:"NAIA",NJCAA:"NJCAA",NCCAA:"NCCAA",NWAC:"NWAC",USCAA:"USCAA"};
 const DIVFULL={"NCAA D1":"NCAA Division I","NCAA D2":"NCAA Division II","NCAA D3":"NCAA Division III",NAIA:"NAIA (small colleges)",NJCAA:"NJCAA (junior colleges)",NCCAA:"NCCAA (Christian colleges)",NWAC:"NWAC (Northwest junior colleges)",USCAA:"USCAA (small colleges)"};   /* plain-word names on hover (Ryan 2026-11-02 audit) */
@@ -1547,7 +1555,7 @@ function resultsCollege(){
   const last=all.length-1;
   o+=`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evNames.map(e=>`<button data-rev="${esc(e)}" aria-pressed="${e===R.ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
   <div class="rbody${R.swap?" swap":""}">${R.hlAth?`<p style="margin:14px 2px 0"><button class="lnk" data-hlback>‹ Back to ${esc(R.hlAth.name)}</button></p>`:""}<div class="rhead"><h3>${L.nat?"":esc(L.label)+" "}${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(listName)} · ${esc(seasonLabel(R.season))}${WIND&&WEV.has(R.ev)?" · wind-legal":""} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools (national rank shown)`:`${all.length} marks`}</span></div>
-  ${windNote(L,R.g,R.ev)}${tsug}${L.nat?`<div class="stats">${[1,10,25,50].filter(k=>rows[k-1]).map(k=>stR(rows[k-1],k===1?"Best":ord(k)+" best",k===1?"lead":"")).join("")}</div>`:""}
+  ${windNote(L,R.g,R.ev)}${archNote(L)}${tsug}${L.nat?`<div class="stats">${[1,10,25,50].filter(k=>rows[k-1]).map(k=>stR(rows[k-1],k===1?"Best":ord(k)+" best",k===1?"lead":"")).join("")}</div>`:""}
   <div class="grid${L.nat?"":" raw"}"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span>${L.nat?"<span>Meet</span>":""}</div>
   ${rows.slice(0,RCAP(R.n)).map((r,i)=>{const k=L.champ&&+r[0]?+r[0]:all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}${R.hl&&r[1]===R.hl?" me":""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span>${L.nat?`<span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(fmtD(r[7]))}</span>`:""}</div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
   </div>${rwall(rows.length,RCAP(R.n))}${ACC.member()&&rows.length>R.n?`<p class="rmorew"><button type="button" class="rmoreb" data-rmore>Show ${Math.min(200,rows.length-R.n)} more <small>${R.n.toLocaleString()} of ${rows.length.toLocaleString()}</small></button></p>`:""}${hookRow()}

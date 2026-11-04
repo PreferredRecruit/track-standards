@@ -266,6 +266,9 @@ footer{text-align:center;font-size:13px;color:var(--pr-mute);padding:10px 22px 3
 .hook.solo{margin-top:14px;border-radius:var(--r-3);box-shadow:var(--pr-rim);border-bottom:0}
 .gath{border:0;background:none;padding:0;text-align:left;cursor:pointer;color:inherit}
 .gath:hover b{color:var(--pr-accent)}
+/* whole row opens the athlete (app.js row hit area) */
+.gr:has(> .gnmw .gath,> .gath,> .gnmw .tpnm),.tpcard li:has(.tpnm){cursor:pointer}
+.gr:has(> .gnmw .gath,> .gath):hover .gath b,.tpcard li:has(.tpnm):hover .tpnm{color:var(--pr-accent)}
 .ahead{display:flex;align-items:center;gap:16px;margin:16px 2px 18px;flex-wrap:wrap}
 .avt{width:64px;height:64px;border-radius:var(--r-3);background:var(--pr-violet);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;letter-spacing:-.03em;box-shadow:var(--sh-2)}
 .ahead h3{margin:0;font-size:32px;letter-spacing:-.04em;line-height:1.05}
