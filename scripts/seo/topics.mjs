@@ -39,7 +39,7 @@ export function topicPages({ S, CT, write, page, parse, esc, slug, evPath, FIELD
   const RUN = ["100m", "200m", "400m", "800m", "1500m", "5000m", "110m Hurdles", "400m Hurdles"], RUNW = ["100m", "200m", "400m", "800m", "1500m", "5000m", "100m Hurdles", "400m Hurdles"];
   const JMP = ["High Jump", "Long Jump", "Triple Jump", "Pole Vault"], THR = ["Shot Put", "Discus", "Hammer", "Javelin"];
   const QA_CSS = `<style>.qa{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:14px;padding:14px 18px;margin:14px 0 6px}.qa b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}.qa p{margin:0}.upd{font-size:13px;color:var(--mute)}ol.how li{margin:6px 0}.tpl{white-space:pre-wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px}</style>`;
-  const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.com", logo: SITE + "/icon-512.png" };
+  const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.org", logo: SITE + "/icon-512.png" };
   const GP = s => `/guides/${s}.html`;
   const CORE = [["/", "Search your mark against every college"], ["/how-fast.html", "How fast do you need to run in college?"], ["/guides/target-recruit-walk-on-explained.html", "Target, Recruit and Walk-On explained"], ["/guides/ncaa-d1-vs-d2-vs-d3-vs-naia-track-and-field.html", "D1 vs D2 vs D3 vs NAIA compared"]];
   const done = [];
@@ -225,7 +225,7 @@ export function topicPages({ S, CT, write, page, parse, esc, slug, evPath, FIELD
       ["Questions to ask any recruiting service", "<ol><li>Who contacts coaches, and how many each week?</li><li>Do the emails come from the athlete's own address?</li><li>Is the service specific to track and field?</li><li>What happens if no coach shows interest?</li><li>Can I see which coaches were contacted?</li></ol>"]],
     faq: [["Do I need a recruiting service at all?", `No. Many athletes get recruited by doing it themselves. Start with the <a href="/">standards search</a> and the <a href="${GP("how-to-get-recruited-for-track-and-field")}">step-by-step guide</a>.`],
       ["Who is Preferred Recruit for?", "Track and field athletes whose marks already fit college programs. Athletes need to meet qualifying marks before outreach starts."]],
-    related: [[QUIZ, "Free recruitment evaluation"], [GP("how-to-get-recruited-for-track-and-field"), "How to get recruited"]], sources: [["https://thepreferredrecruit.com", "Preferred Recruit"], ["https://www.ncsasports.org/", "NCSA"]] });
+    related: [[QUIZ, "Free recruitment evaluation"], [GP("how-to-get-recruited-for-track-and-field"), "How to get recruited"]], sources: [["https://thepreferredrecruit.org", "Preferred Recruit"], ["https://www.ncsasports.org/", "NCSA"]] });
 
   /* 12b (2026-11-03, Search Console: "runcruit" 7,788 impressions + "runrecruit"/"run recruit"/"runcruit login" ~3,000 more, position
      2-5, 0.6% CTR; the homepage was the result shown). Factual comparison only: Runcruit facts from runcruit.com/about; official PR claims. */

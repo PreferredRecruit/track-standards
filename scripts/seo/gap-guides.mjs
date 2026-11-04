@@ -58,7 +58,7 @@ export function gapGuides({ S, CT, write, page, parse, esc, slug, evPath, FIELD,
   const L = (u, t) => `<a href="${u}">${t}</a>`;
   const GP = s => `/guides/${s}.html`;
   const QA_CSS = `<style>.qa{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:14px;padding:14px 18px;margin:14px 0 6px}.qa b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}.qa p{margin:0}.upd{font-size:13px;color:var(--mute)}ol.how li{margin:6px 0}</style>`;
-  const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.com", logo: SITE + "/icon-512.png" };
+  const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.org", logo: SITE + "/icon-512.png" };
   const CORE = [["/", "Search your mark against every college"], ["/how-fast.html", "How fast do you need to run in college?"], [GP("ncaa-d1-vs-d2-vs-d3-vs-naia-track-and-field"), "D1 vs D2 vs D3 vs NAIA compared"]];
   const done = [];
 

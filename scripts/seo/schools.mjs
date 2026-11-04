@@ -276,7 +276,8 @@ ${(() => { const [c, st] = related(s); return (c.length ? `<h2>More ${esc(s.c)} 
 ${links.length ? `<h2>Links</h2><ul>${links.map(([, u, t]) => `<li><a href="${esc(u)}" rel="noopener">${t}</a></li>`).join("")}</ul>` : ""}
 ${/* coach portal links removed (Ryan 2026-10-16: "take out the coach log in"); backend kept, see social/standards/site/portal */""}
 <p style="font-size:13px;color:#4A4A52">${J ? "" : `Standards updated ${DATES.db}`}${B ? `${J ? "" : " · "}Season bests updated ${DATES.data}` : ""}</p>
-<p><a href="${confUrl(s)}">All ${esc(s.c)} ${J ? "junior college programs" : "standards"}</a>${s.s ? ` · <a href="${statePath(s.s)}">College track in ${esc(STATE[s.s] || s.s)}</a>` : ""} · <a href="/how-fast.html">How fast do you need to run in college?</a> · <a href="${QUIZ}">Free recruitment evaluation</a></p>
+<p><a href="${confUrl(s)}">All ${esc(s.c)} ${J ? "junior college programs" : "standards"}</a>${s.s ? ` · <a href="${statePath(s.s)}">College track in ${esc(STATE[s.s] || s.s)}</a>` : ""} · <a href="/how-fast.html">How fast do you need to run in college?</a></p>
+<p class="pr-brand">Want to hit these standards? <a href="https://thepreferredrecruit.org/how-it-works?utm_source=standards&amp;utm_medium=school-page&amp;utm_campaign=PRstandards">See how Preferred Recruit gets athletes recruited</a>. · <a href="${QUIZ}">Free recruitment evaluation</a></p>
 </main>`;
     const meta = (h, attr, key, val) => { const re = new RegExp(`<meta ${attr}="${key}" content="[^"]*"\\s*/?>`); const tag = `<meta ${attr}="${key}" content="${esc(val)}" />`; return re.test(h) ? h.replace(re, tag) : h.replace("</head>", tag + "\n</head>"); };
     let h = shell.replace(/<title>[^<]*<\/title>/, `<title>${esc(title)}</title>`).replace(/<link rel="canonical" href="[^"]*"\s*\/?>/, `<link rel="canonical" href="${url}" />`);

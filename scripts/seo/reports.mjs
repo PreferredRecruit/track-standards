@@ -27,7 +27,7 @@ export function reportPages({ root, S, CT, std, write, page, esc, sl, SITE, DATE
   const list = a => a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1];
   const tbl = (head, rows) => `<div class="scroll"><table><tr>${head.map((h, i) => `<th${i > 1 ? ' class="n"' : ""}>${h}</th>`).join("")}</tr>${rows.map(r => `<tr>${r.map((c, i) => `<td${i > 1 ? ' class="n"' : ""}>${c}</td>`).join("")}</tr>`).join("")}</table></div>`;
   const CSS = `<style>.qa{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:14px;padding:14px 18px;margin:14px 0 6px}.qa b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}.qa p{margin:0}.upd{font-size:13px;color:var(--mute)}</style>`;
-  const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.com", logo: SITE + "/icon-512.png" };
+  const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.org", logo: SITE + "/icon-512.png" };
   const UPD = DATES.max || DATES.db, done = [];
   function art({ p, title, desc, h1, crumb, answer, sections, faq, cite }) {
     const plain = s => s.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&");

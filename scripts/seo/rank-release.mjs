@@ -15,7 +15,7 @@ const fmtDate = iso => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", 
 
 export function releasePages({ R, out, write, page, esc, sl, SITE }) {
   if (!R || !R.cur || !Object.keys(R.cur).length) return [];
-  const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.com", logo: SITE + "/icon-512.png" };
+  const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.org", logo: SITE + "/icon-512.png" };
   const nameOf = r => r && r.s ? (r.s.t && !/\./.test(r.s.t.replace(/\(.*?\)/g, "")) ? r.s.t : r.s.n) : (r && r.t) || "";
   const link = (r, label) => r && r.s ? `<a href="${sl(r.s)}">${esc(label)}</a>` : esc(label);
   const done = [], DV = PDIVS.filter(d => (R.seasons[d] || []).length);

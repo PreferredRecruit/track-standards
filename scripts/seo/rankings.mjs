@@ -90,7 +90,7 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
   let brand = {}; try { brand = JSON.parse(fs.readFileSync(path.join(out, "brand", "brand.json"), "utf8")); } catch { }
   /* ranked teams with no school page (NWAC): logos from scripts/brand/team_logos.py, keyed "<division>|<TFRRS team name>" */
   let tlogo = {}; try { for (const [k, v] of Object.entries(JSON.parse(fs.readFileSync(path.join(out, "brand", "teams.json"), "utf8")))) if (v && v.logo && v.conf !== "low") tlogo[k.split("|").slice(1).join("|")] = v; } catch { }
-  const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.com", logo: SITE + "/icon-512.png" };
+  const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.org", logo: SITE + "/icon-512.png" };
   const LG = Object.fromEntries(PGROUPS.map(([k, l]) => [k, l]));
   /* the TFRRS national list + national meet behind each season (scripts/tfrrs/build_rank_sources.py), cited on the page and in the data */
   let SRC = {}; try { SRC = JSON.parse(fs.readFileSync(path.join(out, "data", "rank_sources.json"), "utf8")); } catch { }
@@ -134,7 +134,7 @@ export function rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }) {
       ...lists.filter(([, rows]) => rows && rows.length).map(([name, rows]) => ({ "@context": "https://schema.org", "@type": "ItemList", name, itemListOrder: "https://schema.org/ItemListOrderAscending", numberOfItems: Math.min(rows.length, 25),
         itemListElement: rows.slice(0, 25).map(r => { const i = info(r); return { "@type": "ListItem", position: r.rank, name: i.nm, ...(i.url ? { url: SITE + i.url } : {}) }; }) }))];
     write(p, page({ title, desc, pathname: p, crumbs, h1: esc(plain(h1)), intro: "", ld,
-      body: RANK_CSS + `<div class="pr"><div class="pr-hero"><div class="pr-kick">${kick}</div><div class="pr-title" aria-hidden="true">Power Rankings</div><p>${sub}</p></div>${body}<h2>Common questions</h2>${faq.map(([q, x]) => `<h3>${esc(q)}</h3><p>${x}</p>`).join("")}<h2>Sharing these rankings</h2><p>Schools, coaches and journalists are welcome to share a ranking with a link to its page. Every number behind a rank is on the page.</p><div class="cta"><b>Want coaches to see your marks?</b> Preferred Recruit gets athletes' marks in front of college coaches. <a href="${QUIZ}">Get your free recruitment evaluation ›</a></div></div>` + TABS_JS }));
+      body: RANK_CSS + `<div class="pr"><div class="pr-hero"><div class="pr-kick">${kick}</div><div class="pr-title" aria-hidden="true">Power Rankings</div><p>${sub}</p></div>${body}<p class="pr-brand">Want to reach a program like these? <a href="https://thepreferredrecruit.org/how-it-works?utm_source=standards&amp;utm_medium=rankings&amp;utm_campaign=PRstandards">See how Preferred Recruit gets athletes recruited</a>.</p><h2>Common questions</h2>${faq.map(([q, x]) => `<h3>${esc(q)}</h3><p>${x}</p>`).join("")}<h2>Sharing these rankings</h2><p>Schools, coaches and journalists are welcome to share a ranking with a link to its page. Every number behind a rank is on the page.</p><div class="cta"><b>Want coaches to see your marks?</b> Preferred Recruit gets athletes' marks in front of college coaches. <a href="${QUIZ}">Get your free recruitment evaluation ›</a></div></div>` + TABS_JS }));
   };
   const dateOf = c => c.asOf || `${c.year}-${c.season === "indoor" ? "03-20" : "06-20"}`;
   const nmOf = r => info(r).nm;

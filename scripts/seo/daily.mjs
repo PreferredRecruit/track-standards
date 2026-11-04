@@ -83,7 +83,7 @@ export function dailyPages({ out, S, CT, write, page, parse, esc, sl, SITE, gNam
   const median = a => { a = a.filter(x => x != null).sort((x, y) => x - y); return a.length ? a[Math.floor(a.length / 2)] : null; };
   const HS = g => (g === "m" ? "Boys" : "Girls");
   const hsHow = (g, e) => `/how-fast/${g === "m" ? "mens" : "womens"}-${slug(e)}.html`;
-  const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.com", logo: SITE + "/icon-512.png" };
+  const ORG = { "@type": "Organization", name: "Preferred Recruit", url: "https://thepreferredrecruit.org", logo: SITE + "/icon-512.png" };
   const live = sched.items.filter(x => x.date <= today).map(x => { const [st, g, e] = x.id.split("|"); return { ...x, st, g, e, rows: levelsFor(S, CT, st, g, e, parse) }; }).filter(x => x.rows.length >= MIN_PROGRAMS);
   const liveIds = new Set(live.map(x => x.id)), dates = new Map();
   const has = (st, g, e) => liveIds.has(`${st}|${g}|${e}`);
