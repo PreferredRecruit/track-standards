@@ -477,8 +477,8 @@ const iinfo=e=>`<span class="ci"><button type="button" class="cib" data-cinfo ar
 const cinfo=(e,cl)=>`<span class="ci"><button type="button" class="cib" data-cinfo aria-expanded="false" aria-label="How we convert the ${esc(e)}">i</button><span class="cpop" role="tooltip"><b>${esc(e)} → ${esc(CONV[e].next?CONV[e].to+" / "+CONV[e].next.to:CONV[e].to)}</b>${esc(CONV[e].how)}${cl?`<span class="cvx2">Your mark in college terms: ${cl}</span>`:""}<small>College teams race different events, so we convert behind the scenes and show every standard as its ${esc(hsName(e,S.g))} equivalent. Schools that publish their own ${esc(hsName(e,S.g))} standard are shown with their own number.</small></span></span>`;
 function standards(){
   const list=evs(S.g); if(!list.includes(S.e)) S.e=list[0];
-  let o=`<div class="sec"><div class="aud" role="group" aria-label="Who are you looking up?"><span>I'm looking up</span><button type="button" data-aud="parent" aria-pressed="${isPar()}">My child</button><button type="button" data-aud="athlete" aria-pressed="${AUD==="athlete"}">Myself</button></div>
-  ${isPar()?`<p class="lede">Pick your child's event and enter their best time to see every college it fits.</p>`:`<p class="lede">Select your gender, event, and enter your time to find the colleges that match you.</p>`}
+  let o=`<div class="sec">
+  
   <form id="mf" class="panel"><div class="row">${seg("g",S.g,isPar()?["Boy","Girl"]:undefined)}
     <div class="evw"><label class="sr" for="ev">Event</label><select class="in" id="ev">${(()=>{const hs=HSE(S.g).filter(e=>list.includes(e)),more=list.filter(e=>!hs.includes(e)),op=e=>`<option value="${esc(e)}" ${e===S.e?"selected":""}>${esc(hsName(e,S.g))}</option>`;return hs.map(op).join("")+(more.length?`<optgroup label="More events">${more.map(op).join("")}</optgroup>`:"")})()}</select>${CONV[S.e]?cinfo(S.e):S.g==="m"&&IMPL[S.e]?iinfo(S.e):""}</div>
     <label class="sr" for="mk">Personal best</label><input class="in" id="mk" placeholder="${FIELD.has(S.e)?"Best mark":"Best time"}, e.g. ${esc(ph(S.e))}" value="${esc(S.mark)}" autocomplete="off" inputmode="decimal">

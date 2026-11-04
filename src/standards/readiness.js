@@ -33,7 +33,7 @@ function layer() {
   if (!el) { document.body.insertAdjacentHTML("beforeend", `<div class="onb" id="rdy" role="main"></div>`); el = document.getElementById("rdy"); }
   return el;
 }
-const top = () => `<header class="onbtop"><button type="button" class="onblogo" data-rq="exit" aria-label="Back to Track Standards"><span class="onbtile">PR</span><span><b>Preferred Recruit</b><small>Track Standards</small></span></button></header>`;
+const top = () => `<header class="onbtop"><button type="button" class="onblogo" data-rq="exit" aria-label="Back to Track Standards"><img class="onbtile" src="/ts-icon.svg" alt="" width="34" height="34"><span><b>Track Standards</b><small>by Preferred Recruit</small></span></button></header>`;
 const title = s => typeof s.t === "function" ? s.t() : s.t;
 
 function stepView() {
