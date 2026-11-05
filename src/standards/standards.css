@@ -548,12 +548,6 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .eval .evk{margin:-4px 0 12px;font-size:13px;font-weight:650;color:#6A35E8}.eval .evk[hidden]{display:none}
 .eval b,.eval .evm strong.hk{text-wrap:balance}
 /* school-page checker (Ryan 2026-10-16) */
-.schk{margin:16px 0 4px;background:var(--pr-card);border:1px solid var(--pr-line);border-radius:var(--r-3);padding:14px 16px}
-.schk b{display:block;font-size:17px;margin-bottom:10px}
-.schk div{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;gap:8px}
-.schk .in{height:44px}.schk .go{height:44px;padding:0 20px}
-.schkr{margin:10px 2px 0;font-size:15px}.schkr.ok b{color:#12805C}.schkr.no{color:var(--pr-ink)}.schkr.bad{color:#A15C00}
-@media (max-width:640px){.schk div{grid-template-columns:1fr 1fr}.schk .go{grid-column:1/-1}}
 /* school branding: the school's colour frames its page; Preferred Recruit purple stays on every evaluation CTA */
 .branded .sband{display:flex;align-items:center;gap:16px;margin:10px 0 14px;padding:16px 18px;border-radius:var(--r-3);background:var(--sb);color:var(--sbo)}
 .branded .sband img{width:72px;height:72px;border-radius:var(--r-2);background:#fff;object-fit:contain;padding:6px;flex:none;box-shadow:var(--sh-2)}
@@ -561,7 +555,6 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .branded .sname{border-left:5px solid var(--sb);padding-left:12px}
 .branded .scroll thead th{background:color-mix(in srgb,var(--sb) 10%,var(--pr-card));color:var(--sbi)}
 .branded .verify a,.branded .intro a,.branded .more a{color:var(--sbi)}
-.branded .schk{border-color:color-mix(in srgb,var(--sb) 35%,var(--pr-line))}
 .bnote{margin-top:22px;font-size:12px;color:var(--pr-faint)}
 @media (max-width:640px){.branded .sband{padding:12px 14px;gap:12px}.branded .sband img{width:56px;height:56px}.branded .sband b{font-size:20px}}
 .branded .meta>span:first-child{display:none}
@@ -570,7 +563,6 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .simple .sband .sname{border:0;padding:0;margin:2px 0 0;font-size:24px;line-height:1.12;letter-spacing:-.025em;color:var(--sbo)}
 .simple .sband .star{color:#F5C451}
 .simple .sini{width:72px;height:72px;border-radius:var(--r-2);background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center;font-weight:800;font-size:24px;line-height:1;letter-spacing:.02em;flex:none}
-.simple .schk{margin-top:12px}
 .sabout{margin-top:34px;padding-top:22px;border-top:1px solid var(--pr-line)}
 .sabout h2{font-size:20px;letter-spacing:-.02em;margin:0 0 8px}
 .sabout .intro{margin:0 0 12px}
@@ -1465,22 +1457,10 @@ html.onbva .onb :is([data-onb="edit"],[data-onb="editkid"],[data-onb="quick"],[d
 @media(max-width:640px){.vabar{margin:0 16px 12px;font-size:13px}.vabar button{width:100%}}
 
 /* ===== UX pass 2026-11-02 (preview branch ux-preview) ===== */
-/* "your time" on school pages: one line, the level is the visual, the school's table stays the hero */
-.you{display:flex;align-items:center;gap:12px;margin:2px 0 12px;padding:10px 10px 10px 12px;border:1px solid var(--pr-line);border-radius:var(--r-2);background:var(--pr-card)}
-.you p{margin:0;flex:1;min-width:0;font-size:15px;line-height:1.4;color:var(--pr-mute)}.you p b{color:var(--pr-ink)}
-.ylv{flex:none;font-size:13px;font-weight:750;padding:6px 11px;border-radius:var(--r-pill);color:#fff;background:var(--pr-faint)}
-.ylv.T{background:var(--pr-t)}.ylv.R{background:var(--pr-r)}.ylv.W{background:var(--pr-w)}
-.ych{flex:none;border:0;background:none;color:var(--pr-accent);font-weight:650;font-size:14px;padding:8px 6px;cursor:pointer;min-height:40px}
-.you.ask{display:block;padding:14px}
-.you.ask label{display:block;font-size:15px;font-weight:700;margin:0 0 10px}
-.yrow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) auto;gap:8px}
-.yrow .in{height:46px;min-width:0}.yrow .go{height:46px;padding:0 20px;border:0;border-radius:var(--r-2);background:var(--pr-black);color:var(--pr-card);font-weight:650;cursor:pointer}
-.yerr{margin:8px 0 0;font-size:14px;color:#B42318}.yerr:empty{display:none}
 tr.me td{background:color-mix(in srgb,var(--pr-accent) 7%,var(--pr-card))}
 tr.me td:first-child{box-shadow:inset 3px 0 0 var(--pr-accent);font-weight:700}
 .mechip{display:block;width:max-content;margin-top:4px;font-size:12px;font-weight:700;padding:2px 8px;border-radius:var(--r-pill);color:var(--pr-faint);background:var(--pr-soft)}
 .mechip.T{color:var(--pr-t);background:color-mix(in srgb,var(--pr-t) 12%,transparent)}.mechip.R{color:var(--pr-r);background:color-mix(in srgb,var(--pr-r) 12%,transparent)}.mechip.W{color:var(--pr-w);background:color-mix(in srgb,var(--pr-w) 12%,transparent)}
-@media (max-width:640px){.yrow{grid-template-columns:1fr 1fr}.yrow .go{grid-column:1/-1}.you:not(.ask){display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:start}.you:not(.ask) .ych{grid-column:2;justify-self:start;padding:0;min-height:32px}.ylv{margin-top:1px}}
 
 /* phones: floating buttons sit in the bottom corners instead of over the tables */
 @media (max-width:640px){#prhelp{bottom:12px;left:12px}#prhelpp{bottom:64px}.evpill{bottom:12px}
@@ -1501,7 +1481,6 @@ tr.me td:first-child{box-shadow:inset 3px 0 0 var(--pr-accent);font-weight:700}
 .tcap{margin:8px 2px 0;font-size:13px;line-height:1.4;color:var(--pr-faint)}
 .scroll thead th{white-space:nowrap}
 .zfl{margin:4px 0 0}.zfl a{color:var(--pr-violet);font-weight:600}
-.you .yall{color:var(--pr-violet);font-weight:600;white-space:nowrap}
 /* the sheets are white in both modes, so everything inside them reads with light tokens (UX audit 2026-11-03: dark mode made the sign-in labels 1.09:1) */
 .eval{--pr-ink:#0B0B0F;--pr-ink2:#1D1D1F;--pr-mute:#4A4A52;--pr-faint:#66666F;--pr-line:#E4E3EA;--pr-soft:#F3F2F7;--pr-card:#FFFFFF;--pr-black:#0B0B0F;color-scheme:light}
 
