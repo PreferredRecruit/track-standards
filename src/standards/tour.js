@@ -1,6 +1,6 @@
 // @ts-nocheck
 /* Help button + guided tour (Ryan 2026-11-02: "design a 'Help' button or an onboarding tutorial tour that triggers when a user first
-   logs in ... ensure no one is confused about how to use the platform"). The Help button sits bottom-left on every view: quick
+   logs in ... ensure no one is confused about how to use the platform"). The Help button sits in the header (a floating bubble until 2026-11-04, when it was covering table rows on phones): quick
    answers in plain words plus "Take the tour". The tour spotlights the home controls one at a time, starts by itself the first time a
    signed-in member reaches the home page (once per browser and account), and can be replayed from Help. It sets html.onbon while open,
    which already keeps the evaluation pop-ups and nudges away. */
@@ -77,7 +77,7 @@ export function init(opts) {
   O = { ...O, ...opts };
   if (!document.getElementById("prhelp")) {
     const b = document.createElement("button"); b.id = "prhelp"; b.type = "button"; b.setAttribute("aria-expanded", "false"); b.setAttribute("aria-controls", "prhelpp");
-    b.setAttribute("aria-label", "Help"); b.innerHTML = `<span aria-hidden="true">?</span>Help`; document.body.appendChild(b);
+    b.setAttribute("aria-label", "Help"); b.innerHTML = `<span aria-hidden="true">?</span>Help`; (document.querySelector(".prh #acchd")?.parentElement || document.body).insertBefore(b, document.querySelector(".prh #acchd"));
   }
   document.addEventListener("click", ev => {
     if (ev.target.closest("#prhelp")) { const p = document.getElementById("prhelpp"); return p && !p.hidden ? closeHelp() : openHelp(); }

@@ -257,7 +257,7 @@ footer{text-align:center;font-size:13px;color:var(--pr-mute);padding:10px 22px 3
 .lvc.W b::before{background:var(--pr-w)}.lvc.R b::before{background:var(--pr-r)}.lvc.T b::before{background:var(--pr-t)}
 .lvc p{margin:6px 0 0;font-size:14px;line-height:1.45;color:var(--pr-ink2)}
 .lvc em{display:inline-block;margin-top:8px;font-style:normal;font-size:12px;font-weight:600;color:var(--pr-mute);background:var(--pr-soft);border-radius:var(--r-pill);padding:3px 9px}
-.tabs button .tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1.5px solid currentColor;font-size:10px;font-weight:700;margin-left:6px;opacity:.6;font-style:normal}
+.tabs button .tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1.5px solid currentColor;font-size:12px;font-weight:700;margin-left:6px;opacity:.6;font-style:normal}
 .one{text-align:center;max-width:560px;margin:60px auto 0}
 .one h4{font-size:24px;letter-spacing:-.03em;font-weight:700;margin:0}
 .one p{margin:6px 0 16px;color:var(--pr-mute);font-size:15px}
@@ -399,7 +399,7 @@ td small{color:var(--pr-mute);font-size:12px;margin-left:4px}
 .pill2.T{color:var(--pr-t);background:color-mix(in srgb,var(--pr-t) 12%,transparent)}
 .pill2.R{color:var(--pr-r);background:color-mix(in srgb,var(--pr-r) 13%,transparent)}
 .pill2.W{color:var(--pr-w);background:color-mix(in srgb,var(--pr-w) 12%,transparent)}
-.dest{margin-left:4px;font-size:10px;font-weight:600;color:var(--pr-mute);letter-spacing:.02em}
+.dest{margin-left:4px;font-size:12px;font-weight:600;color:var(--pr-mute);letter-spacing:.02em}
 .tbh{margin:28px 0 4px;font-size:20px;font-weight:650;letter-spacing:-.02em}.tbh small{font-size:13px;font-weight:500;color:var(--pr-mute);margin-left:6px}.tbp{margin:0 0 10px;font-size:14px;color:var(--pr-ink2)}
 .shr{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:10px 18px;border:0;border-radius:var(--r-pill);background:var(--pr-accent);color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .shr:hover{opacity:.9}
@@ -479,7 +479,7 @@ th .lvi .cpop{text-align:left}
 .rel{display:flex;flex-wrap:wrap;gap:8px}.rel button{border:0;border-radius:var(--r-pill);background:var(--pr-soft);padding:8px 14px;font:inherit;font-size:13px;font-weight:600;color:var(--pr-ink);cursor:pointer}.rel button:hover{color:var(--pr-accent)}.rel small{margin-left:6px;font-weight:500;color:var(--pr-mute)}
 .more{display:flex;flex-wrap:wrap;gap:6px 18px;margin:28px 0 0;padding-top:16px;border-top:1px solid var(--pr-line);font-size:14px}
 .more a{color:var(--pr-accent);font-weight:500}
-footer a{color:var(--pr-accent)}footer .soc{display:block;margin-top:10px;font-size:10px;color:var(--pr-faint);opacity:.7}footer .soc a{color:inherit;text-decoration:none}footer .soc a:hover{text-decoration:underline}
+footer a{color:var(--pr-accent)}footer .soc{display:block;margin-top:10px;font-size:12px;color:var(--pr-faint);opacity:.7}footer .soc a{color:inherit;text-decoration:none}footer .soc a:hover{text-decoration:underline}
 
 /* ---- phones (Ryan 2026-10-15: iPhone + dark mode polish) ---- */
 @media (prefers-color-scheme:dark){html:not([data-theme="light"]){background:#0A0A0D}:root:not([data-theme="light"]) .evwrap::after{background:linear-gradient(90deg,transparent,#0E0C16)}}
@@ -619,7 +619,7 @@ html[data-theme="dark"]{background:#0A0A0D}:root[data-theme="dark"] .evwrap::aft
 .simple .scroll thead th{white-space:normal;line-height:1.3;vertical-align:bottom;overflow-wrap:anywhere;hyphens:auto}
 .sec.still{animation:none}
 .simple .scroll thead th{overflow-wrap:break-word;hyphens:manual}@media (max-width:640px){.simple .scroll thead th{letter-spacing:.03em}}
-@media (max-width:640px){.simple .scroll thead th:first-child,.simple .scroll tbody td:first-child{width:25%}.simple .scroll thead th{font-size:10px}}
+@media (max-width:640px){.simple .scroll thead th:first-child,.simple .scroll tbody td:first-child{width:25%}.simple .scroll thead th{font-size:12px}}
 .eval #evt[hidden]{display:none}
 /* clean footer (Ryan 2026-10-17): one Similar programs row + a numbered Explore list; every link stays on the page */
 .simple .relh{margin:6px 0 8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
@@ -1408,7 +1408,7 @@ header .hd .acchd{flex:none;visibility:visible}
 .srk-f .srk{margin-top:4px}.srk-t{margin:20px 0 6px;font-size:17px;color:var(--pr-ink)}
 .srk-bd{margin-top:14px}.srk-bd>summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--pr-accent)}
 .more ol{border-top:0}.more li{border-bottom:0}
-.srchip{flex-direction:row}.srchip .srk-k0{position:absolute;top:-8px;left:12px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--sb);padding:0 6px;border-radius:var(--r-1);opacity:1}
+.srchip{flex-direction:row}.srchip .srk-k0{position:absolute;top:-8px;left:12px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--sb);padding:0 6px;border-radius:var(--r-1);opacity:1}
 .srchip{position:relative;padding-top:10px}.srchip[disabled]{cursor:default}.srchip.off{opacity:.8;cursor:default}.srchip.off small{font-size:12px}
 /* Help button + guided tour (tour.js, Ryan 2026-11-02) */
 #prhelp{position:fixed;left:16px;bottom:16px;z-index:60;display:flex;align-items:center;gap:8px;padding:10px 16px 10px 10px;border-radius:var(--r-pill);border:1px solid var(--pr-line);background:var(--pr-card);color:var(--pr-ink);font:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:var(--sh-2)}
@@ -1433,7 +1433,7 @@ header .hd .acchd{flex:none;visibility:visible}
 @media (max-width:640px){#prhelp{font-size:0;gap:0;padding:4px;left:10px;bottom:84px}#prhelp span{width:34px;height:34px;font-size:17px}}
 /* rank in the band's top-right corner, small (Ryan 2026-11-02: "should not be on the same level as the logo") */
 .sband{position:relative}.srchips{position:absolute;top:12px;right:12px;margin:0;width:auto!important}
-.srchip{padding:6px 10px 6px 9px!important;gap:7px;border-radius:var(--r-2);flex:none!important}.srchip b{font-size:17px}.srchip span{font-size:12px}.srchip small{font-size:10px}
+.srchip{padding:6px 10px 6px 9px!important;gap:7px;border-radius:var(--r-2);flex:none!important}.srchip b{font-size:17px}.srchip span{font-size:12px}.srchip small{font-size:12px}
 .srchip .srk-k0{display:none}.srchip.off{padding:6px 10px!important}
 @media (min-width:641px){.sband>div:not(.srchips){padding-right:150px}}
 @media (max-width:640px){.srchips{top:14px;right:14px}}

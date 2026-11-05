@@ -21,7 +21,12 @@ th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertic
   <h2>Coach accounts</h2><div id="accts"></div>
   <h2>Search insights <select id="idays" style="width:auto;font:inherit;margin-left:8px;padding:4px 8px;border-radius:8px"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select></h2>
   <p class="muted">Anonymous: what athletes search (event, grade, state), how the pop-ups convert and what signed-in coaches look at. No names or emails.</p><div id="ins"></div>
-  <h2>Recent activity</h2><div id="aud" class="card"></div>
+  <h2>Clicks and attention</h2>
+  <p class="muted">Anonymous positions only. Purple = clicks that worked. Red = dead clicks (nothing happened) and rage clicks (three fast clicks). Each page type adds up every page of that type, drawn over one example page.</p>
+  <div class="row"><span><select id="hmv" style="width:auto;font:inherit;padding:4px 8px;border-radius:8px"><option value="home">Home</option><option value="search">Search results</option><option value="school" selected>School page</option><option value="results">Results</option><option value="rankings">Rankings</option><option value="ask">Recruiting AI</option><option value="standards">Standards pages</option><option value="guide">Guides</option></select>
+  <select id="hmd" style="width:auto;font:inherit;padding:4px 8px;border-radius:8px;margin-left:6px"><option value="1">Phone</option><option value="0">Desktop</option></select>
+  <button class="s" id="hmgo" style="margin-left:6px">Show map</button></span><span class="muted" id="hmn"></span></div>
+  <div id="hmbox" style="position:relative;overflow:hidden;margin-top:10px;border:1px solid #E4E3EA;border-radius:12px;display:none"></div>
 </section>
 </main>
 <script>
@@ -56,11 +61,33 @@ function tbl(title, cols, rows) { const c = el("div", null, "card"); c.appendChi
   const t = el("table"); const h = el("tr"); cols.forEach(([k, lab]) => h.appendChild(el("th", lab))); t.appendChild(h);
   for (const r of rows) { const tr = el("tr"); cols.forEach(([k]) => tr.appendChild(el("td", r[k] == null ? "–" : k === "last" ? new Date(r[k]).toLocaleString() : String(r[k])))); t.appendChild(tr); }
   c.appendChild(t); return c; }
+const HMURL = { home: "/?hm=0", search: "/?g=m&e=400m&m=52.30&gr=11&hm=0", school: "/schools/university-of-oregon-track-standards.html?hm=0", results: "/?tab=results&hm=0", rankings: "/rankings.html?hm=0", ask: "/?tab=ask&hm=0", standards: "/standards/ncaa-d1-track-and-field-recruiting-standards.html?hm=0", guide: "/guides/runcruit-vs-track-standards.html?hm=0" };
+async function heatmap() {
+  const view = $("hmv").value, phone = $("hmd").value === "1", W = phone ? 375 : 1280, box = $("hmbox");
+  $("hmn").textContent = "Loading…";
+  try { const r = await fetch(TRACK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ op: "heat", admin: store.get(), days: +$("idays").value, view, mobile: phone }) });
+    const d = await r.json(); if (!r.ok) throw new Error(d.error || "Error");
+    const pts = d.points || [], total = pts.reduce((a, p) => a + p.n, 0), bad = pts.reduce((a, p) => a + p.dead + p.rage, 0);
+    $("hmn").textContent = `${total} clicks, ${bad} dead or rage`;
+    const H = Math.min(4000, Math.max(phone ? 812 : 900, ...pts.map(p => p.y + 300))), S = Math.min(1, (box.parentElement.clientWidth - 2) / W);
+    try { sessionStorage.setItem("prEvalDismissed", "1"); } catch (e) { }
+    box.style.display = "block"; box.style.width = W * S + "px"; box.style.height = H * S + "px";
+    const f = document.createElement("iframe"); f.src = HMURL[view]; f.title = "Example page"; f.setAttribute("tabindex", "-1");
+    f.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;border:0;transform:scale(${S});transform-origin:0 0;pointer-events:none`;
+    const c = document.createElement("canvas"); c.width = W; c.height = H; c.style.cssText = `position:absolute;left:0;top:0;width:${W * S}px;height:${H * S}px;pointer-events:none`;
+    const g = c.getContext("2d"), top = Math.max(1, ...pts.map(p => p.n));
+    for (const p of pts) { const x = W / 2 + p.x, rad = 10 + 26 * Math.sqrt(p.n / top), rgb = p.dead + p.rage > p.n / 2 ? "225,29,72" : "122,69,240", o = .25 + .6 * Math.sqrt(p.n / top);
+      const a = g.createRadialGradient(x, p.y, 0, x, p.y, rad); a.addColorStop(0, `rgba(${rgb},${o})`); a.addColorStop(1, `rgba(${rgb},0)`); g.fillStyle = a; g.beginPath(); g.arc(x, p.y, rad, 0, 7); g.fill(); }
+    box.replaceChildren(f, c);
+  } catch (e) { $("hmn").textContent = e.message; } }
 async function insights() {
   const box = $("ins"); box.replaceChildren(el("p", "Loading…", "muted"));
   try { const r = await fetch(TRACK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ op: "report", admin: store.get(), days: +$("idays").value }) });
     const d = await r.json(); if (!r.ok) throw new Error(d.error || "Error");
     box.replaceChildren(
+      tbl("Time on each part of the page (seconds, all visitors)", [["view", "Page"], ["device", "Device"], ["zone", "Part of page"], ["secs", "Seconds"], ["people", "People"]], d.heat_dwell || []),
+      tbl("Where people click", [["view", "Page"], ["device", "Device"], ["zone", "Part of page"], ["clicks", "Clicks"], ["dead", "Dead"], ["rage", "Rage"], ["people", "People"]], d.heat_zones || []),
+      tbl("Dead and rage clicks: what people tried to click", [["view", "Page"], ["device", "Device"], ["zone", "Part of page"], ["el", "Element"], ["n", "Clicks"], ["people", "People"]], d.heat_dead || []),
       tbl("Activity", [["kind", "Action"], ["n", "Count"], ["people", "People"]], d.totals),
       tbl("Event groups (people)", [["grp", "Group"], ["people", "People"]], d.groups),
       tbl("Grades (people)", [["grade", "Grade"], ["people", "People"]], d.grades),
@@ -123,4 +150,5 @@ async function load() {
   if (t) { history.replaceState(null, "", location.pathname); try { const r = await call("admin/verify", { token: t }); store.set(r.session); } catch (e) { $("lm").textContent = e.message; } }
   if (store.get()) load();
 })();
+$("hmgo").addEventListener("click", heatmap);
 </script></body></html>

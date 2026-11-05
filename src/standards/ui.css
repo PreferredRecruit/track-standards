@@ -96,3 +96,24 @@ html.pm .panel .seg button{min-height:48px}
 html.pm .sum{font-size:var(--fs-24)}
 html.pm .lvplain{font-size:var(--fs-15)}
 @media (max-width:640px){.obrow{grid-template-columns:1fr}.obrow .go{width:100%}.obox{padding:14px;margin:0 0 8px}}
+
+/* calm pass (Ryan 2026-11-04: less overwhelm, cleaner, more legible). Numbers behind each line are in docs/design/CALM-2026-11-04.md */
+.prh #prhelp{position:static;flex:none;width:36px;height:36px;padding:0;gap:0;font-size:0;justify-content:center;border:1px solid var(--pr-line);background:none;box-shadow:none}
+.prh #prhelp span{width:auto;height:auto;background:none;color:var(--pr-mute);font-size:var(--fs-15);font-weight:650}
+#prhelpp{left:auto;right:16px;top:72px;bottom:auto}
+@media (min-width:961px){.hero.compact .switch{display:none}}   /* the header nav is the same four links */
+main{padding-bottom:48px}
+.simple .sctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px}.simple .sctl .seg,.simple .sctl .evtg{margin:0}
+.simple .back{min-height:32px}
+.prh #prhelp{margin-left:auto}.prh #prhelp+*{margin-left:8px}
+@media (max-width:640px){
+  .simple .sband{padding:14px;gap:12px;margin-top:0}.simple .sband img,.simple .sini{width:44px;height:44px}.simple .sband .tsw{margin-top:8px}
+  .yrow{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) auto}.yrow .go{grid-column:auto;padding:0 14px}
+  .yrow .in{padding-left:12px;padding-right:8px}.yrow .in::placeholder{font-size:var(--fs-14)}
+  .simple .scroll thead th:first-child,.simple .scroll tbody td:first-child{width:36%}
+  .simple .sctl{flex-wrap:nowrap;gap:6px}.simple .sctl .seg button{padding-left:11px;padding-right:11px;white-space:nowrap}
+  .dds{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.dds>*{min-width:0;max-width:100%}.dds .dd,.dds .dd select{width:100%;max-width:100%}
+}
+
+/* one light theme on every device (Ryan 2026-11-05): "only" also stops Chrome and Samsung Internet from auto-darkening the page */
+:root{color-scheme:only light}

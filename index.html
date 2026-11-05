@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="theme-color" content="#FDFDFE" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#0A0A0D" media="(prefers-color-scheme: dark)">
-    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#FDFDFE">
+    <meta name="color-scheme" content="only light">
     <!-- favicon: 48px-multiple sizes first (Google Search requirement); new file names so Google refetches -->
     <link rel="icon" href="/ts-icon-192.png" type="image/png" sizes="192x192"><link rel="icon" href="/ts-icon.svg" type="image/svg+xml">
     <link rel="icon" href="/ts-favicon-48.png" type="image/png" sizes="48x48">
@@ -70,7 +69,7 @@
     }
     </script>
     <!-- Vercel Web Analytics + Speed Insights (enable both in the Vercel project) -->
-    <script defer src="/_vercel/insights/script.js"></script><script defer src="/_vercel/speed-insights/script.js"></script>
+    <script defer src="/hm.js"></script><script defer src="/_vercel/insights/script.js"></script><script defer src="/_vercel/speed-insights/script.js"></script>
     <script>/* recruitment-evaluation click tracking (Ryan 2026-10-15): Vercel event "Evaluation click" + utm_content per placement */
 window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};
 document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest('a[href*="thepreferredrecruit.com/parentfunnel"]');if(!a)return;

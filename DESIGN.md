@@ -14,7 +14,7 @@ Precision first, futurism in one place.
 
 - **Precision** is the default everywhere: real data, tabular numerals, hairline borders, a fixed type scale, three radii,
   two shadows, one accent. Nothing decorative that the data doesn't need.
-- **Futurism** is spent sparingly: the violet accent, a crisp dark mode, Inter's clean geometry, and at most one orchestrated
+- **Futurism** is spent sparingly: the violet accent, Inter's clean geometry, and at most one orchestrated
   motion moment per screen (the result count arriving, a sheet opening). It is never glass stacks, aurora backgrounds,
   shaders, glows or 3D cards. Those read as a template and cost speed on the phones most visitors use.
 - The audience is parents and high school athletes, 65% on phones, most arriving from Google. Plain words beat clever ones.
@@ -46,6 +46,8 @@ Rules:
 - No accenting a single word in a different colour or weight inside a headline, except the existing home hero line.
 
 ## Colour
+
+> Dark mode is retired (Ryan 2026-11-05): every page forces light with `data-theme="light"` and `color-scheme: only light`. The Dark column below is unused.
 
 | Token | Light | Dark | Use |
 |---|---|---|---|
