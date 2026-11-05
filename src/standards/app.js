@@ -348,7 +348,7 @@ function schoolIntent(i){const s=SCH[i];if(!s)return;let seen=[];try{seen=JSON.p
   if(seen.includes(s.n))return;seen.push(s.n);try{localStorage.setItem("prSeen",JSON.stringify(seen.slice(-60)))}catch(e){}
   if(ACC.signedIn())ACC.core.api("/rest/v1/rpc/record_school_view",{method:"POST",body:{}}).catch(()=>{});
   if(seen.length!==5)return;log("school",{detail:"high-intent-5",school:s.n});
-  if(EV.dismissed||s.j)return;EV.shown=false;EV.force=true;evalIn("You've compared five college programs.","A free evaluation shows which of them would want you and which coaches to contact first.",1800,"high-intent-5","high-intent")}
+  /* the forced second pop-up here was removed 2026-11-05: 98 shown, 1 click */}
 /* readiness entry under the search results, until the check is done on this browser */
 const readyLink=()=>{try{if(localStorage.getItem("prReadyDone"))return ""}catch(e){}return `<button type="button" class="rqlink" data-ready>How ready are you for recruiting? Take the 2-minute check ›</button>`};
 document.addEventListener("click",ev=>{if(ev.target.closest&&ev.target.closest("[data-ready]")){log("feedback",{detail:"readiness-link"});READY.go()}});
@@ -457,7 +457,7 @@ let scrolled=0,lastY=scrollY;
 addEventListener("scroll",()=>{scrolled+=Math.abs(scrollY-lastY);lastY=scrollY;
   if(S.tab==="results"&&S.school==null&&scrolled>1400) {const gp=GRP(evLabel(R.ev||""))||topGrp();{let done=false;try{done=!!localStorage.getItem("prReadyDone")}catch(e){}
     if(done||likelyA())evalIn("Coaches recruit from lists like this one.",`${EVAL} where your marks fit and which programs would want you.`,0,gp?"results-"+gp:"results");
-    else evalIn("Could you make a list like this one?","The 2-minute readiness check shows where you stand for college track and what to work on next.",0,"ready-results"+(gp?"-"+gp:"")+gsfx(),"results-scroll")}}},{passive:true});
+    /* the readiness pop-up that fired here was removed 2026-11-05: 2.6% clicks, shown to readers with no mark of their own */}}},{passive:true});
 
 /* ---------- Standards (the current site's flow, rebranded) ---------- */
 const DEF={W:"The minimum mark required to earn a spot on the team.",R:"The range where coaches typically start recruiting conversations and scholarship discussions begin.",T:"The marks that typically grant a full-ride scholarship, depending on school funding."};
