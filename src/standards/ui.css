@@ -108,6 +108,7 @@ main{padding-bottom:48px}
 .prh #prhelp{margin-left:auto}.prh #prhelp+*{margin-left:8px}
 @media (max-width:640px){
   .simple .sband{padding:14px;gap:12px;margin-top:0}.simple .sband img,.simple .sini{width:44px;height:44px}.simple .sband .tsw{margin-top:8px}
+  .sband>div:not(.srchips){flex-basis:100%}   /* the rank badge sits beside the logo; the school name always gets its own line so the badge can never cover it (Ryan 2026-11-05) */
   .simple .scroll thead th:first-child,.simple .scroll tbody td:first-child{width:36%}
   .simple .sctl{flex-wrap:nowrap;gap:6px}.simple .sctl .seg button{padding-left:11px;padding-right:11px;white-space:nowrap}
   .dds{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.dds>*{min-width:0;max-width:100%}.dds .dd,.dds .dd select{width:100%;max-width:100%}
