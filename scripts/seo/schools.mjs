@@ -271,6 +271,7 @@ ${B ? `<h2>${B.y} season bests</h2><p>${esc(s.n)}'s best mark in each event this
 ${rankSec(s)}${factSections(s, factsOf(s))}
 ${archSection(s)}
 ${vidHtml((VID.schools || {})[s.n])}
+${J ? "" : `<p>New to recruiting? Read <a href="/guides/how-to-get-recruited-for-track-and-field.html">how to get recruited for track and field</a>.</p>`}
 ${(() => { const q = faq(s, B); return `<h2>Common questions</h2>${q.map(([qq, aa]) => `<h3>${esc(qq)}</h3><p>${esc(aa)}</p>`).join("")}`; })()}
 ${(() => { const [c, st] = related(s); return (c.length ? `<h2>More ${esc(s.c)} programs</h2><ul style="columns:3 200px">${c.map(x => `<li><a href="/schools/${schoolSlug(x)}">${esc(x.n)}</a></li>`).join("")}</ul>` : "") + (st.length ? `<h2>More college programs in ${esc(STATE[s.s] || s.s)}</h2><ul style="columns:3 200px">${st.map(x => `<li><a href="/schools/${schoolSlug(x)}">${esc(x.n)}</a> <small>${esc(x.d)}</small></li>`).join("")}</ul>` : ""); })()}
 ${links.length ? `<h2>Links</h2><ul>${links.map(([, u, t]) => `<li><a href="${esc(u)}" rel="noopener">${t}</a></li>`).join("")}</ul>` : ""}

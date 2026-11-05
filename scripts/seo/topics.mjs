@@ -105,12 +105,14 @@ export function topicPages({ S, CT, write, page, parse, esc, slug, evPath, FIELD
     ["Do I need a recruiting video?", "Usually not. Track coaches recruit on marks they can verify. A short race or jump video helps in technical events like pole vault, hurdles and the throws."],
     ["Does club track count?", "Yes, if the meet is sanctioned and the results are public. Coaches care that the mark is legal and verifiable, not which team you wore."],
     ["Which marks count for recruiting?", `Fully automatic (FAT) times and wind-legal marks from sanctioned meets. See <a href="${GP("understanding-track-and-field-prs-for-recruiting")}">understanding PRs</a>.`],
-    ["Do I need a recruiting service?", "No. Every step can be done by a family. A service like Preferred Recruit does the outreach and follow-ups for you and guides the offers, which saves months and reaches more programs."]];
+    ["Do I need a recruiting service?", `No. Every step can be done by a family. A service like Preferred Recruit does the outreach and follow-ups for you and guides the offers, which saves months and reaches more programs. Their <a href="https://thepreferredrecruit.org/how-to-get-recruited-for-track-and-field?utm_source=standards&utm_medium=guide&utm_campaign=PRstandards">guide for parents</a> walks through it.`],
+    ["Is it hard to get recruited for track?", `It depends on the mark and the list. The typical roster mark in the men's 400m is ${m("NCAA D1", "m", "400m", 2)} in D1 and ${m("NCAA D3", "m", "400m", 2)} in D3, so a mark that misses D1 often fits D2, D3 or NAIA. Athletes who aim at too few schools have the hardest time.`],
+    ["Can you get a D1 offer for track?", `Yes, when the marks fit the roster. At a typical D1 program scholarship conversations start near ${m("NCAA D1", "m", "100m", 1)} in the men's 100m and ${m("NCAA D1", "w", "100m", 1)} in the women's. Most offers are partial, and many families combine athletic money with academic aid.`]];
   const pillar = (g) => {
     const G2 = g ? (g === "m" ? "men's" : "women's") : "", who = g ? (g === "m" ? "boys" : "girls") : "", slugp = g ? `how-to-get-recruited-for-${g === "m" ? "mens" : "womens"}-track-and-field` : "how-to-get-recruited-for-track-and-field";
     const ex = g || "m", e4 = "400m";
     art({ p: GP(slugp), crumb: g ? `How to get recruited (${G2})` : "How to get recruited",
-      title: g ? `How to Get Recruited for ${g === "m" ? "Men's" : "Women's"} College Track and Field` : "How to Get Recruited for Track and Field (Step by Step)",
+      title: g ? `How to Get Recruited for ${g === "m" ? "Men's" : "Women's"} College Track and Field` : "How to Get Recruited for College Track and Field in 2026",
       h1: g ? `How to get recruited for ${G2} college track and field` : "How to get recruited for track and field",
       desc: g ? `How high school ${who} get recruited for ${G2} college track and field: the marks coaches look for in every event and division, when recruiting starts, and how offers work.`
         : "How high school athletes get recruited for college track and field: where your marks fit, when coaches start recruiting, what they look for, and how visits and offers work.",
