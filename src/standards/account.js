@@ -154,6 +154,31 @@ function headBtn() { const b = document.getElementById("acchd"); if (!b) return;
   b.setAttribute("aria-label", t); b.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>${t}</span>${member() ? badge(14) : ""}`; }
 export const isOpen = () => { const el = document.getElementById("acc"); return !!(el && el.classList.contains("on")); };
 function open(v, why) { shell(); CFG.onOpen && CFG.onOpen(); VIEW = v; MSG = ""; if (why) WHY = why; draw(); const el = document.getElementById("acc"); el.classList.add("on"); el.setAttribute("aria-hidden", "false"); const bg = document.getElementById("accbg"); bg.hidden = false; requestAnimationFrame(() => bg.classList.add("on")); CFG.log && CFG.log("account", { detail: "open-" + v, placement: WHY || undefined }); setTimeout(() => { const f = el.querySelector("input,select"); f && f.focus(); }, 60); }
+/* phones: the confirm link often opens in another browser, so the tab that signed up never learns it worked (2026-11-05: 49% of phone
+   signups reached the profile steps, 73% on desktop). While the "check your email" sheet is up, quietly try the sign-in again, on return
+   to the tab and every 8 seconds, for 15 minutes. The password stays in memory only. */
+let WATCH = null;
+function stopWatch() { if (WATCH) { clearInterval(WATCH.t); document.removeEventListener("visibilitychange", WATCH.on); WATCH = null; } }
+function watchConfirm(email, password) {
+  stopWatch();
+  const w = WATCH = { busy: false, errs: 0, until: Date.now() + 15 * 6e4 };
+  w.on = async () => {
+    if (WATCH !== w || w.busy || document.visibilityState !== "visible") return;
+    if (SES || VIEW !== "check" || Date.now() > w.until) return stopWatch();
+    w.busy = true;
+    try {
+      const r = await api("/auth/v1/token?grant_type=password", { method: "POST", body: { email, password }, auth: false });
+      if (WATCH !== w) return;
+      stopWatch(); keep(r); await loadProfile();
+      CFG.log && CFG.log("account", { detail: "confirm-auto" });
+      try { localStorage.removeItem("prPending"); } catch (e) {}
+      close(); changed(); if (ONB.isPage()) ONB.show(); else if (!member()) ONB.go("/onboarding");
+    } catch (e) { if (!/confirm/i.test(e.message) && ++w.errs >= 3) stopWatch(); }
+    w.busy = false;
+  };
+  w.t = setInterval(w.on, 8000);
+  document.addEventListener("visibilitychange", w.on);
+}
 function close() { const el = document.getElementById("acc"); if (!el) return; el.classList.remove("on"); el.setAttribute("aria-hidden", "true"); const bg = document.getElementById("accbg"); bg.classList.remove("on"); setTimeout(() => (bg.hidden = true), 300); }
 
 /* password field with a Show / Hide toggle (Ryan 2026-10-20: "it should not be difficult for these kids to sign up") */
@@ -199,7 +224,7 @@ function draw() {
     const inbox = /gmail|googlemail/.test(dom) ? ["Open Gmail", "https://mail.google.com/mail/u/0/#search/from%3Atrackandfieldstandards.com"] : /outlook|hotmail|live|msn/.test(dom) ? ["Open Outlook", "https://outlook.live.com/mail/0/"] : /yahoo/.test(dom) ? ["Open Yahoo Mail", "https://mail.yahoo.com/"] : /icloud|me\.com|mac\.com/.test(dom) ? ["Open iCloud Mail", "https://www.icloud.com/mail"] : null;
     b.innerHTML = `<p class="eye">One more step</p><h2 class="evh" id="acch">Check your email</h2><p class="acsub">We sent a link to <b>${esc(em || "your email")}</b>. Tap <b>Confirm my email</b> in that email and you'll come right back here to build your profile.</p>
       ${inbox ? `<a class="acbtn acmail" href="${inbox[1]}" target="_blank" rel="noopener">${inbox[0]}</a>` : ""}
-      <p class="achint">It comes from Track &amp; Field Standards. Not there after a minute? Check spam or promotions.</p>${MSG ? `<p class="acerr" role="alert">${esc(MSG)}</p>` : ""}
+      <p class="achint">It comes from Track &amp; Field Standards. Not there after a minute? Check spam or promotions. Once you've confirmed, come back to this page and we'll sign you in.</p>${MSG ? `<p class="acerr" role="alert">${esc(MSG)}</p>` : ""}
       <div class="acrow"><button type="button" class="aclnk" data-acc="resend" ${RESENT > Date.now() ? "disabled" : ""}>${RESENT > Date.now() ? "Email sent again" : "Send it again"}</button><button type="button" class="aclnk" data-acc="signup">Wrong email? Start over</button></div>`;
   } else if (VIEW === "reset") {
     b.innerHTML = `<p class="eye">Reset password</p><h2 class="evh" id="acch">Choose a new password</h2><form id="accn" class="acform" novalidate>${pw("acnp", "New password", "new-password")}${pw("acnp2", "Confirm new password", "new-password")}<p class="achint">At least 6 characters.</p>${err}<button class="acbtn" ${BUSY ? "disabled" : ""}>Save password</button></form>`;
@@ -286,7 +311,7 @@ async function submit(id) {
         if (r && !r.access_token && Array.isArray(idn) && !idn.length) { BUSY = false; VIEW = "signin"; CFG.log && CFG.log("account", { detail: "signup-existing" }); return fail("That email already has an account. Sign in, or use Email me a sign-in link below."); }
         CFG.log && CFG.log("account", { detail: "signup", placement: WHY || undefined });
         if (r && r.access_token) { keep(r); await loadProfile(); BUSY = false; close(); changed(); ONB.go("/onboarding"); return; }
-        FORM._email = email; BUSY = false; VIEW = "check"; draw(); try { localStorage.setItem("prPending", JSON.stringify({ e: email, t: Date.now() })); } catch (e2) {} return;
+        FORM._email = email; BUSY = false; VIEW = "check"; draw(); watchConfirm(email, pw); try { localStorage.setItem("prPending", JSON.stringify({ e: email, t: Date.now() })); } catch (e2) {} return;
       }
       keep(await api("/auth/v1/token?grant_type=password", { method: "POST", body: { email, password: pw }, auth: false }));
       await loadProfile(); BUSY = false; CFG.log && CFG.log("account", { detail: "signin" });
@@ -294,7 +319,7 @@ async function submit(id) {
     } catch (e) {
       BUSY = false;
       if (VIEW === "signup" && /sending confirmation|smtp/i.test(e.message)) return fail("Our email service was busy for a second. Tap Create account to try again.");
-      if (/confirm/i.test(e.message)) { FORM._email = email; VIEW = "check"; MSG = "Confirm your email first. Use the link we sent, or send it again below."; return draw(); }
+      if (/confirm/i.test(e.message)) { FORM._email = email; VIEW = "check"; MSG = "Confirm your email first. Use the link we sent, or send it again below."; draw(); watchConfirm(email, pw); return; }
       fail(/confirm/i.test(e.message) ? "Confirm your email first. Check your inbox for the link." : /invalid login/i.test(e.message) ? "That email and password don't match. Forgot it? Use Email me a sign-in link below, or reset your password." : /already registered|exists/i.test(e.message) ? "That email already has an account. Sign in instead." : /weak|short/i.test(e.message + (e.code || "")) ? "Use at least 6 characters for your password." : e.message);
     }
   } else if (id === "accr") {

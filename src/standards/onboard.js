@@ -108,6 +108,8 @@ function card() {
     ${row("GPA", sub.gpa)}${row("High school", sub.school)}</aside>`;
 }
 
+let MORE = false;   /* the optional part of the About step stays open across redraws (phones lost 35% of people on that step, 2026-11-05) */
+document.addEventListener("toggle", e => { if (e.target && e.target.matches && e.target.matches("[data-more]")) MORE = e.target.open; }, true);
 function stepBody(k) {
   const C = core.cfg(), p = par(), sub = S();
   if (k === "who") return `<h1>Build your recruiting profile</h1><p class="onbsub">It takes about two minutes. Your profile shows every college your marks fit and keeps your PRs in one place.</p>
@@ -120,9 +122,10 @@ function stepBody(k) {
     <div class="onbq"><span>Class</span>${opt("year", [...CLASSES.map(([y, l]) => [y, l, "Class of " + y]), [SENIOR - 1, "In college", "Already there"]], sub.year, "c5")}</div>
     <div class="onbq"><span>Team</span>${opt("gender", [["m", "Men"], ["w", "Women"]], sub.gender, "c2")}</div>
     <div class="onbg2"><label class="onbf" for="f-state"><span>State</span><select class="in" id="f-state" data-in="state" data-obj="s"><option value="">Choose a state</option>${Object.entries(core.ST).map(([k2, v]) => `<option value="${k2}" ${k2 === sub.state ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label>${inp("school", "High school (optional)", sub.school, 'maxlength="100" autocomplete="off"')}</div>
+    <details class="onbmore" data-more ${MORE || sub.email || sub.phone || (sub.dream || []).length ? "open" : ""}><summary>Add ${p ? "their contact" : "your phone"} and dream schools (optional)</summary>
     ${p ? `<div class="onbsec"><b>${esc(sub.first || "Your athlete")}'s contact</b><small>Optional. Only Preferred Recruit sees it.</small><div class="onbg2">${inp("email", "Athlete's email", sub.email, 'type="email" maxlength="120" autocomplete="off"')}${inp("phone", "Athlete's phone", sub.phone, 'type="tel" maxlength="30" autocomplete="off"')}</div></div>`
       : `<div class="onbsec"><b>Your phone</b><small>Optional. Only Preferred Recruit sees it.</small><div class="onbg2">${inp("phone", "Your phone", sub.phone, 'type="tel" maxlength="30" autocomplete="tel"')}<span></span></div></div>`}
-    ${dreamBox(sub, p)}`;
+    ${dreamBox(sub, p)}</details>`;
   if (k === "events") {
     const evs = sub.gender ? (C.events ? C.events(sub.gender) : []) : [];
     const sel = (cur, i) => `<select class="in" data-mk="e" data-i="${i}" aria-label="Event"><option value="">Choose an event</option>${evs.map(e => `<option value="${esc(e)}" ${e === cur ? "selected" : ""}>${evName(e, sub.gender)}</option>`).join("")}</select>`;
