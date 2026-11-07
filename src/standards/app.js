@@ -372,10 +372,10 @@ function evalIn(title,body,delay,v,trig,bs){
     body="The 2-minute readiness check shows where you stand for college track and what to work on next.";bs=null;v="ready-low-"+(v||"generic")}}
   /* Tier B (GPA 2.3 to 2.99, or 3.0+ without a PR-standard mark yet): same headline, softer body (draft for Ryan's approval) */
   {const P=ACC.member()&&ACC.profile(),kid=pickKid();
-   if(kid){const n=kid.first_name;title=title.replace(/^Your /,`${n}'s `).replace(/\byour\b/,`${n}'s`).replace(/^You're /,`${n} is `).replace(/^You /,`${n} `);
+   if(kid&&kid.first_name&&title){const n=kid.first_name;title=String(title).replace(/^Your /,`${n}'s `).replace(/\byour\b/,`${n}'s`).replace(/^You're /,`${n} is `).replace(/^You /,`${n} `);
      const sw=t=>t&&t.replace(/would want you\b/g,`would want ${n}`).replace(/fit you\b/g,`fit ${n}`).replace(/\byour marks\b/g,`${n}'s marks`).replace(/recruit you\b/g,`recruit ${n}`);
      body=sw(body);if(bs)bs=Object.fromEntries(Object.entries(bs).map(([k,v])=>[k,sw(v)]))}
-   else if(P&&P.role!=="parent"&&P.first_name&&/^Your /.test(title))title=`${P.first_name}, your ${title.slice(5)}`}
+   else if(P&&P.role!=="parent"&&P.first_name&&/^Your /.test(title||""))title=`${P.first_name}, your ${title.slice(5)}`}
   if(ACC.tier()==="B"){const r=(ACC.profile()||{}).tier_reason||"";body=/^GPA 3\.0/.test(r)?TIERB.gpa:TIERB.grow;bs=null;v=(v||"generic")+"-b"}
   EV.t=setTimeout(()=>{if(EV.shown||EV.dismissed||(S.school!=null&&!EV.force)) return; EV.force=false; EV.v=v||"generic"; EV.ready=/^ready-/.test(EV.v); EV.trig=trig||"timer"; EV.title=title; EV.body=body; EV.bs=bs||null; openEval(true)},delay||0);
 }
@@ -852,7 +852,7 @@ const archNote=(L)=>{const y=+String(R.season).slice(0,4);if(!L||!L.nat||!ARCH[y
 const windNote=(L,g,ev)=>{if(!WIND||!WEV.has(ev))return "";if(L&&L.champ)return `<p class="wnote">Championship results show each mark as it was run, with that race's wind.</p>`;const x=((L.wh||{})[g]||{})[ev];return `<p class="wnote">Wind-legal marks only.${x&&x.sw?` ${x.sw} wind-aided best${x.sw>1?"s":""} swapped for legal ones.`:""}${x&&x.hid?` ${x.hid} athlete${x.hid>1?"s":""} hidden, no legal mark yet.`:""}</p>`};
 const DIVINFO={"NCAA D1":"NCAA D1","NCAA D2":"NCAA D2","NCAA D3":"NCAA D3",NAIA:"NAIA",NJCAA:"NJCAA",NCCAA:"NCCAA",NWAC:"NWAC",USCAA:"USCAA"};
 const DIVFULL={"NCAA D1":"NCAA Division I","NCAA D2":"NCAA Division II","NCAA D3":"NCAA Division III",NAIA:"NAIA (small colleges)",NJCAA:"NJCAA (junior colleges)",NCCAA:"NCCAA (Christian colleges)",NWAC:"NWAC (Northwest junior colleges)",USCAA:"USCAA (small colleges)"};   /* plain-word names on hover (Ryan 2026-11-02 audit) */
-const evLabel=e=>e.replace(/^(\d[\d,]*) Meters$/,"$1m").replace(/^(\d+) Hurdles$/,"$1m Hurdles").replace(/^(\d+) Steeplechase$/,"$1m Steeple").replace(/^4 x (\d+) Relay$/,"4×$1 Relay");
+const evLabel=e=>String(e??"").replace(/^(\d[\d,]*) Meters$/,"$1m").replace(/^(\d+) Hurdles$/,"$1m Hurdles").replace(/^(\d+) Steeplechase$/,"$1m Steeple").replace(/^4 x (\d+) Relay$/,"4×$1 Relay");
 const years=()=>[...new Set(RIDX.map(x=>x.year))].sort().reverse();
 const seasons=()=>[...new Set(RIDX.map(x=>x.year+"-"+x.season))].sort().reverse();
 const seasonLabel=k=>{const [y,s]=k.split("-");return `${y} ${s==="xc"?"Cross Country":s[0].toUpperCase()+s.slice(1)}`};
@@ -1236,7 +1236,7 @@ function progBlock(cs,aid){PGCS=cs;PGID=aid||PGID;/* every event they've compete
    Any other meet shows the marks on this season's lists that were set there, labelled as such, with TFRRS for the full results. */
 const MEV={LJ:"Long Jump",HJ:"High Jump",PV:"Pole Vault",TJ:"Triple Jump",SP:"Shot Put",DT:"Discus",HT:"Hammer",WT:"Weight Throw",JT:"Javelin",Hep:"Heptathlon",Dec:"Decathlon",Pent:"Pentathlon",
   "3000S":"3000 Steeplechase","10k":"10,000 Meters","10,000":"10,000 Meters","5k":"5000 Meters",Mile:"Mile",DMR:"Distance Medley Relay"};
-const mevKey=c=>MEV[c]||(/^(\d+)H$/.test(c)?c.replace(/H$/," Hurdles"):/^4x(\d+)$/.test(c)?c.replace(/^4x(\d+)$/,"4 x $1 Relay"):/^\d+$/.test(c)?c+" Meters":c);
+const mevKey=c=>MEV[c]||(c=String(c??""),/^(\d+)H$/.test(c)?c.replace(/H$/," Hurdles"):/^4x(\d+)$/.test(c)?c.replace(/^4x(\d+)$/,"4 x $1 Relay"):/^\d+$/.test(c)?c+" Meters":c);
 const mnorm=x=>String(x||"").toLowerCase().replace(/&/g,"and").replace(/\btrack and field\b|\bt and f\b|\btf\b/g,"tf").replace(/[^a-z0-9]+/g," ").trim();
 const meetSeason=d=>{const y=(String(d).match(/(\d{4})\s*$/)||[])[1],mo=MO.findIndex(x=>String(d).startsWith(x));if(!y||mo<0)return null;return mo===11?(+y+1)+"-indoor":mo<=2?y+"-indoor":y+"-outdoor"};
 /* full meet results (scripts/tfrrs/scrape_meets.py + build_meets.py): /data/meets/index.json maps athlete -> meet name -> id */
@@ -1359,9 +1359,9 @@ function loadTeam(b){if(!b||TDATA[b]||TLOAD[b])return;TLOAD[b]=fetch("/data/rost
   .then(d=>{TDATA[b]=d}).catch(()=>{TDATA[b]={none:1}}).then(()=>{if(TM.i!=null&&tbase(SCH[TM.i])===b){R.swap=true;render()}})}
 /* one event code for both sources: TFRRS history ("100","110H","LJ") and list names ("100 Meters","110 Hurdles","Long Jump") */
 const ECODE={"High Jump":"HJ","Pole Vault":"PV","Long Jump":"LJ","Triple Jump":"TJ","Shot Put":"SP","Weight Throw":"WT","Discus":"DT","Hammer":"HT","Javelin":"JT","Pentathlon":"Pent","Heptathlon":"Hep","Decathlon":"Dec","Distance Medley Relay":"DMR","Sprint Medley Relay":"SMR"};
-const ecode=e=>ECODE[e]||e.replace(/^(\d[\d,]*) Meters$/,"$1").replace(/^(\d+) Hurdles$/,"$1H").replace(/^(\d+) Steeplechase$/,"$1S").replace(/^4 x (\d+) Relay$/,"4x$1");
+const ecode=e=>ECODE[e]||String(e??"").replace(/^(\d[\d,]*) Meters$/,"$1").replace(/^(\d+) Hurdles$/,"$1H").replace(/^(\d+) Steeplechase$/,"$1S").replace(/^4 x (\d+) Relay$/,"4x$1");
 const ENAME={HJ:"High Jump",PV:"Pole Vault",LJ:"Long Jump",TJ:"Triple Jump",SP:"Shot Put",WT:"Weight Throw",DT:"Discus",HT:"Hammer",JT:"Javelin",Pent:"Pentathlon",Hep:"Heptathlon",Dec:"Decathlon",DMR:"Distance Medley",SMR:"Sprint Medley",Mile:"Mile"};
-const ename=c=>ENAME[c]||c.replace(/^(\d[\d,]*)H$/,"$1m Hurdles").replace(/^(\d+)S$/,"$1m Steeple").replace(/^4x(\d+)y?$/,"4×$1 Relay").replace(/^(\d[\d,]*)$/,"$1m").replace(/^(\d+)y$/,"$1 yards");
+const ename=c=>ENAME[c]||String(c??"").replace(/^(\d[\d,]*)H$/,"$1m Hurdles").replace(/^(\d+)S$/,"$1m Steeple").replace(/^4x(\d+)y?$/,"4×$1 Relay").replace(/^(\d[\d,]*)$/,"$1m").replace(/^(\d+)y$/,"$1 yards");
 const EORD=["55","60","100","150","200","300","400","500","600","600y","800","1000","1500","Mile","3000","5000","10,000","55H","60H","100H","110H","400H","2000S","3000S","4x100","4x200","4x400","4x800","DMR","SMR","HJ","PV","LJ","TJ","SP","WT","DT","HT","JT","Pent","Hep","Dec"];
 const eord=c=>{const k=EORD.indexOf(c);return k<0?99:k};
 const tfield=c=>/^(HJ|PV|LJ|TJ|SP|WT|DT|HT|JT|Pent|Hep|Dec)$/.test(c);
@@ -2237,7 +2237,7 @@ const RKE=["60 Meters","100 Meters","200 Meters","400 Meters","600 Meters","800 
 /* which group an event belongs to (same rules as scripts/seo/power.mjs PGROUPS); relays sit only under Events */
 const RKGE={sprints:/^(55|60|100|200|300|400) Meters$/,hurdles:/Hurdles$/,distance:/^(600|800|1000|1500|3000|5000|10,000) Meters$|^Mile$|Steeplechase/,jumps:/Jump$|Vault$/,throws:/^(Shot Put|Discus|Hammer|Javelin|Weight Throw)$/,multis:/athlon$/};
 const rkGrpOf=e=>(Object.entries(RKGE).find(([,re])=>re.test(e))||[])[0]||null;
-const rkEv=e=>e.replace(" Meters","m").replace(" Hurdles","m hurdles").replace(" Relay"," relay");
+const rkEv=e=>String(e??"").replace(" Meters","m").replace(" Hurdles","m hurdles").replace(" Relay"," relay");
 function rkLoad(u,k){if(k==="idx"?RK.idx:RK.data[k])return true;if(RK.busy[u])return false;RK.busy[u]=true;
   fetch(u).then(r=>r.ok?r.json():Promise.reject(r.status)).then(j=>{if(k==="idx")RK.idx=j;else RK.data[k]=j}).catch(()=>{if(k==="idx")RK.idx={err:1};else RK.data[k]={err:1}}).finally(()=>{RK.busy[u]=false;if(S.tab==="rankings")render()});return false}
 function rkCss(){if(document.getElementById("rkcss"))return;const l=document.createElement("link");l.id="rkcss";l.rel="stylesheet";l.href="/rankings.css";document.head.appendChild(l)}
@@ -2455,15 +2455,17 @@ function gradeOf(raw){const q=" "+String(raw).toLowerCase()+" ";if(/\b(freshman|
   const c=q.match(/class of (20\d\d)/);if(c){const now=new Date(),sy=now.getMonth()>=6?now.getFullYear()+1:now.getFullYear(),g=12-(+c[1]-sy);if(g>=9&&g<=12)return g}return 0}
 document.addEventListener("click",ev=>{const a=ev.target.closest&&ev.target.closest("[data-aud]");if(!a)return;AUD=a.dataset.aud;try{localStorage.setItem("prAud",AUD)}catch(e){}
   document.documentElement.classList.toggle("pm",isPar());log("feedback",{detail:"aud-"+AUD});render();if(isPar()){const q=$("obq");if(q)q.focus()}});
-document.addEventListener("submit",ev=>{ev.preventDefault();
-  if(ev.target.id==="obf"){const raw=$("obq").value,d=detect(raw),gr=gradeOf(raw),h=$("obh");
+document.addEventListener("submit",ev=>{const fid=ev.target&&ev.target.id;if(fid!=="obf"&&fid!=="cf"&&fid!=="mf")return;   /* account, onboarding, readiness and profile forms have their own handlers (Clarity 2026-11-07: hint-null errors) */
+  ev.preventDefault();
+  if(fid==="obf"){const raw=$("obq").value,d=detect(raw),gr=gradeOf(raw),h=$("obh");
     if(d.g)S.g=d.g;const list=evs(S.g);
     if(!d.e||!list.includes(d.e)||!d.mark||parse(d.mark,d.e)==null){h.textContent="Add the event and the time, like: my daughter runs the 1600 in 5:20, she's a sophomore.";log("feedback",{detail:"onebox-miss"});return}
     S.e=d.e;S.mark=d.mark;if(gr)S.gr=gr;log("feedback",{detail:"onebox-ok"});render();
     const f=$("mf");if(f){if(S.gr)f.requestSubmit();else{const hh=$("hint");if(hh)hh.textContent="Pick your child's grade to see the colleges.";const gs=document.querySelector(".gseg");if(gs){gs.classList.add("need");const b=gs.querySelector("button");if(b)b.focus()}}}return}
   if(ev.target.id==="cf"){send($("ct").value);return}
-  if(parse(S.mark,S.e)==null){$("hint").textContent=badMark(S.e);return}
-  if(!S.gr){$("hint").textContent="Pick your grade to see your colleges.";const gs=document.querySelector(".gseg");if(gs){gs.classList.remove("need");void gs.offsetWidth;gs.classList.add("need");gs.querySelector("button").focus()}return}
+  const hint=$("hint"),say=t=>{if(hint)hint.textContent=t};
+  if(parse(S.mark,S.e)==null){say(badMark(S.e));return}
+  if(!S.gr){say("Pick your grade to see your colleges.");const gs=document.querySelector(".gseg");if(gs){gs.classList.remove("need");void gs.offsetWidth;gs.classList.add("need");gs.querySelector("button").focus()}return}
   S.run=true;S.f="";S.div="";S.conf="";S.st="";S.n=24;render();
   /* each search gets its own URL: shareable, back button returns to the form, and analytics counts it as a page view (Ryan 2026-10-15: bounce rate) */
   try{const u=`/?g=${S.g}&e=${encodeURIComponent(S.e)}&m=${encodeURIComponent(S.mark.trim())}`;if(location.pathname+location.search!==u)history.pushState({},"",u)}catch(e){}{const el=document.querySelector(".sum");if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-74,behavior:"smooth"})}
@@ -2553,3 +2555,11 @@ document.addEventListener("submit",ev=>{ev.preventDefault();
     const top=["T","R","W"].map(k=>L.filter(x=>x.t===k&&DIVS.includes(x.s.d)).sort((a,b)=>DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||(b.s.o?1:0)-(a.s.o?1:0)||a.s.n.localeCompare(b.s.n))[0]).filter(Boolean).map(x=>({n:x.s.t||x.s.n,d:x.s.d,lv:TN[x.t],slug:SLUG[x.i]}));
     const nm=nearMiss(g,e,v);return {n:L.length,T:c("T"),R:c("R"),W:c("W"),near:nm.n?{n:nm.n,lv:TN[nm.lvl],gap:nm.gap}:null,top}},intent:INT,sid:SID,log,onChange:()=>{fromProfile();render()}}).then(()=>{fromProfile();render();if(READY.isPage())READY.show()});
 }
+
+/* dead taps (Clarity 2026-11-07: the busiest dead taps were the search panel's empty space and the "Search for one school" card).
+   A tap that lands between fields focuses the closest field; a tap anywhere on the one-school card opens its search box. */
+document.addEventListener("click",ev=>{const t=ev.target;if(!t||!t.closest||t.closest("input,select,textarea,button,a,label,.ci,#drop"))return;
+  if(t.closest(".one")){const q=document.getElementById("q");if(q){q.focus();return}}
+  const f=t.closest("#mf");if(!f)return;let best=null,bd=56;
+  f.querySelectorAll("#ev,#mk").forEach(el=>{const r=el.getBoundingClientRect(),dx=Math.max(r.left-ev.clientX,0,ev.clientX-r.right),dy=Math.max(r.top-ev.clientY,0,ev.clientY-r.bottom),d=Math.hypot(dx,dy);if(d<bd){bd=d;best=el}});
+  if(best){best.focus();if(best.tagName==="SELECT"&&best.showPicker)try{best.showPicker()}catch(e){}}});
