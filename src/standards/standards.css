@@ -1491,3 +1491,48 @@ tr.me td:first-child{box-shadow:inset 3px 0 0 var(--pr-accent);font-weight:700}
 .pgfold>summary{cursor:pointer;list-style:none;font-weight:600;font-size:15px;color:var(--pr-accent);padding:12px 2px}
 .pgfold>summary::-webkit-details-marker{display:none}.pgfold>summary::after{content:" \203A"}.pgfold[open]>summary::after{content:""}
 .pgfold .ah2{display:none}
+
+/* pop-up v2 test (Ryan 2026-11-07): dark sheet, logos of schools they fit, one question, one action. Same sheet in light and dark mode. */
+.eval.v2{--v2bg:#0B0B0F;--v2fg:#fff;--v2mu:rgba(255,255,255,.66);--v2ln:rgba(255,255,255,.16);--v2sf:rgba(255,255,255,.08);background:var(--v2bg);color:var(--v2fg);box-shadow:var(--sh-2)}
+.eval.v2 .evlg{background:none;padding:24px 22px 0;text-align:left;overflow:visible}
+.eval.v2 .evlg::before,.eval.v2 .evlg::after{display:none}
+.eval.v2 .evlr{justify-content:flex-start;height:auto;gap:0}
+.eval.v2 .evlt,.eval.v2 .evlt:nth-child(3){width:46px;height:46px;margin:0 0 0 -12px;border-radius:50%;background:#fff;border:3px solid var(--v2bg);animation:none}
+.eval.v2 .evlt:first-child{margin-left:0}
+.eval.v2 .evlt img{width:70%;height:70%}
+.eval.v2 .evlt i{display:none}
+.eval.v2 .evmore{display:flex;flex:none;width:auto;white-space:nowrap;align-items:center;height:46px;margin-left:-12px;padding:0 12px;border-radius:var(--r-pill);background:#1D1D1F;border:3px solid var(--v2bg);font-size:13px;font-weight:700}
+.eval.v2 .evmore .m2{display:none}
+.eval.v2.s2 .evlr{gap:6px;padding-right:40px}
+.eval.v2.s2 .evlt{display:flex;width:auto;height:32px;margin:0;padding:0 10px 0 4px;gap:7px;border-radius:var(--r-pill);background:var(--v2sf);box-shadow:none}
+.eval.v2.s2 .evlt:nth-child(n+3){display:none}
+.eval.v2.s2 .evlt img{width:24px;height:24px;padding:3px;border-radius:50%;background:#fff}
+.eval.v2.s2 .evlt i{display:inline;font-style:normal;font-size:12px;font-weight:600;white-space:nowrap}
+.eval.v2.s2 .evmore{height:32px;margin:0;background:var(--v2sf);box-shadow:none;border:0;font-size:12px;font-weight:600}
+.eval.v2.s2 .evmore .m1{display:none}.eval.v2.s2 .evmore .m2{display:inline}
+.eval.v2 .bd{padding:18px 22px 18px}
+.eval.v2 .eye,.eval.v2 .evk{display:none}
+.eval.v2 .evh{margin:0 0 6px;padding-right:24px;color:var(--v2fg);font-size:32px;font-weight:750;letter-spacing:-.035em;line-height:1.12}
+.eval.v2 .evh em{font-style:normal;color:var(--pr-violet)}
+.eval.v2 .evq{margin-top:0}
+.eval.v2 .evql{margin:0 0 18px;font-size:17px;font-weight:500;color:var(--v2mu)}
+.eval.v2 #evp{margin:0 0 18px;font-size:17px;color:var(--v2mu)}
+.eval.v2 .evo{display:grid;grid-template-columns:1fr 1fr;gap:10px;border:0;border-radius:0;overflow:visible}
+.eval.v2 .evo:has([data-evgpa]){grid-template-columns:1fr 1fr 1fr}
+.eval.v2 .evo button,.eval.v2 .evo button:last-child{height:52px;justify-content:center;text-align:center;padding:0 10px;border:1px solid var(--v2ln);border-radius:var(--r-pill);background:var(--v2sf);color:var(--v2fg);font-size:17px;font-weight:700}
+.eval.v2 .evo button:first-child{background:var(--v2fg);color:var(--v2bg);border-color:var(--v2fg)}
+.eval.v2 .evo button:focus-visible{outline:2px solid var(--pr-violet);outline-offset:2px}
+.eval.v2 .evo button::after{display:none}
+.eval.v2 .evo [data-evq="offers"]{display:none}
+.eval.v2 a#eva{border-radius:var(--r-pill);background:var(--pr-violet)}
+.eval.v2 .evlater{color:var(--v2mu)}.eval.v2 .evlater:hover{color:var(--v2fg)}
+.eval.v2 small{color:var(--v2mu)}
+.eval.v2 #evs small::before{content:"Free · "}
+.eval.v2 .x{background:var(--v2sf);color:var(--v2mu)}.eval.v2 .x:hover{background:var(--v2ln)}
+@media (max-width:760px){.eval.v2{left:10px;right:10px;bottom:10px;width:auto;border-radius:var(--r-3)}.eval.v2::before{display:none}.eval.v2 .evh{font-size:24px}}
+.evpill.v2p{display:flex;align-items:center;gap:10px;padding:6px 16px 6px 6px}
+.evpill.v2p[hidden]{display:none}
+.evpill .pl{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#fff}
+.evpill .pl img{width:22px;height:22px;object-fit:contain}
+.eval.v2 .evmore b{padding:0;font-size:inherit;font-weight:inherit;letter-spacing:0}
+.eval.v2 #evs .evlater{color:var(--v2mu)}

@@ -273,6 +273,30 @@ function readyOffer(n,sfx){let done=false;try{done=!!localStorage.getItem("prRea
   return {n,v:"ready-"+(n?"early":"nofit")+sfx,ready:true,t:n?"You're early, and that's an advantage.":"Not on the chart yet? You are not the problem.",
     b:n?`Your ${S.mark.trim()} already meets the standard at ${n.toLocaleString()} programs. The 2-minute readiness check shows what to work on before coaches start calling.`:"The 2-minute readiness check shows where you stand today and what to work on next."}}
 const PARB=()=>{const h=String(SID).replace(/[^0-9a-f]/gi,"").slice(-4);return (parseInt(h||"0",16)%2)===1};   /* stable 50/50 for the parent test */
+/* pop-up v2 test (Ryan 2026-11-07: "way too much text ... these are student-athletes"): dark sheet, real logos of schools their mark
+   fits, one question, one action. 50/50 on a stable browser bucket (other bits than PARB); ?pv=2 or ?pv=1 pins this browser for
+   previews. Athletes only (parents keep their own copy). Every v2 variant logs as "v2-..." so the report compares the two arms. */
+let V2C=null;
+const V2B=()=>{if(V2C!=null)return V2C;try{const q=new URLSearchParams(location.search).get("pv");if(q==="1"||q==="2")localStorage.setItem("prPV",q);const k=localStorage.getItem("prPV");if(k)return V2C=k==="2"}catch(e){}
+  const h=String(SID).replace(/[^0-9a-f]/gi,"").slice(-6,-4);return V2C=(parseInt(h||"0",16)%2)===1};
+const v2On=()=>V2B()&&!isPar()&&!pickKid()&&!EV.ready;
+const PILLTXT='See who’d recruit you <span aria-hidden="true">›</span>';
+const V2S2={none:["Let's get you <em>in touch.</em>","Coaches recruit who they know. See which ones to contact first."],
+  some:["Nice. Let's turn those talks <em>into offers.</em>","See which coaches to focus on first."],
+  offers:["Offers mean <em>options.</em>","See who else would want you before you sign."]};
+function v2Apply(){const el=$("eval");if(!el)return;const on=v2On();el.classList.toggle("v2",on);if(!on){el.classList.remove("s2");return}
+  EV.v="v2-"+String(EV.v||"generic").replace(/v2-/g,"");
+  const ask=!$("evq").hidden,h=$("evm"),ql=document.querySelector("#evq .evql");el.classList.toggle("s2",!ask);
+  if(ask){if(EV.gq)return;   /* the GPA question keeps its own words */
+    const s=S.school!=null?SCH[S.school]:null,v=S.run&&S.mark?parse(S.mark,S.e):null,n=v!=null?SCH.filter(x=>tier(x,S.g,S.e,v)).length:0;
+    h.innerHTML=s?`Would ${esc(s.t||s.n)} <em>recruit you?</em>`:n?`Your ${esc(S.mark.trim())} fits <em>${n.toLocaleString()} schools.</em>`:esc(EV.title||"Talent gets you the offer. Visibility gets you in the room.");
+    if(ql)ql.textContent=!s&&n?"Are you talking to any of their coaches?":"Are you talking to any college coaches yet?";
+    const b1=document.querySelector('[data-evq="none"]'),b2=document.querySelector('[data-evq="some"]');if(b1)b1.textContent="Not yet";if(b2)b2.textContent="Yes, a few";return}
+  const c=V2S2[INT.rs]||V2S2.none;h.innerHTML=c[0];$("evp").textContent=c[1];$("eva").textContent="Show me which coaches"}
+function v2Pill(){const p=$("evpill");if(!p)return;const open=$("eval")&&$("eval").classList.contains("on"),s=S.school!=null?SCH[S.school]:null;
+  if(!v2On()||!s||s.j||open){if(p.dataset.school!=null){delete p.dataset.school;p.classList.remove("v2p");p.innerHTML=PILLTXT;p.hidden=S.school!=null||!EV.dismissed||open}return}
+  if(!BR)loadBrand();const b=BR&&BR[(s.os&&s.os[0])||slugOf(s.n)],lg=b&&b.logo&&b.conf!=="low"?`<span class="pl"><img src="${esc(b.logo)}" alt="" width="24" height="24"></span>`:"";
+  p.dataset.school=String(S.school);p.classList.add("v2p");p.innerHTML=`${lg}Would ${esc(s.t||s.n)} recruit you? <span aria-hidden="true">›</span>`;p.hidden=false}
 function offerCopy(){const v=parse(S.mark,S.e);if(v==null)return null;
   const all=SCH.filter(s=>tier(s,S.g,S.e,v)),n=all.length,T=all.filter(s=>tier(s,S.g,S.e,v)==="T").length,Rr=all.filter(s=>tier(s,S.g,S.e,v)==="R").length;
   const mk=S.mark.trim(), sfx=gsfx(), N=n.toLocaleString();
@@ -313,7 +337,7 @@ function exitOffer(trig){
   if(EV.dismissed&&likelyA()){let used=true,out=0;try{used=sessionStorage.getItem("prA2")==="1";out=+sessionStorage.getItem("prEvalOutAt")||0}catch(e){}
     const blocked=ACC.tier()==="C"||ACC.isOpen()||document.getElementById("prnudge")||document.documentElement.classList.contains("onbon")||(ACC.signedIn()&&!ACC.member())||(S.school!=null&&(!SCH[S.school]||SCH[S.school].j));
     if(!used&&!blocked&&out&&Date.now()-out>60000){try{sessionStorage.setItem("prA2","1")}catch(e){}EV.dismissed=false;EV.shown=false}}
-  if(EV.shown||EV.dismissed)return;if(S.school!=null){const s=SCH[S.school];if(!s||s.j)return;const nm=s.t||s.n;EV.force=true;
+  if(EV.shown||EV.dismissed)return;if(S.school!=null&&v2On())return;if(S.school!=null){const s=SCH[S.school];if(!s||s.j)return;const nm=s.t||s.n;EV.force=true;
     const dv=INT.e&&INT.m?parse(INT.m,INT.e):null,d=dv!=null?dreamCopy(s,INT.g||S.g,INT.e,dv):null;
     if(d)evalIn(d.t,d.b,0,"school-exit-dream-"+d.k+gsfx(),trig,dreamBs(d));else evalIn(`Does ${nm} know your name?`,`Coaches recruit the athletes who reach out. ${EVAL} if ${nm} would want you.`,0,"school-exit"+gsfx(),trig,null);return}if(!S.run&&Date.now()-T0<20000)return;
   const o=S.run?offerCopy():null;
@@ -417,15 +441,17 @@ function eyebrow(){if(S.school!=null){const s=SCH[S.school];return s?`${s.t||s.n
 const EVDREAM=["university-of-oregon","university-of-arkansas","university-of-georgia","louisiana-state-university","texas-am-university","university-of-southern-california","university-of-florida","stanford"];
 function evLogoPick(){const B=BR||{},sl=s=>(s.os&&s.os[0])||slugOf(s.n),ok=s=>{const b=B[sl(s)];return b&&b.logo&&b.conf!=="low"},DV={"NCAA D1":0,"NCAA D2":1,"NCAA D3":2,NAIA:3};
   const hsh=x=>{let h=7;for(const c of x)h=(h*31+c.charCodeAt(0))>>>0;return h};
-  let L=[],cap="";
+  let L=[],cap="",fit=0;
   if(S.school!=null&&SCH[S.school]){const me=SCH[S.school];L=[me,...SCH.filter(x=>x!==me&&!x.j&&x.ck===me.ck&&ok(x)).sort((a,b)=>hsh(a.n)-hsh(b.n))];cap=`${me.t||me.n} and the ${me.c}`}
   else if(S.run&&S.mark){const v=parse(S.mark,S.e);if(v!=null){const F=SCH.filter(x=>!x.j&&tier(x,S.g,S.e,v));L=F.filter(ok).sort((a,b)=>(DV[a.d]??9)-(DV[b.d]??9)||hsh(a.n)-hsh(b.n));
-    if(F.length)cap=`${F.length.toLocaleString()} programs fit your ${S.mark.trim()} ${S.e}`}}
-  if(L.filter(ok).length<5){const D=EVDREAM.map(k=>SCH.find(x=>sl(x)===k+"-track-standards")).filter(Boolean);L=[...L,...D.filter(x=>!L.includes(x))];if(!cap)cap="Programs like these recruit off their lists"}
-  return {L:L.filter(ok).slice(0,5),cap,sl}}
+    fit=F.length;if(F.length)cap=`${F.length.toLocaleString()} programs fit your ${S.mark.trim()} ${S.e}`}}
+  if(L.filter(ok).length<5&&!(fit&&v2On())){   /* v2 says "fits N schools" right under the logos, so only schools they fit */const D=EVDREAM.map(k=>SCH.find(x=>sl(x)===k+"-track-standards")).filter(Boolean);L=[...L,...D.filter(x=>!L.includes(x))];if(!cap)cap="Programs like these recruit off their lists"}
+  return {L:L.filter(ok).slice(0,5),cap,sl,fit}}
 function evLogos(){let w=$("evlg");const el=$("eval");if(!el)return;if(!w){w=document.createElement("div");w.id="evlg";w.className="evlg";el.insertBefore(w,el.querySelector(".bd"))}
   if(!BR){loadBrand();const t=setInterval(()=>{if(BR){clearInterval(t);evLogos()}},300);setTimeout(()=>clearInterval(t),8000)}
-  const {L,cap,sl}=evLogoPick();if(!L.length){w.hidden=true;return}w.hidden=false;
+  const {L,cap,sl,fit}=evLogoPick();if(!L.length){w.hidden=true;return}w.hidden=false;
+  if(v2On()){const sh=L.slice(0,4),m1=fit>sh.length?fit-sh.length:0,m2=fit>2?fit-2:0;
+    w.innerHTML=`<div class="evlr">${sh.map(x=>{const b=BR[sl(x)];return `<span class="evlt"><img src="${esc(b.logo)}" alt="" width="32" height="32" loading="eager"><i>${esc(x.t||x.n)}</i></span>`}).join("")}${m1?`<span class="evmore"><b class="m1">+${m1.toLocaleString()}</b><b class="m2">+${m2.toLocaleString()} more</b></span>`:""}</div>`;return}
   w.innerHTML=`<div class="evlr">${L.map((x,i)=>{const b=BR[sl(x)];return `<span class="evlt" style="--i:${i};--c:${esc(b.primary||"#6C47FF")}"><img src="${esc(b.logo)}" alt="${esc(x.t||x.n)}" width="44" height="44" loading="eager"></span>`}).join("")}</div>${cap?`<p class="evlc">${esc(cap)}</p>`:""}`}
 function openEval(log1){const el=$("eval");if(document.documentElement.classList.contains("onbon"))return;
   try{evLogos()}catch(e){}
@@ -436,6 +462,7 @@ function openEval(log1){const el=$("eval");if(document.documentElement.classList
   const ask=!INT.rs&&!EV.ready;$("evq").hidden=!ask;$("evs").hidden=ask;
   {const kid=pickKid(),ql=document.querySelector("#evq .evql"),o3=document.querySelector('[data-evq="offers"]');if(ql)ql.textContent=kid?`Have college coaches contacted ${kid.first_name} yet?`:isPar()?"Have college coaches contacted your child yet?":"Have college coaches contacted you yet?";if(o3)o3.textContent=kid||isPar()?"Offers already":"I have offers"}
   if(!ask&&!EV.ready&&likelyA()&&!INT.gpa)askGpa();
+  v2Apply();
   el.classList.add("on");el.setAttribute("aria-hidden","false");$("evbg").hidden=false;requestAnimationFrame(()=>$("evbg").classList.add("on"));$("evpill").hidden=true;EV.shown=true;
   if(log1)log("popup_shown",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig});
   setTimeout(()=>{try{el.focus({preventScroll:true})}catch(e){}},350)}
@@ -446,20 +473,20 @@ function askGpa(){const ql=document.querySelector("#evq .evql"),o=document.query
   $("evq").hidden=false;$("evs").hidden=true}
 function evalOut(){const el=$("eval");el.classList.remove("on");el.setAttribute("aria-hidden","true");$("evbg").classList.remove("on");setTimeout(()=>{if(!$("eval").classList.contains("on"))$("evbg").hidden=true},300);
   EV.dismissed=true;try{sessionStorage.setItem("prEvalDismissed","1");sessionStorage.setItem("prEvalOutAt",String(Date.now()))}catch(e){}
-  if(S.school==null)$("evpill").hidden=false}
+  if(S.school==null)$("evpill").hidden=false;else v2Pill()}
 document.addEventListener("click",ev=>{
   const q=ev.target.closest("[data-evq]");if(q){INT.rs=q.dataset.evq;saveInt();log("feedback",{detail:"status-"+q.dataset.evq,event:INT.e});
     /* signed-in answers go on the profile too (2026-10-25: 116 profiles had no recruiting stage), so sales sees where each family is */
     {const st={none:"getting_started",some:"talking",offers:"offers"}[q.dataset.evq],u=ACC.signedIn()&&ACC.core.ses()&&ACC.core.ses().user;if(st&&u)ACC.core.api("/rest/v1/profiles?id=eq."+u.id,{method:"PATCH",body:{recruiting_stage:st},prefer:"return=minimal"}).catch(()=>{})}
     if(likelyA()&&!INT.gpa){askGpa();return}
-    $("evp").textContent=evBody();$("eva").href=quizFor();$("evq").hidden=true;$("evs").hidden=false;return}
+    $("evp").textContent=evBody();$("eva").href=quizFor();$("evq").hidden=true;$("evs").hidden=false;v2Apply();return}
   const gq=ev.target.closest("[data-evgpa]");if(gq){INT.gpa=gq.dataset.evgpa;saveInt();keepQ();log("feedback",{detail:"gpa-"+INT.gpa,event:INT.e});
     const o=document.querySelector("#evq .evo");if(EV.gq){o.innerHTML=EV.gq;EV.gq=null}
-    $("evp").textContent=evBody();$("eva").href=quizFor();$("evq").hidden=true;$("evs").hidden=false;return}
+    $("evp").textContent=evBody();$("eva").href=quizFor();$("evq").hidden=true;$("evs").hidden=false;v2Apply();return}
   if(EV.ready&&ev.target.closest("#eva")){ev.preventDefault();log("popup_click",{event:INT.e,placement:"popup",variant:EV.v,trig:EV.trig});evalOut();READY.go();return}
   if(ev.target.closest("#evlater")){evalOut();return}
   if(ev.target.id==="evbg"){evalOut();return}
-  if(ev.target.closest("#evpill")){EV.v=(EV.v||"generic").replace(/^pill-/,"");EV.v="pill-"+EV.v;EV.trig="pill-click";openEval(true)}});
+  if(ev.target.closest("#evpill")){if($("evpill").dataset.school!=null){EV.ready=false;EV.title="";EV.bs=null;EV.v="school-pill"+gsfx()}else{EV.v=(EV.v||"generic").replace(/^pill-/,"");EV.v="pill-"+EV.v}EV.trig="pill-click";openEval(true)}});
 let scrolled=0,lastY=scrollY;
 addEventListener("scroll",()=>{scrolled+=Math.abs(scrollY-lastY);lastY=scrollY;
   if(S.tab==="results"&&S.school==null&&scrolled>1400) {const gp=GRP(evLabel(R.ev||""))||topGrp();{let done=false;try{done=!!localStorage.getItem("prReadyDone")}catch(e){}
@@ -2339,6 +2366,7 @@ function render(){
   if(S.tab==="standards"&&!onSchool) drop();
   moveInd(); if(S.tab==="standards"&&!onSchool) watchMore();  R.swap=false; ACC.ensureHead&&ACC.ensureHead();
   if(S.tab==="standards"&&!onSchool) TOUR.maybe();   /* first sign-in tour, or ?tour=1 from Help on another page */
+  try{v2Pill()}catch(e){}
 }
 addEventListener("resize",moveInd);
 matchMedia("(min-width:761px)").addEventListener("change",()=>{if(S.tab==="results"&&R.cmp&&MULTI())render()});
