@@ -1663,3 +1663,7 @@ tr.me td:first-child{box-shadow:inset 3px 0 0 var(--pr-accent);font-weight:700}
 .crumbs>span[aria-hidden]{flex:none}
 .crumbs span:last-child{flex:none;max-width:none}
 @media (max-width:760px){.mhd{align-items:center;flex-wrap:nowrap}.mhd .mseg button{height:32px;padding:0 10px;font-size:13px}.mhd p{font-size:13px}}
+
+/* Layout stability (Clarity 2026-11-08: CLS 0.12): the footer can't appear mid-screen while a view loads, and loading rows match real rows */
+main#app:empty,main#app:has(.sk,.loading){min-height:100vh}
+.sk{height:48px}
