@@ -116,3 +116,14 @@ main{padding-bottom:48px}
 
 /* one light theme on every device (Ryan 2026-11-05): "only" also stops Chrome and Samsung Internet from auto-darkening the page */
 :root{color-scheme:only light}
+
+/* one-time standards-email ask for parents (2026-11-08) */
+.emask{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:60;max-width:380px;background:#fff;border-radius:var(--r-2);box-shadow:var(--pr-rim);padding:16px;font-size:var(--fs-14);line-height:var(--lh-body);animation:emin var(--dur-3) var(--ease-out)}
+.emask p{margin:0 0 12px}
+.emab{display:flex;gap:8px;align-items:center}
+.emask .emyes{background:var(--pr-violet);color:#fff;border:0;border-radius:var(--r-pill);padding:10px 16px;font:600 var(--fs-14)/1 var(--pr-font);cursor:pointer;min-height:44px}
+.emask .emyes:hover{background:var(--pr-violet-press)}
+.emask .emno{background:none;border:0;color:inherit;opacity:.7;font:500 var(--fs-14)/1 var(--pr-font);padding:10px 12px;cursor:pointer;min-height:44px}
+.emask button:focus-visible{outline:2px solid var(--pr-violet);outline-offset:2px}
+@keyframes emin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (max-width:640px){.emask{right:16px;max-width:none}}

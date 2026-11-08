@@ -87,7 +87,23 @@ async function loadProfile() {
     const [ks, ms] = await Promise.all([api("/rest/v1/athletes?select=id,first_name,gender,grad_year,grade,gpa,tier,dream_schools&parent_id=eq." + SES.user.id + "&order=created_at").catch(() => []), api("/rest/v1/marks?select=event,mark,athlete_id&user_id=eq." + SES.user.id).catch(() => [])]);
     KIDS = (ks || []).map(k => Object.assign(k, { marks: (ms || []).filter(m => m.athlete_id === k.id).map(m => ({ e: m.event, v: +m.mark })) }));
   }
+  if (PRO && PRO.role === "parent" && PRO.finished_at && !PRO.email_updates && !EMASKED && !store.get(EMK)) { EMASKED = 1; setTimeout(emAsk, 4000); }
   return PRO;
+}
+
+/* one-time ask for existing parents (Ryan 2026-11-08 "approve"): standards-change emails, one a month at most. Asked once per
+   browser; any answer (or the close button) stores the flag. New parents get the same checkbox in onboarding and settings. */
+const EMK = "prEmAsk"; let EMASKED = 0;
+function emAsk() {
+  if (!PRO || PRO.email_updates || store.get(EMK) || document.getElementById("emask")) return;
+  if (document.querySelector(".onb, #acc.on, [role=dialog][aria-modal=true]")) { setTimeout(emAsk, 8000); return; }
+  document.body.insertAdjacentHTML("beforeend", `<div class="emask" id="emask" role="region" aria-label="Email updates"><p>Want an email when the standards change for your athlete's events and schools? One a month at most.</p><div class="emab"><button type="button" class="btn emyes">Yes, email me</button><button type="button" class="emno">No thanks</button></div></div>`);
+  const el = document.getElementById("emask"), done = v => { store.set(EMK, v); el.remove(); };
+  el.querySelector(".emyes").onclick = async () => {
+    done("yes");
+    try { await api("/rest/v1/profiles?id=eq." + SES.user.id, { method: "PATCH", prefer: "return=minimal", body: { email_updates: true } }); PRO.email_updates = true; } catch (e) { store.set(EMK, null); }
+  };
+  el.querySelector(".emno").onclick = () => done("no");
 }
 
 /* Preferred Recruit verified badge (Ryan 2026-11-02: "when the kids use their TPR email and verify it, then they get automatically
