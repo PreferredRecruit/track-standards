@@ -223,6 +223,8 @@ const ck0=check;check=function(){ck0();const g=$("g").value,e=$("e").value,m=$("
  o.insertAdjacentHTML("beforeend",'<div class="cta"><p>'+(fit?"That's "+fit.toLocaleString()+" programs to reach. Want our team to get your athlete in front of their coaches?":"Every mark has a path, and some programs recruit on progress. Want a plan for your athlete?")+'</p><a href="'+f.toString().replace(/"/g,"&quot;")+'" target="_top">Get your free evaluation</a></div>');
  try{parent.postMessage({prFinder:"result",e:e,fit:fit},"*")}catch(z){}};
 document.addEventListener("click",ev=>{const a=ev.target.closest&&ev.target.closest(".cta a");if(a)try{parent.postMessage({prFinder:"cta"},"*")}catch(z){}});
+const sendH=()=>{if(PR)try{parent.postMessage({prFinder:"h",h:document.documentElement.scrollHeight},"*")}catch(z){}};
+const ck1=check;check=function(){ck1();sendH()};addEventListener("load",sendH);addEventListener("resize",sendH);
 $("go").onclick=()=>check();$("v").onkeydown=ev=>{if(ev.key==="Enter")check()};
 </script></body></html>`);
 }
