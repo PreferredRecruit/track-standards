@@ -49,7 +49,7 @@ export function reportPages({ root, S, CT, std, write, page, esc, sl, SITE, DATE
     const growers = d => D(d).filter(x => x.yoy_n >= MINY[d] && x.yoy != null).sort((a, b) => b.yoy - a.yoy || b.yoy_n - a.yoy_n);
     const m = d => ({ peak: med(D(d).map(x => x.peak)), yoy: med(D(d).map(x => x.yoy)), imp: med(D(d).map(x => x.imp)), n: D(d).length, seasons: D(d).reduce((a, x) => a + x.n, 0) });
     const top3 = d => peakers(d).slice(0, 3).map(x => `${plainName(x.team)} (${x.peak}%)`);
-    const p4 = R.filter(x => { const s = schoolOf(x.team); return s && (CT[s.ck] || {}).rule === "p4" && x.peak_n >= MIN["NCAA D1"]; }).sort((a, b) => b.peak - a.peak);
+    const p4 = R.filter(x => { const s = schoolOf(x.team); return s && ["p4", "sec"].includes((CT[s.ck] || {}).rule) && x.peak_n >= MIN["NCAA D1"]; }).sort((a, b) => b.peak - a.peak);
     const total = R.filter(x => DIVS.includes(x.division)).reduce((a, x) => a + x.n, 0);
     const d1 = m("NCAA D1");
     const answer = `In ${total.toLocaleString()} athlete-seasons of TFRRS results from 2022 to 2026, the typical NCAA D1 program had ${d1.peak}% of its athletes run their season best at the conference championship or later. The best D1 programs at peaking were ${list(top3("NCAA D1"))}${p4.length ? `, and among Power 4 programs ${plainName(p4[0].team)} led at ${p4[0].peak}%` : ""}.`;
