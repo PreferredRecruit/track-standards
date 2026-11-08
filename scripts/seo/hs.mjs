@@ -191,7 +191,7 @@ select,input,button{font:inherit;padding:10px 12px;border:1px solid #DCDAE5;bord
 button{background:linear-gradient(135deg,#A98BFF,#7A45F0 55%,#4E22C2);color:#fff;border:0;font-weight:650;cursor:pointer}
 .out{margin-top:16px;padding:14px;border-radius:14px;background:#F5F3FD;min-height:84px}.big{font-size:28px;font-weight:700;letter-spacing:-.03em}
 .lv{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin:6px 0}.lv b{font-size:16px}.dv{font-size:12px;color:#4A4A52}.err{color:#B42318}
-a{color:#7A45F0;font-weight:600}.ft{margin-top:12px;font-size:12px;color:#4A4A52;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}</style></head><body>
+a{color:#7A45F0;font-weight:600}.cta{margin-top:12px;padding:14px;border-radius:14px;background:#0B0B0F;color:#fff}.cta p{margin:0 0 10px;font-size:14px}.cta a{display:inline-block;background:#7A45F0;color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;font-size:14px}.ft{margin-top:12px;font-size:12px;color:#4A4A52;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}</style></head><body>
 <h1>Where could you compete in college?</h1><p class="s">Pick an event, enter your best high school mark.</p>
 <div class="row"><select id="g" aria-label="Gender"><option value="m">Boys</option><option value="w">Girls</option></select><select id="e" aria-label="Event"></select></div>
 <div class="row" style="margin-top:8px"><input id="v" placeholder="e.g. 4:35 or 20-6" aria-label="Your mark" inputmode="text"><button id="go">Check</button></div>
@@ -212,6 +212,17 @@ function check(){const g=$("g").value,e=$("e").value,v=parse($("v").value,e),o=$
  for(const[d,t,rc,w,n]of(D.ev[g+"|"+e]||[])){const l=ok(t)?"Target":ok(rc)?"Recruit":ok(w)?"Walk-On":null;if(l){T[l]+=n;byD[d]+=n}}
  const tot=T.Target+T.Recruit+T["Walk-On"];
  o.innerHTML='<div class="big">'+tot.toLocaleString()+' college programs</div><div class="lv"><span><b>'+T.Target+'</b> Target</span><span><b>'+T.Recruit+'</b> Recruit</span><span><b>'+T["Walk-On"]+'</b> Walk-On</span></div><div class="dv">'+D.divs.map((d,i)=>byD[i]?d+": "+byD[i]:"").filter(Boolean).join(" · ")+'</div>'+(g==="m"&&IMPL[e]?'<div class="dv">'+IMPL[e]+'</div>':"")+(c?'<div class="dv">High school '+e+' converted to the college '+c.to+' where needed.</div>':"");}
-$("go").onclick=check;$("v").onkeydown=ev=>{if(ev.key==="Enter")check()};
+/* Preferred Recruit site mode (Ryan 2026-11-08: "a little version and then convert them"): ?pr=<placement> adds the parent
+   evaluation step under the result, carrying the event and mark to the funnel, and tells the host page (for its analytics) */
+const Q=new URLSearchParams(location.search),PR=(Q.get("pr")||"").replace(/[^a-z0-9-]/g,"").slice(0,30);
+if(PR){document.querySelector("h1").textContent="Where could your athlete compete in college?";document.querySelector("p.s").textContent="Pick their event and enter their best high school mark.";}
+const ck0=check;check=function(){ck0();const g=$("g").value,e=$("e").value,m=$("v").value.trim(),o=$("out"),n=(o.querySelector(".big")||{}).textContent;
+ const all=new URL("${SITE}/");if(m){all.searchParams.set("g",g);all.searchParams.set("e",e);all.searchParams.set("m",m)}if(PR){all.searchParams.set("utm_source","pr-site");all.searchParams.set("utm_medium","referral");all.searchParams.set("utm_campaign","finder-"+PR)}$("all").href=all.toString();
+ if(!PR||!n)return;const f=new URL("https://app.thepreferredrecruit.com/parentfunnel/");for(const[k,v]of[["utm_source","website"],["utm_medium","pr-site"],["utm_campaign","PRsite"],["utm_content","finder-"+PR],["utm_term",e],["pr_mark",m]])f.searchParams.set(k,v);
+ const fit=parseInt(n.replace(/[^0-9]/g,""),10)||0;
+ o.insertAdjacentHTML("beforeend",'<div class="cta"><p>'+(fit?"That's "+fit.toLocaleString()+" programs to reach. Want our team to get your athlete in front of their coaches?":"Every mark has a path, and some programs recruit on progress. Want a plan for your athlete?")+'</p><a href="'+f.toString().replace(/"/g,"&quot;")+'" target="_top">Get your free evaluation</a></div>');
+ try{parent.postMessage({prFinder:"result",e:e,fit:fit},"*")}catch(z){}};
+document.addEventListener("click",ev=>{const a=ev.target.closest&&ev.target.closest(".cta a");if(a)try{parent.postMessage({prFinder:"cta"},"*")}catch(z){}});
+$("go").onclick=()=>check();$("v").onkeydown=ev=>{if(ev.key==="Enter")check()};
 </script></body></html>`);
 }
