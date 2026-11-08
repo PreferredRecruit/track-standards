@@ -214,16 +214,19 @@ function check(){const g=$("g").value,e=$("e").value,v=parse($("v").value,e),o=$
  o.innerHTML='<div class="big">'+tot.toLocaleString()+' college programs</div><div class="lv"><span><b>'+T.Target+'</b> Target</span><span><b>'+T.Recruit+'</b> Recruit</span><span><b>'+T["Walk-On"]+'</b> Walk-On</span></div><div class="dv">'+D.divs.map((d,i)=>byD[i]?d+": "+byD[i]:"").filter(Boolean).join(" · ")+'</div>'+(g==="m"&&IMPL[e]?'<div class="dv">'+IMPL[e]+'</div>':"")+(c?'<div class="dv">High school '+e+' converted to the college '+c.to+' where needed.</div>':"");}
 /* Preferred Recruit site mode (Ryan 2026-11-08: "a little version and then convert them"): ?pr=<placement> adds the parent
    evaluation step under the result, carrying the event and mark to the funnel, and tells the host page (for its analytics) */
-const Q=new URLSearchParams(location.search),PR=(Q.get("pr")||"").replace(/[^a-z0-9-]/g,"").slice(0,30);
+const Q=new URLSearchParams(location.search),PR=(Q.get("pr")||"").replace(/[^a-z0-9-]/g,"").slice(0,30),IN=(Q.get("in")||"").replace(/[^a-z0-9-]/g,"").slice(0,30);
+/* ?in=<family>: the same finder under the tables on Track Standards' own data pages (Ryan 2026-11-08, bounce fix); ?g= / ?e= preselect */
+if(Q.get("g")==="w"){$("g").value="w";fill()}if(Q.get("e")&&[...$("e").options].some(o=>o.value===Q.get("e")))$("e").value=Q.get("e");
+if(IN){document.querySelector("h1").textContent="Where would your mark fit?";document.querySelector(".ft").style.display="none";}
 if(PR){document.querySelector("h1").textContent="Where could your athlete compete in college?";document.querySelector("p.s").textContent="Pick their event and enter their best high school mark.";}
 const ck0=check;check=function(){ck0();const g=$("g").value,e=$("e").value,m=$("v").value.trim(),o=$("out"),n=(o.querySelector(".big")||{}).textContent;
  const all=new URL("${SITE}/");if(m){all.searchParams.set("g",g);all.searchParams.set("e",e);all.searchParams.set("m",m)}if(PR){all.searchParams.set("utm_source","pr-site");all.searchParams.set("utm_medium","referral");all.searchParams.set("utm_campaign","finder-"+PR)}$("all").href=all.toString();
- if(!PR||!n)return;const f=new URL("https://app.thepreferredrecruit.com/parentfunnel/");for(const[k,v]of[["utm_source","website"],["utm_medium","pr-site"],["utm_campaign","PRsite"],["utm_content","finder-"+PR],["utm_term",e],["pr_mark",m]])f.searchParams.set(k,v);
+ if(!(PR||IN)||!n)return;const f=new URL("https://app.thepreferredrecruit.com/parentfunnel/");for(const[k,v]of(PR?[["utm_source","website"],["utm_medium","pr-site"],["utm_campaign","PRsite"],["utm_content","finder-"+PR]]:[["utm_source","website"],["utm_medium","standards"],["utm_campaign","PRstandards"],["utm_content","finder-"+IN]]).concat([["utm_term",e],["pr_mark",m]]))f.searchParams.set(k,v);
  const fit=parseInt(n.replace(/[^0-9]/g,""),10)||0;
- o.insertAdjacentHTML("beforeend",'<div class="cta"><p>'+(fit?"That's "+fit.toLocaleString()+" programs to reach. Want our team to get your athlete in front of their coaches?":"Every mark has a path, and some programs recruit on progress. Want a plan for your athlete?")+'</p><a href="'+f.toString().replace(/"/g,"&quot;")+'" target="_top">Get your free evaluation</a></div>');
+ o.insertAdjacentHTML("beforeend",'<div class="cta"><p>'+(PR?(fit?"That's "+fit.toLocaleString()+" programs to reach. Want our team to get your athlete in front of their coaches?":"Every mark has a path, and some programs recruit on progress. Want a plan for your athlete?"):(fit?"That's "+fit.toLocaleString()+" programs. Want help getting in front of their coaches?":"Every mark has a path, and some programs recruit on progress. Want a plan?"))+(IN&&fit?' <a href="'+all.toString().replace(/"/g,"&quot;")+'" target="_top" style="background:none;padding:0;color:#C9B8FF;display:inline">See the schools</a>':"")+'</p><a href="'+f.toString().replace(/"/g,"&quot;")+'" target="_top">Get your free evaluation</a></div>');
  try{parent.postMessage({prFinder:"result",e:e,fit:fit},"*")}catch(z){}};
 document.addEventListener("click",ev=>{const a=ev.target.closest&&ev.target.closest(".cta a");if(a)try{parent.postMessage({prFinder:"cta"},"*")}catch(z){}});
-const sendH=()=>{if(PR)try{parent.postMessage({prFinder:"h",h:Math.ceil(document.body.getBoundingClientRect().height)},"*")}catch(z){}};
+const sendH=()=>{if(PR||IN)try{parent.postMessage({prFinder:"h",h:Math.ceil(document.body.getBoundingClientRect().height)},"*")}catch(z){}};
 const ck1=check;check=function(){ck1();sendH()};addEventListener("load",sendH);addEventListener("resize",sendH);
 $("go").onclick=()=>check();$("v").onkeydown=ev=>{if(ev.key==="Enter")check()};
 </script></body></html>`);

@@ -66,8 +66,22 @@ function checker(pathname) {
 }
 const CHK_CSS = `.chk{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:16px 0}.chk b{display:block;font-size:15px;margin-bottom:8px}.chk div{display:flex;gap:8px;flex-wrap:wrap}.chk select,.chk input{font:inherit;padding:10px 12px;border:1px solid #DCDAE5;border-radius:12px;background:#FAFAFC;flex:1 1 140px;min-width:0}.chk button{font:inherit;font-weight:650;border:0;border-radius:999px;padding:10px 18px;background:#7A45F0;color:#fff;cursor:pointer}`;
 const withChecker = (pathname, body) => { const c = checker(pathname), i = body.indexOf('<p class="upd">'); if (body.includes('<div class="qa">') && i > -1) { const j = body.indexOf("</p>", i) + 4; return body.slice(0, j) + c + body.slice(j); } return c + body; };
+/* bounce fix (Ryan 2026-11-08): real phone visitors left 86% of data pages (results, colleges, rankings, athletes, champions) after
+   reading the table. The finder sits right under the first table: the reader checks their own mark in place, then gets one next step. */
+const FINDER_FAM = new Set(["results", "colleges", "colleges-for", "rankings", "athletes", "champions"]);
+function withFinder(pathname, body) {
+  const fam = pathname.split("/")[1]; if (!FINDER_FAM.has(fam)) return body;
+  const p = pathname.toLowerCase(), g = /(womens|girls)/.test(p) ? "w" : "m";
+  const e = [...CHECK_EV].sort((a, b) => b.length - a.length).find(x => p.includes("-" + slug(x) + ".") || p.includes("-" + slug(x) + "-") || p.includes("/" + slug(x) + "."));
+  const src = `/embed.html?in=${fam}&g=${g}${e ? "&e=" + encodeURIComponent(e) : ""}`;
+  const f = `<section class="finder" id="finder"><iframe src="${src}" title="Where would your mark fit? College track standards finder" loading="lazy" style="display:block;width:100%;height:440px;border:0;border-radius:16px;background:#fff;box-shadow:0 0 0 1px rgba(16,12,40,.08)"></iframe></section>`;
+  let i = body.indexOf("</table>"); if (i < 0) return body + f;
+  i += 8; if (body.startsWith("</div>", i)) i += 6;
+  return body.slice(0, i) + f + body.slice(i);
+}
 function page({ title, desc, pathname, crumbs, h1, intro, body, ld }) {
   if (!/^\/(guides|for-coaches)\.html$/.test(pathname) && !/^\/rankings/.test(pathname)) body = withChecker(pathname, body);
+  body = withFinder(pathname, body);
   title = fitTitle(title); desc = fitDesc(desc, tailsFor(pathname));
   const url = SITE + pathname;
   const bc = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: crumbs.map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) };
@@ -127,18 +141,27 @@ td .cfm{display:none}@media(max-width:560px){.evtbl th,.evtbl td{padding:10px 7p
    Search intent (Ryan 2026-10-16): the copy names the athlete's event (this page's event, else the last one they looked at on the site,
    from localStorage prIntent), the funnel link carries event + grade, and the page view goes to the anonymous insights log. */
 (function(){var T="https://airqmzyuxyyiqjaocwmk.supabase.co/functions/v1/track",I={},sid,T0=Date.now(),TRIG="",UTM;
+/* bot filter (Ryan 2026-11-08, bounce audit): crawlers rendering these pages were 75% of "visits" (5% phones, 91% never a visible tab, 0 s active) */
+var BOT=!!navigator.webdriver||/bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|facebookexternalhit|embedly|gptbot|chatgpt|claude|perplexity|bytespider|ahrefs|semrush|mj12/i.test(navigator.userAgent||"");
 try{UTM=new URLSearchParams(location.search).get("utm_source");if(UTM)sessionStorage.setItem("prUtm",UTM.slice(0,40));else UTM=sessionStorage.getItem("prUtm")||undefined}catch(e){}
 try{I=JSON.parse(localStorage.getItem("prIntent"))||{};sid=localStorage.getItem("prSid");if(!sid){sid=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36));localStorage.setItem("prSid",sid)}}catch(e){sid="anon-"+Math.random().toString(36).slice(2,12)}
 function grp(e){e=String(e||"");return /hurdle/i.test(e)?"hurdles":/thlon/i.test(e)?"multis":/jump|vault/i.test(e)?"jumps":/shot|discus|hammer|javelin|weight|throw/i.test(e)?"throws":/relay/i.test(e)?(/800|1600|mile|medley/i.test(e)?"distance":"sprints"):/^(55|60|100|200|400)(m|$)/i.test(e)?"sprints":"distance"}
-window.prLog=function(k,x){try{var ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}var hh=document.documentElement,b={sid:sid,kind:k,coach:ct,secs:Math.round((Date.now()-T0)/1000),scroll_pct:Math.min(100,Math.round((scrollY+innerHeight)/Math.max(hh.scrollHeight,1)*100)),hour:new Date().getHours(),grade:I.gr||undefined,path:location.pathname,mobile:innerWidth<700,utm_source:UTM};for(var q in x||{})b[q]=x[q];if(b.event&&!b.grp)b.grp=grp(b.event);fetch(T,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(function(){})}catch(e){}};
+window.prLog=function(k,x){if(BOT)return;try{var ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}var hh=document.documentElement,b={sid:sid,kind:k,coach:ct,secs:Math.round((Date.now()-T0)/1000),scroll_pct:Math.min(100,Math.round((scrollY+innerHeight)/Math.max(hh.scrollHeight,1)*100)),hour:new Date().getHours(),grade:I.gr||undefined,path:location.pathname,mobile:innerWidth<700,utm_source:UTM};for(var q in x||{})b[q]=x[q];if(b.event&&!b.grp)b.grp=grp(b.event);fetch(T,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(function(){})}catch(e){}};
 var m=location.pathname.match(/(?:^|[\/-])(boys|girls|mens|womens)-([a-z0-9-]+?)(?:-track-standards)?(?:\.html)?$/),ev=null,g=null;
 if(m){var EVS=${SEO_EVS};for(var k in EVS){if(m[2]===k||m[2].indexOf(k+"-")===0){ev=EVS[k];break}}}
 if(ev){g=/^(boys|mens)$/.test(m[1])?"m":"w";I.e=ev;I.grp=grp(ev);I.g=g;I.c=I.c||{};I.c[I.grp]=(I.c[I.grp]||0)+1;try{localStorage.setItem("prIntent",JSON.stringify(I))}catch(e){}}
-prLog("seo_page",{event:ev||undefined,g:g||undefined});
+/* the page view counts once a person is there: a tap, key or scroll, or 5 s with the tab visible (crawlers do neither) */
+var SEEN=0;function seen(){if(SEEN)return;SEEN=1;prLog("seo_page",{event:ev||undefined,g:g||undefined})}
+["pointerdown","keydown","scroll","touchstart"].forEach(function(t){addEventListener(t,seen,{passive:true,capture:true,once:true})});
+setTimeout(function(){if(document.visibilityState==="visible")seen()},5000);
+/* finder under the table: auto height + offer shown/clicked in the same placement report as the pop-ups */
+addEventListener("message",function(e){var d=e.data;if(e.origin!==location.origin||!d||!d.prFinder)return;var f=document.querySelector("#finder iframe");
+  if(d.prFinder==="h"){if(f&&d.h)f.style.height=Math.min(900,Math.max(380,d.h+4))+"px";return}
+  seen();var pl="finder-"+location.pathname.split("/")[1];if(d.prFinder==="result")prLog("popup_shown",{placement:pl,event:d.e,n_fits:d.fit});if(d.prFinder==="cta")prLog("popup_click",{placement:pl})});
 /* retention: one "leave" beacon per hide/close with total + active seconds (same as the app) */
 var ACT=0,LIN=Date.now(),LEFT=-1;["pointerdown","keydown","scroll","touchstart"].forEach(function(t){addEventListener(t,function(){LIN=Date.now()},{passive:true,capture:true})});
 setInterval(function(){if(document.visibilityState==="visible"&&Date.now()-LIN<30000)ACT+=5},5000);
-function bye(){if(ACT===LEFT)return;LEFT=ACT;prLog("leave",{active_secs:ACT,detail:"seo_page"})}
+function bye(){if(!SEEN||ACT===LEFT)return;LEFT=ACT;prLog("leave",{active_secs:ACT,detail:"seo_page"})}
 addEventListener("pagehide",bye);document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden")bye()});
 /* bottom bar removed (2026-10-25: 0.2% click rate on 3,881 views, and Ryan wants landing pages clean); the page view + intent above stay */
 /* SEO-page pop-up (Ryan 2026-10-29: "yeah we need more pop ups"; 3 days: ~1,039 SEO-page visits, ~210 ever saw an offer). Same centre

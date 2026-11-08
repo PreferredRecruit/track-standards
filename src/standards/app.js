@@ -89,7 +89,9 @@ let ACT=0,LASTIN=Date.now(),LASTK="",LEFT=-1;
 setInterval(()=>{if(document.visibilityState==="visible"&&Date.now()-LASTIN<30000)ACT+=5},5000);
 const bye=()=>{if(ACT===LEFT)return;LEFT=ACT;log("leave",{active_secs:ACT,detail:LASTK||"none"})};
 addEventListener("pagehide",bye);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")bye()});
-function log(kind,x){if(kind!=="leave"&&kind!=="taps"&&kind!=="dwell")LASTK=kind;try{let ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}const b=Object.assign({sid:SID,kind,coach:ct,secs:Math.round((Date.now()-T0)/1000),scroll_pct:scrollPct(),hour:new Date().getHours(),grade:INT.gr||undefined,path:location.pathname+location.search,mobile:innerWidth<700,utm_source:UTM},x||{});
+/* bot filter (2026-11-08 bounce audit): crawlers that run the page code never reach the insights log */
+const BOT=!!navigator.webdriver||/bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|facebookexternalhit|embedly|gptbot|chatgpt|claude|perplexity|bytespider|ahrefs|semrush|mj12/i.test(navigator.userAgent||"");
+function log(kind,x){if(BOT)return;if(kind!=="leave"&&kind!=="taps"&&kind!=="dwell")LASTK=kind;try{let ct;try{ct=localStorage.getItem("pr_coach")||undefined}catch(e){}const b=Object.assign({sid:SID,kind,coach:ct,secs:Math.round((Date.now()-T0)/1000),scroll_pct:scrollPct(),hour:new Date().getHours(),grade:INT.gr||undefined,path:location.pathname+location.search,mobile:innerWidth<700,utm_source:UTM},x||{});
   if(b.event&&!b.grp)b.grp=GRP(b.event);fetch(TRACK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(()=>{})}catch(e){}}
 /* the funnel link carries the intent too, so the evaluation and CRM know the event and grade (utm_term = event, pr_grade = grade) */
 /* who filled in the funnel, as a Lead Source tag (Ryan 2026-11-05: are standards leads parents or athletes?): wP parent account, wA athlete account, wS opened a link their athlete sent */
