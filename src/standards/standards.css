@@ -1536,3 +1536,40 @@ tr.me td:first-child{box-shadow:inset 3px 0 0 var(--pr-accent);font-weight:700}
 .evpill .pl img{width:22px;height:22px;object-fit:contain}
 .eval.v2 .evmore b{padding:0;font-size:inherit;font-weight:inherit;letter-spacing:0}
 .eval.v2 #evs .evlater{color:var(--v2mu)}
+
+/* Meet page standings (Ryan 2026-11-07): results left, team scores fixed on the right (desktop); phones get a bottom bar that opens */
+.mtwrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
+.mtmain{min-width:0}
+.mtside{position:sticky;top:76px;margin-top:14px;padding:18px;border-radius:var(--r-3);background:var(--pr-card);box-shadow:var(--pr-rim)}
+.mtside h4{margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--pr-mute)}
+.mtside h4.tsw{margin-top:18px;padding-top:16px;border-top:1px solid var(--pr-line)}
+.tsr{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 0;font-size:15px;font-variant-numeric:tabular-nums}
+.tsr i{font-style:normal;font-size:13px;font-weight:600;color:var(--pr-mute)}
+.tsr span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tsr b{font-weight:700}
+.tsr.lead{margin:0 -8px;padding:9px 8px;border-radius:var(--r-1);background:var(--pr-soft)}
+.tsmore summary{cursor:pointer;padding:8px 0;font-size:14px;font-weight:600;color:var(--pr-violet);list-style:none}
+.tsmore summary::-webkit-details-marker{display:none}
+.tsok,.tsnote{margin:12px 0 0;font-size:13px;font-weight:600;color:var(--pr-mute)}
+.tsok{color:var(--pr-ink)}
+.tsev{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;width:100%;padding:9px 0;border:0;border-bottom:1px solid var(--pr-line);background:none;color:var(--pr-ink);font:inherit;text-align:left;cursor:pointer}
+.tsev:last-child{border-bottom:0}
+.tsev small{grid-column:1/3;font-size:12px;color:var(--pr-mute)}
+.tsev span{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tsev span em{font-style:normal;font-weight:400;color:var(--pr-mute);margin-left:6px;font-size:13px}
+.tsev b{font-size:15px;font-variant-numeric:tabular-nums}
+.tsev:hover span{color:var(--pr-violet)}
+.mtbar{display:none}
+.gmk small+small{margin-top:0}
+@media (max-width:960px){
+  .mtwrap{display:block}.mtside{display:none}
+  .mtbar{display:block;position:sticky;bottom:10px;z-index:30;margin:14px 0 0;border-radius:var(--r-3);background:var(--pr-black);color:var(--pr-card);box-shadow:var(--sh-2)}
+  .mtbar summary{display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 16px;cursor:pointer;list-style:none}
+  .mtbar summary::-webkit-details-marker{display:none}
+  .mtbar summary b{display:block;font-size:15px}.mtbar summary small{display:block;font-size:13px;opacity:.7}
+  .mtbar summary em{margin-left:auto;font-style:normal;font-size:13px;font-weight:600;opacity:.85}
+  .mtbar[open] summary em{visibility:hidden}
+  .mtbarb{max-height:50vh;overflow:auto;padding:0 16px 14px}
+  .mtbarb .tsr.lead{background:color-mix(in srgb,var(--pr-card) 12%,transparent)}
+  .mtbarb .tsr i,.mtbarb .tsok,.mtbarb .tsnote{color:inherit;opacity:.7}
+}

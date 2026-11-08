@@ -1271,15 +1271,37 @@ let MIDX=null,MIDXL=null;const MF={};
 function loadMeetIdx(){if(MIDX||MIDXL)return;MIDXL=fetch("/data/meets/index.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>{MIDX=d;if(R.mv)render()})}
 function loadMeet(id){if(MF[id])return;MF[id]="…";getGz("/data/meets/"+id+".dat").then(d=>{MF[id]=d;if(R.mv)render()}).catch(()=>{MF[id]="x";if(R.mv)render()})}
 async function getGz(u){const r=await fetch(u);if(!r.ok)throw new Error(u);return await unpack(r)}
+/* team scores + standings panel (Ryan 2026-11-07): scripts/tfrrs/meet_scores.py writes /data/meets/scores/<id>.json only for meets
+   with an official TEAM SCORES table. The panel always shows the official totals; per-athlete points and the "matches" line only
+   when our own count reproduced every team exactly (sys = the scoring that did). Unscored meets show no scores at all. */
+const MSC={};
+function loadScores(id){if(MSC[id])return;MSC[id]="…";fetch("/data/meets/scores/"+id+".json").then(r=>r.ok?r.json():"none").catch(()=>"none").then(d=>{MSC[id]=d;if(R.mv)render()})}
+function finalPts(rows,sys){const P=String(sys||"").split(" ")[0].split("-").map(Number).filter(n=>n>0),x2=/x2/.test(sys||""),by={};
+  rows.forEach(r=>{const p=+String(r[0]).replace(/\D/g,"");if(p)(by[p]=by[p]||[]).push(r)});const out=new Map();
+  Object.entries(by).forEach(([p,g])=>{p=+p;if(p>P.length)return;let t=0;for(let i=p-1;i<Math.min(p-1+g.length,P.length);i++)t+=P[i];g.forEach(r=>out.set(r,t/g.length))});return [out,x2]}
+const ptsF=n=>String(Math.round(n*100)/100);
+function standings(M,evs){const S=MSC[M.id];if(!S||S==="…"||S==="none")return {side:"",bar:""};const T=S[R.g];if(!T||!T.t||!T.t.length)return {side:"",bar:""};
+  const g=R.g==="m"?"Men":"Women",top=T.t.slice(0,10),more=T.t.slice(10);
+  const row=(t,i)=>`<div class="tsr${i===0?" lead":""}"><i>${i+1}</i><span>${esc(t[0])}</span><b>${esc(ptsF(t[1]))}</b></div>`;
+  const wins=evs.map(e=>{const R0=(M.ev[e]||{})[R.g];if(!R0)return null;const f=R0.find(r=>/^final/i.test(r[0]))||R0[0];const w=f&&f[2].find(r=>String(r[0]).replace(/\D/g,"")==="1");return w?[e,w]:null}).filter(Boolean);
+  const check=T.ok?`<p class="tsok">✓ Matches the official team scores</p>`:`<p class="tsnote">Official team scores</p>`;
+  const side=`<aside class="mtside" aria-label="Team scores"><h4>Team scores · ${g}</h4>${top.map(row).join("")}
+    ${more.length?`<details class="tsmore"><summary>All ${T.t.length} teams</summary>${more.map((t,i)=>row(t,i+10)).join("")}</details>`:""}${check}
+    ${wins.length?`<h4 class="tsw">Event winners</h4>${wins.map(([e,w])=>`<button class="tsev" data-mvev="${esc(e)}"><small>${esc(evLabel(e))}</small><span>${esc(w[1]||w[3])}<em>${esc(w[3])}</em></span><b>${esc(w[4])}</b></button>`).join("")}`:""}</aside>`;
+  const bar=`<details class="mtbar"><summary><span><b>${esc(T.t[0][0])} leads, ${esc(ptsF(T.t[0][1]))}</b><small>Team scores · ${g}</small></span><em>See all</em></summary>
+    <div class="mtbarb">${T.t.map(row).join("")}${check}</div></details>`;
+  return {side,bar,T}}
 function fullMeet(M){const mv=R.mv,evs=Object.keys(M.ev).filter(e=>M.ev[e][R.g]).sort((a,b)=>eord(ecode(a))-eord(ecode(b))),ev=evs.includes(mv.e)?mv.e:evs[0];
-  const tf=M.url;
+  const tf=M.url;loadScores(M.id);const ST=standings(M,evs),okP=ST.T&&ST.T.ok;
   return `<div class="rbody${R.swap?" swap":""}"><p style="margin:14px 2px 0"><button class="lnk" data-mvback>‹ Back to ${esc(mv.name)}</button></p>
+  <div class="mtwrap"><div class="mtmain">
   <div class="rhead"><h3>${esc(M.meet)}</h3><span>${esc(fmtD(mv.date))} · ${R.g==="m"?"Men":"Women"} · full results</span></div>
   <div class="evwrap"><div class="evs" role="group" aria-label="Event">${evs.map(e=>`<button data-mvev="${esc(e)}" aria-pressed="${e===ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
-  ${(M.ev[ev]||{})[R.g]?M.ev[ev][R.g].map(([rnd,w,rows])=>`<div class="rhead" style="margin-top:14px"><h3 style="font-size:17px">${esc(rnd)}</h3><span>${rows.length} ${/Relay/.test(ev)?"teams":"athletes"}${w?` · wind ${esc(w)}`:""}</span></div>
+  ${(M.ev[ev]||{})[R.g]?M.ev[ev][R.g].map(([rnd,w,rows],ri)=>{const fin=ri===0&&(/^final/i.test(rnd)||M.ev[ev][R.g].length===1);const [pts,x2]=okP&&fin?finalPts(rows,ST.T.sys):[new Map(),false];const rel=/relay/i.test(ev)&&x2?2:1;
+  return `<div class="rhead" style="margin-top:14px"><h3 style="font-size:17px">${esc(rnd)}</h3><span>${rows.length} ${/Relay/.test(ev)?"teams":"athletes"}${w?` · wind ${esc(w)}`:""}</span></div>
   <div class="grid raw"><div class="gh"><span>Place</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span></div>
-  ${rows.map(r=>{const p=+String(r[0]).replace(/\D/g,"");return `<div class="gr ${/^final/i.test(rnd)&&p&&p<=3?"p"+p:""}${r[1]===mv.name?" me":""}"><span class="rkb">${esc(r[0]||"–")}</span><span class="gnmw"><span class="gnm"><b>${esc(r[1]||r[3])}</b></span><small>${esc(yr(r[2]))}</small></span><span class="gtm" style="cursor:default">${esc(r[3])}</span><span class="gmk">${esc(r[4])}${r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span></div>`}).join("")}</div>`).join(""):""}
-  <p class="note">Source: <a href="${esc(tf)}" target="_blank" rel="noopener">TFRRS meet results ↗</a></p>${hookRow()}</div></div>`}
+  ${rows.map(r=>{const p=+String(r[0]).replace(/\D/g,"");const pt=pts.get(r);return `<div class="gr ${/^final/i.test(rnd)&&p&&p<=3?"p"+p:""}${r[1]===mv.name?" me":""}"><span class="rkb">${esc(r[0]||"–")}</span><span class="gnmw"><span class="gnm"><b>${esc(r[1]||r[3])}</b></span><small>${esc(yr(r[2]))}</small></span><span class="gtm" style="cursor:default">${esc(r[3])}</span><span class="gmk">${esc(r[4])}${r[5]?`<small>wind ${esc(r[5])}</small>`:""}${pt?`<small>${esc(ptsF(pt*rel))} pts</small>`:""}</span></div>`}).join("")}</div>`}).join(""):""}
+  <p class="note">Source: <a href="${esc(tf)}" target="_blank" rel="noopener">TFRRS meet results ↗</a></p>${hookRow()}</div>${ST.side}</div>${ST.bar}</div>`}
 function meetView(D){
   const id=MIDX&&R.mv.path&&(MIDX[R.mv.path]||{})[R.mv.meet];if(!MIDX){loadMeetIdx();return skeleton()}
   if(id){loadMeet(id);const M=MF[id];if(M==="…")return skeleton();if(M&&M!=="x")return fullMeet(M)}
@@ -1551,6 +1573,9 @@ function resultsCollege(){
     <div class="search">${MAG}<label class="sr" for="rq">Search a school or athlete</label><input class="in" id="rq" placeholder="Search a school or athlete" value="${esc(R.q)}" autocomplete="off" enterkeyhint="go"><div id="rqd"></div></div></div></div>`;
   if(!D||D.err){o+=ctl(null)+(D&&D.err?`<div class="loading">These results aren't available in the preview.</div>`:skeleton());return o+`</div>`}
   if(R.mv){const L0=D.lists.find(l=>l.champ&&mnorm(l.id)===mnorm(R.mv.meet));
+    /* a meet we hold in full (all rounds + team scores) opens as its meet page, championships included (Ryan 2026-11-07) */
+    if(!MIDX){loadMeetIdx();return o+ctl(D.lists.find(z=>z.nat)||D.lists[0])+skeleton()}
+    if(R.mv.path&&(MIDX[R.mv.path]||{})[R.mv.meet])return o+ctl(D.lists.find(z=>z.nat)||D.lists[0])+meetView(D);
     if(L0){R.conf=L0.label;R.hl=R.mv.name;R.hlAth=R.mv.ath;R.hlGo=1;setTimeout(()=>{if(!R.hlGo)return;R.hlGo=0;const x=document.querySelector(".gr.me");if(x)x.scrollIntoView({block:"center"})},400);const k=Object.keys(L0.g[R.g]||{}).find(k=>k===R.mv.e);if(k)R.ev=k;R.mv=null}
     else return o+ctl(D.lists.find(z=>z.nat)||D.lists[0])+meetView(D)}
   const natI=Math.max(0,D.lists.findIndex(z=>z.nat)),ci=R.conf?confIdx(D,R.conf):natI,miss=R.conf&&ci<0;R.list=ci<0?natI:ci;

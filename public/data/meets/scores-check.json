@@ -1,0 +1,2141 @@
+{
+"flags": [
+[
+57472,
+"Air Force Indoor Team Challenge",
+"m",
+"1/4 teams match"
+],
+[
+57472,
+"Air Force Indoor Team Challenge",
+"w",
+"0/4 teams match"
+],
+[
+58567,
+"2019 BYU Cougar Indoor",
+"m",
+"0/3 teams match"
+],
+[
+58567,
+"2019 BYU Cougar Indoor",
+"w",
+"0/1 teams match"
+],
+[
+59968,
+"Jim Click Shootout",
+"m",
+"1/6 teams match"
+],
+[
+59968,
+"Jim Click Shootout",
+"w",
+"0/6 teams match"
+],
+[
+61144,
+"2019 UVU Collegiate Invitational",
+"m",
+"2/5 teams match"
+],
+[
+61144,
+"2019 UVU Collegiate Invitational",
+"w",
+"0/3 teams match"
+],
+[
+68837,
+"UCONN Dog Fight",
+"m",
+"0/4 teams match"
+],
+[
+68837,
+"UCONN Dog Fight",
+"w",
+"2/4 teams match"
+],
+[
+70956,
+"Dakota Alumni Classic",
+"m",
+"1/7 teams match"
+],
+[
+70956,
+"Dakota Alumni Classic",
+"w",
+"2/9 teams match"
+],
+[
+70968,
+"Kansas State Winter Invitational",
+"m",
+"0/1 teams match"
+],
+[
+70968,
+"Kansas State Winter Invitational",
+"w",
+"4/6 teams match"
+],
+[
+71225,
+"SDSU Holiday Open & Multi",
+"m",
+"9/19 teams match"
+],
+[
+71225,
+"SDSU Holiday Open & Multi",
+"w",
+"4/15 teams match"
+],
+[
+71586,
+"Bob Pollock Invitational",
+"m",
+"0/2 teams match"
+],
+[
+71586,
+"Bob Pollock Invitational",
+"w",
+"1/7 teams match"
+],
+[
+71656,
+"Simmons-Harvey Invitational - 2022",
+"m",
+"0/4 teams match"
+],
+[
+71656,
+"Simmons-Harvey Invitational - 2022",
+"w",
+"0/4 teams match"
+],
+[
+71798,
+"Bison Open",
+"m",
+"13/17 teams match"
+],
+[
+71798,
+"Bison Open",
+"w",
+"11/16 teams match"
+],
+[
+72200,
+"Jim Emmerich Alumni Meet",
+"m",
+"7/11 teams match"
+],
+[
+72640,
+"SDSU Indoor Classic",
+"m",
+"5/24 teams match"
+],
+[
+72640,
+"SDSU Indoor Classic",
+"w",
+"5/20 teams match"
+],
+[
+73600,
+"2022 Al Bortke Open: University of Mary",
+"m",
+"7/9 teams match"
+],
+[
+73600,
+"2022 Al Bortke Open: University of Mary",
+"w",
+"7/9 teams match"
+],
+[
+73797,
+"UCONN Northeast Challenge",
+"m",
+"5/21 teams match"
+],
+[
+73797,
+"UCONN Northeast Challenge",
+"w",
+"6/19 teams match"
+],
+[
+74756,
+"South Dakota Challenge",
+"m",
+"13/18 teams match"
+],
+[
+74756,
+"South Dakota Challenge",
+"w",
+"13/19 teams match"
+],
+[
+74795,
+"NEICAAA Outdoor Track & Field Championships",
+"w",
+"44/46 teams match"
+],
+[
+75162,
+"Big 12 Championships",
+"w",
+"9/10 teams match"
+],
+[
+75224,
+"NCAA Division I Outdoor Track & Field Championships",
+"m",
+"71/72 teams match"
+],
+[
+75357,
+"Larry Wieczorek Invitational",
+"m",
+"4/14 teams match"
+],
+[
+75357,
+"Larry Wieczorek Invitational",
+"w",
+"4/11 teams match"
+],
+[
+75509,
+"2023 WSU Open",
+"m",
+"2/5 teams match"
+],
+[
+75509,
+"2023 WSU Open",
+"w",
+"1/7 teams match"
+],
+[
+75548,
+"Alan Connie Shamrock Invitational",
+"m",
+"4/30 teams match"
+],
+[
+75548,
+"Alan Connie Shamrock Invitational",
+"w",
+"3/32 teams match"
+],
+[
+75568,
+"Air Force Lindeman Invitational",
+"m",
+"1/6 teams match"
+],
+[
+75568,
+"Air Force Lindeman Invitational",
+"w",
+"4/8 teams match"
+],
+[
+75635,
+"Bob Pollock",
+"m",
+"1/3 teams match"
+],
+[
+75635,
+"Bob Pollock",
+"w",
+"1/6 teams match"
+],
+[
+75697,
+"Kansas State Winter Invite",
+"w",
+"2/3 teams match"
+],
+[
+75976,
+"Janis Rider / Doug Bolstorff Invitational",
+"m",
+"3/15 teams match"
+],
+[
+75976,
+"Janis Rider / Doug Bolstorff Invitational",
+"w",
+"2/19 teams match"
+],
+[
+75980,
+"Simmons-Harvey Invitational - 2023",
+"m",
+"0/4 teams match"
+],
+[
+75980,
+"Simmons-Harvey Invitational - 2023",
+"w",
+"1/4 teams match"
+],
+[
+76053,
+"SDSU Holiday Open & Multi",
+"m",
+"7/16 teams match"
+],
+[
+76053,
+"SDSU Holiday Open & Multi",
+"w",
+"7/14 teams match"
+],
+[
+76225,
+"2023 Notre Dame Invitational",
+"m",
+"0/4 teams match"
+],
+[
+76225,
+"2023 Notre Dame Invitational",
+"w",
+"1/4 teams match"
+],
+[
+76311,
+"Akron/Kent St.Dual",
+"m",
+"0/2 teams match"
+],
+[
+76311,
+"Akron/Kent St.Dual",
+"w",
+"0/2 teams match"
+],
+[
+76356,
+"Jim Click Shootout 2023 Multi",
+"m",
+"0/6 teams match"
+],
+[
+76356,
+"Jim Click Shootout 2023 Multi",
+"w",
+"2/6 teams match"
+],
+[
+76398,
+"Bison Team Cup",
+"m",
+"1/3 teams match"
+],
+[
+76398,
+"Bison Team Cup",
+"w",
+"2/3 teams match"
+],
+[
+76416,
+"Wisconsin Badger's Windy City Invite II",
+"w",
+"0/7 teams match"
+],
+[
+76534,
+"Navy v. Princeton",
+"m",
+"0/2 teams match"
+],
+[
+76534,
+"Navy v. Princeton",
+"w",
+"0/2 teams match"
+],
+[
+76556,
+"2023 MPSF Indoor Track & Field Championships",
+"m",
+"4/6 teams match"
+],
+[
+76605,
+"UND Open",
+"m",
+"2/13 teams match"
+],
+[
+76605,
+"UND Open",
+"w",
+"6/12 teams match"
+],
+[
+76825,
+"2023 Triton Invite (College/University)",
+"m",
+"1/19 teams match"
+],
+[
+76825,
+"2023 Triton Invite (College/University)",
+"w",
+"1/22 teams match"
+],
+[
+76842,
+"KU-KSU-WSU Triangular",
+"m",
+"0/3 teams match"
+],
+[
+76842,
+"KU-KSU-WSU Triangular",
+"w",
+"0/3 teams match"
+],
+[
+76953,
+"H-Y-P",
+"m",
+"0/3 teams match"
+],
+[
+76953,
+"H-Y-P",
+"w",
+"0/3 teams match"
+],
+[
+76979,
+"Bison Open",
+"m",
+"1/12 teams match"
+],
+[
+76979,
+"Bison Open",
+"w",
+"5/13 teams match"
+],
+[
+77019,
+"Jim Emmerich Alumni Invite",
+"w",
+"12/13 teams match"
+],
+[
+77194,
+"McNeese State Indoor #2",
+"m",
+"7/12 teams match"
+],
+[
+77194,
+"McNeese State Indoor #2",
+"w",
+"5/12 teams match"
+],
+[
+77371,
+"Longhorn Invitational",
+"m",
+"1/6 teams match"
+],
+[
+77371,
+"Longhorn Invitational",
+"w",
+"2/5 teams match"
+],
+[
+77405,
+"NJCAA Region 11 Championship",
+"m",
+"1/7 teams match"
+],
+[
+77405,
+"NJCAA Region 11 Championship",
+"w",
+"1/7 teams match"
+],
+[
+77931,
+"63rd Annual Mt. SAC Relays",
+"m",
+"11/80 teams match"
+],
+[
+77931,
+"63rd Annual Mt. SAC Relays",
+"w",
+"7/72 teams match"
+],
+[
+77976,
+"The 128th Big Meet",
+"m",
+"1/2 teams match"
+],
+[
+77976,
+"The 128th Big Meet",
+"w",
+"0/2 teams match"
+],
+[
+78004,
+"Island Relays Bahamas",
+"m",
+"3/6 teams match"
+],
+[
+78004,
+"Island Relays Bahamas",
+"w",
+"6/8 teams match"
+],
+[
+78323,
+"UCONN Dog Fight",
+"m",
+"1/9 teams match"
+],
+[
+78323,
+"UCONN Dog Fight",
+"w",
+"2/9 teams match"
+],
+[
+78379,
+"McNeese State Cowboy Relays",
+"m",
+"2/7 teams match"
+],
+[
+78379,
+"McNeese State Cowboy Relays",
+"w",
+"2/6 teams match"
+],
+[
+79514,
+"GCAC Conference Championships",
+"w",
+"4/5 teams match"
+],
+[
+81081,
+"2023 Region XI Championships",
+"m",
+"1/7 teams match"
+],
+[
+81081,
+"2023 Region XI Championships",
+"w",
+"3/7 teams match"
+],
+[
+81390,
+"Art Kadish Elm City Challenge",
+"m",
+"3/10 teams match"
+],
+[
+81390,
+"Art Kadish Elm City Challenge",
+"w",
+"3/8 teams match"
+],
+[
+81398,
+"Jimmy Grant Invite",
+"w",
+"0/3 teams match"
+],
+[
+81507,
+"Little Rock Invitational",
+"m",
+"5/10 teams match"
+],
+[
+81507,
+"Little Rock Invitational",
+"w",
+"5/11 teams match"
+],
+[
+81545,
+"2024 Mark Colligan Memorial",
+"m",
+"0/5 teams match"
+],
+[
+81545,
+"2024 Mark Colligan Memorial",
+"w",
+"1/5 teams match"
+],
+[
+81574,
+"2024 Arizona Spring Break Fiesta",
+"w",
+"0/2 teams match"
+],
+[
+81577,
+"Jim Click Shootout Arizona Track and Field",
+"m",
+"1/7 teams match"
+],
+[
+81577,
+"Jim Click Shootout Arizona Track and Field",
+"w",
+"1/7 teams match"
+],
+[
+81677,
+"Pacific Coast Invitational 2024",
+"m",
+"48/54 teams match"
+],
+[
+81677,
+"Pacific Coast Invitational 2024",
+"w",
+"44/52 teams match"
+],
+[
+81841,
+"South Alabama Invitational",
+"m",
+"3/8 teams match"
+],
+[
+81841,
+"South Alabama Invitational",
+"w",
+"5/8 teams match"
+],
+[
+81864,
+"John Gartland Invitational",
+"m",
+"2/5 teams match"
+],
+[
+81864,
+"John Gartland Invitational",
+"w",
+"3/5 teams match"
+],
+[
+81867,
+"Coughlan-Malloy Cup",
+"m",
+"0/2 teams match"
+],
+[
+81867,
+"Coughlan-Malloy Cup",
+"w",
+"1/2 teams match"
+],
+[
+81868,
+"Blue-White Classic",
+"m",
+"4/7 teams match"
+],
+[
+81868,
+"Blue-White Classic",
+"w",
+"1/7 teams match"
+],
+[
+81870,
+"ISU Open",
+"m",
+"2/7 teams match"
+],
+[
+81870,
+"ISU Open",
+"w",
+"2/7 teams match"
+],
+[
+82003,
+"Simmons-Harvey",
+"m",
+"0/4 teams match"
+],
+[
+82003,
+"Simmons-Harvey",
+"w",
+"4/5 teams match"
+],
+[
+82082,
+"Dakota Alumni Classic",
+"m",
+"1/9 teams match"
+],
+[
+82082,
+"Dakota Alumni Classic",
+"w",
+"0/10 teams match"
+],
+[
+82112,
+"Inland Northwest Invitational hosted by Whitworth University",
+"m",
+"7/19 teams match"
+],
+[
+82112,
+"Inland Northwest Invitational hosted by Whitworth University",
+"w",
+"7/16 teams match"
+],
+[
+82146,
+"SDSU Holiday Open & Multi",
+"m",
+"15/23 teams match"
+],
+[
+82146,
+"SDSU Holiday Open & Multi",
+"w",
+"11/20 teams match"
+],
+[
+82153,
+"Washburn Alumni Invite",
+"m",
+"8/14 teams match"
+],
+[
+82153,
+"Washburn Alumni Invite",
+"w",
+"11/13 teams match"
+],
+[
+82251,
+"Akron/Kent St.Dual",
+"m",
+"0/2 teams match"
+],
+[
+82251,
+"Akron/Kent St.Dual",
+"w",
+"0/2 teams match"
+],
+[
+82348,
+"Navy vs. Princeton Dual",
+"m",
+"1/2 teams match"
+],
+[
+82348,
+"Navy vs. Princeton Dual",
+"w",
+"0/2 teams match"
+],
+[
+82614,
+"Livingstone Blue Bear Invitational",
+"m",
+"16/17 teams match"
+],
+[
+82614,
+"Livingstone Blue Bear Invitational",
+"w",
+"9/17 teams match"
+],
+[
+82630,
+"Mark Conover Classic",
+"m",
+"13/14 teams match"
+],
+[
+82630,
+"Mark Conover Classic",
+"w",
+"9/10 teams match"
+],
+[
+82844,
+"Bison Team Cup",
+"m",
+"3/4 teams match"
+],
+[
+82844,
+"Bison Team Cup",
+"w",
+"2/3 teams match"
+],
+[
+82867,
+"SWAC Indoor Track & Field Championships",
+"w",
+"6/12 teams match"
+],
+[
+82947,
+"Harvey Glance Tide and Tigers Dual",
+"m",
+"0/2 teams match"
+],
+[
+82947,
+"Harvey Glance Tide and Tigers Dual",
+"w",
+"1/2 teams match"
+],
+[
+82969,
+"2024 KU-KSU-WSU Triangular",
+"m",
+"0/3 teams match"
+],
+[
+82969,
+"2024 KU-KSU-WSU Triangular",
+"w",
+"0/3 teams match"
+],
+[
+82976,
+"Arkansas Invitational",
+"m",
+"8/21 teams match"
+],
+[
+82976,
+"Arkansas Invitational",
+"w",
+"11/21 teams match"
+],
+[
+83063,
+"The Summit League Indoor Championships",
+"m",
+"5/7 teams match"
+],
+[
+83092,
+"Linfield Erik Anderson Icebreaker Memorial Invitational",
+"m",
+"13/20 teams match"
+],
+[
+83092,
+"Linfield Erik Anderson Icebreaker Memorial Invitational",
+"w",
+"19/22 teams match"
+],
+[
+83138,
+"2024 Bison Open",
+"m",
+"12/16 teams match"
+],
+[
+83138,
+"2024 Bison Open",
+"w",
+"12/15 teams match"
+],
+[
+83141,
+"Washburn Rust Buster",
+"m",
+"17/24 teams match"
+],
+[
+83141,
+"Washburn Rust Buster",
+"w",
+"15/23 teams match"
+],
+[
+83397,
+"SPC Wayland West Texas Shootout",
+"w",
+"0/1 teams match"
+],
+[
+83555,
+"2024 Hornet Invite",
+"m",
+"6/20 teams match"
+],
+[
+83555,
+"2024 Hornet Invite",
+"w",
+"5/17 teams match"
+],
+[
+83589,
+"2024 Colonial Relays",
+"m",
+"4/29 teams match"
+],
+[
+83589,
+"2024 Colonial Relays",
+"w",
+"4/25 teams match"
+],
+[
+83606,
+"45th Aztec Invitational",
+"m",
+"4/18 teams match"
+],
+[
+83606,
+"45th Aztec Invitational",
+"w",
+"2/23 teams match"
+],
+[
+83658,
+"LCC Open 2024",
+"m",
+"9/17 teams match"
+],
+[
+83658,
+"LCC Open 2024",
+"w",
+"11/19 teams match"
+],
+[
+83696,
+"Gibson Invitational",
+"m",
+"21/24 teams match"
+],
+[
+83696,
+"Gibson Invitational",
+"w",
+"18/20 teams match"
+],
+[
+83865,
+"David Noble Relays",
+"m",
+"6/14 teams match"
+],
+[
+83865,
+"David Noble Relays",
+"w",
+"6/14 teams match"
+],
+[
+83886,
+"Sun Belt Indoor Championships",
+"w",
+"12/13 teams match"
+],
+[
+84323,
+"UCONN Dog Fight",
+"m",
+"2/10 teams match"
+],
+[
+84323,
+"UCONN Dog Fight",
+"w",
+"3/11 teams match"
+],
+[
+84324,
+"UCONN Northeast Challenge",
+"m",
+"7/23 teams match"
+],
+[
+84324,
+"UCONN Northeast Challenge",
+"w",
+"6/20 teams match"
+],
+[
+84352,
+"64th Annual Mt. SAC Relays",
+"m",
+"14/90 teams match"
+],
+[
+84352,
+"64th Annual Mt. SAC Relays",
+"w",
+"4/85 teams match"
+],
+[
+85172,
+"Emporia State Relays",
+"m",
+"17/26 teams match"
+],
+[
+85172,
+"Emporia State Relays",
+"w",
+"23/24 teams match"
+],
+[
+85368,
+"Cougar Classic Invitational",
+"m",
+"0/6 teams match"
+],
+[
+85368,
+"Cougar Classic Invitational",
+"w",
+"1/6 teams match"
+],
+[
+85390,
+"NDSU Spring Classic",
+"w",
+"3/4 teams match"
+],
+[
+85649,
+"UCLA vs. USC Dual 2024",
+"m",
+"1/2 teams match"
+],
+[
+85649,
+"UCLA vs. USC Dual 2024",
+"w",
+"1/2 teams match"
+],
+[
+85670,
+"Bucknell Team Challenge",
+"m",
+"5/10 teams match"
+],
+[
+85670,
+"Bucknell Team Challenge",
+"w",
+"3/10 teams match"
+],
+[
+85877,
+"2024 Charlotte Invitational",
+"m",
+"3/17 teams match"
+],
+[
+85877,
+"2024 Charlotte Invitational",
+"w",
+"2/14 teams match"
+],
+[
+86314,
+"Stanford vs Cal Big Meet",
+"m",
+"1/2 teams match"
+],
+[
+86314,
+"Stanford vs Cal Big Meet",
+"w",
+"0/2 teams match"
+],
+[
+86466,
+"NJCAA Division I Outdoor Track & Field Championships",
+"w",
+"33/35 teams match"
+],
+[
+86612,
+"NCAA Division II Outdoor Track & Field Championships",
+"m",
+"60/62 teams match"
+],
+[
+86852,
+"NJCAA Region XI Championships",
+"m",
+"4/7 teams match"
+],
+[
+86852,
+"NJCAA Region XI Championships",
+"w",
+"2/7 teams match"
+],
+[
+87191,
+"Southside Power & Fitness Invitational",
+"m",
+"11/15 teams match"
+],
+[
+87191,
+"Southside Power & Fitness Invitational",
+"w",
+"7/13 teams match"
+],
+[
+87237,
+"Little Rock Invitational",
+"m",
+"2/10 teams match"
+],
+[
+87237,
+"Little Rock Invitational",
+"w",
+"8/10 teams match"
+],
+[
+87290,
+"John Gartland Invitational",
+"m",
+"4/10 teams match"
+],
+[
+87290,
+"John Gartland Invitational",
+"w",
+"4/10 teams match"
+],
+[
+87304,
+"Pacesetter Sports Invitational",
+"m",
+"11/12 teams match"
+],
+[
+87304,
+"Pacesetter Sports Invitational",
+"w",
+"11/12 teams match"
+],
+[
+87305,
+"Gibson Invitational",
+"m",
+"20/28 teams match"
+],
+[
+87305,
+"Gibson Invitational",
+"w",
+"13/30 teams match"
+],
+[
+87358,
+"The University of South Alabama Jaguar Invitational",
+"m",
+"9/16 teams match"
+],
+[
+87358,
+"The University of South Alabama Jaguar Invitational",
+"w",
+"9/16 teams match"
+],
+[
+87405,
+"The 130th Big Meet",
+"m",
+"0/2 teams match"
+],
+[
+87405,
+"The 130th Big Meet",
+"w",
+"1/2 teams match"
+],
+[
+87510,
+"UConn Husky Challenge",
+"m",
+"3/4 teams match"
+],
+[
+87510,
+"UConn Husky Challenge",
+"w",
+"1/3 teams match"
+],
+[
+87533,
+"Navy vs Princeton",
+"m",
+"0/2 teams match"
+],
+[
+87533,
+"Navy vs Princeton",
+"w",
+"1/2 teams match"
+],
+[
+87543,
+"2025 Rod McCravy Memorial Track & Field",
+"m",
+"15/17 teams match"
+],
+[
+87543,
+"2025 Rod McCravy Memorial Track & Field",
+"w",
+"13/16 teams match"
+],
+[
+87646,
+"New Mexico Collegiate Classic 2025 (16 Team Invite)",
+"m",
+"8/18 teams match"
+],
+[
+87646,
+"New Mexico Collegiate Classic 2025 (16 Team Invite)",
+"w",
+"8/19 teams match"
+],
+[
+87711,
+"NAIA / Juco Challenge",
+"w",
+"21/29 teams match"
+],
+[
+87829,
+"Louisville Opener",
+"m",
+"1/4 teams match"
+],
+[
+87829,
+"Louisville Opener",
+"w",
+"2/4 teams match"
+],
+[
+87841,
+"2025 Simmons-Harvey Invitational",
+"m",
+"0/3 teams match"
+],
+[
+87841,
+"2025 Simmons-Harvey Invitational",
+"w",
+"0/3 teams match"
+],
+[
+87876,
+"KU-KSU-WSU Triangular",
+"m",
+"0/3 teams match"
+],
+[
+87876,
+"KU-KSU-WSU Triangular",
+"w",
+"0/3 teams match"
+],
+[
+88060,
+"SDSU Holiday Open and Multi",
+"m",
+"9/27 teams match"
+],
+[
+88060,
+"SDSU Holiday Open and Multi",
+"w",
+"8/21 teams match"
+],
+[
+88228,
+"McNeese Cowboy Relays",
+"m",
+"1/13 teams match"
+],
+[
+88228,
+"McNeese Cowboy Relays",
+"w",
+"4/12 teams match"
+],
+[
+88246,
+"EKU Spring Invitational",
+"w",
+"8/11 teams match"
+],
+[
+88268,
+"Myrtle Beach Collegiate Challenge",
+"m",
+"12/31 teams match"
+],
+[
+88268,
+"Myrtle Beach Collegiate Challenge",
+"w",
+"11/32 teams match"
+],
+[
+88290,
+"Coughlan-Malloy Cup",
+"m",
+"0/2 teams match"
+],
+[
+88290,
+"Coughlan-Malloy Cup",
+"w",
+"0/2 teams match"
+],
+[
+88431,
+"2025 Mark Colligan Memorial",
+"m",
+"0/4 teams match"
+],
+[
+88431,
+"2025 Mark Colligan Memorial",
+"w",
+"1/4 teams match"
+],
+[
+88781,
+"29th Annual Monmouth University Track & Field Season Opener",
+"w",
+"16/20 teams match"
+],
+[
+88885,
+"SIUE Cougar Classic",
+"m",
+"12/14 teams match"
+],
+[
+89276,
+"Mark Conover Classic",
+"m",
+"16/17 teams match"
+],
+[
+89276,
+"Mark Conover Classic",
+"w",
+"10/11 teams match"
+],
+[
+89286,
+"ACU Wes Kittley Invitational 2025",
+"w",
+"1/5 teams match"
+],
+[
+89351,
+"2025 MPSF Indoor TF Champs",
+"m",
+"5/6 teams match"
+],
+[
+89351,
+"2025 MPSF Indoor TF Champs",
+"w",
+"7/13 teams match"
+],
+[
+89367,
+"West Texas Relays",
+"w",
+"1/4 teams match"
+],
+[
+89398,
+"UConn Dog Fight",
+"m",
+"1/7 teams match"
+],
+[
+89398,
+"UConn Dog Fight",
+"w",
+"2/7 teams match"
+],
+[
+89414,
+"2025 Colonial Relays",
+"m",
+"14/33 teams match"
+],
+[
+89414,
+"2025 Colonial Relays",
+"w",
+"14/30 teams match"
+],
+[
+89418,
+"UConn Northeast Challenge",
+"m",
+"11/14 teams match"
+],
+[
+89418,
+"UConn Northeast Challenge",
+"w",
+"11/12 teams match"
+],
+[
+89494,
+"Sun Belt Conference Indoor Track Championship 2025",
+"w",
+"12/13 teams match"
+],
+[
+89523,
+"Southern Conference Indoor Track and Field Championships 202",
+"m",
+"4/7 teams match"
+],
+[
+89523,
+"Southern Conference Indoor Track and Field Championships 202",
+"w",
+"6/8 teams match"
+],
+[
+89525,
+"ASUN Indoor Track & Field Championships",
+"m",
+"5/7 teams match"
+],
+[
+89525,
+"ASUN Indoor Track & Field Championships",
+"w",
+"7/9 teams match"
+],
+[
+89574,
+"2025 Jim Click Shootout & Multis",
+"m",
+"1/6 teams match"
+],
+[
+89574,
+"2025 Jim Click Shootout & Multis",
+"w",
+"2/6 teams match"
+],
+[
+89637,
+"2025 Oregon Team Invite",
+"m",
+"0/5 teams match"
+],
+[
+89637,
+"2025 Oregon Team Invite",
+"w",
+"0/7 teams match"
+],
+[
+89763,
+"Don McGarey Invitational",
+"m",
+"6/9 teams match"
+],
+[
+89763,
+"Don McGarey Invitational",
+"w",
+"6/9 teams match"
+],
+[
+89912,
+"USC vs UCLA",
+"m",
+"1/2 teams match"
+],
+[
+89912,
+"USC vs UCLA",
+"w",
+"1/2 teams match"
+],
+[
+89972,
+"John Jacobs Collegiate Invitational",
+"m",
+"7/17 teams match"
+],
+[
+89972,
+"John Jacobs Collegiate Invitational",
+"w",
+"10/17 teams match"
+],
+[
+90378,
+"Troy Doc Anderson Invitational & Multi 2025",
+"m",
+"13/18 teams match"
+],
+[
+90378,
+"Troy Doc Anderson Invitational & Multi 2025",
+"w",
+"13/16 teams match"
+],
+[
+90719,
+"WSU Cougar Classic",
+"m",
+"6/7 teams match"
+],
+[
+90719,
+"WSU Cougar Classic",
+"w",
+"5/6 teams match"
+],
+[
+90756,
+"2025 Charlotte Invitational",
+"m",
+"1/18 teams match"
+],
+[
+90756,
+"2025 Charlotte Invitational",
+"w",
+"3/15 teams match"
+],
+[
+91007,
+"Bison Open",
+"m",
+"6/10 teams match"
+],
+[
+91007,
+"Bison Open",
+"w",
+"8/10 teams match"
+],
+[
+91032,
+"Bucknell Team Challenge",
+"m",
+"2/7 teams match"
+],
+[
+91032,
+"Bucknell Team Challenge",
+"w",
+"2/7 teams match"
+],
+[
+91170,
+"Florida Relays",
+"m",
+"93/112 teams match"
+],
+[
+91170,
+"Florida Relays",
+"w",
+"100/118 teams match"
+],
+[
+91283,
+"2025 Texas Invitational",
+"m",
+"13/16 teams match"
+],
+[
+91283,
+"2025 Texas Invitational",
+"w",
+"12/18 teams match"
+],
+[
+91438,
+"2025 Big Sky Conference Outdoor Track and Field Championship",
+"m",
+"7/10 teams match"
+],
+[
+91438,
+"2025 Big Sky Conference Outdoor Track and Field Championship",
+"w",
+"7/10 teams match"
+],
+[
+91487,
+"SIUE Cougar Classic",
+"m",
+"13/15 teams match"
+],
+[
+91929,
+"CIAA Outdoor Track and Field Championship 2025",
+"m",
+"7/8 teams match"
+],
+[
+91929,
+"CIAA Outdoor Track and Field Championship 2025",
+"w",
+"6/11 teams match"
+],
+[
+92296,
+"Jim Green Invitational",
+"w",
+"3/5 teams match"
+],
+[
+92533,
+"South Alabama Last Chance Meet",
+"m",
+"4/7 teams match"
+],
+[
+92533,
+"South Alabama Last Chance Meet",
+"w",
+"3/6 teams match"
+],
+[
+92627,
+"University of South Alabama Jaguar Invite",
+"m",
+"5/15 teams match"
+],
+[
+92627,
+"University of South Alabama Jaguar Invite",
+"w",
+"12/15 teams match"
+],
+[
+92759,
+"John Gartland Invitational",
+"m",
+"2/8 teams match"
+],
+[
+92759,
+"John Gartland Invitational",
+"w",
+"3/7 teams match"
+],
+[
+92762,
+"ISU Open",
+"m",
+"9/11 teams match"
+],
+[
+92762,
+"ISU Open",
+"w",
+"8/11 teams match"
+],
+[
+92763,
+"Pacesetter Invitational",
+"m",
+"20/21 teams match"
+],
+[
+92763,
+"Pacesetter Invitational",
+"w",
+"14/18 teams match"
+],
+[
+92764,
+"Gibson Invitational",
+"m",
+"9/29 teams match"
+],
+[
+92764,
+"Gibson Invitational",
+"w",
+"7/28 teams match"
+],
+[
+93120,
+"College Meet Opener",
+"m",
+"8/10 teams match"
+],
+[
+93120,
+"College Meet Opener",
+"w",
+"8/10 teams match"
+],
+[
+93451,
+"Bison Team Cup",
+"m",
+"3/5 teams match"
+],
+[
+93451,
+"Bison Team Cup",
+"w",
+"2/6 teams match"
+],
+[
+93554,
+"Navy vs Princeton",
+"m",
+"1/2 teams match"
+],
+[
+93554,
+"Navy vs Princeton",
+"w",
+"0/2 teams match"
+],
+[
+93755,
+"John Weaver Invitational",
+"m",
+"2/15 teams match"
+],
+[
+93755,
+"John Weaver Invitational",
+"w",
+"2/14 teams match"
+],
+[
+94052,
+"Summit League Indoor Championship",
+"m",
+"4/7 teams match"
+],
+[
+94052,
+"Summit League Indoor Championship",
+"w",
+"6/8 teams match"
+],
+[
+94082,
+"Spokane Sports Showcase 2026",
+"w",
+"10/11 teams match"
+],
+[
+94247,
+"Bob Davidson Team Challenge presented by Norris Woody",
+"m",
+"8/12 teams match"
+],
+[
+94247,
+"Bob Davidson Team Challenge presented by Norris Woody",
+"w",
+"6/12 teams match"
+],
+[
+94525,
+"2026 MPSF Indoor TF Championships",
+"w",
+"13/14 teams match"
+],
+[
+94654,
+"2026 Mountain West Indoor Track and Field Championships",
+"w",
+"11/12 teams match"
+],
+[
+94729,
+"Mark Colligan Memorial",
+"m",
+"0/4 teams match"
+],
+[
+94729,
+"Mark Colligan Memorial",
+"w",
+"0/4 teams match"
+],
+[
+94835,
+"Jim Emmerich Alumni Meet",
+"m",
+"1/5 teams match"
+],
+[
+94835,
+"Jim Emmerich Alumni Meet",
+"w",
+"2/7 teams match"
+],
+[
+94844,
+"Mark Colligan Memorial",
+"m",
+"0/4 teams match"
+],
+[
+94844,
+"Mark Colligan Memorial",
+"w",
+"0/4 teams match"
+],
+[
+94878,
+"2026 Conover Classic",
+"m",
+"5/14 teams match"
+],
+[
+94878,
+"2026 Conover Classic",
+"w",
+"9/13 teams match"
+],
+[
+94901,
+"Don McGarey Invitational",
+"m",
+"1/10 teams match"
+],
+[
+94901,
+"Don McGarey Invitational",
+"w",
+"3/12 teams match"
+],
+[
+94939,
+"2026 Collegiate Strawberry Relays",
+"m",
+"3/12 teams match"
+],
+[
+94939,
+"2026 Collegiate Strawberry Relays",
+"w",
+"3/10 teams match"
+],
+[
+94990,
+"2026 Big Sky Conference Indoor",
+"w",
+"8/10 teams match"
+],
+[
+95049,
+"Alan Connie Shamrock Invitational (Roster Registration)",
+"m",
+"1/32 teams match"
+],
+[
+95049,
+"Alan Connie Shamrock Invitational (Roster Registration)",
+"w",
+"11/30 teams match"
+],
+[
+95103,
+"2026 ASUN Indoor Track & Field Championships",
+"w",
+"5/9 teams match"
+],
+[
+95333,
+"Southern Conference Indoor Track and Field Championships 202",
+"m",
+"3/7 teams match"
+],
+[
+95333,
+"Southern Conference Indoor Track and Field Championships 202",
+"w",
+"2/9 teams match"
+],
+[
+95387,
+"Missouri Valley Conference Championship",
+"m",
+"8/10 teams match"
+],
+[
+95387,
+"Missouri Valley Conference Championship",
+"w",
+"8/10 teams match"
+],
+[
+95459,
+"Big 12 Championships",
+"w",
+"15/16 teams match"
+],
+[
+95542,
+"Jaguar Invitational",
+"m",
+"3/12 teams match"
+],
+[
+95542,
+"Jaguar Invitational",
+"w",
+"4/11 teams match"
+],
+[
+95554,
+"60th Colonial Relays",
+"m",
+"6/23 teams match"
+],
+[
+95554,
+"60th Colonial Relays",
+"w",
+"3/20 teams match"
+],
+[
+95667,
+"2026 Utah Valley Collegiate Invite",
+"m",
+"5/10 teams match"
+],
+[
+95667,
+"2026 Utah Valley Collegiate Invite",
+"w",
+"7/9 teams match"
+],
+[
+95696,
+"UConn Dog Fight",
+"m",
+"3/13 teams match"
+],
+[
+95696,
+"UConn Dog Fight",
+"w",
+"3/13 teams match"
+],
+[
+95706,
+"The 131st Big Meet",
+"m",
+"0/2 teams match"
+],
+[
+95706,
+"The 131st Big Meet",
+"w",
+"0/2 teams match"
+],
+[
+95813,
+"Bob Larson & Jim Bush Legends",
+"m",
+"24/25 teams match"
+],
+[
+95813,
+"Bob Larson & Jim Bush Legends",
+"w",
+"27/30 teams match"
+],
+[
+95932,
+"2026 IC4A-ECAC Outdoor T&F Championships",
+"m",
+"13/18 teams match"
+],
+[
+95932,
+"2026 IC4A-ECAC Outdoor T&F Championships",
+"w",
+"16/18 teams match"
+],
+[
+96024,
+"Terry Long Florida State Relays",
+"m",
+"0/10 teams match"
+],
+[
+96024,
+"Terry Long Florida State Relays",
+"w",
+"1/8 teams match"
+],
+[
+96113,
+"Oregon Team Invitational",
+"m",
+"0/6 teams match"
+],
+[
+96113,
+"Oregon Team Invitational",
+"w",
+"0/8 teams match"
+],
+[
+96184,
+"Southern Conference Outdoor Track and Field",
+"m",
+"4/8 teams match"
+],
+[
+96184,
+"Southern Conference Outdoor Track and Field",
+"w",
+"5/10 teams match"
+],
+[
+96220,
+"OU Alumni O'Ring Open",
+"m",
+"2/11 teams match"
+],
+[
+96220,
+"OU Alumni O'Ring Open",
+"w",
+"4/11 teams match"
+],
+[
+96221,
+"Sooner Invitational",
+"m",
+"5/11 teams match"
+],
+[
+96221,
+"Sooner Invitational",
+"w",
+"2/9 teams match"
+],
+[
+96410,
+"The 2026 American Outdoor Track & Field Championships",
+"m",
+"8/10 teams match"
+],
+[
+96410,
+"The 2026 American Outdoor Track & Field Championships",
+"w",
+"11/13 teams match"
+],
+[
+96454,
+"USC v. UCLA Dual Meet",
+"m",
+"1/2 teams match"
+],
+[
+96454,
+"USC v. UCLA Dual Meet",
+"w",
+"1/2 teams match"
+],
+[
+96702,
+"2026 ASUN Outdoor Track & Field Championship",
+"w",
+"3/9 teams match"
+],
+[
+96788,
+"Big Sky Outdoor Track & Field Championships",
+"m",
+"8/10 teams match"
+],
+[
+96788,
+"Big Sky Outdoor Track & Field Championships",
+"w",
+"8/10 teams match"
+],
+[
+96826,
+"Stumptown Running West Coast Twilight",
+"m",
+"3/12 teams match"
+],
+[
+96826,
+"Stumptown Running West Coast Twilight",
+"w",
+"1/7 teams match"
+]
+],
+"meets": 361
+}
