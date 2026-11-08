@@ -74,7 +74,7 @@ function withFinder(pathname, body) {
   const p = pathname.toLowerCase(), g = /(womens|girls)/.test(p) ? "w" : "m";
   const e = [...CHECK_EV].sort((a, b) => b.length - a.length).find(x => p.includes("-" + slug(x) + ".") || p.includes("-" + slug(x) + "-") || p.includes("/" + slug(x) + "."));
   const src = `/embed.html?in=${fam}&g=${g}${e ? "&e=" + encodeURIComponent(e) : ""}`;
-  const f = `<section class="finder" id="finder"><iframe src="${src}" title="Where would your mark fit? College track standards finder" loading="lazy" style="display:block;width:100%;height:440px;border:0;border-radius:16px;background:#fff;box-shadow:0 0 0 1px rgba(16,12,40,.08)"></iframe></section>`;
+  const f = `<section class="finder" id="finder" style="margin:24px 0"><iframe src="${src}" title="Where would your mark fit? College track standards finder" loading="lazy" style="display:block;width:100%;height:440px;border:0;border-radius:16px;background:#fff;box-shadow:0 0 0 1px rgba(16,12,40,.08)"></iframe></section>`;
   let i = body.indexOf("</table>"); if (i < 0) return body + f;
   i += 8; if (body.startsWith("</div>", i)) i += 6;
   return body.slice(0, i) + f + body.slice(i);

@@ -225,7 +225,7 @@ const ck0=check;check=function(){ck0();const g=$("g").value,e=$("e").value,m=$("
  const fit=parseInt(n.replace(/[^0-9]/g,""),10)||0;
  o.insertAdjacentHTML("beforeend",'<div class="cta"><p>'+(PR?(fit?"That's "+fit.toLocaleString()+" programs to reach. Want our team to get your athlete in front of their coaches?":"Every mark has a path, and some programs recruit on progress. Want a plan for your athlete?"):(fit?"That's "+fit.toLocaleString()+" programs. Want help getting in front of their coaches?":"Every mark has a path, and some programs recruit on progress. Want a plan?"))+(IN&&fit?' <a href="'+all.toString().replace(/"/g,"&quot;")+'" target="_top" style="background:none;padding:0;color:#C9B8FF;display:inline">See the schools</a>':"")+'</p><a href="'+f.toString().replace(/"/g,"&quot;")+'" target="_top">Get your free evaluation</a></div>');
  try{parent.postMessage({prFinder:"result",e:e,fit:fit},"*")}catch(z){}};
-document.addEventListener("click",ev=>{const a=ev.target.closest&&ev.target.closest(".cta a");if(a)try{parent.postMessage({prFinder:"cta"},"*")}catch(z){}});
+document.addEventListener("click",ev=>{const a=ev.target.closest&&ev.target.closest('.cta a[href*="parentfunnel"]');if(a)try{parent.postMessage({prFinder:"cta"},"*")}catch(z){}});
 const sendH=()=>{if(PR||IN)try{parent.postMessage({prFinder:"h",h:Math.ceil(document.body.getBoundingClientRect().height)},"*")}catch(z){}};
 const ck1=check;check=function(){ck1();sendH()};addEventListener("load",sendH);addEventListener("resize",sendH);
 $("go").onclick=()=>check();$("v").onkeydown=ev=>{if(ev.key==="Enter")check()};
