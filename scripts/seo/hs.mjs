@@ -23,7 +23,7 @@ export const CONV = {
   "Mile": { to: "1500m", k: { m: 0.926, w: 0.926 }, how: "Mile × 0.926" },
   "3200m": { to: "3000m", k: { m: 0.9314, w: 0.9314 }, next: { to: "5000m", k: 1.7186 }, how: "3200m × 0.9314 = 3000m, then 3000m × 1.7186 = 5000m (Riegel formula)" },
   "300m Hurdles": { to: "400m Hurdles", k: { m: 1.41, w: 1.45 }, how: "men ×1.41, women ×1.45 (same hurdle height in high school and college)" },
-  '110m Hurdles (39")': { to: "110m Hurdles", add: 0.5, how: "39-inch high school time + 0.5 seconds for the 42-inch college hurdles" } };
+  '110m Hurdles (39")': { to: "110m Hurdles", add: 0.2, how: "39-inch high school time + 0.2 seconds for the 42-inch college hurdles" } };
 export const HS_EVENTS = ["100m", "200m", "400m", "800m", "1600m", "3200m", "100m Hurdles", '110m Hurdles (39")', "300m Hurdles", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Javelin", "Hammer"];
 /* field events read "how far do you need to throw the shot put", "how high do you need to jump in the high jump" (Ryan 2026-10-16:
    the field pages said "run the Shot Put"); Javelin and Hammer added (keyword gap: throws cluster). URLs unchanged. */

@@ -154,14 +154,14 @@ const ord=n=>n+(n%100>=11&&n%100<=13?"th":{1:"st",2:"nd",3:"rd"}[n%10]||"th");
 const meets=(e,v,std)=>{const s=parse(std,e);if(s==null||v==null)return false;return FIELD.has(e)?v>=s-1e-9:v<=s+1e-9};
 /* High school -> college conversions. One table, used everywhere (finder, school pages, AI).
    Distance: 1600m -> mile x1.0058, mile -> 1500m x0.926 (so 1600m -> 1500m x0.9314); 3200m -> 3000m x0.9314;
-   3000m -> 5000m by Riegel (5000/3000)^1.06 = x1.7186. Hurdles: boys 110mH 39" -> 42" college height +0.5s;
+   3000m -> 5000m by Riegel (5000/3000)^1.06 = x1.7186. Hurdles: boys 110mH 39" -> 42" college height +0.2s (Ryan 2026-11-07: 13.7 high school = 13.9 college);
    300mH -> 400mH x1.41 (men, both 36") / x1.45 (women, both 30"). Women's 100mH is 33" in both, so no change.
    Each conversion carries a tight range (low, mid, high); tiers use the mid value. */
 const CONV={
   "1600m":{to:"1500m",k:[0.9284,0.9314,0.9344],how:"1600m × 0.9314 (1600m to mile ×1.0058, mile to 1500m ×0.926)"},
   "Mile":{to:"1500m",k:[0.923,0.926,0.929],how:"Mile × 0.926"},
   "3200m":{to:"3000m",k:[0.9284,0.9314,0.9344],next:{to:"5000m",k:1.7186},how:"3200m × 0.9314 = 3000m; 3000m × 1.7186 = 5000m (Riegel)"},
-  "110m Hurdles (39\")":{to:"110m Hurdles",lab:"110m Hurdles at 42\"",add:[0.4,0.5,0.6],how:"39\" high school time + 0.5s (0.4 to 0.6) for 42\" college hurdles"},
+  "110m Hurdles (39\")":{to:"110m Hurdles",lab:"110m Hurdles at 42\"",add:[0.1,0.2,0.3],how:"39\" high school time + 0.2s (0.1 to 0.3) for 42\" college hurdles"},
   "300m Hurdles":{to:"400m Hurdles",k:{m:[1.39,1.41,1.43],w:[1.43,1.45,1.47]},how:"Men ×1.41 (1.39 to 1.43), women ×1.45 (1.43 to 1.47). Same hurdle height in both (36\" men, 30\" women)"}};
 const fmtT=x=>{if(x==null)return"";if(x<60)return x.toFixed(2);const m=Math.floor(x/60),s=x-m*60;return m+":"+(s<10?"0":"")+s.toFixed(2)};
 function convert(e,g,v){const c=CONV[e];if(!c||v==null)return null;
@@ -2169,7 +2169,7 @@ Answer ANY question about college track standards, results, athletes, schools, c
 Data facts:
 - ${NSTD} colleges with levels: NCAA D1, NCAA D2, NCAA D3, NAIA. Junior colleges (NJCAA) have pages with season results only, no levels. Levels: Target (the marks that typically earn the strongest scholarship interest, depending on school funding), Recruit (where coaches typically start recruiting conversations and scholarship talks; not a guarantee), Walk-On (minimum mark to earn a roster spot).
 - Starred (official) schools use their own published chart (2024 or newer, verified mark for mark). Others: NCAA D1/D2 Target=8th, Recruit=15th, Walk-On=25th best mark in their 2026 conference, except Power 4 (ACC, Big Ten, Big 12, SEC): sprints and distance (100m-5000m) use every conference athlete's 2026 best, Target=top 10%, Recruit=top 25%; hurdles, jumps and throws Target=middle of the 8th-10th best, Recruit=middle of the 15th-25th; NO Walk-On level anywhere in the Power 4 (only a handful of case-by-case walk-on spots, so the Recruit mark is the real bar; starred schools use their own chart); NCAA D3/NAIA Target=top 8, Walk-On=40th, no Recruit level (NCAA D3 gives no athletic scholarships).
-- High school conversions: 1600m x0.9314 = 1500m; Mile x0.926 = 1500m; 3200m x0.9314 = 3000m, then x1.7186 = 5000m; 300m hurdles x1.41 men / x1.45 women = 400m hurdles; boys 39-inch 110m hurdles +0.5s = 42-inch.
+- High school conversions: 1600m x0.9314 = 1500m; Mile x0.926 = 1500m; 3200m x0.9314 = 3000m, then x1.7186 = 5000m; 300m hurdles x1.41 men / x1.45 women = 400m hurdles; boys 39-inch 110m hurdles +0.2s = 42-inch.
 - Results (TFRRS performance lists) available: ${yearsAvail()}.
 - Events: ${EVENTS.join(", ")}.
 

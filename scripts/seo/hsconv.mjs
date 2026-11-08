@@ -1,7 +1,7 @@
 /* College standards in high school events (Ryan 2026-10-25: "high school conversion column at the top of every school and
    division table ... 1600m, 3200m, and 300m hurdles"). Same factors as the app (src/standards/app.js CONV / toHS), inverted:
      1600m = 1500m / 0.9314            3200m = 3000m / 0.9314, or 5000m / 1.7186 / 0.9314 (Riegel)
-     300m hurdles = 400m hurdles / 1.41 men, / 1.45 women (same hurdle height)      boys 110mH 39" = college 42" time - 0.5 s
+     300m hurdles = 400m hurdles / 1.41 men, / 1.45 women (same hurdle height)      boys 110mH 39" = college 42" time - 0.2 s (Ryan 2026-11-07)
    Sprints, 800m, women's 100mH and field events are the same event in high school and college. Official 1600m/3200m/300mH
    marks a school publishes win over a conversion. */
 export const HS_EVENTS = g => ["100m", "200m", "400m", "800m", "1600m", "3200m", g === "m" ? "110m Hurdles" : "100m Hurdles", "300m Hurdles", "High Jump", "Pole Vault", "Long Jump", "Triple Jump", "Shot Put", "Discus", "Javelin"];
@@ -11,7 +11,7 @@ export const fmtXC = x => x == null ? "–" : `${Math.floor(x / 60)}:${String((x
 export function hsLevel(level, e, g, cell, parse) {
   const v = cell == null || cell === "" ? null : parse(String(cell).replace(/ est\.$/, ""), e);
   return v == null ? null : e === "1500m" ? fmtHS(v / 0.9314) : e === "3000m" ? fmtHS(v / 0.9314) : e === "5000m" ? fmtHS(v / 1.7186 / 0.9314)
-    : e === "400m Hurdles" ? fmtHS(v / (g === "m" ? 1.41 : 1.45)) : e === "110m Hurdles" ? fmtHS(v - 0.5) : null;
+    : e === "400m Hurdles" ? fmtHS(v / (g === "m" ? 1.41 : 1.45)) : e === "110m Hurdles" ? fmtHS(v - 0.2) : null;
 }
 /* rows [label, [target, recruit, walk-on], note] for a school or a division, from a std(g, e) -> [t, r, w] getter */
 export function hsRows(get, g, parse) {

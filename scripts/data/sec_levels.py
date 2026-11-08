@@ -91,6 +91,9 @@ def big_ten_men_field(d, db):
         old = ct[e][1][0]
         ct[e][1] = cell(rows[14][4], e)
         print("Big Ten m", e, "Recruit", old, "->", ct[e][1][0])
+    ct["110m Hurdles"][1] = ["13.90", ""]   # Ryan 2026-11-07: "still too soft ... 13.9 and hs 13.7"
+    ct["110m Hurdles"][0] = ["13.66", ""]   # Target must stay faster than Recruit: 3rd best Big Ten mark of 2026
+    print("Big Ten m 110m Hurdles Recruit -> 13.90 (Ryan)")
     old = ct["High Jump"][1][0]
     ct["High Jump"][1] = ["2.08m", "6' 10\""]
     print("Big Ten m High Jump Recruit", old, "-> 2.08m (6' 10\")")
