@@ -55,7 +55,7 @@ const fmtM = (e, v) => core.cfg().fmt ? core.cfg().fmt(e, +v) : String(v);
 function blankKid() { const I = core.cfg().intent || {}; return { id: null, first: "", last: "", gender: I.g || "", year: I.gr ? SENIOR + (12 - +I.gr) : "", state: D && D.state || "", school: "", gpa: "", email: "", phone: "", dream: [], marks: [[I.e || "", I.m || ""]], avatar: null, banner: null, theme: null }; }
 function selfDraft(p = core.profile() || {}) {
   const I = VIEW_AS ? {} : core.cfg().intent || {};
-  return { id: null, role: p.role || "", first: p.first_name || "", last: p.last_name || "", phone: p.phone || "", sms: !!p.sms_consent,
+  return { id: null, role: p.role || "", first: p.first_name || "", last: p.last_name || "", phone: p.phone || "", sms: !!p.sms_consent, em: !!p.email_updates,
     gender: p.gender || I.g || "", year: p.grad_year || (I.gr ? SENIOR + (12 - +I.gr) : ""), state: p.state || "", school: p.high_school || "", gpa: p.gpa != null ? String(p.gpa) : "",
     pname: p.parent_name || "", pemail: p.parent_email || "", pphone: p.parent_phone || "", age: !!p.age_13_plus,
     divs: p.target_divisions || [], schol: p.scholarship_priority || "",
@@ -116,7 +116,7 @@ function stepBody(k) {
     <div class="onbroles">${ROLES.map(([v, l, d]) => `<button type="button" data-set="role" data-v="${v}" aria-checked="${D.role === v}" role="radio"><span class="ri">${svg(ICON[v])}</span><b>${l}</b><small>${d}</small></button>`).join("")}</div>`;
   if (k === "you") return `<h1>${p ? "About you" : "Your name"}</h1><p class="onbsub">${p ? "Next you'll add your athlete. You can add more than one." : "So we know who's using the site."}</p>
     <div class="onbg2">${inp("first", "First name", D.first, 'autocomplete="given-name" maxlength="60"', "", "d")}${inp("last", "Last name", D.last, 'autocomplete="family-name" maxlength="60"', "", "d")}</div>
-    ${p ? inp("phone", "Your phone", D.phone, 'type="tel" autocomplete="tel" maxlength="30"', "", "d") + `<label class="onbck"><input type="checkbox" data-ck="sms" ${D.sms ? "checked" : ""}><span>Preferred Recruit may text me about my athlete's recruiting. Message rates apply. Reply STOP to opt out.</span></label>` : ""}${AGE()}`;
+    ${p ? inp("phone", "Your phone", D.phone, 'type="tel" autocomplete="tel" maxlength="30"', "", "d") + `<label class="onbck"><input type="checkbox" data-ck="sms" ${D.sms ? "checked" : ""}><span>Preferred Recruit may text me about my athlete's recruiting. Message rates apply. Reply STOP to opt out.</span></label><label class="onbck"><input type="checkbox" data-ck="em" ${D.em ? "checked" : ""}><span>Email me when the standards change for my athlete&#39;s events and schools. One email a month at most. Unsubscribe any time.</span></label>` : ""}${AGE()}`;
   if (k === "about") return `<h1>${p ? (MODE === "addkid" ? "Add another athlete" : "Your athlete") : "About you"}</h1><p class="onbsub">${p ? "Each athlete gets their own profile, PRs and college matches." : "The basics coaches look at first."}</p>
     <div class="onbg2">${inp("first", p ? "Athlete's first name" : "First name", sub.first, 'autocomplete="off" maxlength="60"')}${inp("last", p ? "Athlete's last name" : "Last name", sub.last, 'autocomplete="off" maxlength="60"')}</div>
     <div class="onbq"><span>Class</span>${opt("year", [...CLASSES.map(([y, l]) => [y, l, "Class of " + y]), [SENIOR - 1, "In college", "Already there"]], sub.year, "c5")}</div>
@@ -393,7 +393,7 @@ async function save(k, finish) {
   const C = core.cfg(), uid = core.ses().user.id, sub = S(), kid = par();
   const prof = { id: uid, role: D.role, onboarding_step: STEP + 1, site_sid: C.sid || null };
   if (k === "who") Object.assign(prof, {});
-  if (k === "you") Object.assign(prof, { first_name: D.first || null, last_name: D.last || null, phone: kid ? (D.phone || null) : null, sms_consent: kid && !!D.phone && !!D.sms, age_13_plus: true });
+  if (k === "you") Object.assign(prof, { first_name: D.first || null, last_name: D.last || null, phone: kid ? (D.phone || null) : null, sms_consent: kid && !!D.phone && !!D.sms, email_updates: kid && !!D.em, age_13_plus: true });
   const yr = sub.year ? +sub.year : null, gpa = sub.gpa !== "" && sub.gpa != null && !isNaN(+sub.gpa) ? Math.round(+sub.gpa * 100) / 100 : null;
   if (k === "about" && !kid) Object.assign(prof, { first_name: sub.first, last_name: sub.last || null, grad_year: yr, grade: yr ? gradeOf(yr) : null, gender: sub.gender || null, state: sub.state || null, high_school: sub.school || null, phone: sub.phone || null, dream_schools: (sub.dream || []).length ? sub.dream : null });
   if (k === "gpa" && !kid) Object.assign(prof, { gpa, parent_name: D.pname || null, parent_email: D.pemail || null, parent_phone: D.pphone || null, age_13_plus: true });

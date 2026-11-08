@@ -239,7 +239,7 @@ function draw() {
 
 function drawFinish(b, err) {
   const p = PRO || {}, I = CFG.intent || {};
-  if (!FORM._init) Object.assign(FORM, { _init: 1, role: p.role || "", gender: p.gender || I.g || "", grade: p.grade || (I.gr ? String(I.gr) : ""), state: p.state || "", gpa: p.gpa_band || "", pe: p.parent_email || "", pp: p.parent_phone || "", sms: !!p.sms_consent, age: !!p.age_13_plus, marks: FORM.marks || [[I.e || "", I.m || ""]] });
+  if (!FORM._init) Object.assign(FORM, { _init: 1, role: p.role || "", gender: p.gender || I.g || "", grade: p.grade || (I.gr ? String(I.gr) : ""), state: p.state || "", gpa: p.gpa_band || "", pe: p.parent_email || "", pp: p.parent_phone || "", sms: !!p.sms_consent, em: !!p.email_updates, age: !!p.age_13_plus, marks: FORM.marks || [[I.e || "", I.m || ""]] });
   const ath = FORM.role === "athlete", par = FORM.role === "parent", fam = ath || par;
   const evList = FORM.gender ? (CFG.events ? CFG.events(FORM.gender) : []) : [];
   const evOpt = cur => `<option value="">Event</option>${evList.map(e => `<option value="${esc(e)}" ${e === cur ? "selected" : ""}>${esc(CFG.evName ? CFG.evName(e, FORM.gender) : e)}</option>`).join("")}`;
@@ -252,14 +252,14 @@ function drawFinish(b, err) {
     <div class="acq"><span>Cumulative high school GPA</span>${seg("gpa", GPA, FORM.gpa)}</div>
     <div class="acq"><span>${par ? "Your athlete's best marks" : "Your best marks"}</span>${FORM.gender ? FORM.marks.map((m, i) => `<div class="acmk"><select class="in" data-mk="e" data-i="${i}" aria-label="Event">${evOpt(m[0])}</select><input class="in" data-mk="m" data-i="${i}" value="${esc(m[1])}" placeholder="${esc(CFG.ph ? CFG.ph(m[0]) : "PR")}" aria-label="Best mark" inputmode="decimal" autocomplete="off"></div>`).join("") + (FORM.marks.length < 3 ? `<button type="button" class="aclnk" data-acc="addmk">+ Add another event</button>` : "") : `<p class="achint">Pick a team first.</p>`}</div>
     ${ath ? field("acpe", "A parent's email (optional)", `<input class="in" id="acpe" type="email" value="${esc(FORM.pe)}" autocomplete="off">`) + `<p class="achint">Recruiting help goes to a parent, never to an athlete directly.</p>` : ""}
-    ${par ? field("acpp", "Phone (optional)", `<input class="in" id="acpp" type="tel" value="${esc(FORM.pp)}" autocomplete="tel">`) + `<label class="acck"><input type="checkbox" id="acsms" ${FORM.sms ? "checked" : ""}> Preferred Recruit may text me about my athlete's recruiting. Message rates apply. Reply STOP to opt out.</label>` : ""}` : ""}
+    ${par ? field("acpp", "Phone (optional)", `<input class="in" id="acpp" type="tel" value="${esc(FORM.pp)}" autocomplete="tel">`) + `<label class="acck"><input type="checkbox" id="acsms" ${FORM.sms ? "checked" : ""}> Preferred Recruit may text me about my athlete's recruiting. Message rates apply. Reply STOP to opt out.</label><label class="acck"><input type="checkbox" id="acem" ${FORM.em ? "checked" : ""}> Email me when the standards change for my athlete&#39;s events and schools. One email a month at most. Unsubscribe any time.</label>` : ""}` : ""}
     <label class="acck"><input type="checkbox" id="acage" ${FORM.age ? "checked" : ""}> I am 13 or older.</label>${err}
     <button class="acbtn" ${BUSY ? "disabled" : ""}>${BUSY ? "Saving…" : "See my full results"}</button></form>`;
 }
 function readFinish() {
   const v = id => { const e = document.getElementById(id); return e ? e.value.trim() : undefined; };
   if (v("acst") !== undefined) FORM.state = v("acst"); if (v("acpe") !== undefined) FORM.pe = v("acpe"); if (v("acpp") !== undefined) FORM.pp = v("acpp");
-  const s = document.getElementById("acsms"); if (s) FORM.sms = s.checked; const a = document.getElementById("acage"); if (a) FORM.age = a.checked;
+  const s = document.getElementById("acsms"); if (s) FORM.sms = s.checked; const em = document.getElementById("acem"); if (em) FORM.em = em.checked; const a = document.getElementById("acage"); if (a) FORM.age = a.checked;
   document.querySelectorAll("#accp [data-mk]").forEach(el => { FORM.marks[+el.dataset.i][el.dataset.mk === "e" ? 0 : 1] = el.value.trim(); });
 }
 async function saveFinish() {
@@ -282,7 +282,7 @@ async function saveFinish() {
     await fresh();
     const row = { id: SES.user.id, role: FORM.role, age_13_plus: true, site_sid: CFG.sid || null, finished_at: (PRO && PRO.finished_at) || new Date().toISOString(),
       gender: fam ? FORM.gender : null, grade: fam ? FORM.grade : null, state: fam ? FORM.state : null, gpa_band: fam ? FORM.gpa : null,
-      parent_email: FORM.role === "athlete" && FORM.pe ? FORM.pe : null, parent_phone: FORM.role === "parent" && FORM.pp ? FORM.pp : null, sms_consent: FORM.role === "parent" && !!FORM.pp && FORM.sms };
+      parent_email: FORM.role === "athlete" && FORM.pe ? FORM.pe : null, parent_phone: FORM.role === "parent" && FORM.pp ? FORM.pp : null, sms_consent: FORM.role === "parent" && !!FORM.pp && FORM.sms, email_updates: FORM.role === "parent" && !!FORM.em };
     await api("/rest/v1/profiles?on_conflict=id", { method: "POST", body: row, prefer: "resolution=merge-duplicates,return=minimal" });
     await api("/rest/v1/marks?user_id=eq." + SES.user.id, { method: "DELETE" });
     if (marks.length) await api("/rest/v1/marks", { method: "POST", body: marks, prefer: "return=minimal" });
