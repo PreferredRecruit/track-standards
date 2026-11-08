@@ -70,10 +70,30 @@ def main(write, names):
     db = json.load(open(DB))
     for name in names:
         conf(d, db, name, CONFS[name])
-    db["rules"]["SEC"] = [10, 25, None]   # percent of the conference's athletes in the event (key kept for the app)
+    db["rules"]["SEC"] = [10, 25, None]
+    if "Big Ten" in names:
+        big_ten_men_field(d, db)   # percent of the conference's athletes in the event (key kept for the app)
     if write:
         json.dump(db, open(DB, "w"), ensure_ascii=False, separators=(",", ":"))
         print("written", DB)
+
+
+def big_ten_men_field(d, db):
+    """Ryan 2026-11-07 (Oregon review): Big Ten men's hurdles and jumps Recruit levels were too soft ("it's faster in the Big Ten
+    for sure"; high jump "closer to 6'10\""). Recruit = the 15th best Big Ten mark of 2026 on the national list (hurdles wind-legal;
+    triple jump all conditions, approved at 15.13m = 49' 7.75"); high jump uses Ryan's 6' 10" anchor (2.08m). Target unchanged."""
+    T = d["teams"]
+    nat = next(l for l in d["lists"] if l.get("nat"))
+    ct = db["ct"]["NCAA D1|Big Ten"]["m"]
+    for le, legal_only in (("110 Hurdles", True), ("400 Hurdles", True), ("Triple Jump", False)):
+        e = EV[le]
+        rows = [r for r in nat["g"]["m"][le] if base(T[r[3]]) in CONFS["Big Ten"] and (not legal_only or legal(e, r[5]))]
+        old = ct[e][1][0]
+        ct[e][1] = cell(rows[14][4], e)
+        print("Big Ten m", e, "Recruit", old, "->", ct[e][1][0])
+    old = ct["High Jump"][1][0]
+    ct["High Jump"][1] = ["2.08m", "6' 10\""]
+    print("Big Ten m High Jump Recruit", old, "-> 2.08m (6' 10\")")
 
 
 def conf(d, db, name, SEC):
