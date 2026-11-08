@@ -1618,3 +1618,48 @@ tr.me td:first-child{box-shadow:inset 3px 0 0 var(--pr-accent);font-weight:700}
 }
 /* profile and meet pages stand on their own: the results filters stay on the results list (Ryan 2026-11-08) */
 .sec.deep>.lede,.sec.deep>.rfsum,.sec.deep>.rcard,.sec.deep .rconf{display:none}
+
+/* Compact scale (Ryan 2026-11-08: "too big and clunky ... more information visible on a single page"). Same type sizes from the
+   scale, tighter rows and cards: results rows ~48px (was 62), meet rows one meta line on phones, smaller profile header */
+.gr{min-height:48px}.gh{height:34px}
+.rkb{width:26px;height:26px;font-size:12px}
+.gnm b{font-size:15px}.gnm small,.gnmw small{font-size:12px}
+.gmk{font-size:15px}.gmk small{font-size:12px}
+.rhead{margin:4px 2px 8px}.rhead h3{font-size:24px}
+.evs{padding:2px 0 10px}.evs button{padding:6px 14px}
+.ah2{margin:18px 2px 8px}
+.pbs{grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.pbs div{padding:10px 12px}.pbs b{font-size:24px;margin-top:2px}
+.meets{gap:8px}
+.mt1 .mh{padding:10px 16px}.mr{padding:7px 16px;font-size:14px}.mr b{font-size:15px}
+.plc{font-size:12px;padding:2px 9px}
+.aprof{margin:10px 0 4px}.aband{height:64px}
+.aprow{margin-top:-32px;padding:0 20px 16px;gap:14px}
+.aprof .avt{width:72px;height:72px;font-size:24px}
+.apid{padding-top:38px}.aptop{padding-top:38px}
+.apid h2,.mhd h2{font-size:28px}.apid p,.mhd p{font-size:14px;margin-top:4px}
+.aptop b{font-size:24px}
+.atabs{margin:18px 0 10px}.atabs button{height:40px;font-size:14px}
+.mhd{margin:8px 2px 4px}.mseg button{height:36px}
+.mcats{gap:12px;margin-top:12px}
+.mcat h4{padding:10px 16px 6px}
+.mev{padding:8px 16px;gap:2px 10px}.mev b{font-size:14px}.mevm{font-size:14px}
+.mev em{padding:2px 8px}
+.mtside{padding:16px}.tsr{padding:5px 0;font-size:14px}.tsr.lead{padding:6px 8px}
+.tsev{padding:7px 0}.tsev span,.tsev b{font-size:14px}
+.crumbs{margin-top:12px}
+@media (max-width:760px){
+  .gr{padding:8px 12px;grid-template-columns:32px minmax(0,1fr) auto}
+  .grid.raw .gnmw small{display:none}
+  .apid{padding-top:0}.aptop{padding-top:0}
+  .aprof .avt{width:60px;height:60px;font-size:20px}.aprow{margin-top:-26px;padding:0 14px 14px}
+  .apid h2,.mhd h2{font-size:24px}
+  .pbs{grid-template-columns:repeat(3,minmax(0,1fr))}.pbs b{font-size:20px}
+  .mev{padding:8px 14px}
+}
+/* one-line breadcrumb: the middle steps shrink with an ellipsis, the current page stays readable */
+.crumbs{flex-wrap:nowrap;overflow:hidden;white-space:nowrap}
+.crumbs>*{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.crumbs>span[aria-hidden]{flex:none}
+.crumbs span:last-child{flex:none;max-width:none}
+@media (max-width:760px){.mhd{align-items:center;flex-wrap:nowrap}.mhd .mseg button{height:32px;padding:0 10px;font-size:13px}.mhd p{font-size:13px}}
