@@ -18,7 +18,7 @@ import json, gzip, re, sys, pathlib
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DB = ROOT / "public/data/db.json"
 RANK = ROOT / "public/data/rank/2026-outdoor-d1.dat"
-SHARES = (0.10, 0.25, 0.45)
+SHARES = (0.10, 0.25)   # Ryan 2026-11-07: no Walk-On level for Power 4 (only a handful of case-by-case spots)
 CONFS = {
     "SEC": {"Alabama", "Arkansas", "Auburn", "Florida", "Georgia", "Kentucky", "LSU", "Miss State", "Missouri", "Oklahoma", "Ole Miss",
             "South Carolina", "Tennessee", "Texas", "Texas A&M", "Vanderbilt"},
@@ -70,7 +70,7 @@ def main(write, names):
     db = json.load(open(DB))
     for name in names:
         conf(d, db, name, CONFS[name])
-    db["rules"]["SEC"] = [10, 25, 45]   # percent of the conference's athletes in the event (key kept for the app)
+    db["rules"]["SEC"] = [10, 25, None]   # percent of the conference's athletes in the event (key kept for the app)
     if write:
         json.dump(db, open(DB, "w"), ensure_ascii=False, separators=(",", ":"))
         print("written", DB)
@@ -93,8 +93,8 @@ def conf(d, db, name, SEC):
             sec = [r for r in rows if base(T[r[3]]) in SEC and legal(e, r[5])]
             if len(sec) < 50:
                 continue
-            lv = [cell(sec[max(1, round(f * len(sec))) - 1][4], e) for f in SHARES]
-            out.append((g, e, len(sec), [x and x[0] for x in (old.get(e) or [])], [x[0] for x in lv]))
+            lv = [cell(sec[max(1, round(f * len(sec))) - 1][4], e) for f in SHARES] + [None]
+            out.append((g, e, len(sec), [x and x[0] for x in (old.get(e) or [])], [x and x[0] for x in lv]))
             old[e] = lv
         ct[g] = old
     ct["rule"] = "sec"
