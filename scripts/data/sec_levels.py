@@ -65,7 +65,71 @@ def cell(mark, e):
     return [mark, imperial(mark)] if e in FIELD else [mark, ""]
 
 
+TARGET_RANK, RECRUIT_RANK = 8, 15
+ANCHORS = {("Big Ten", "m", "110m Hurdles"): (["13.66", ""], ["13.90", ""]),   # Ryan 2026-11-07 ("13.9 and hs 13.7")
+           ("Big Ten", "m", "High Jump"): (None, ["2.08m", "6' 10\""]),        # Ryan 2026-11-07 ("closer to 6'10")
+           ("SEC", "m", "400m"): (None, ["45.77", ""]),                        # Ryan 2026-11-11 ("Keep the 45.77 mark")
+           ("Big 12", "m", "Triple Jump"): (None, "rank10")}                   # Ryan 2026-11-11 ("use the top ten mark")
+
+
+def p4_rank(d, db, verbose=True):
+    """ONE rule for every Power 4 event (Ryan 2026-11-11: "the standards must be consistent across the board ... It does not make
+    sense for some Power Four standards to be easier than mid-majors"). From the full-depth national D1 list, each conference's own
+    athletes' 2026 bests: Target = the 8th best mark in the conference, Recruit = the 15th best. Every Power 4 conference has 16+
+    athletes on the list in every event, so the rank always exists. Season bests include wind-aided marks, like the conference lists.
+    Guardrail: a Power 4 level is never easier than the toughest non-Power-4 D1 conference's level in that event.
+    No Walk-On level (Power 4 walk-on spots are a handful, case by case). Ryan's anchors win over the rule."""
+    T = d["teams"]; nat = next(l for l in d["lists"] if l.get("nat")); ct = db["ct"]
+    def num(c, e):
+        if not c: return None
+        m = re.sub(r"[^0-9:.]", "", str(c[0]))
+        if not m: return None
+        q = [float(x) for x in m.split(":")]
+        return q[0] * 60 + q[1] if len(q) == 2 else q[0]
+    rows_out = []
+    for g in ("m", "w"):
+        for le, e in EV.items():
+            rows = nat["g"][g].get(le)
+            if not rows: continue
+            f = e in FIELD; harder = (lambda a, b: a > b) if f else (lambda a, b: a < b)
+            mid = [ct[k][g][e] for k in ct if k.startswith("NCAA D1|") and k.split("|")[1] not in CONFS and (ct[k].get(g) or {}).get(e)]
+            floor = [None, None]
+            for i in (0, 1):
+                vals = [(num(c[i], e), c[i]) for c in mid if len(c) > i and c[i] and num(c[i], e)]
+                if vals: floor[i] = max(vals, key=lambda x: x[0]) if f else min(vals, key=lambda x: x[0])
+            for name, S in CONFS.items():
+                key = "NCAA D1|" + name
+                if key not in ct: continue
+                mine = [r for r in rows if base(T[r[3]]) in S]
+                use = mine   # every athlete's season best, wind included: a wind-legal filter drops anyone whose best was windy
+                             # (28% of SEC men's 100m, 56% of Big Ten), which skewed conferences against each other
+                if len(use) < RECRUIT_RANK: continue
+                old = (ct[key].get(g) or {}).get(e)
+                lv = [cell(use[TARGET_RANK - 1][4], e), cell(use[RECRUIT_RANK - 1][4], e)]
+                note = ""
+                for i in (0, 1):
+                    if floor[i] and harder(floor[i][0], num(lv[i], e)):
+                        lv[i] = list(floor[i][1]) if isinstance(floor[i][1], list) else [floor[i][1], ""]; note += f" floor{i}"
+                an = ANCHORS.get((name, g, e))
+                if an:
+                    rec = cell(use[9][4], e) if an[1] == "rank10" else an[1]
+                    lv = [an[0] or lv[0], rec or lv[1]]; note += " anchor"
+                ct[key].setdefault(g, {})[e] = lv + [None]
+                rows_out.append((name, g, e, len(use), [x and x[0] for x in (old or [])][:2], [lv[0][0], lv[1][0]], note))
+    for name in CONFS: ct["NCAA D1|" + name]["rule"] = "sec"
+    db["rules"]["SEC"] = [TARGET_RANK, RECRUIT_RANK, None]
+    if verbose:
+        for r in rows_out: print(f"{r[0]:8} {r[1]} {r[2]:20} n={r[3]:<4} {str(r[4]):30} -> {r[5]}{r[6]}")
+    return rows_out
+
+
 def main(write, names):
+    if "--rank" in sys.argv:
+        d = json.load(gzip.open(RANK)); db = json.load(open(DB))
+        p4_rank(d, db)
+        if write:
+            json.dump(db, open(DB, "w"), ensure_ascii=False, separators=(",", ":")); print("written", DB)
+        return
     d = json.load(gzip.open(RANK))
     db = json.load(open(DB))
     for name in names:
