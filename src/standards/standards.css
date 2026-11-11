@@ -1659,3 +1659,6 @@ main#app:empty,main#app:has(.sk,.loading){min-height:100vh}
   .mxph h3{font-size:20px}
   .mxrow,.mxrow.tsr{grid-template-columns:30px minmax(0,1fr) auto;gap:10px;padding:6px 6px}.mxrow .tm{display:none}.tmm{display:inline}
 }
+
+/* Quick wins (Ryan 2026-11-11 audit): on phones the floating evaluation button no longer covers the last rows of a page */
+@media (max-width:640px){body{padding-bottom:72px}}

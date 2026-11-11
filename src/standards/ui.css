@@ -132,3 +132,9 @@ main{padding-bottom:48px}
 @media (max-width:640px){.prh,header{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--pr-card,#fff)}}
 /* dead taps: the whole search panel and the one-school block read as tappable */
 #mf .row,.one{cursor:text}
+/* Quick wins (Ryan 2026-11-11 audit): plain grey link lists on the guide pages become tappable chips (40 px, one hairline, violet on
+   hover); the "Quick answer" label drops the spaced capitals (DESIGN.md: no eyebrow labels) */
+.pg .links{columns:auto;display:flex;flex-wrap:wrap;gap:8px}
+.pg .links a{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--pr-line,#E4E3EA);border-radius:var(--r-pill);background:var(--pr-card,#fff);color:var(--pr-ink,#0B0B0F);font-size:14px;font-weight:550;text-decoration:none;transition:border-color var(--dur-1),color var(--dur-1)}
+.pg .links a:hover{border-color:var(--pr-violet);color:var(--pr-violet);text-decoration:none}
+.pg .qa b{text-transform:none;letter-spacing:0;font-size:13px;font-weight:650}
