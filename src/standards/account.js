@@ -216,13 +216,17 @@ function draw() {
     const up = VIEW === "signup";
     b.innerHTML = `<p class="eye">Free account</p><h2 class="evh" id="acch">${up ? "Create your free account" : "Welcome back"}</h2>
       <p class="acsub">${up ? "See every college your mark fits, the full results lists and unlimited Recruiting AI." : "Sign in to see your full lists."}</p>
-      <form id="accf" class="acform" novalidate>${field("ace", "Email", `<input class="in" id="ace" type="email" autocomplete="email" required>`)}
+      <form id="accf" class="acform" novalidate>${field("ace", "Email", `<input class="in" id="ace" type="email" autocomplete="email" value="${esc(FORM._email || "")}" required>`)}
       ${pw("acp", "Password", up ? "new-password" : "current-password")}
       ${up ? pw("acp2", "Confirm password", "new-password") + `<p class="achint">At least 6 characters.</p>` : ""}${err}
       <button class="acbtn" ${BUSY ? "disabled" : ""}>${BUSY ? "One moment…" : up ? "Create account" : "Sign in"}</button></form>
       ${up ? "" : `<div class="acor"><span>or</span></div><button type="button" class="acbtn acghost" data-acc="link">Email me a sign-in link</button><p class="achint acc2">No password needed. We'll email you a link that signs you straight in.</p>`}
       <p class="acalt">${up ? `Already have an account? <button type="button" class="aclnk" data-acc="signin">Sign in</button>` : `New here? <button type="button" class="aclnk" data-acc="signup">Create a free account</button> · <button type="button" class="aclnk" data-acc="forgot">Forgot password?</button>`}</p>
       <small class="acfine">By creating an account you agree to our <a href="/privacy.html" target="_blank" rel="noopener">privacy policy</a>. We never sell your data.</small>`;
+  } else if (VIEW === "expired") {
+    b.innerHTML = `<p class="eye">Email link</p><h2 class="evh" id="acch">That link has expired</h2><p class="acsub">Email links only work once and for a limited time. Enter your email and we'll send you a fresh one.</p>
+      <form id="accx" class="acform" novalidate>${field("acx", "Email", `<input class="in" id="acx" type="email" autocomplete="email" value="${esc(FORM._email || "")}" required>`)}${err}<button class="acbtn" ${BUSY ? "disabled" : ""}>${BUSY ? "One moment…" : "Send me a new link"}</button></form>
+      <p class="acalt">Already confirmed? <button type="button" class="aclnk" data-acc="signin">Sign in</button></p>`;
   } else if (VIEW === "forgot") {
     b.innerHTML = `<p class="eye">Reset password</p><h2 class="evh" id="acch">Forgot your password?</h2><p class="acsub">We'll email you a link to set a new one.</p>
       <form id="accr" class="acform" novalidate>${field("acre", "Email", `<input class="in" id="acre" type="email" autocomplete="email" value="${esc(FORM._email || "")}" required>`)}${err}<button class="acbtn" ${BUSY ? "disabled" : ""}>Send reset link</button></form>
@@ -338,6 +342,16 @@ async function submit(id) {
       if (/confirm/i.test(e.message)) { FORM._email = email; VIEW = "check"; MSG = "Confirm your email first. Use the link we sent, or send it again below."; draw(); watchConfirm(email, pw); return; }
       fail(/confirm/i.test(e.message) ? "Confirm your email first. Check your inbox for the link." : /invalid login/i.test(e.message) ? "That email and password don't match. Forgot it? Use Email me a sign-in link below, or reset your password." : /already registered|exists/i.test(e.message) ? "That email already has an account. Sign in instead." : /weak|short/i.test(e.message + (e.code || "")) ? "Use at least 6 characters for your password." : e.message);
     }
+  } else if (id === "accx") {   /* a fresh link: the confirmation email if they never confirmed, else a sign-in link */
+    const email = val("acx").trim(); if (!/^\S+@\S+\.\S+$/.test(email)) return fail("Enter a valid email.");
+    FORM._email = email; BUSY = true; draw();
+    try { await api("/auth/v1/resend?redirect_to=" + encodeURIComponent(location.origin + "/onboarding"), { method: "POST", body: { type: "signup", email }, auth: false }); }
+    catch (e) {
+      if (/seconds|rate/i.test(e.message)) { BUSY = false; return fail("Please wait a minute before sending again."); }
+      try { await api("/auth/v1/otp?redirect_to=" + encodeURIComponent(location.origin + "/account"), { method: "POST", body: { email, create_user: false }, auth: false }); } catch (e2) {}
+    }
+    BUSY = false; FORM._sent = "link"; RESENT = Date.now() + 60000; VIEW = "sent"; draw(); setTimeout(draw, 60500);
+    CFG.log && CFG.log("account", { detail: "expired-newlink" });
   } else if (id === "accr") {
     const email = val("acre").trim(); if (!/^\S+@\S+\.\S+$/.test(email)) return fail("Enter a valid email.");
     BUSY = true; draw();
@@ -354,7 +368,10 @@ async function submit(id) {
 /* links from the confirmation / reset emails land with tokens in the URL hash */
 async function fromHash() {
   const h = new URLSearchParams(location.hash.slice(1));
-  if (h.get("error_description")) { history.replaceState(null, "", location.pathname + location.search); open("signin"); fail(h.get("error_description").replace(/\+/g, " ")); return; }
+  if (h.get("error_description")) { history.replaceState(null, "", location.pathname + location.search);
+    /* 2026-11-11: ~13 a day opened an old or used email link and got a raw "Email link is invalid or has expired" */
+    if (/expired|invalid/i.test(h.get("error_description")) || h.get("error_code") === "otp_expired") { open("expired"); return; }
+    open("signin"); fail(h.get("error_description").replace(/\+/g, " ")); return; }
   if (!h.get("access_token")) return;
   keep({ access_token: h.get("access_token"), refresh_token: h.get("refresh_token"), expires_in: +h.get("expires_in") || 3600 });
   history.replaceState(null, "", location.pathname + location.search);
@@ -427,7 +444,9 @@ export async function init(cfg) {
       if (!/^\S+@\S+\.\S+$/.test(em)) { MSG = "Enter your email first."; return draw(); }
       FORM._email = em; FORM._sent = a === "link" ? "link" : "reset"; MSG = ""; RESENT = Date.now() + 60000; VIEW = "sent"; draw(); setTimeout(draw, 60500);
       const path = a === "link" ? "/auth/v1/otp?redirect_to=" + encodeURIComponent(location.origin + "/account") : "/auth/v1/recover?redirect_to=" + encodeURIComponent(location.origin + "/account");
-      api(path, { method: "POST", body: a === "link" ? { email: em, create_user: false } : { email: em }, auth: false }).catch(err => { if (/seconds|rate/i.test(err.message)) { MSG = "Please wait a minute before sending again."; RESENT = 0; draw(); } });
+      api(path, { method: "POST", body: a === "link" ? { email: em, create_user: false } : { email: em }, auth: false }).catch(err => { if (/seconds|rate/i.test(err.message)) { MSG = "Please wait a minute before sending again."; RESENT = 0; draw(); }
+        /* 2026-11-11: ~4 a day asked for a sign-in link for an email with no account and waited for an email that never came */
+        else if (a === "link" && (err.code === "otp_disabled" || /signups not allowed/i.test(err.message))) { VIEW = "signup"; MSG = "There's no account with that email yet. Create a free one here."; draw(); } });
       CFG.log && CFG.log("account", { detail: a === "link" ? "magic-link" : "reset" }); return; }
     if (a === "resend") { const em = FORM._email; if (!em) return; MSG = ""; RESENT = Date.now() + 60000; draw();
       api("/auth/v1/resend?redirect_to=" + encodeURIComponent(location.origin + "/onboarding"), { method: "POST", body: { type: "signup", email: em }, auth: false }).catch(err => { MSG = /seconds|rate/i.test(err.message) ? "Please wait a minute before sending again." : err.message; RESENT = 0; draw(); });
