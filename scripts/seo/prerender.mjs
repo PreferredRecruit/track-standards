@@ -584,11 +584,11 @@ ${latestYear ? `<h2>National champions and top marks</h2>${L(champPages.filter((
   if (DAILY.finalize) console.log(`daily pages: ${DAILY.finalize()} inbound link blocks`);
   /* link check (2026-10-29 bug sweep: athlete pages and explore linked heptathlon/decathlon standards and some 10000m results pages
      that are never built): an internal link to a page that doesn't exist becomes plain text, so no page ships a dead link */
-  { let fixed = 0; const has = u => fs.existsSync(path.join(out, u));
+  { let fixed = 0; const has = u => fs.existsSync(path.join(out, u)), dead = new Map();
     for (const p of files) { const f = path.join(out, p), h = fs.readFileSync(f, "utf8");
-      const n = h.replace(/<a href="(\/(?:standards|results|champions|colleges|colleges-for|states|conferences|how-fast|athletes|guides)\/[^"#?]+\.html)"[^>]*>([\s\S]*?)<\/a>/g, (m, u, inner) => has(u) ? m : (fixed++, inner));
+      const n = h.replace(/<a href="(\/(?:standards|results|champions|colleges|colleges-for|states|conferences|how-fast|athletes|guides)\/[^"#?]+\.html)"[^>]*>([\s\S]*?)<\/a>/g, (m, u, inner) => { if (has(u)) return m; fixed++; dead.set(u, (dead.get(u) || []).concat(p)); return inner; });
       if (n !== h) fs.writeFileSync(f, n); }
-    if (fixed) console.log(`link check: ${fixed} links to missing pages unlinked`); }
+    if (fixed) { console.log(`link check: ${fixed} links to missing pages unlinked`); fs.writeFileSync(path.join(out, "..", ".dead-links.json"), JSON.stringify([...dead].map(([u, from]) => ({ u, from })), null, 1)); } }
   /* sitemap index + one sitemap per section, each URL dated by the data it shows (so Google can trust lastmod) */
   const schoolUrls = [...new Set(S.map(sl))].sort();
   const AREL = new Map(AIDX.live.map(x => [x.url, x.release > DATES.max ? x.release : DATES.max]));   /* athlete pages: release day (data changes move it via DATES.max) */

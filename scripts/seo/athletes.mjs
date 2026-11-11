@@ -80,7 +80,9 @@ export function athletePages({ idx, write, page, esc, slug, S, raw, parse, FIELD
   const fits = (g, e, v) => { let have = 0, w = 0, t = 0; for (const s of progs) { const L = raw(s, g, e); if (!L) continue; const lv = L.map(x => x ? val(x, e) : null); if (lv.every(x => x == null)) continue; have++;
       const walk = lv[2] ?? lv[1] ?? lv[0], top = lv[0] ?? lv[1] ?? lv[2]; if (walk != null && !better(e, walk, v)) w++; if (top != null && !better(e, top, v)) t++; } return { have, w, t }; };
   const seasonName = s => s === "xc" ? "cross country" : s;
-  const resultPath = (r, g) => `/results/${r.y}-${r.s}-${slug(r.d)}-${g === "m" ? "mens" : "womens"}-${slug(r.e)}.html`;
+  /* results pages are named "10,000m" (slug 10-000m) and exist for NCAA D1/D2/D3, NAIA and NJCAA only (2026-11-11 link fix: 29 dead links) */
+  const resultPath = (r, g) => `/results/${r.y}-${r.s}-${slug(r.d)}-${g === "m" ? "mens" : "womens"}-${slug(r.e === "10000m" ? "10,000m" : r.e)}.html`;
+  const RES_DIVS = new Set(["NCAA D1", "NCAA D2", "NCAA D3", "NAIA", "NJCAA"]);
   for (const a of live) {
     if (!a.recs.length) continue;
     const g = a.g, first = a.name.split(" ")[0];
@@ -124,8 +126,8 @@ export function athletePages({ idx, write, page, esc, slug, S, raw, parse, FIELD
     const links = [];
     if (school) links.push([sl(school), `${school.n} track and field recruiting standards`]);
     if (school && confName.get(school.d + "|" + school.c)) links.push([confName.get(school.d + "|" + school.c), `${school.c} recruiting standards`]);
-    links.push([evPath(head.d, g, head.e), `${head.d} ${gName(g).toLowerCase()} ${head.e} standards at every school`]);
-    for (const r of evBest.slice(0, 3)) if (r.nat) links.push([resultPath(r, g), `${r.y} ${r.d} ${gName(g).toLowerCase()} ${r.e} top marks`]);
+    if (!/athlon/i.test(head.e)) links.push([evPath(head.d, g, head.e), `${head.d} ${gName(g).toLowerCase()} ${head.e} standards at every school`]);   /* no standards for multi-events */
+    for (const r of evBest.slice(0, 3)) if (r.nat && RES_DIVS.has(r.d)) links.push([resultPath(r, g), `${r.y} ${r.d} ${gName(g).toLowerCase()} ${r.e} top marks`]);
     links.push(["/athletes.html", "More college athletes"]);
     const faq = [[`What is ${a.name}'s best ${head.e} mark?`, `${evBest.find(r => r.e === head.e).mark}, set in the ${evBest.find(r => r.e === head.e).y} ${seasonName(evBest.find(r => r.e === head.e).s)} season (TFRRS performance lists).`]];
     if (fh.have) faq.push([`How many colleges would a ${head.mark} ${head.e} fit?`, fh.t === fh.have ? `All of them: it ${FIELD.has(head.e) ? "goes past" : "beats"} the top recruiting level at all ${fh.have.toLocaleString()} college programs with ${gName(g).toLowerCase()} ${head.e} standards on this site.` : `It meets the Walk-On level at ${fh.w.toLocaleString()} of ${fh.have.toLocaleString()} college programs with ${gName(g).toLowerCase()} ${head.e} standards on this site, and the top recruiting level at ${fh.t.toLocaleString()}.`]);

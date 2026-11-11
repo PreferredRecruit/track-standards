@@ -204,7 +204,8 @@ function tier0(t,e,v){if(meets(e,v,t[0]))return "T";if(meets(e,v,t[1]))return "R
 const stdGrp=e=>/Hurdles/.test(e)?"hurdles":/^(100|200|400)m$/.test(e)?"sprints":/^(800|1500|1600|3000|3200|5000|10000)m$|Mile|Steeple/.test(e)?"distance":/Jump|Vault/.test(e)?"jumps":/Put|Discus|Hammer|Javelin|Weight/.test(e)?"throws":/athlon/.test(e)?"multis":null;
 const noGrp=(s,g,e)=>!!(s.nf&&(s.nf[g]||[]).includes(stdGrp(e)));
 const nfNote=(s,g)=>{const L=(s.nf||{})[g];if(!L||!L.length)return "";const w=g==="m"?"men's":"women's",l=L.length>1?L.slice(0,-1).join(", ")+" or "+L[L.length-1]:L[0];
-  return `<p class="nfnote"><b>No ${w} ${esc(l)}.</b> ${esc(s.n)} has no ${w} marks in ${esc(l)} on TFRRS since 2024, so there are no levels for those events. The program competes in ${esc(["sprints","hurdles","distance","jumps","throws"].filter(k=>!L.includes(k)).join(", ")||"no listed events")}.</p>`};
+  /* Ryan 2026-11-11: say plainly that the program doesn't recruit these events (every flag checked against the school's TFRRS team page) */
+  return `<p class="nfnote"><b>Doesn't recruit ${w} ${esc(l)}.</b> ${esc(s.n)} has no ${w} athletes in ${esc(l)} on TFRRS since 2024, so it doesn't recruit those events and there are no levels for them. The program competes in ${esc(["sprints","hurdles","distance","jumps","throws"].filter(k=>!L.includes(k)).join(", ")||"no listed events")}.</p>`};
 function tier(s,g,e,v){if(noGrp(s,g,e))return null;const t=s[g][e];if(t)return tier0(t,e,toCol(s,g,e,v));const c=convert(e,g,v);if(!c)return null;
   for(const x of c){if(s[g][x.e])return tier0(s[g][x.e],x.e,x.v)}return null}
 const TN={T:"Target",R:"Recruit",W:"Walk-On"};

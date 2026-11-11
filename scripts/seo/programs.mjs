@@ -31,8 +31,11 @@ export function markPrograms({ out, S }) {
         const o = F.get(s) || { m: new Set(), w: new Set() }; o[g].add(grp); F.set(s, o); }
     }
   }
+  /* groups confirmed on the school's own TFRRS team page (scripts/seo/data/nf-verified.json, checked 2026-11-11) are never flagged */
+  let VER = {}; try { VER = JSON.parse(fs.readFileSync(new URL("./data/nf-verified.json", import.meta.url), "utf8")).fielded || {}; } catch {}
   let n = 0;
   for (const s of S) { delete s.nf; const o = F.get(s); if (!o) continue;
+    for (const g of ["m", "w"]) for (const k of VER[`${s.n}|${s.d}|${g}`] || []) o[g].add(k);
     const nf = {}; for (const g of ["m", "w"]) { if (!o[g].size) continue; const own = new Set(Object.keys(((s.om || {})[g]) || {}).map(stdGroup)), miss = NF_GROUPS.filter(k => !o[g].has(k) && !own.has(k));   /* a group on the school's own chart counts as fielded */ if (miss.length) nf[g] = miss; }   /* a gender with no marks at all: no team, handled elsewhere */
     if (nf.m || nf.w) { s.nf = nf; n++; } }
   return { n, years };

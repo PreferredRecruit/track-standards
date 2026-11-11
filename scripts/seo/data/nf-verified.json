@@ -1,0 +1,5 @@
+{
+  "_note": "Ryan 2026-11-11: verify the 'doesn't field this event group' flags against each school's own TFRRS team page (TOP MARKS, correct gender). 228 program/gender flags checked: 227 confirmed, 1 contradicted. Groups listed here are fielded and must not be flagged.",
+  "checked": "2026-11-11",
+  "fielded": { "Auburn Montgomery|NCAA D2|m": ["throws"] }
+}

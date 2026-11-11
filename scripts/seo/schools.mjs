@@ -251,7 +251,7 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, SHA
       { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [["Home", "/"], ...(J ? [] : [[s.d, divHub(s.d)]]), [s.c, confUrl(s)], [s.n, p]].map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) }];
     const side = g => {
       const noG = e => ((s.nf || {})[g] || []).includes(stdGroup(e));   /* groups the program doesn't field (programs.mjs) */
-      const nfP = (() => { const L = (s.nf || {})[g]; if (!L) return ""; const w = g === "m" ? "men's" : "women's"; return `<p style="font-size:14px;color:#4A4A52"><b>No ${w} ${esc(L.join(", "))}.</b> ${esc(s.n)} has no ${w} marks in those event groups on TFRRS since 2024, so there are no levels for them.</p>`; })();
+      const nfP = (() => { const L = (s.nf || {})[g]; if (!L) return ""; const w = g === "m" ? "men's" : "women's"; return `<p style="font-size:14px;color:#4A4A52"><b>Doesn't recruit ${w} ${esc(L.length > 1 ? L.slice(0, -1).join(", ") + " or " + L[L.length - 1] : L[0])}.</b> ${esc(s.n)} has no ${w} athletes in those events on TFRRS since 2024, so it doesn't recruit them and there are no levels for them.</p>`; })();
       const off = s.o && (s.off || {})[g];
       if (off) {   /* an official chart that covers only some events (2026-10-31: Fresno Pacific's is its XC page, 800m-3200m): the rest from the conference */
         const om = Object.keys(((s.om || {})[g]) || {}), cov = e => om.includes(e) || (e === "1500m" && om.some(x => /1600m|Mile|1500m/.test(x))) || (/^(3000m|5000m)$/.test(e) && om.some(x => /3200m|3000m|5000m/.test(x)));
