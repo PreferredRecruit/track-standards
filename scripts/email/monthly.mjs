@@ -5,12 +5,13 @@
 
    node scripts/email/monthly.mjs <yyyy-mm> --preview            write a sample HTML to the scratch dir, send nothing
    node scripts/email/monthly.mjs <yyyy-mm> --test you@x.com     send the sample (made-up athlete) to one address
-   node scripts/email/monthly.mjs <yyyy-mm> --send               send to every opted-in parent (needs the service key)
+   node scripts/email/monthly.mjs <yyyy-mm> --dry                count who would get it, send nothing
+   node scripts/email/monthly.mjs <yyyy-mm> --send               send to every opted-in parent
 
    Rules: parents with email_updates = true only (the database forces athletes off), skipped if emailed in the last 25 days,
    email_last_sent_at stamped after each send, one-click unsubscribe link + List-Unsubscribe header, postal address in the footer.
-   Keys come from the vault (~/.config/pr-secrets): resend-standards.env (RESEND_API_KEY) and, for --send only,
-   standards-accounts.env (SUPABASE_SERVICE_ROLE_KEY for project vtbrenadwivmiursebfp). Never printed. */
+   Keys come from the vault (~/.config/pr-secrets): resend-standards.env (RESEND_API_KEY) and, for --send/--dry,
+   standards-accounts.env (NEWSLETTER_SECRET, newsletter-only; checked by migration 013). Never printed. */
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -97,25 +98,21 @@ if (flag("--preview")) {
 } else if (flag("--test")) {
   const to = val("--test"); if (!/^\S+@\S+\.\S+$/.test(to || "")) throw new Error("--test needs an email address");
   console.log("test sent, id", await send(to, SAMPLE));
-} else if (flag("--send")) {
-  const sk = vault("standards-accounts.env", "SUPABASE_SERVICE_ROLE_KEY");
-  if (!sk) { console.error("Missing SUPABASE_SERVICE_ROLE_KEY in ~/.config/pr-secrets/standards-accounts.env"); process.exit(1); }
-  const H = { apikey: sk, Authorization: "Bearer " + sk };
-  const get = async (q) => { const r = await fetch(DB_URL + "/rest/v1/" + q, { headers: H }); if (!r.ok) throw new Error("db " + r.status); return r.json(); };
+} else if (flag("--send") || flag("--dry")) {
+  /* no admin key: a newsletter-only secret in the vault (NEWSLETTER_SECRET), checked by two database functions (migration 013) */
+  const sec = vault("standards-accounts.env", "NEWSLETTER_SECRET");
+  if (!sec) { console.error("Missing NEWSLETTER_SECRET in ~/.config/pr-secrets/standards-accounts.env"); process.exit(1); }
+  const KEY = "sb_publishable_Ym2-USDV80BCDbIMm6EoUQ_aPqqbIbJ";
+  const rpc = async (fn, body) => { const r = await fetch(DB_URL + "/rest/v1/rpc/" + fn, { method: "POST", headers: { apikey: KEY, "Content-Type": "application/json" }, body: JSON.stringify({ secret: sec, ...body }) }); if (!r.ok) throw new Error(fn + " " + r.status); return r.json(); };
+  const ps = []; for (let off = 0; ; off += 500) { const pg = await rpc("newsletter_recipients", { lim: 500, off }); ps.push(...pg); if (pg.length < 500) break; }
   const cutoff = new Date(Date.now() - 25 * 864e5).toISOString();
-  const ps = [];   /* the API returns at most 1,000 rows per request: page through every opted-in parent */
-  for (let off = 0; ; off += 1000) { const pg = await get(`profiles?select=id,first_name,email_token,email_last_sent_at&role=eq.parent&email_updates=is.true&order=id&limit=1000&offset=${off}`); ps.push(...pg); if (pg.length < 1000) break; }
-  let sent = 0, skipped = 0;
-  for (const p of ps) {
-    if (p.email_last_sent_at && p.email_last_sent_at > cutoff) { skipped++; continue; }
-    const [u] = await fetch(`${DB_URL}/auth/v1/admin/users/${p.id}`, { headers: H }).then((r) => r.json()).then((x) => [x]);
-    if (!u || !u.email) { skipped++; continue; }
-    const ks = await get(`athletes?select=id,first_name,gender&parent_id=eq.${p.id}&order=created_at`);
-    const ms = await get(`marks?select=event,mark,athlete_id&user_id=eq.${p.id}`);
-    const kids = ks.map((k) => ({ ...k, marks: ms.filter((m) => m.athlete_id === k.id) })).filter((k) => k.marks.length);
-    await send(u.email, { parent_first: p.first_name, token: p.email_token, kid: kids[0] || null });
-    await fetch(`${DB_URL}/rest/v1/profiles?id=eq.${p.id}`, { method: "PATCH", headers: { ...H, "Content-Type": "application/json", Prefer: "return=minimal" }, body: JSON.stringify({ email_last_sent_at: new Date().toISOString() }) });
-    sent++;
+  const due = ps.filter(p => !(p.email_last_sent_at && p.email_last_sent_at > cutoff));
+  if (flag("--dry")) { console.log(`opted in ${ps.length}, due ${due.length}, with an athlete mark ${due.filter(p => p.kid).length} (dry run, nothing sent)`); process.exit(0); }
+  let sent = 0;
+  for (const p of due) {
+    await send(p.email, { parent_first: p.first_name, token: p.email_token, kid: p.kid ? { ...p.kid, marks: (p.kid.marks || []).map(m => ({ event: m.event, mark: +m.mark })) } : null });
+    await rpc("newsletter_mark_sent", { ids: [p.id] }); sent++;
+    await new Promise(r => setTimeout(r, 400));   /* well under Resend's 10 a second */
   }
-  console.log(`sent ${sent}, skipped ${skipped} (emailed in the last 25 days or no email), opted in ${ps.length}`);
+  console.log(`sent ${sent} of ${ps.length} opted in (${ps.length - due.length} already emailed in the last 25 days)`);
 } else console.error("pick --preview, --test <email> or --send");

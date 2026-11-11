@@ -1,0 +1,4 @@
+-- Applied 2026-11-11 to vtbrenadwivmiursebfp (full SQL in the migration history: 013_newsletter_secret_rpc).
+-- Monthly standards update without the admin key: NEWSLETTER_SECRET lives only in ~/.config/pr-secrets/standards-accounts.env;
+-- private.secrets keeps its SHA-256. public.newsletter_recipients(secret, lim, off) lists opted-in parents (paged, 500 max) with their
+-- first athlete that has marks; public.newsletter_mark_sent(secret, ids) stamps email_last_sent_at. Wrong secret = "not allowed".
