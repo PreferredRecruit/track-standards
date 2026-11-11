@@ -90,6 +90,10 @@ function phoneCols(pathname, body) {
     const extra = PHONE_HIDE_FAM[pathname.split("/")[1]] || new Set();
     const hide = new Set(names.map((n, i) => PHONE_HIDE.has(n) || extra.has(n) ? i : -1).filter(i => i >= 0));
     const t = /class="/.test(attrs) ? attrs.replace(/class="/, 'class="dtb ') : attrs + ' class="dtb"';
+    const di = names.indexOf("Division");
+    if (di >= 0) inner = inner.replace(/<tr([^>]*)>([\s\S]*?)<\/tr>/g, (r, ra, cells) => { let i = -1;   /* phones: "Div." / "D1" instead of "Division" / "NCAA D1" */
+      return `<tr${ra}>` + cells.replace(/(<t[hd][^>]*>)([\s\S]*?)(<\/t[hd]>)/g, (m, o, c, e) => { i++; if (i !== di) return m;
+        return o + (c === "Division" ? '<span class="pnh">Division</span><span class="pon">Div.</span>' : c.replace(/^NCAA (D[123])/, '<span class="pnh">NCAA </span>$1')) + e; }) + "</tr>"; });
     if (!hide.size) return `<table${t}>${inner}</table>`;
     const rows = inner.replace(/<tr([^>]*)>([\s\S]*?)<\/tr>/g, (r, ra, cells) => {
       if ((cells.match(/<t[hd][\s>]/g) || []).length !== names.length) return r;   /* colspan rows stay as they are */
@@ -146,7 +150,7 @@ details.morel{margin-top:6px}details.morel>summary{cursor:pointer;list-style:non
 code{overflow-wrap:anywhere;word-break:break-word;font-size:.9em;background:var(--soft);border-radius:6px;padding:1px 6px}
 header nav a.cta .s{display:none}
 /* UX audit 2026-10-31: on phones the two-row header scrolled with the page took 20% of the screen; tables keep their labels */
-@media(max-width:560px){header{position:relative}table.dtb td,table.dtb th{padding:10px 6px;font-size:13px}table.dtb td:first-child,table.dtb th:first-child{padding-left:10px}table.dtb th{font-size:12px}table.dtb td.n{white-space:nowrap}table.dtb .ph{display:none}}
+table.dtb .pon{display:none}@media(max-width:560px){header{position:relative}table.dtb td,table.dtb th{padding:10px 6px;font-size:13px}table.dtb td:first-child,table.dtb th:first-child{padding-left:10px}table.dtb th{font-size:12px}table.dtb td.n{white-space:nowrap}table.dtb .ph{display:none}table.dtb .pnh{display:none}table.dtb .pon{display:inline}}
 thead th{position:sticky;top:64px;z-index:2}@media(max-width:560px){thead th{top:0}}
 .skip{position:absolute;left:-9999px}.skip:focus{left:12px;top:12px;z-index:99;background:#fff;padding:8px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
 td .cfm{display:none}@media(max-width:560px){.evtbl th,.evtbl td{padding:10px 7px;font-size:13px}.evtbl th{font-size:12px;letter-spacing:.04em}.evtbl td:first-child,.evtbl th:first-child{padding-left:12px}.evtbl th.cf,.evtbl td.cf{display:none}td .cfm{display:block;font-size:12px;font-weight:500;color:var(--mute);margin-top:2px}}
