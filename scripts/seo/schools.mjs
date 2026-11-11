@@ -9,6 +9,8 @@ import { stdGroup } from "./programs.mjs";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fitTitle, fitDesc, pickDesc, levelWords, SEASON } from "./meta.mjs";
+import fsTT from "node:fs";
+const TITLE_TEST = (() => { try { return new Set(JSON.parse(fsTT.readFileSync(new URL("./data/title-test-2026-11.json", import.meta.url), "utf8")).test); } catch { return new Set(); } })();
 import { loadFacts, evl, shortOf, t1600, newestFirst } from "./facts.mjs";
 import { hsRows, fmtXC } from "./hsconv.mjs";
 const JG = "/guides/junior-college-track-and-field-recruiting.html";
@@ -210,9 +212,13 @@ export function schoolPages({ root, out, S, CT = {}, DATES = {}, SITE, QUIZ, SHA
     const short = s.n.length <= 32 ? s.n : (s.t || s.n);
     /* searches say "ohio state track and field recruiting standards": keep "Track & Field" + year by using the common team name
        (Ohio State, Michigan, USC) when the full name doesn't fit; never TFRRS abbreviations like "Miami (Fla.)" or "Colorado St." */
+    /* title test (2026-11-11, scripts/seo/data/title-test-2026-11.json): the 100 test schools say "(2026 Times)"; matched control keeps the old title */
     const T = `Track & Field Recruiting Standards ${SEASON}`, common = s.t && !/[().]/.test(s.t) && s.t !== s.n && T_COUNT.get(s.t) === 1 ? s.t : null;
-    const title = fitTitle(J ? `${short} Track & Field (NJCAA): ${B ? B.y + " " : ""}Results & Roster`
+    const title0 = fitTitle(J ? `${short} Track & Field (NJCAA): ${B ? B.y + " " : ""}Results & Roster`
       : `${s.n} ${T}`.length <= 60 ? `${s.n} ${T}` : common && `${common} ${T}`.length <= 60 ? `${common} ${T}` : `${short} ${T}`);
+    /* title test: same title with the season as "(2026-27 Times)", only where it still fits 60 characters (else the page stays control) */
+    const tt = !J && TITLE_TEST.has(s.n) && title0.endsWith(` ${SEASON}`) ? title0.slice(0, -SEASON.length) + `(${SEASON} Times)` : null;
+    const title = tt && tt.length <= 60 ? tt : title0;
     const p4 = ["p4", "sec"].includes((CT[s.ck] || {}).rule) && !s.o, lw = p4 ? "recruit and scholarship-level" : s.c === "Ivy League" ? "walk-on and recruit" : levelWords(s.d), ofc = s.o ? ", from the official team chart" : "", conf = s.c !== s.d ? ", " + s.c : "";
     const exTxt = ex.length ? " " + ex.map(([g, e, v]) => `${g === "m" ? "Men's" : "Women's"} ${e} walk-on: ${v}.`).join(" ") : "";
     const weekly = B ? [" Season bests updated weekly.", " Free, no sign-up.", " Free."] : [" Free, no sign-up.", " Free to use.", " Free."];

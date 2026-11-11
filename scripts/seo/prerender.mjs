@@ -22,6 +22,7 @@ import { reportPages } from "./reports.mjs";
 import { hsLevel, hsRows, fmtXC, fmtHS } from "./hsconv.mjs";
 import { topicPages, EDITED } from "./topics.mjs";
 import { gapGuides } from "./gap-guides.mjs";
+import { growthPages } from "./growth.mjs";
 import { morePages } from "./more-pages.mjs";
 import { computeSite, rankPath, seasonPath, eventPath, stdToList, eventSeason, evName, seasonLabel as seasonLabel2 } from "./power-site.mjs";
 import { markPrograms, stdGroup } from "./programs.mjs";
@@ -458,6 +459,8 @@ export function generate(root, out) {
   /* data reports for links and citations (scripts/seo/reports.mjs, outreach 2.1 + 2.2) */
   try { TOPICS.push(...reportPages({ root, S: S.filter(x => !x.j), CT, std, write, page, esc, sl, SITE, DATES, QUIZ })); } catch (e) { console.warn("reports skipped:", e && e.message); }
   try { TOPICS.push(...gapGuides({ S: S.filter(x => !x.j), CT, write, page, parse, esc, slug, evPath, FIELD, SITE, gName, STATE, statePath, resultPages, DATES, QUIZ })); } catch (e) { console.warn("gap guides skipped:", e && e.message); }
+  /* growth plan 2026-11-11: no-fit gap page + search-log report (scripts/seo/growth.mjs) */
+  try { TOPICS.push(...growthPages({ root, S: S.filter(x => !x.j), CT, write, writeRaw, page, parse, esc, slug, evPath, FIELD, SITE })); } catch (e) { console.warn("growth pages skipped:", e && e.message); }
   /* missing pages found in Search Console 2026-10-30: XC times, best colleges, printable sheet (scripts/seo/more-pages.mjs) */
   try { TOPICS.push(...morePages({ root, out, S: S.filter(x => !x.j), CT, write, page, parse, esc, sl, evPath, FIELD, SITE, gName, QUIZ, fmtXC })); } catch (e) { console.warn("more pages skipped:", e && e.message); }
   try { rankingPages({ R, out, write, page, esc, sl, SITE, QUIZ }); } catch (e) { console.warn("ranking pages skipped:", e && e.message); }
