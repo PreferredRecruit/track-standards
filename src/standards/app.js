@@ -1287,39 +1287,34 @@ function finalPts(rows,sys){const P=String(sys||"").split(" ")[0].split("-").map
   rows.forEach(r=>{const p=+String(r[0]).replace(/\D/g,"");if(p)(by[p]=by[p]||[]).push(r)});const out=new Map();
   Object.entries(by).forEach(([p,g])=>{p=+p;if(p>P.length)return;let t=0;for(let i=p-1;i<Math.min(p-1+g.length,P.length);i++)t+=P[i];g.forEach(r=>out.set(r,t/g.length))});return [out,x2]}
 const ptsF=n=>String(Math.round(n*100)/100);
-function standings(M,evs){const S=MSC[M.id];if(!S||S==="…"||S==="none")return {side:"",bar:""};const T=S[R.g];if(!T||!T.t||!T.t.length)return {side:"",bar:""};
-  const g=R.g==="m"?"Men":"Women",top=T.t.slice(0,10),more=T.t.slice(10);
-  const row=(t,i)=>`<div class="tsr${i===0?" lead":""}"><i>${i+1}</i><span>${esc(t[0])}</span><b>${esc(ptsF(t[1]))}</b></div>`;
-  const wins=evs.map(e=>{const R0=(M.ev[e]||{})[R.g];if(!R0)return null;const f=R0.find(r=>/^final/i.test(r[0]))||R0[0];const w=f&&f[2].find(r=>String(r[0]).replace(/\D/g,"")==="1");return w?[e,w]:null}).filter(Boolean);
-  const check=T.ok?`<p class="tsok">✓ Matches the official team scores</p>`:`<p class="tsnote">Official team scores</p>`;
-  const side=`<aside class="mtside" aria-label="Team scores"><h4>Team scores · ${g}</h4>${top.map(row).join("")}
-    ${more.length?`<details class="tsmore"><summary>All ${T.t.length} teams</summary>${more.map((t,i)=>row(t,i+10)).join("")}</details>`:""}${check}
-    ${wins.length?`<h4 class="tsw">Event winners</h4>${wins.map(([e,w])=>`<button class="tsev" data-mvev="${esc(e)}"><small>${esc(evLabel(e))}</small><span>${esc(w[1]||w[3])}<em>${esc(w[3])}</em></span><b>${esc(w[4])}</b></button>`).join("")}`:""}</aside>`;
-  const bar=`<details class="mtbar"><summary><span><b>${esc(T.t[0][0])} leads, ${esc(ptsF(T.t[0][1]))}</b><small>Team scores · ${g}</small></span><em>See all</em></summary>
-    <div class="mtbarb">${T.t.map(row).join("")}${check}</div></details>`;
-  return {side,bar,T}}
+/* Meet page redesign (Ryan 2026-11-11: "so easy a five-year-old could navigate it", softer shapes, less text, names and marks
+   big): team scores become one podium card above the events, events become soft tiles (mark first, then the winner). */
+function standings(M){const S=MSC[M.id];if(!S||S==="…"||S==="none")return {pod:""};const T=S[R.g];if(!T||!T.t||!T.t.length)return {pod:""};
+  const row=(t,i)=>`<div class="mxr"><i>${i+1}</i><span>${esc(t[0])}</span><b>${esc(ptsF(t[1]))}</b></div>`;
+  const pod=`<section class="mxpod" aria-label="Team scores"><div class="mxpods">${T.t.slice(0,3).map((t,i)=>`<div class="mxp p${i+1}"><i>${i+1}</i><b>${esc(t[0])}</b><span>${esc(ptsF(t[1]))} pts</span></div>`).join("")}</div>
+    ${T.t.length>3?`<details class="mxall"><summary>All ${T.t.length} teams</summary><div class="mxlist">${T.t.map(row).join("")}</div>${T.ok?`<p class="mxok">Matches the official team scores</p>`:""}</details>`:""}</section>`;
+  return {pod,T}}
 const MCAT=[["Sprints"],["Hurdles"],["Middle distance"],["Distance"],["Relays"],["Jumps"],["Throws"],["Multi-events"],["Other"]];
 function mcat(e){return /relay/i.test(e)?"Relays":/hurdle/i.test(e)?"Hurdles":/steeple|walk|^(3000|3200|5000|10,?000)/i.test(e)?"Distance":/athlon/i.test(e)?"Multi-events":/jump|vault/i.test(e)?"Jumps":/put|discus|hammer|javelin|weight/i.test(e)?"Throws":/^(800|1000|1500|1600|mile)/i.test(e)?"Middle distance":/^(55|60|100|150|200|300|400|500|600)\b/i.test(e)?"Sprints":"Other"}
 const finalOf=rounds=>(rounds||[]).find(r=>/^final/i.test(r[0]))||(rounds||[])[0];
 function fullMeet(M){const mv=R.mv,G=R.g,evs=Object.keys(M.ev).filter(e=>M.ev[e][G]).sort((a,b)=>eord(ecode(a))-eord(ecode(b)));
-  const tf=M.url;loadScores(M.id);const ST=standings(M,evs),okP=ST.T&&ST.T.ok,gw=G==="m"?"Men's":"Women's";
+  const tf=M.url;loadScores(M.id);const ST=standings(M),okP=ST.T&&ST.T.ok,gw=G==="m"?"Men's":"Women's";
   const ev=mv.e&&evs.includes(mv.e)?mv.e:null,hasG=g=>Object.values(M.ev).some(x=>x[g]);
-  const crumbs=`<nav class="crumbs" aria-label="Breadcrumb">${mv.name?`<button class="lnk" data-mvback>${esc(mv.name)}</button><span aria-hidden="true">›</span>`:""}${ev?`<button class="lnk" data-mvev="">${esc(M.meet)}</button><span aria-hidden="true">›</span><span>${esc(evLabel(ev))}</span>`:`<span>${esc(M.meet)}</span>`}</nav>`;
+  const back=ev?`<button class="mxback" data-mvev="">‹ All events</button>`:mv.name?`<button class="mxback" data-mvback>‹ ${esc(mv.name)}</button>`:"";
   const seg=`<div class="seg mseg" role="group" aria-label="Men or women">${["m","w"].filter(hasG).map(g=>`<button data-mvg="${g}" aria-pressed="${g===G}">${g==="m"?"Men":"Women"}</button>`).join("")}</div>`;
-  const head=`<header class="mhd"><div><h2>${esc(ev?gw+" "+evLabel(ev):M.meet)}</h2><p>${esc(fmtD(mv.date))}${ev?"":` · ${evs.length} events`}</p></div>${seg}</header>`;
+  const head=`${back}<div class="mxhd"><h2>${esc(ev?gw+" "+evLabel(ev):M.meet)}</h2><p>${esc(fmtD(mv.date))}</p>${seg}</div>`;
   let body;
-  if(!ev){const by={};evs.forEach(e=>{(by[mcat(e)]=by[mcat(e)]||[]).push(e)});
-    body=`<div class="mcats">${MCAT.map(([c])=>c).filter(c=>by[c]).map(c=>`<section class="mcat"><h4>${c}</h4>${by[c].map(e=>{const R0=M.ev[e][G],f=finalOf(R0),w=f&&(f[2].find(r=>String(r[0]).replace(/\D/g,"")==="1")||f[2][0]);
+  if(!ev){const by={};evs.forEach(e=>{(by[mcat(e)]=by[mcat(e)]||[]).push(e)});let n=0;
+    body=ST.pod+`<div class="mxtiles">`+MCAT.map(([c])=>c).filter(c=>by[c]).map(c=>by[c].map(e=>{const R0=M.ev[e][G],f=finalOf(R0),w=f&&(f[2].find(r=>String(r[0]).replace(/\D/g,"")==="1")||f[2][0]);
       const mine=mv.name&&R0.flatMap(r=>r[2].map(x=>[r[0],x])).find(([,x])=>x[1]===mv.name);
-      const rn=R0.map(r=>r[0].replace(/s$/,"")).filter((x,i,A)=>A.indexOf(x)===i).join(" · ");
-      return `<button class="mev${mine?" me":""}" data-mvev="${esc(e)}"><span class="mevn"><b>${esc(evLabel(e))}</b><small>${esc(rn)}</small></span>${w?`<span class="mevw"><b>${esc(w[1]||w[3])}</b><small>${esc(w[3])}</small></span><span class="mevm">${esc(w[4])}</span>`:"<span></span><span></span>"}<i aria-hidden="true">›</i>${mine?`<em>${esc(mv.name.split(" ")[0])} · ${esc(String(mine[1][0]))}${/^\d+$/.test(mine[1][0])?ordS(+mine[1][0]):""} · ${esc(mine[1][4])}</em>`:""}</button>`}).join("")}</section>`).join("")}</div>`}
+      const who=w&&(w[1]||w[3]),sch=w&&w[1]&&w[1]!==w[3]?w[3]:"";
+      return `<button class="mxt${mine?" me":""}" data-mvev="${esc(e)}" style="--i:${Math.min(n++,12)}"><span class="mxev">${esc(evLabel(e))}</span>${w?`<span class="mxmk">${esc(w[4])}</span><span class="mxnm">${esc(who)}</span>${sch?`<span class="mxsc">${esc(sch)}</span>`:""}`:""}<i class="mxgo" aria-hidden="true">›</i>${mine?`<em>${esc(mv.name.split(" ")[0])} · ${esc(String(mine[1][0]))}${/^\d+$/.test(mine[1][0])?ordS(+mine[1][0]):""} · ${esc(mine[1][4])}</em>`:""}</button>`}).join("")).join("")+`</div>`}
   else body=M.ev[ev][G].map(([rnd,w,rows],ri)=>{const fin=ri===0&&(/^final/i.test(rnd)||M.ev[ev][G].length===1);const [pts,x2]=okP&&fin?finalPts(rows,ST.T.sys):[new Map(),false];const rel=/relay/i.test(ev)&&x2?2:1;
   return `<div class="rhead" style="margin-top:18px"><h3 style="font-size:17px">${esc(rnd)}</h3><span>${rows.length} ${/Relay/.test(ev)?"teams":"athletes"}${w?` · wind ${esc(w)}`:""}</span></div>
   <div class="grid raw"><div class="gh"><span>Place</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span></div>
   ${rows.map(r=>{const p=+String(r[0]).replace(/\D/g,"");const pt=pts.get(r);return `<div class="gr ${/^final/i.test(rnd)&&p&&p<=3?"p"+p:""}${r[1]===mv.name?" me":""}"><span class="rkb">${esc(r[0]||"–")}</span><span class="gnmw"><span class="gnm"><b>${esc(r[1]||r[3])}</b></span><small>${esc(yr(r[2]))}</small></span><span class="gtm" style="cursor:default">${esc(r[3])}</span><span class="gmk">${esc(r[4])}${r[5]||pt?`<small>${[r[5]?"wind "+esc(r[5]):"",pt?esc(ptsF(pt*rel))+" pts":""].filter(Boolean).join(" · ")}</small>`:""}</span></div>`}).join("")}</div>`}).join("")+`<p class="mnext"><button class="lnk" data-mvev="">‹ All events</button></p>`;
-  return `<div class="rbody${R.swap?" swap":""}">${crumbs}${head}
-  <div class="mtwrap"><div class="mtmain">${body}
-  <p class="note">Source: <a href="${esc(tf)}" target="_blank" rel="noopener">TFRRS meet results ↗</a></p>${hookRow()}</div>${ST.side}</div>${ST.bar}</div>`}
+  return `<div class="rbody mx${R.swap?" swap":""}">${head}${body}
+  <p class="note">Source: <a href="${esc(tf)}" target="_blank" rel="noopener">TFRRS meet results ↗</a></p>${hookRow()}</div>`}
 const ordS=n=>{const v=n%100;return v>=11&&v<=13?"th":["th","st","nd","rd"][n%10]||"th"};
 function meetView(D){
   const id=MIDX&&R.mv.path&&(MIDX[R.mv.path]||{})[R.mv.meet];if(!MIDX){loadMeetIdx();return skeleton()}
