@@ -1288,33 +1288,40 @@ function finalPts(rows,sys){const P=String(sys||"").split(" ")[0].split("-").map
   rows.forEach(r=>{const p=+String(r[0]).replace(/\D/g,"");if(p)(by[p]=by[p]||[]).push(r)});const out=new Map();
   Object.entries(by).forEach(([p,g])=>{p=+p;if(p>P.length)return;let t=0;for(let i=p-1;i<Math.min(p-1+g.length,P.length);i++)t+=P[i];g.forEach(r=>out.set(r,t/g.length))});return [out,x2]}
 const ptsF=n=>String(Math.round(n*100)/100);
-/* Meet page redesign (Ryan 2026-11-11: "so easy a five-year-old could navigate it", softer shapes, less text, names and marks
-   big): team scores become one podium card above the events, events become soft tiles (mark first, then the winner). */
-function standings(M){const S=MSC[M.id];if(!S||S==="…"||S==="none")return {pod:""};const T=S[R.g];if(!T||!T.t||!T.t.length)return {pod:""};
-  const row=(t,i)=>`<div class="mxr"><i>${i+1}</i><span>${esc(t[0])}</span><b>${esc(ptsF(t[1]))}</b></div>`;
-  const pod=`<section class="mxpod" aria-label="Team scores"><div class="mxpods">${T.t.slice(0,3).map((t,i)=>`<div class="mxp p${i+1}"><i>${i+1}</i><b>${esc(t[0])}</b><span>${esc(ptsF(t[1]))} pts</span></div>`).join("")}</div>
-    ${T.t.length>3?`<details class="mxall"><summary>All ${T.t.length} teams</summary><div class="mxlist">${T.t.map(row).join("")}</div>${T.ok?`<p class="mxok">Matches the official team scores</p>`:""}</details>`:""}</section>`;
-  return {pod,T}}
+/* Meet page v3 (Ryan 2026-11-11: "way more efficient ... reference TFRRS and athletic.net"): athletic.net-style event rail on the
+   left (event + winning mark), the chosen event's full results on the right, rounds as tabs, team scores as their own rail item.
+   Phones: the rail becomes one scrolling row of chips above the results. TFRRS keys like "Men 100 M" are folded into "100 Meters". */
+function standings(M){const S=MSC[M.id];if(!S||S==="…"||S==="none")return {};const T=S[R.g];return T&&T.t&&T.t.length?{T}:{}}
+const normEv=k=>String(k||"").replace(/^(Men|Women)\s+/,"").replace(/^(\d[\d,]*) ?M(eter)?s?( Dash| Run)?$/i,"$1 Meters");
+function meetEvents(M){const out={};Object.keys(M.ev).forEach(k=>{if(/jump off/i.test(k))return;const gm=k.match(/^(Men|Women)\s/),n=normEv(k);
+  ["m","w"].forEach(g=>{if(gm&&gm[1][0].toLowerCase()!==g)return;const r=M.ev[k][g];if(!r)return;out[n]=out[n]||{};out[n][g]=(out[n][g]||[]).concat(r)})});return out}
 const MCAT=[["Sprints"],["Hurdles"],["Middle distance"],["Distance"],["Relays"],["Jumps"],["Throws"],["Multi-events"],["Other"]];
 function mcat(e){return /relay/i.test(e)?"Relays":/hurdle/i.test(e)?"Hurdles":/steeple|walk|^(3000|3200|5000|10,?000)/i.test(e)?"Distance":/athlon/i.test(e)?"Multi-events":/jump|vault/i.test(e)?"Jumps":/put|discus|hammer|javelin|weight/i.test(e)?"Throws":/^(800|1000|1500|1600|mile)/i.test(e)?"Middle distance":/^(55|60|100|150|200|300|400|500|600)\b/i.test(e)?"Sprints":"Other"}
 const finalOf=rounds=>(rounds||[]).find(r=>/^final/i.test(r[0]))||(rounds||[])[0];
-function fullMeet(M){const mv=R.mv,G=R.g,evs=Object.keys(M.ev).filter(e=>M.ev[e][G]).sort((a,b)=>eord(ecode(a))-eord(ecode(b)));
-  const tf=M.url;loadScores(M.id);const ST=standings(M),okP=ST.T&&ST.T.ok,gw=G==="m"?"Men's":"Women's";
-  const ev=mv.e&&evs.includes(mv.e)?mv.e:null,hasG=g=>Object.values(M.ev).some(x=>x[g]);
-  const back=ev?`<button class="mxback" data-mvev="">‹ All events</button>`:mv.name?`<button class="mxback" data-mvback>‹ ${esc(mv.name)}</button>`:"";
+function fullMeet(M){const mv=R.mv,G=R.g,EV=meetEvents(M),evs=Object.keys(EV).filter(e=>EV[e][G]).sort((a,b)=>eord(ecode(a))-eord(ecode(b))||a.localeCompare(b));
+  const tf=M.url;loadScores(M.id);const T=standings(M).T,okP=T&&T.ok,hasG=g=>Object.values(EV).some(x=>x[g]);
+  const mineOf=e=>mv.name&&EV[e][G].flatMap(r=>r[2].map(x=>[r[0],x])).find(([,x])=>x[1]===mv.name);
+  const ordered=MCAT.map(([c])=>c).flatMap(c=>evs.filter(e=>mcat(e)===c)),want=normEv(mv.e);
+  const ev=mv.e==="__ts"&&T?"__ts":evs.includes(want)?want:(ordered.find(e=>mineOf(e))||ordered[0]);
+  const win=e=>{const f=finalOf(EV[e][G]);return f&&(f[2].find(r=>String(r[0]).replace(/\D/g,"")==="1")||f[2][0])};
+  const cur=on=>on?' aria-current="true"':"";
+  const back=mv.name?`<button class="mxback" data-mvback>‹ ${esc(mv.name)}</button>`:"";
   const seg=`<div class="seg mseg" role="group" aria-label="Men or women">${["m","w"].filter(hasG).map(g=>`<button data-mvg="${g}" aria-pressed="${g===G}">${g==="m"?"Men":"Women"}</button>`).join("")}</div>`;
-  const head=`${back}<div class="mxhd"><h2>${esc(ev?gw+" "+evLabel(ev):M.meet)}</h2><p>${esc(fmtD(mv.date))}</p>${seg}</div>`;
-  let body;
-  if(!ev){const by={};evs.forEach(e=>{(by[mcat(e)]=by[mcat(e)]||[]).push(e)});let n=0;
-    body=ST.pod+`<div class="mxtiles">`+MCAT.map(([c])=>c).filter(c=>by[c]).map(c=>by[c].map(e=>{const R0=M.ev[e][G],f=finalOf(R0),w=f&&(f[2].find(r=>String(r[0]).replace(/\D/g,"")==="1")||f[2][0]);
-      const mine=mv.name&&R0.flatMap(r=>r[2].map(x=>[r[0],x])).find(([,x])=>x[1]===mv.name);
-      const who=w&&(w[1]||w[3]),sch=w&&w[1]&&w[1]!==w[3]?w[3]:"";
-      return `<button class="mxt${mine?" me":""}" data-mvev="${esc(e)}" style="--i:${Math.min(n++,12)}"><span class="mxev">${esc(evLabel(e))}</span>${w?`<span class="mxmk">${esc(w[4])}</span><span class="mxnm">${esc(who)}</span>${sch?`<span class="mxsc">${esc(sch)}</span>`:""}`:""}<i class="mxgo" aria-hidden="true">›</i>${mine?`<em>${esc(mv.name.split(" ")[0])} · ${esc(String(mine[1][0]))}${/^\d+$/.test(mine[1][0])?ordS(+mine[1][0]):""} · ${esc(mine[1][4])}</em>`:""}</button>`}).join("")).join("")+`</div>`}
-  else body=M.ev[ev][G].map(([rnd,w,rows],ri)=>{const fin=ri===0&&(/^final/i.test(rnd)||M.ev[ev][G].length===1);const [pts,x2]=okP&&fin?finalPts(rows,ST.T.sys):[new Map(),false];const rel=/relay/i.test(ev)&&x2?2:1;
-  return `<div class="rhead" style="margin-top:18px"><h3 style="font-size:17px">${esc(rnd)}</h3><span>${rows.length} ${/Relay/.test(ev)?"teams":"athletes"}${w?` · wind ${esc(w)}`:""}</span></div>
-  <div class="grid raw"><div class="gh"><span>Place</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span></div>
-  ${rows.map(r=>{const p=+String(r[0]).replace(/\D/g,"");const pt=pts.get(r);return `<div class="gr ${/^final/i.test(rnd)&&p&&p<=3?"p"+p:""}${r[1]===mv.name?" me":""}"><span class="rkb">${esc(r[0]||"–")}</span><span class="gnmw"><span class="gnm"><b>${esc(r[1]||r[3])}</b></span><small>${esc(yr(r[2]))}</small></span><span class="gtm" style="cursor:default">${esc(r[3])}</span><span class="gmk">${esc(r[4])}${r[5]||pt?`<small>${[r[5]?"wind "+esc(r[5]):"",pt?esc(ptsF(pt*rel))+" pts":""].filter(Boolean).join(" · ")}</small>`:""}</span></div>`}).join("")}</div>`}).join("")+`<p class="mnext"><button class="lnk" data-mvev="">‹ All events</button></p>`;
-  return `<div class="rbody mx${R.swap?" swap":""}">${head}${body}
+  const head=`${back}<div class="mxhd"><div><h2>${esc(M.meet)}</h2><p>${esc(fmtD(mv.date))}</p></div>${seg}</div>`;
+  let lastC="";
+  const rail=`<nav class="mxrail" aria-label="Events">${T?`<button class="mxri ts" data-mvev="__ts"${cur(ev==="__ts")}><span>Team scores</span><b>${esc(T.t[0][0])}</b></button>`:""}${ordered.map(e=>{const c=mcat(e),w=win(e),hd=c!==lastC?`<h4>${c}</h4>`:"";lastC=c;
+    return hd+`<button class="mxri${mineOf(e)?" me":""}" data-mvev="${esc(e)}"${cur(e===ev)}><span>${esc(evLabel(e))}</span><b>${w?esc(w[4]):""}</b></button>`}).join("")}</nav>`;
+  let panel;
+  if(ev==="__ts")panel=`<div class="mxph"><h3>Team scores</h3><span>${T.t.length} teams${okP?" · matches the official scores":""}</span></div>
+    <div class="mxrows">${T.t.map((t,i)=>`<div class="mxrow tsr"><i class="pl${i===0?" p1":""}">${i+1}</i><span class="nm"><b>${esc(t[0])}</b></span><span class="mk">${esc(ptsF(t[1]))}<small>pts</small></span></div>`).join("")}</div>`;
+  else if(!ev)panel=`<p class="note">No ${G==="m"?"men's":"women's"} results saved for this meet.</p>`;
+  else{const RS=EV[ev][G],rd=Math.min(Math.max(+mv.rd||0,0),RS.length-1),[rnd,wd,rows]=RS[rd];
+    const fin=/^final/i.test(rnd)||RS.length===1,[pts,x2]=okP&&fin?finalPts(rows,T.sys):[new Map(),false],rel=/relay/i.test(ev)&&x2?2:1;
+    const tabs=RS.length>1?`<div class="seg mxrds" role="group" aria-label="Round">${RS.map((r,i)=>`<button data-mvrd="${i}" aria-pressed="${i===rd}">${esc(r[0])}</button>`).join("")}</div>`:"";
+    panel=`<div class="mxph"><h3>${esc(evLabel(ev))}</h3><span>${esc(RS.length>1?"":rnd)}${RS.length>1?"":" · "}${rows.length} ${/relay/i.test(ev)?"teams":"athletes"}${wd?` · wind ${esc(wd)}`:""}</span></div>${tabs}
+    <div class="mxrows">${rows.map(r=>{const p=+String(r[0]).replace(/\D/g,""),pt=pts.get(r),sub=[r[5]?"wind "+esc(r[5]):"",pt?esc(ptsF(pt*rel))+" pts":""].filter(Boolean).join(" · ");
+      return `<div class="mxrow${r[1]===mv.name?" me":""}"><i class="pl${fin&&p===1?" p1":fin&&p&&p<=3?" p3":""}">${esc(r[0]||"–")}</i><span class="nm"><b>${esc(r[1]||r[3])}</b><small>${esc(yr(r[2]))}${r[1]&&r[1]!==r[3]?`<span class="tmm">${r[2]?" · ":""}${esc(r[3])}</span>`:""}</small></span><span class="tm">${r[1]&&r[1]!==r[3]?esc(r[3]):""}</span><span class="mk">${esc(r[4])}${sub?`<small>${sub}</small>`:""}</span></div>`}).join("")}</div>`}
+  return `<div class="rbody mx${R.swap?" swap":""}">${head}<div class="mxwrap">${rail}<section class="mxpanel">${panel}</section></div>
   <p class="note">Source: <a href="${esc(tf)}" target="_blank" rel="noopener">TFRRS meet results ↗</a></p>${hookRow()}</div>`}
 const ordS=n=>{const v=n%100;return v>=11&&v<=13?"th":["th","st","nd","rd"][n%10]||"th"};
 function meetView(D){
@@ -2491,7 +2498,9 @@ document.addEventListener("click",ev=>{
   if(d.ameet!==undefined){const P=ATH&&R.ath&&ATH[R.ath.path],m=P&&P.meets[+d.ameet];if(!m)return;const sea=meetSeason(m.date);
     R.mv={meet:m.meet,date:m.date,e:d.amev?mevKey(d.amev):"",name:R.ath.name,ath:R.ath,path:R.ath.path};if(sea&&RIDX.some(x=>x.year+"-"+x.season===sea&&x.div===R.div))R.season=sea;
     R.ath=null;R.team=null;R.q="";R.swap=true;render();scrollTo({top:0});log("results_event",{detail:"meet",meet:m.meet});return}
-  if(d.mvev!==undefined){R.mv.e=d.mvev;render();scrollTo({top:0});return}
+  if(d.mvev!==undefined){R.mv.e=d.mvev;R.mv.rd=0;render();const P=document.querySelector(".mxpanel");if(!P){scrollTo({top:0});return}
+    if(P.getBoundingClientRect().top<64)P.scrollIntoView({block:"start"});const C=document.querySelector(".mxri[aria-current]");if(C&&matchMedia("(max-width:640px)").matches)C.scrollIntoView({block:"nearest",inline:"center"});return}
+  if(d.mvrd!==undefined){R.mv.rd=+d.mvrd;render();return}
   if(d.mvg){R.g=d.mvg;render();return}
   if(d.atab){R.atab=d.atab;render();return}
   if("hlback" in d){R.ath=R.hlAth;R.hlAth=null;R.hl=null;R.conf="";R.swap=true;render();return}
