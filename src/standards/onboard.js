@@ -301,7 +301,9 @@ async function viewAsEnd() {
   VIEW_AS = null; document.documentElement.classList.remove("onbva");
   await loadAll(); await loadImgs(); SEL = 0; K = KIDS[0] ? clone(KIDS[0]) : blankKid(); TAB = "admin"; render(); window.scrollTo(0, 0); layer().scrollTo(0, 0);
 }
-async function loadAdmin() { try { const r = await core.api("/rest/v1/rpc/admin_accounts", { method: "POST", body: {} }); ADM = { rows: r || [] }; } catch (e) { ADM = { err: "Couldn't load accounts. " + e.message }; } render(); }
+/* the API returns at most 1,000 rows per request, so the list stopped at 1,000 accounts (Ryan 2026-11-11: "stuck at 1,006"; the
+   database had 1,187). Fetch in pages of 1,000, newest first, until a page comes back short. */
+async function loadAdmin() { try { const rows = []; for (let off = 0; off < 100000; off += 1000) { const r = await core.api(`/rest/v1/rpc/admin_accounts?order=created_at.desc,id&limit=1000&offset=${off}`, { method: "POST", body: {} }) || []; rows.push(...r); if (r.length < 1000) break; } ADM = { rows }; } catch (e) { ADM = { err: "Couldn't load accounts. " + e.message }; } render(); }
 function csv() {
   const H = ["athlete", "account", "role", "tier", "class", "gender", "state", "high_school", "gpa", "marks", "contact", "finished", "clicked_evaluation", "joined"];
   const cell = v => { v = v == null ? "" : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
