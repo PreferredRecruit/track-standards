@@ -2546,6 +2546,14 @@ function gradeOf(raw){const q=" "+String(raw).toLowerCase()+" ";if(/\b(freshman|
   const c=q.match(/class of (20\d\d)/);if(c){const now=new Date(),sy=now.getMonth()>=6?now.getFullYear()+1:now.getFullYear(),g=12-(+c[1]-sy);if(g>=9&&g<=12)return g}return 0}
 document.addEventListener("click",ev=>{const a=ev.target.closest&&ev.target.closest("[data-aud]");if(!a)return;AUD=a.dataset.aud;try{localStorage.setItem("prAud",AUD)}catch(e){}
   document.documentElement.classList.toggle("pm",isPar());log("feedback",{detail:"aud-"+AUD});render();if(isPar()){const q=$("obq");if(q)q.focus()}});
+/* dead taps (Clarity 2026-11-11: 14% of sessions; on the home search mostly taps on the space and labels around the fields): a tap on the
+   search panel that isn't on a control opens the field it belongs to; the "Search for one school" block opens its search box */
+document.addEventListener("click",ev=>{const t=ev.target;if(!t||!t.closest||t.closest("input,select,textarea,button,a,label,summary,[role=button],[data-grade]"))return;
+  if(t.closest(".one")){const q=$("q");if(q){q.focus();return}}
+  const f=t.closest("#mf");if(!f)return;
+  if(t.closest(".evw")){const e=$("ev");if(e){e.focus();try{e.showPicker&&e.showPicker()}catch(z){}}return}
+  if(t.closest(".gseg")||(t.closest("#hint")&&/grade/i.test(t.textContent||""))){const b=f.querySelector('.gseg button[aria-pressed="true"]')||f.querySelector(".gseg button");if(b)b.focus();return}
+  const m=$("mk");if(m)m.focus()});
 document.addEventListener("submit",ev=>{const fid=ev.target&&ev.target.id;if(fid!=="obf"&&fid!=="cf"&&fid!=="mf")return;   /* account, onboarding, readiness and profile forms have their own handlers (Clarity 2026-11-07: hint-null errors) */
   ev.preventDefault();
   if(fid==="obf"){const raw=$("obq").value,d=detect(raw),gr=gradeOf(raw),h=$("obh");
@@ -2557,12 +2565,15 @@ document.addEventListener("submit",ev=>{const fid=ev.target&&ev.target.id;if(fid
   const hint=$("hint"),say=t=>{if(hint)hint.textContent=t};
   if(parse(S.mark,S.e)==null){say(badMark(S.e));return}
   if(!S.gr){say("Pick your grade to see your colleges.");const gs=document.querySelector(".gseg");if(gs){gs.classList.remove("need");void gs.offsetWidth;gs.classList.add("need");gs.querySelector("button").focus()}return}
-  S.run=true;S.f="";S.div="";S.conf="";S.st="";S.n=24;render();
+  S.run=true;S.f="";S.div="";S.conf="";S.st="";S.n=24;
+  /* phone tap lag (Clarity INP 280 ms, 2026-11-11): show the press first, build the results list in the next task, so the tap paints at once */
+  {const go=document.querySelector("#mf .go");if(go){go.disabled=true;go.textContent="Searching…"}}
+  setTimeout(()=>{render();
   /* each search gets its own URL: shareable, back button returns to the form, and analytics counts it as a page view (Ryan 2026-10-15: bounce rate) */
   try{const u=`/?g=${S.g}&e=${encodeURIComponent(S.e)}&m=${encodeURIComponent(S.mark.trim())}`;if(location.pathname+location.search!==u)history.pushState({},"",u)}catch(e){}{const el=document.querySelector(".sum");if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-74,behavior:"smooth"})}
   const v=parse(S.mark,S.e), n=SCH.filter(s=>tier(s,S.g,S.e,v)).length;
   intent(S.e,S.g,S.mark.trim()); log("search",{g:S.g,event:S.e,mark:S.mark.trim(),n_fits:n,detail:AUD||undefined});
-  armOffer();});
+  armOffer();},0);});
 
   /* return visit (new session, last search 30+ min ago): remind them of their own mark once, 15 s in, unless they search again */
   try{const first=!sessionStorage.getItem("prSeen");sessionStorage.setItem("prSeen","1");

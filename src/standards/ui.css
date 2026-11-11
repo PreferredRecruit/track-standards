@@ -127,3 +127,8 @@ main{padding-bottom:48px}
 .emask button:focus-visible{outline:2px solid var(--pr-violet);outline-offset:2px}
 @keyframes emin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media (max-width:640px){.emask{right:16px;max-width:none}}
+
+/* phones (Clarity INP 280 ms, 2026-11-11): the frosted sticky header repaints behind every scroll and tap; solid on small screens */
+@media (max-width:640px){.prh,header{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--pr-card,#fff)}}
+/* dead taps: the whole search panel and the one-school block read as tappable */
+#mf .row,.one{cursor:text}
