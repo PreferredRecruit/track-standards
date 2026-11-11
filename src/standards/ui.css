@@ -162,3 +162,20 @@ main{padding-bottom:48px}
 .chk .chk-gr input:checked+span{background:var(--pr-black);color:#fff}
 .chk input[type=radio]:focus-visible+span{outline:2px solid var(--pr-violet);outline-offset:2px}
 .chk>button{width:100%}
+
+/* School page on desktop (Ryan 2026-11-11 audit: the 780 px column left half the screen empty): standards left, facts right */
+@media (min-width:961px){
+  main:has(.scols){max-width:1120px}
+  .scols{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
+  .scside{position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto;scrollbar-width:thin}
+  .scside>*:first-child{margin-top:12px}
+}
+
+/* home: three doors under the search (Ryan 2026-11-11 audit) */
+.hdoors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:760px;margin:40px auto 0}
+.hdoors a{position:relative;display:flex;flex-direction:column;gap:4px;padding:16px 48px 16px 18px;border-radius:var(--r-3);background:var(--pr-card,#fff);box-shadow:var(--pr-rim);color:var(--pr-ink,#0B0B0F);text-align:left;text-decoration:none;transition:transform var(--dur-2) var(--ease-out)}
+.hdoors a:hover{transform:translateY(-2px)}
+.hdoors b{font-size:17px;font-weight:700}
+.hdoors span{font-size:14px;color:var(--pr-mute,#4A4A52);line-height:var(--lh-snug)}
+.hdoors i{position:absolute;top:50%;right:14px;display:grid;place-items:center;width:28px;height:28px;margin-top:-14px;border-radius:50%;background:color-mix(in srgb,var(--pr-violet) 10%,transparent);color:var(--pr-violet);font-style:normal;font-weight:700}
+@media (max-width:640px){.hdoors{grid-template-columns:1fr;gap:8px;margin-top:28px}}

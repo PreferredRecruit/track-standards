@@ -529,6 +529,8 @@ function standards(){
     <button class="go">Search colleges</button></div><div class="hint" id="hint"></div></form>`;
   /* order (Ryan 2026-10-13): search by stats · or · search one school · what the levels mean · results */
   o+=`<div class="orsep" role="separator"><span>or</span></div><div class="one${S.run?" sm":""}"><h4>Search for one school</h4><p>${NSTD.toLocaleString()} colleges across NCAA D1, D2, D3 and NAIA, plus every NJCAA junior college.</p><div class="search">${MAG}<label class="sr" for="q">Search colleges</label><input class="in" id="q" placeholder="Try USC, Oregon or Ole Miss" autocomplete="off" value="${esc(S.q)}"><div id="drop"></div></div></div>`;
+  /* home on desktop (Ryan 2026-11-11 audit: an empty band under the search): three plain doors to the rest of the site, no data loads */
+  if(!S.run)o+=`<nav class="hdoors" aria-label="Explore">${[["/?tab=results","Results","Every college mark this season, event by event"],["/?tab=rankings","Rankings","Every team rated out of 99, updated Mondays"],["/recruiting.html","Guides","How recruiting works, in plain words"]].map(([u,t,d])=>`<a href="${u}"><b>${t}</b><span>${d}</span><i aria-hidden="true">›</i></a>`).join("")}</nav>`;
   if(S.run&&parse(S.mark,S.e)==null){   /* a shared or typed URL with a value that can't be a mark (UX audit 2026-11-03): say so instead of searching */
     return o.replace('<div class="hint" id="hint"></div>',`<div class="hint" id="hint">${esc(badMark(S.e))}</div>`)+`</div>`}
   if(S.run){
@@ -691,7 +693,7 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   const still=BRQ;BRQ=false;
   let o=`<div class="sec branded simple${still?" still":""}" style="padding-top:0;${bv}"><button class="back" data-back>‹ Back</button>
   <div class="sband">${mark}<div><small>${/\(/.test(s.n)?esc(s.n.replace(/^.*?\((.*?)\).*$/,"$1"))+" · ":""}${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(s.s):""}</small><h1 class="sname">${esc(s.n.replace(/\s*\(.*?\)\s*/g," ").trim())} Track &amp; Field${s.j?" (NJCAA)":" Standards"}</h1>${s.j?`<a class="tplink1" href="/teams/${tslug(S.school)}" data-tpage="${S.school}">Team results &amp; roster ›</a>`:tsw(S.school,"std")}${s.o?`<span class="offpill">★ Official standards${s.yr?` · ${esc(s.yr)}`:""}${oldChart(s)?" (latest published)":""}</span>`:""}</div><div class="srchips" id="srchips"></div></div>
-  <div class="sctl">${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} track &amp; field only</p>`:seg("g",g)}<!--tg--></div>`;   /* school checker removed (Ryan 2026-10-16: "is that even necessary, the kids can clearly see") */
+  <div class="sctl">${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} track &amp; field only</p>`:seg("g",g)}<!--tg--></div><!--scols-->`;   /* school checker removed (Ryan 2026-10-16: "is that even necessary, the kids can clearly see") */
   if(s.j){
     o+=`<div class="verify" style="margin-top:16px"><b>No recruiting levels for junior colleges</b><span>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: junior colleges compete nationally rather than in conferences, so there's no reliable way to predict a program's marks. Below are ${esc(s.n)}'s best marks this season; the full national list, by event, is in Results.</span><a href="/?tab=results&div=NJCAA">NJCAA national list ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
     setTimeout(()=>teamBest(S.school),0);setTimeout(()=>schoolRank(S.school),0);   /* NJCAA Power Rankings (2026-11-03) */
@@ -720,7 +722,9 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   setTimeout(()=>schoolIntent(S.school),0);
   /* the "how these are set" / official-source box goes to the bottom (Ryan 2026-10-16: "just put it at the bottom") */
   const vm=o.match(/<div class="verify">[\s\S]*?<\/div>/),vf=vm?vm[0]:"";if(vf)o=o.replace(vf,"");
-  return o+`<div id="sfacts"></div><div id="srank"></div><div id="tbest"></div><div id="svid"></div>`+schoolArch(s)+schoolAbout(s,vf)+schoolExtra(s)+brandNote(s,B)+`</div>`}
+  /* desktop two columns (Ryan 2026-11-11 audit): standards, season bests and videos left; facts, rank, about and links in a sticky right
+     column. Below 961 px the wrappers are plain blocks, so phones keep the single column in the same order as before. */
+  return o.replace("<!--scols-->",`<div class="scols"><div class="scmain">`)+`<div id="tbest"></div><div id="svid"></div></div><aside class="scside"><div id="sfacts"></div><div id="srank"></div>`+schoolArch(s)+schoolAbout(s,vf)+schoolExtra(s)+`</aside></div>`+brandNote(s,B)+`</div>`}
 /* parent capture (Ryan 2026-10-25, enterprise value: parents buy, but 71 of 100 athlete accounts had no parent contact).
    Signed-in athletes without a parent on file see one card under their results until they add one or close it.
    Saves parent name / email / phone to their own profile (RLS: owner only). No SMS consent is taken here: a parent's
