@@ -138,3 +138,27 @@ main{padding-bottom:48px}
 .pg .links a{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--pr-line,#E4E3EA);border-radius:var(--r-pill);background:var(--pr-card,#fff);color:var(--pr-ink,#0B0B0F);font-size:14px;font-weight:550;text-decoration:none;transition:border-color var(--dur-1),color var(--dur-1)}
 .pg .links a:hover{border-color:var(--pr-violet);color:var(--pr-violet);text-decoration:none}
 .pg .qa b{text-transform:none;letter-spacing:0;font-size:13px;font-weight:650}
+
+/* One header + one form (Ryan 2026-11-11 consistency batch). Static pages: the app's section pills on phones and tablets (the header
+   links hide below 960 px), and the mark checker uses the app's Men/Women toggle and grade buttons (radios, no JS). */
+.prtabs{display:none}
+@media (max-width:960px){
+  .prtabs{display:flex;gap:2px;width:max-content;max-width:calc(100% - 32px);margin:12px auto 0;padding:4px;border-radius:var(--r-pill);background:var(--pr-card,#fff);box-shadow:var(--pr-rim);overflow-x:auto;scrollbar-width:none}
+  .prtabs::-webkit-scrollbar{display:none}
+  .prtabs a{flex:none;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;border-radius:var(--r-pill);font-size:14px;font-weight:600;color:var(--pr-mute,#4A4A52);text-decoration:none;white-space:nowrap}
+  .prtabs a[aria-current]{background:var(--pr-black);color:#fff}
+}
+@media (max-width:640px){.prtabs{justify-content:space-between;width:auto;gap:0}.prtabs a{padding:0 10px;font-size:13px}}
+@media (min-width:961px){.pg .chk{max-width:640px}}
+.chk .chk-seg{display:inline-flex;gap:0;margin:2px 0 10px;padding:4px;border-radius:var(--r-pill);background:var(--pr-soft,#F3F2F7)}
+.chk .chk-seg label,.chk .chk-gr label{position:relative;display:inline-flex}
+.chk input[type=radio]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.chk .chk-seg span{display:inline-flex;align-items:center;min-height:36px;padding:0 18px;border-radius:var(--r-pill);font-size:15px;font-weight:600;color:var(--pr-mute,#4A4A52);cursor:pointer}
+.chk .chk-seg input:checked+span{background:var(--pr-card,#fff);color:var(--pr-ink,#0B0B0F);box-shadow:var(--sh-1)}
+.chk .chk-row{display:flex;gap:8px;flex-wrap:nowrap}.chk .chk-row select,.chk .chk-row input{flex:1 1 0;min-width:0}
+.chk .chk-gr{display:flex;align-items:center;gap:6px;margin:10px 0 12px;flex-wrap:wrap}
+.chk .chk-gr>span{margin-right:6px;font-size:14px;color:var(--pr-mute,#4A4A52)}
+.chk .chk-gr label span{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:var(--r-pill);background:var(--pr-soft,#F3F2F7);font-size:14px;font-weight:600;color:var(--pr-ink2,#1D1D1F);cursor:pointer}
+.chk .chk-gr input:checked+span{background:var(--pr-black);color:#fff}
+.chk input[type=radio]:focus-visible+span{outline:2px solid var(--pr-violet);outline-offset:2px}
+.chk>button{width:100%}
