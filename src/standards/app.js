@@ -124,13 +124,13 @@ function parseMark0(str,e){
   if(FR[e]){var r=FR[e],m;
     var mr=/(\d+(?:\.\d*)?)\s*m(?![a-z])/g;while((m=mr.exec(s)))if(inR(+m[1],r))return +m[1];
     m=s.match(/\((\d+\.\d+)\)/);if(m&&inR(+m[1],r))return +m[1];m=s.match(/^(\d+\.\d\d)\s*\(/);if(m&&inR(+m[1],r))return +m[1];
-    var f=s.replace(/^(\d+)"(\d)/,"$1'$2").split(/[\/(;]|\bor\b/)[0].replace(/\s+/g,"").replace(/(\d)ft-?(\d)/,"$1-$2").replace(/(\d)in$/,"$1").replace(/(\d)ft$/,"$1'");
+    var f=s.replace(/^(\d{1,3})\s+(\d{1,2}(?:\.\d+)?)$/,"$1-$2").replace(/^(\d+)"(\d)/,"$1'$2").split(/[\/(;]|\bor\b/)[0].replace(/\s+/g,"").replace(/(\d)ft-?(\d)/,"$1-$2").replace(/(\d)in$/,"$1").replace(/(\d)ft$/,"$1'");
     m=f.match(/^(\d+)(?:'|-|ft)-?(\d+(?:\.\d+)?)?(?:"|in|')?$/);
     if(m){var ft=+m[1],inch=m[2]?+m[2]:0;if(inch>=12&&/^\d\d$/.test(m[2]))inch=inch/10;if(inch<12)return(ft*12+inch)*0.0254;return null}
     m=f.match(/^(\d+(?:\.\d+)?)(?:'|ft|")?$/);
     if(m){var n=+m[1],asM=n,asFt=n*0.3048;if(/'|ft/.test(f))return inR(asFt,r)?asFt:null;if(/"/.test(f))return inR(n*0.0254,r)?n*0.0254:inR(asFt,r)?asFt:null;if(inR(asM,r))return asM;if(inR(asFt,r))return asFt;return n<30?n:null}
     return null}
-  var R=TR[e],alts=s.replace(/\([^)]*\)/g," ").split(/[\/|;]|\bor\b/).map(function(x){return x.replace(/^[^:]*[a-z][^:]*:|^\s*\d{3,5}\s*:\s/,"").replace(/\b\d+k\b|\b[a-z]+\b/g," ")});
+  var R=TR[e];s=s.replace(/^(\d+),(\d{1,2})$/,"$1.$2").replace(/^(\d{1,2})\s*[;' ]\s*(\d{2}(?:\.\d+)?)$/,"$1:$2");var alts=s.replace(/\([^)]*\)/g," ").split(/[\/|;]|\bor\b/).map(function(x){return x.replace(/^[^:]*[a-z][^:]*:|^\s*\d{3,5}\s*:\s/,"").replace(/\b\d+k\b|\b[a-z]+\b/g," ")});
   var one=function(seg){var t=seg.replace(/[^0-9:.]/g,"");if(!t)return null;
   var c=(t.match(/:/g)||[]).length,d=(t.match(/\./g)||[]).length,p,a,b;
   if(c===0&&d===2){p=t.split(".");return +p[0]*60+ +(p[1]+"."+p[2])}
