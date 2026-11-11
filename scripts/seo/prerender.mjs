@@ -81,13 +81,14 @@ function withFinder(pathname, body) {
 }
 /* phone tables (Ryan 2026-11-11, bounce fix #2): on a 375 px phone the results table was 536 px wide, so the mark itself sat off
    screen behind a sideways swipe. On data pages, low-value columns hide on phones only (class "ph"), cells get tighter. */
-const PHONE_HIDE = new Set(["Class", "Meet", "Conference rank"]);
+const PHONE_HIDE = new Set(["Class", "Meet", "Conference rank"]), PHONE_HIDE_FAM = { athletes: new Set(["School"]) };   /* athlete pages name the school in the title */
 function phoneCols(pathname, body) {
   if (!FINDER_FAM.has(pathname.split("/")[1])) return body;
   return body.replace(/<table([^>]*)>([\s\S]*?)<\/table>/g, (all, attrs, inner) => {
     const head = (inner.match(/<tr[^>]*>([\s\S]*?)<\/tr>/) || [])[1] || "";
     const names = [...head.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map(m => m[1].replace(/<[^>]+>/g, "").trim());
-    const hide = new Set(names.map((n, i) => PHONE_HIDE.has(n) ? i : -1).filter(i => i >= 0));
+    const extra = PHONE_HIDE_FAM[pathname.split("/")[1]] || new Set();
+    const hide = new Set(names.map((n, i) => PHONE_HIDE.has(n) || extra.has(n) ? i : -1).filter(i => i >= 0));
     const t = /class="/.test(attrs) ? attrs.replace(/class="/, 'class="dtb ') : attrs + ' class="dtb"';
     if (!hide.size) return `<table${t}>${inner}</table>`;
     const rows = inner.replace(/<tr([^>]*)>([\s\S]*?)<\/tr>/g, (r, ra, cells) => {
@@ -145,7 +146,7 @@ details.morel{margin-top:6px}details.morel>summary{cursor:pointer;list-style:non
 code{overflow-wrap:anywhere;word-break:break-word;font-size:.9em;background:var(--soft);border-radius:6px;padding:1px 6px}
 header nav a.cta .s{display:none}
 /* UX audit 2026-10-31: on phones the two-row header scrolled with the page took 20% of the screen; tables keep their labels */
-@media(max-width:560px){header{position:relative}table.dtb td,table.dtb th{padding:10px 8px;font-size:13px}table.dtb th{font-size:12px}table.dtb td.n{white-space:nowrap}table.dtb .ph{display:none}}
+@media(max-width:560px){header{position:relative}table.dtb td,table.dtb th{padding:10px 6px;font-size:13px}table.dtb td:first-child,table.dtb th:first-child{padding-left:10px}table.dtb th{font-size:12px}table.dtb td.n{white-space:nowrap}table.dtb .ph{display:none}}
 thead th{position:sticky;top:64px;z-index:2}@media(max-width:560px){thead th{top:0}}
 .skip{position:absolute;left:-9999px}.skip:focus{left:12px;top:12px;z-index:99;background:#fff;padding:8px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
 td .cfm{display:none}@media(max-width:560px){.evtbl th,.evtbl td{padding:10px 7px;font-size:13px}.evtbl th{font-size:12px;letter-spacing:.04em}.evtbl td:first-child,.evtbl th:first-child{padding-left:12px}.evtbl th.cf,.evtbl td.cf{display:none}td .cfm{display:block;font-size:12px;font-weight:500;color:var(--mute);margin-top:2px}}
