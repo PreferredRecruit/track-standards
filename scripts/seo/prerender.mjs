@@ -79,9 +79,28 @@ function withFinder(pathname, body) {
   i += 8; if (body.startsWith("</div>", i)) i += 6;
   return body.slice(0, i) + f + body.slice(i);
 }
+/* phone tables (Ryan 2026-11-11, bounce fix #2): on a 375 px phone the results table was 536 px wide, so the mark itself sat off
+   screen behind a sideways swipe. On data pages, low-value columns hide on phones only (class "ph"), cells get tighter. */
+const PHONE_HIDE = new Set(["Class", "Meet", "Conference rank"]);
+function phoneCols(pathname, body) {
+  if (!FINDER_FAM.has(pathname.split("/")[1])) return body;
+  return body.replace(/<table([^>]*)>([\s\S]*?)<\/table>/g, (all, attrs, inner) => {
+    const head = (inner.match(/<tr[^>]*>([\s\S]*?)<\/tr>/) || [])[1] || "";
+    const names = [...head.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map(m => m[1].replace(/<[^>]+>/g, "").trim());
+    const hide = new Set(names.map((n, i) => PHONE_HIDE.has(n) ? i : -1).filter(i => i >= 0));
+    const t = /class="/.test(attrs) ? attrs.replace(/class="/, 'class="dtb ') : attrs + ' class="dtb"';
+    if (!hide.size) return `<table${t}>${inner}</table>`;
+    const rows = inner.replace(/<tr([^>]*)>([\s\S]*?)<\/tr>/g, (r, ra, cells) => {
+      if ((cells.match(/<t[hd][\s>]/g) || []).length !== names.length) return r;   /* colspan rows stay as they are */
+      let i = -1;
+      return `<tr${ra}>` + cells.replace(/<(t[hd])([^>]*)>/g, (m, tag, a) => { i++; if (!hide.has(i)) return m; return /class="/.test(a) ? `<${tag}${a.replace(/class="/, 'class="ph ')}>` : `<${tag}${a} class="ph">`; }) + "</tr>";
+    });
+    return `<table${t}>${rows}</table>`;
+  });
+}
 function page({ title, desc, pathname, crumbs, h1, intro, body, ld }) {
   if (!/^\/(guides|for-coaches)\.html$/.test(pathname) && !/^\/rankings/.test(pathname)) body = withChecker(pathname, body);
-  body = withFinder(pathname, body);
+  body = withFinder(pathname, phoneCols(pathname, body));
   title = fitTitle(title); desc = fitDesc(desc, tailsFor(pathname));
   const url = SITE + pathname;
   const bc = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: crumbs.map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) };
@@ -126,7 +145,7 @@ details.morel{margin-top:6px}details.morel>summary{cursor:pointer;list-style:non
 code{overflow-wrap:anywhere;word-break:break-word;font-size:.9em;background:var(--soft);border-radius:6px;padding:1px 6px}
 header nav a.cta .s{display:none}
 /* UX audit 2026-10-31: on phones the two-row header scrolled with the page took 20% of the screen; tables keep their labels */
-@media(max-width:560px){header{position:relative}}
+@media(max-width:560px){header{position:relative}table.dtb td,table.dtb th{padding:10px 8px;font-size:13px}table.dtb th{font-size:12px}table.dtb td.n{white-space:nowrap}table.dtb .ph{display:none}}
 thead th{position:sticky;top:64px;z-index:2}@media(max-width:560px){thead th{top:0}}
 .skip{position:absolute;left:-9999px}.skip:focus{left:12px;top:12px;z-index:99;background:#fff;padding:8px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
 td .cfm{display:none}@media(max-width:560px){.evtbl th,.evtbl td{padding:10px 7px;font-size:13px}.evtbl th{font-size:12px;letter-spacing:.04em}.evtbl td:first-child,.evtbl th:first-child{padding-left:12px}.evtbl th.cf,.evtbl td.cf{display:none}td .cfm{display:block;font-size:12px;font-weight:500;color:var(--mute);margin-top:2px}}
@@ -269,7 +288,7 @@ export function generate(root, out) {
     const confHS = g => { const R = hsRows((gg, e) => { const r = (line[gg] || {})[e]; return r ? [0, 1, 2].map(j => { const v = r[j]; return v ? (v[1] ? `${v[1]} (${v[0]})` : v[0]) : ""; }) : null; }, g, parse), cl = [0, 1, 2].filter(j => (!["p4", "sec"].includes(line.rule) || j < 2) && R.some(x => x[1][j])), LB = ["Target", "Recruit", "Walk-On"];
       return R.length ? `<h2>${esc(c)} ${gName(g).toLowerCase()} standards in high school events</h2><div class="scroll"><table><tr><th>High school event</th>${cl.map(j => `<th class="n">${LB[j]}</th>`).join("")}</tr>${R.map(([e, v, note]) => `<tr><td>${esc(e)}${note ? ` <small>${esc(note)}</small>` : ""}</td>${cl.map(j => `<td class="n">${esc(v[j] || "–")}</td>`).join("")}</tr>`).join("")}</table></div>` : ""; };
     const body = (d !== "NJCAA" && Object.keys(line.m || line.w || {}).length ? confHS("m") + confHS("w") + `<p>The ${esc(c)}'s levels from its 2026 championship, converted to the events you run in high school (1600m from the 1500m, 3200m from the 5000m, 300m hurdles from the 400m hurdles). Schools with their own published chart (★) can differ: open the school.</p>` : "") + `<h2>${esc(c)} track &amp; field programs (${list.length})</h2><div class="scroll"><table><tr><th>School</th><th>State</th><th>${d === "NJCAA" ? "On this site" : "Standards"}</th></tr>${list.map(s => `<tr><td><a href="${sl(s)}">${esc(s.n)}</a>${s.o ? ' <span class="star">★ official</span>' : ""}</td><td>${esc(STATE[s.s] || s.s || "")}</td><td>${s.j ? "Season results" : s.o ? "Published by the school" : s.est ? "Estimate" : "Set from 2026 conference results"}</td></tr>`).join("")}</table></div>` +
-      (Object.keys(line.m || {}).length ? ["m", "w"].map(g => (line.rule === "p4" ? `<h2>${esc(c)} ${gName(g).toLowerCase()} marks: what it took this season</h2><p>The ${esc(c)} is a Power 4 conference, so there is no Walk-On level. Target is the middle of the 8th to 10th best marks in the conference in 2026 and Recruit the middle of the 15th to 25th, for conference schools without an official chart.</p><div class="scroll"><table><tr><th>Event</th><th class="n">Target</th><th class="n">Recruit</th></tr>${evRows(g, 2)}</table></div>` : line.rule === "sec" ? `<h2>${esc(c)} ${gName(g).toLowerCase()} marks: what it took this season</h2><p>${esc(c)} sprint and distance levels come from every ${esc(c)} athlete's 2026 season best on TFRRS: Target is the top 10% of the conference in the event and Recruit the top 25%. Hurdles, jumps and throws: Target is the middle of the 8th to 10th best marks, Recruit the middle of the 15th to 25th. Power 4 programs keep only a handful of walk-on spots and fill them one athlete at a time, so there is no Walk-On level for them here. Treat the Recruit mark as the real bar to get in. Conference schools with an official chart use their own.</p><div class="scroll"><table><tr><th>Event</th><th class="n">Target</th><th class="n">Recruit</th></tr>${evRows(g, 2)}</table></div>` : `<h2>${esc(c)} ${gName(g).toLowerCase()} marks: what it took this season</h2><p>The 8th, 15th and 25th best marks in the ${esc(c)} in 2026, which set the Target, Recruit and Walk-On levels for conference schools without an official chart.</p><div class="scroll"><table><tr><th>Event</th><th class="n">8th (Target)</th><th class="n">15th (Recruit)</th><th class="n">25th (Walk-On)</th></tr>${evRows(g)}</table></div>`)).join("") : "");
+      (Object.keys(line.m || {}).length ? ["m", "w"].map(g => (line.rule === "p4" ? `<h2>${esc(c)} ${gName(g).toLowerCase()} marks: what it took this season</h2><p>The ${esc(c)} is a Power 4 conference, so there is no Walk-On level. Target is the middle of the 8th to 10th best marks in the conference in 2026 and Recruit the middle of the 15th to 25th, for conference schools without an official chart.</p><div class="scroll"><table><tr><th>Event</th><th class="n">Target</th><th class="n">Recruit</th></tr>${evRows(g, 2)}</table></div>` : line.rule === "sec" ? `<h2>${esc(c)} ${gName(g).toLowerCase()} marks: what it took this season</h2><p>${esc(c)} sprint and distance levels come from every ${esc(c)} athlete's 2026 season best on TFRRS: Target is the top 10% of the conference in the event and Recruit the top 25%. Hurdles, jumps and throws: Target is the middle of the 8th to 10th best marks, Recruit the middle of the 15th to 25th.${c === "Big Ten" ? " Big Ten men's hurdles, high jump and triple jump have higher Recruit marks, set by Preferred Recruit to match how fast the Big Ten recruits." : ""} Power 4 programs keep only a handful of walk-on spots and fill them one athlete at a time, so there is no Walk-On level for them here. Treat the Recruit mark as the real bar to get in. Conference schools with an official chart use their own.</p><div class="scroll"><table><tr><th>Event</th><th class="n">Target</th><th class="n">Recruit</th></tr>${evRows(g, 2)}</table></div>` : `<h2>${esc(c)} ${gName(g).toLowerCase()} marks: what it took this season</h2><p>The 8th, 15th and 25th best marks in the ${esc(c)} in 2026, which set the Target, Recruit and Walk-On levels for conference schools without an official chart.</p><div class="scroll"><table><tr><th>Event</th><th class="n">8th (Target)</th><th class="n">15th (Recruit)</th><th class="n">25th (Walk-On)</th></tr>${evRows(g)}</table></div>`)).join("") : "");
     const juco = d === "NJCAA";
     /* the conference's own ranking (Ryan 2026-10-30: rankings schools can share) */
     const CR = R.conf.get(k), cur = R.cur[d];

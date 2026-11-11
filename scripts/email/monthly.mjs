@@ -103,7 +103,8 @@ if (flag("--preview")) {
   const H = { apikey: sk, Authorization: "Bearer " + sk };
   const get = async (q) => { const r = await fetch(DB_URL + "/rest/v1/" + q, { headers: H }); if (!r.ok) throw new Error("db " + r.status); return r.json(); };
   const cutoff = new Date(Date.now() - 25 * 864e5).toISOString();
-  const ps = await get(`profiles?select=id,first_name,email_token,email_last_sent_at&role=eq.parent&email_updates=is.true`);
+  const ps = [];   /* the API returns at most 1,000 rows per request: page through every opted-in parent */
+  for (let off = 0; ; off += 1000) { const pg = await get(`profiles?select=id,first_name,email_token,email_last_sent_at&role=eq.parent&email_updates=is.true&order=id&limit=1000&offset=${off}`); ps.push(...pg); if (pg.length < 1000) break; }
   let sent = 0, skipped = 0;
   for (const p of ps) {
     if (p.email_last_sent_at && p.email_last_sent_at > cutoff) { skipped++; continue; }
