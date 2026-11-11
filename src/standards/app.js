@@ -285,7 +285,9 @@ const PARB=()=>{const h=String(SID).replace(/[^0-9a-f]/gi,"").slice(-4);return (
    previews. Athletes only (parents keep their own copy). Every v2 variant logs as "v2-..." so the report compares the two arms. */
 let V2C=null;
 const V2B=()=>{if(V2C!=null)return V2C;try{const q=new URLSearchParams(location.search).get("pv");if(q==="1"||q==="2")localStorage.setItem("prPV",q);const k=localStorage.getItem("prPV");if(k)return V2C=k==="2"}catch(e){}
-  const h=String(SID).replace(/[^0-9a-f]/gi,"").slice(-6,-4);return V2C=(parseInt(h||"0",16)%2)===1};
+  /* test concluded 2026-11-11 (Ryan: "rebuild the losing version once the test concludes"): v2 10.2% (131/1,285) vs v1 5.4% (136/2,498),
+     driven by school pages (logo pill 19/65, school pop-up 5.2% vs 2.9%); v2 is now everyone's. ?pv=1 still previews v1. */
+  return V2C=true};
 const v2On=()=>V2B()&&!isPar()&&!pickKid()&&!EV.ready;
 const PILLTXT='See who’d recruit you <span aria-hidden="true">›</span>';
 const V2S2={none:["Let's get you <em>in touch.</em>","Coaches recruit who they know. See which ones to contact first."],
