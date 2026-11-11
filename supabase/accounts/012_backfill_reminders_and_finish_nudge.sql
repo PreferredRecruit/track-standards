@@ -1,0 +1,7 @@
+-- Ryan 2026-11-11 ("approval to ship all other updates"), applied to project vtbrenadwivmiursebfp:
+-- (a) send_confirm_reminders() drops the 72-hour cap, so everyone unconfirmed after 24 h gets ONE reminder, older sign-ups included;
+-- (b) send_finish_nudges(): ONE sign-in-link email (auth /otp, create_user false, redirect /onboarding) to anyone who confirmed but
+--     hasn't finished a profile 24 h after sign-up; the site sends unfinished accounts straight to profile setup.
+-- Pacing: each job sends 1 per 6 minutes (~10 an hour) so new sign-ups' confirmation emails are never crowded out; failures retry
+-- up to 3 times. Logs: public.confirm_reminders, public.finish_nudges. Cron: confirm-reminders */6, finish-nudges 3-59/6.
+-- (Full SQL as applied is in the migration history: 012_backfill_reminders_and_finish_nudge.)

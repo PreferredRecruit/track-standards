@@ -69,7 +69,8 @@ TARGET_RANK, RECRUIT_RANK = 8, 15
 ANCHORS = {("Big Ten", "m", "110m Hurdles"): (["13.66", ""], ["13.90", ""]),   # Ryan 2026-11-07 ("13.9 and hs 13.7")
            ("Big Ten", "m", "High Jump"): (None, ["2.08m", "6' 10\""]),        # Ryan 2026-11-07 ("closer to 6'10")
            ("SEC", "m", "400m"): (None, ["45.77", ""]),                        # Ryan 2026-11-11 ("Keep the 45.77 mark")
-           ("Big 12", "m", "Triple Jump"): (None, "rank10")}                   # Ryan 2026-11-11 ("use the top ten mark")
+           ("Big 12", "m", "Triple Jump"): (None, "rank10"),                   # Ryan 2026-11-11 ("use the top ten mark")
+           ("SEC", "m", "Javelin"): ("rank4", "rank8")}                        # Ryan 2026-11-11 ("based on the eighth place throw"); Target moves to 4th to stay above
 
 
 def p4_rank(d, db, verbose=True):
@@ -112,8 +113,8 @@ def p4_rank(d, db, verbose=True):
                         lv[i] = list(floor[i][1]) if isinstance(floor[i][1], list) else [floor[i][1], ""]; note += f" floor{i}"
                 an = ANCHORS.get((name, g, e))
                 if an:
-                    rec = cell(use[9][4], e) if an[1] == "rank10" else an[1]
-                    lv = [an[0] or lv[0], rec or lv[1]]; note += " anchor"
+                    pick = lambda x: cell(use[int(x[4:]) - 1][4], e) if isinstance(x, str) and x.startswith("rank") else x
+                    lv = [pick(an[0]) or lv[0], pick(an[1]) or lv[1]]; note += " anchor"
                 ct[key].setdefault(g, {})[e] = lv + [None]
                 rows_out.append((name, g, e, len(use), [x and x[0] for x in (old or [])][:2], [lv[0][0], lv[1][0]], note))
     for name in CONFS: ct["NCAA D1|" + name]["rule"] = "sec"
