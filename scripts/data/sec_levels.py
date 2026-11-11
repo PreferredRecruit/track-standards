@@ -70,7 +70,7 @@ ANCHORS = {("Big Ten", "m", "110m Hurdles"): (["13.66", ""], ["13.90", ""]),   #
            ("Big Ten", "m", "High Jump"): (None, ["2.08m", "6' 10\""]),        # Ryan 2026-11-07 ("closer to 6'10")
            ("SEC", "m", "400m"): (None, ["45.77", ""]),                        # Ryan 2026-11-11 ("Keep the 45.77 mark")
            ("Big 12", "m", "Triple Jump"): (None, "rank10"),                   # Ryan 2026-11-11 ("use the top ten mark")
-           ("SEC", "m", "Javelin"): ("rank4", "rank8")}                        # Ryan 2026-11-11 ("based on the eighth place throw"); Target moves to 4th to stay above
+           ("SEC", "m", "Javelin"): ("rank8", "rank12")}                       # Ryan 2026-11-11: Target 8th, Recruit 12th ("12th or 13th, whatever looks most reasonable": 68.02m)
 
 
 def p4_rank(d, db, verbose=True):
