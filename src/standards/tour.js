@@ -59,6 +59,10 @@ function end(done) {
 const HELP = () => [
   ["How do I find colleges for my time?", "On Standards, pick boys or girls and the event, type a best time or mark from a meet, pick the grade and press Search colleges. You'll see every college that fits, sorted by how good a fit it is."],
   ["What do Target, Recruit and Walk-On mean?", `Target: ${O.DEF.T || ""} Recruit: ${O.DEF.R || ""} Walk-On: ${O.DEF.W || ""}`],
+  /* methodology, the star and the grain-of-salt note (Ryan 2026-11-12); wording matches /guides/target-recruit-walk-on-explained.html */
+  ["How are the standards calculated?", "Some schools publish their own standards. We use those and check them mark for mark against the school's website. For every other school, the levels come from its conference's 2026 results.\n\nIn NCAA D1 and D2, Target is the 8th best mark in the conference, Recruit the 15th and Walk-On the 25th. In NCAA D3 and NAIA, Target is a top 8 conference mark and Walk-On the 40th.\n\nA coach builds a team to score at its own conference meet, so the conference's marks show where that school's bar really sits. A few schools with neither are marked as estimates."],
+  ["What does the \u2605 star mean?", "The star marks official standards. The school published them itself, and we checked them mark for mark against its website. Schools without a star use levels set from their conference results, as explained above."],
+  ["Are these exact cutoffs?", "No. Use them as a benchmark, and take them with a grain of salt. Coaches recruit the whole athlete: your grades, how you train and compete, your attitude and coachability, and how you'd fit the team. A mark just under a level can still earn a roster spot, and a mark above one doesn't guarantee an offer."],
   ["How do I type a time or a mark?", "Type it the way it reads on the results sheet: 11.2 or 11.24 for a sprint, 4:35 or 4:35.2 for a mile, 20-6 or 20' 6\" for a jump or throw."],
   ["What are Results and Rankings?", "Results lists the best college marks this season, event by event, from TFRRS. Rankings rates the college teams themselves, so you can see who's strongest in each division."],
   ["How do I see one school?", "Type the school's name in \"Search for one school\" on the Standards page. Its page shows the marks its team looks for in every event, men and women."],
@@ -68,7 +72,7 @@ function helpPanel() {
   if (!p) { p = document.createElement("div"); p.id = "prhelpp"; p.setAttribute("role", "dialog"); p.setAttribute("aria-label", "Help"); p.hidden = true; document.body.appendChild(p); }
   p.innerHTML = `<div class="hph"><b>Need a hand?</b><button type="button" class="hpx" data-hp="close" aria-label="Close help">×</button></div>
     <button type="button" class="hptour" data-hp="tour"><span>▶</span>Take the 1-minute tour</button>
-    ${HELP().map(([q, a]) => `<details class="hpq"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}
+    ${HELP().map(([q, a]) => `<details class="hpq"><summary>${esc(q)}</summary>${a.split("\n\n").map(x => `<p>${esc(x)}</p>`).join("")}</details>`).join("")}
     <button type="button" class="hpai" data-hp="ai">Still stuck? Ask the Recruiting AI ›</button>`;
   return p;
 }

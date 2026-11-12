@@ -225,3 +225,4 @@ sup.mkf{margin-left:2px;font-size:.55em;font-weight:700;letter-spacing:.02em;col
 /* corner pill out of the way while scrolling (Ryan 2026-11-12) */
 .evpill{transition:transform var(--dur-2) var(--ease-out),opacity var(--dur-2) var(--ease-out)}
 body.prscroll .evpill{transform:translateY(calc(100% + 24px));opacity:0;pointer-events:none}
+@media (max-width:960px){#prhelpp{top:124px;max-height:calc(100vh - 140px)}}   /* clear the two-row phone header (2026-11-12) */
