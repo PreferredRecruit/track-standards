@@ -1,0 +1,5 @@
+-- 021 (2026-11-12): applied live. The confirm-reminder and finish-nudge cron jobs had used ~200 of the daily Resend quota
+-- (retrying every failure), so real sign-ups failed with "error sending confirmation email". Now: one try per person,
+-- accounts from the last 14 days only, max 30 a day per job. Jobs 3 and 4 were paused the same day
+-- (select cron.alter_job(job_id := 3, active := true) / 4 to resume once the Resend plan has room).
+-- Function bodies: see the applied migration "021_reminder_caps" in Supabase (send_confirm_reminders, send_finish_nudges).
