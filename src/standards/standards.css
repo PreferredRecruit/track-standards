@@ -41,7 +41,7 @@ h1 span{display:block;background:linear-gradient(90deg,#A98BFF 0%,#8A5CF5 32%,#7
 .inl{margin:20px auto 0;font-size:17px;color:var(--pr-mute)}
 .inl a{color:var(--pr-accent);font-weight:600;white-space:nowrap}
 .inl a:hover{text-decoration:underline;text-underline-offset:4px}
-.switch{position:relative;display:inline-grid;grid-template-columns:repeat(4,auto);margin:34px auto 0;padding:5px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--pr-card) 82%,transparent);box-shadow:var(--pr-rim);border:1px solid color-mix(in srgb,var(--pr-line) 60%,transparent)}
+.switch{position:relative;display:inline-grid;grid-template-columns:repeat(3,auto);margin:34px auto 0;padding:5px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--pr-card) 82%,transparent);box-shadow:var(--pr-rim);border:1px solid color-mix(in srgb,var(--pr-line) 60%,transparent)}
 .switch .ind{position:absolute;top:5px;bottom:5px;left:0;border-radius:var(--r-pill);background:var(--pr-black);box-shadow:var(--sh-2);transition:transform .5s cubic-bezier(.2,.8,.2,1),width .5s cubic-bezier(.2,.8,.2,1)}
 .switch button{position:relative;z-index:1;display:flex;align-items:center;gap:8px;border:0;background:none;padding:11px 22px;border-radius:var(--r-pill);font-size:15px;font-weight:600;color:var(--pr-mute);cursor:pointer;white-space:nowrap;transition:color .35s}
 .switch button[aria-selected="true"]{color:var(--pr-card)}
@@ -1346,7 +1346,7 @@ header .hd .acchd{flex:none;visibility:visible}
 .simple .scroll thead th{color:var(--pr-mute)}.simple .scroll{border-top:3px solid var(--sb,var(--pr-line))}
 @media (max-width:640px){.simple .scroll thead th{font-size:12px}}
 .switch button{min-height:44px}.back{min-height:44px;min-width:44px;display:inline-flex;align-items:center}.eval .x{width:40px!important;height:40px!important}.hlp .hbtn{min-height:40px}
-@media (max-width:420px){.switch{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;box-sizing:border-box}.switch button{justify-content:center;padding:9px 4px;font-size:13px}}
+@media (max-width:420px){.switch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;box-sizing:border-box}.switch button{justify-content:center;padding:9px 4px;font-size:13px}}
 .tsw{max-width:100%;box-sizing:border-box}@media (max-width:420px){.tsw a,.tsw span{padding:0 9px;font-size:13px}}
 /* compact data tabs (UX audit 2026-10-31, preview): headline only on Standards; on phones the Results/Rankings filters fold into one summary bar */
 .hero.compact{padding-top:18px}.hero.compact h1,.hero.compact .inl{display:none}.hero.compact .switch{margin-top:0}

@@ -10,10 +10,9 @@ const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { 
 let O = { DEF: {}, log: () => { }, signedIn: () => false, userId: () => "" }, STEP = -1, STEPS = [];
 
 const steps = () => [
-  { sel: [".switch", ".prh .prnav"], t: "Four sections", b: "Standards finds colleges for your time. Results shows the best college marks this season. Rankings shows the top college teams. Recruiting AI answers your questions." },
+  { sel: [".switch", ".prh .prnav"], t: "Three sections", b: "Standards finds colleges for your time. Results shows the best college marks this season. Rankings shows the top college teams." },
   { sel: "#mf", t: "Find colleges for your time", b: "Pick boys or girls and the event, then type a best time or mark from a meet (like 11.2 or 20-6). Pick the grade and press Search colleges." },
   { sel: "#q", t: "Look up one school", b: "Type any college name to see the marks that school's team looks for, event by event." },
-  { sel: ['.switch [data-tab="ask"]', '.prnav [data-tab="ask"]'], t: "Ask in plain words", b: "Not sure where to look? Ask the Recruiting AI, for example: \"Which colleges fit a 5:10 mile?\"" },
   { sel: "#acchd", t: O.signedIn() ? "Your account" : "Save your times", b: O.signedIn() ? "Your profile lives here: your athlete's events, times and grade, so the site can show the colleges that fit." : "Sign in to save your athlete's events and times so the site remembers them." },
   { sel: "#prhelp", t: "Help is always here", b: "Tap Help any time for quick answers or to watch this tour again." },
 ];

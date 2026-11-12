@@ -530,7 +530,7 @@ function standards(){
   /* order (Ryan 2026-10-13): search by stats · or · search one school · what the levels mean · results */
   o+=`<div class="orsep" role="separator"><span>or</span></div><div class="one${S.run?" sm":""}"><h4>Search for one school</h4><p>${NSTD.toLocaleString()} colleges across NCAA D1, D2, D3 and NAIA, plus every NJCAA junior college.</p><div class="search">${MAG}<label class="sr" for="q">Search colleges</label><input class="in" id="q" placeholder="Try USC, Oregon or Ole Miss" autocomplete="off" value="${esc(S.q)}"><div id="drop"></div></div></div>`;
   /* home on desktop (Ryan 2026-11-11 audit: an empty band under the search): three plain doors to the rest of the site, no data loads */
-  if(!S.run)o+=`<nav class="hdoors" aria-label="Explore">${[["/?tab=results","Results","Every college mark this season, event by event"],["/?tab=rankings","Rankings","Every team rated out of 99, updated Mondays"],["/recruiting.html","Guides","How recruiting works, in plain words"]].map(([u,t,d])=>`<a href="${u}"><b>${t}</b><span>${d}</span><i aria-hidden="true">›</i></a>`).join("")}</nav>`;
+  if(!S.run)o+=`<nav class="hdoors" aria-label="Explore">${[["/?tab=results","Results","Every college mark this season, event by event"],["/?tab=rankings","Rankings","Every team rated out of 99, updated Mondays"]].map(([u,t,d])=>`<a href="${u}"><b>${t}</b><span>${d}</span><i aria-hidden="true">›</i></a>`).join("")}</nav>`;
   if(S.run&&parse(S.mark,S.e)==null){   /* a shared or typed URL with a value that can't be a mark (UX audit 2026-11-03): say so instead of searching */
     return o.replace('<div class="hint" id="hint"></div>',`<div class="hint" id="hint">${esc(badMark(S.e))}</div>`)+`</div>`}
   if(S.run){

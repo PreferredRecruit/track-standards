@@ -172,7 +172,7 @@ main{padding-bottom:48px}
 }
 
 /* home: three doors under the search (Ryan 2026-11-11 audit) */
-.hdoors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:760px;margin:40px auto 0}
+.hdoors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:560px;margin:40px auto 0}
 .hdoors a{position:relative;display:flex;flex-direction:column;gap:4px;padding:16px 48px 16px 18px;border-radius:var(--r-3);background:var(--pr-card,#fff);box-shadow:var(--pr-rim);color:var(--pr-ink,#0B0B0F);text-align:left;text-decoration:none;transition:transform var(--dur-2) var(--ease-out)}
 .hdoors a:hover{transform:translateY(-2px)}
 .hdoors b{font-size:17px;font-weight:700}
@@ -180,3 +180,6 @@ main{padding-bottom:48px}
 .hdoors i{position:absolute;top:50%;right:14px;display:grid;place-items:center;width:28px;height:28px;margin-top:-14px;border-radius:50%;background:color-mix(in srgb,var(--pr-violet) 10%,transparent);color:var(--pr-violet);font-style:normal;font-weight:700}
 @media (min-width:961px){.hdoors{display:none}}   /* phone/tablet only, same reason */
 @media (max-width:640px){.hdoors{grid-template-columns:1fr;gap:8px;margin-top:28px}}
+
+/* Ryan 2026-11-12: the menu is Standards / Results / Rankings; the AI tab stays in the DOM (Help and ?tab=ask open it) but never shows */
+.switch button[hidden]{display:none}
