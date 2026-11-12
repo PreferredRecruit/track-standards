@@ -1330,8 +1330,12 @@ function fullMeet(M){const mv=R.mv,G=R.g,EV=meetEvents(M),evs=Object.keys(EV).fi
   return `<div class="rbody mx${R.swap?" swap":""}">${head}<div class="mxwrap">${rail}<section class="mxpanel">${panel}</section></div>
   <p class="note">Source: <a href="${esc(tf)}" target="_blank" rel="noopener">TFRRS meet results ↗</a></p>${hookRow()}</div>`}
 const ordS=n=>{const v=n%100;return v>=11&&v<=13?"th":["th","st","nd","rd"][n%10]||"th"};
+/* meet id for a meet card (Ryan 2026-11-12): TFRRS reuses meet names every season ("NCAA Division I Outdoor Track & Field
+   Championships", "Big Ten Indoor Championships"), so the index keys each meet by "name|dates"; a bare name is only stored when the
+   athlete ran that meet in one season */
+const meetId=mv=>{if(!MIDX||!mv||!mv.path)return null;const m=MIDX[mv.path]||{};return m[mv.meet+"|"+mv.date]||m[mv.meet]||null};
 function meetView(D){
-  const id=MIDX&&R.mv.path&&(MIDX[R.mv.path]||{})[R.mv.meet];if(!MIDX){loadMeetIdx();return skeleton()}
+  const id=meetId(R.mv);if(!MIDX){loadMeetIdx();return skeleton()}
   if(id){loadMeet(id);const M=MF[id];if(M==="…")return skeleton();if(M&&M!=="x")return fullMeet(M)}
   const mv=R.mv,nm=mnorm(mv.meet),by={};
   D.lists.forEach(l=>Object.entries(l.g[R.g]||{}).forEach(([e,rows])=>rows.forEach(r=>{if(mnorm(D.meets[r[6]])!==nm)return;(by[e]||(by[e]=new Map())).set(r[1]+"|"+r[3],r)})));
@@ -1610,7 +1614,7 @@ function resultsCollege(){
   if(R.mv){const L0=D.lists.find(l=>l.champ&&mnorm(l.id)===mnorm(R.mv.meet));
     /* a meet we hold in full (all rounds + team scores) opens as its meet page, championships included (Ryan 2026-11-07) */
     if(!MIDX){loadMeetIdx();return o+ctl(D.lists.find(z=>z.nat)||D.lists[0])+skeleton()}
-    if(R.mv.path&&(MIDX[R.mv.path]||{})[R.mv.meet])return o+ctl(D.lists.find(z=>z.nat)||D.lists[0])+meetView(D);
+    if(meetId(R.mv))return o+ctl(D.lists.find(z=>z.nat)||D.lists[0])+meetView(D);
     if(L0){R.conf=L0.label;R.hl=R.mv.name;R.hlAth=R.mv.ath;R.hlGo=1;setTimeout(()=>{if(!R.hlGo)return;R.hlGo=0;const x=document.querySelector(".gr.me");if(x)x.scrollIntoView({block:"center"})},400);const k=Object.keys(L0.g[R.g]||{}).find(k=>k===R.mv.e);if(k)R.ev=k;R.mv=null}
     else return o+ctl(D.lists.find(z=>z.nat)||D.lists[0])+meetView(D)}
   const natI=Math.max(0,D.lists.findIndex(z=>z.nat)),ci=R.conf?confIdx(D,R.conf):natI,miss=R.conf&&ci<0;R.list=ci<0?natI:ci;

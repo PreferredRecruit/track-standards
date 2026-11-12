@@ -4,7 +4,7 @@ Each athlete's TFRRS page (already cached by the athlete scrape) links its meets
 meet is read (all rounds). Output: meets/<id>.json = {"id","meet","url","events": {"<event>": {"m"|"w": [{"round","wind","rows"}]}},
 "complete"}, plus meets/_athletes.json = {athlete path: {meet name: id}} so the site can open the exact meet from a meet card.
 Usage: python3 scrape_meets.py <site>/public/data/athletes.json <athlete page cache dir> <out dir>"""
-import json, os, re, sys
+import html, json, os, re, sys
 from scrape_champs import get, parse_event, event_key
 
 def main(ath_json, cache_dir, out):
@@ -14,9 +14,18 @@ def main(ath_json, cache_dir, out):
         f = os.path.join(cache_dir, "https_tf_tfrrs_org_athletes_" + re.sub(r"[^A-Za-z0-9]+", "_", k) + "_html.html")
         try: h = open(f, encoding="utf8", errors="ignore").read() if os.path.exists(f) else get(f"https://tf.tfrrs.org/athletes/{k}.html")
         except Exception as e: print("  athlete failed", k, e, flush=True); continue
-        for mid, slug, name in re.findall(r'href="https://(?:www|tf)\.tfrrs\.org/results/(\d+)/([^"/]+)">([^<]+)</a>', h):
-            name = " ".join(name.split()); idmap.setdefault(k, {})[name] = int(mid); ids[mid] = slug
+        seen = {}
+        for m in re.finditer(r'href="https://(?:www|tf)\.tfrrs\.org/results/(\d+)/([^"/]+)">([^<]+)</a>', h):
+            mid, slug, name = m.group(1), m.group(2), " ".join(m.group(3).split())
+            d = re.search(r"([A-Z][a-z]{2} [\d\-]+(?:/[A-Z][a-z]{2} \d+)?, \d{4})", h[m.end():m.end() + 200])
+            # Ryan 2026-11-12: TFRRS reuses meet names every season, so a meet is keyed "name|dates" (dates exactly as the meet
+            # card shows them); the bare name is kept only when the athlete ran that meet in a single season
+            if d: idmap.setdefault(k, {})[html.unescape(name) + "|" + d.group(1)] = int(mid)
+            seen.setdefault(html.unescape(name), set()).add(int(mid)); ids[mid] = slug
+        for name, s in seen.items():
+            if len(s) == 1: idmap.setdefault(k, {})[name] = next(iter(s))
     json.dump(idmap, open(os.path.join(out, "_athletes.json"), "w"))
+    if "--map-only" in sys.argv: print(f"meet map: {sum(len(v) for v in idmap.values())} keys for {len(idmap)} athletes"); return
     print(f"{len(ids)} meets from {len(idmap)} athletes", flush=True)
     for n, (mid, slug) in enumerate(sorted(ids.items(), key=lambda x: -int(x[0]))):
         p = os.path.join(out, mid + ".json")
