@@ -247,7 +247,7 @@ function premiumView() {
   if (PT === "dash") body = dashView(); else if (PT === "list") body = listView(); else if (PT === "cc") body = ccView(); else if (PT === "set") body = setView();
   else if (PT === "aov" && core.admin()) body = aovView(); else if (PT === "admin" && core.admin()) body = adminView();
   else body = D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`;
-  return top(NAV) + `<div class="pm">${sideNav()}<section class="pmmain">${body}</section></div>`;
+  return top(NAV) + `<div class="pmshell">${sideNav()}<section class="pmmain">${body}</section></div>`;
 }
 function headRow() {
   const sub = PSUB() || D, C = core.cfg(), ms = bestMark(sub).slice(0, 3);

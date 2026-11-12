@@ -285,7 +285,7 @@ body.prscroll .evpill{transform:translateY(calc(100% + 24px));opacity:0;pointer-
 
 /* ===== Premium account (Ryan 2026-11-12): sidebar shell, dashboard, My College List, Coach Contacts, Settings, Admin overview.
    Tokens only, so the same markup reads in Premium White (light tokens) and Premium Dark (html[data-theme="dark"] tokens). ===== */
-.pm{display:grid;grid-template-columns:236px minmax(0,1fr);gap:28px;max-width:1240px;margin:0 auto;padding:24px 24px 64px;align-items:start}
+.pmshell{display:grid;grid-template-columns:236px minmax(0,1fr);gap:28px;max-width:1240px;margin:0 auto;padding:24px 24px 64px;align-items:start}
 .pmside{position:sticky;top:84px;display:flex;flex-direction:column;gap:2px}
 .pmnv{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 12px;border:0;border-radius:var(--r-1);background:none;color:var(--pr-mute);font:inherit;font-size:var(--fs-14);font-weight:500;text-align:left;text-decoration:none;cursor:pointer;transition:background-color var(--dur-1) var(--ease-out),color var(--dur-1) var(--ease-out)}
 .pmnv:hover{background:var(--pr-soft);color:var(--pr-ink)}
@@ -397,10 +397,10 @@ button.pmcat{cursor:pointer}
 .pmkpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .pmkpi{padding:14px 16px;border:1px solid var(--pr-line);border-radius:var(--r-2);background:var(--pr-card);box-shadow:var(--sh-1);display:grid;gap:2px}
 .pmkpi small{font-size:var(--fs-13);color:var(--pr-mute)}.pmkpi b{font-size:var(--fs-24);font-weight:600;letter-spacing:var(--ls-head);font-variant-numeric:tabular-nums}.pmkpi span{font-size:var(--fs-12);color:var(--pr-faint)}
-:root[data-theme="dark"] .pm .pmpath.pri,:root[data-theme="dark"] .pmth[aria-checked="true"]{box-shadow:0 0 0 1px color-mix(in srgb,var(--pr-violet) 55%,transparent),0 0 28px -8px color-mix(in srgb,var(--pr-violet) 70%,transparent)}
+:root[data-theme="dark"] .pmshell .pmpath.pri,:root[data-theme="dark"] .pmth[aria-checked="true"]{box-shadow:0 0 0 1px color-mix(in srgb,var(--pr-violet) 55%,transparent),0 0 28px -8px color-mix(in srgb,var(--pr-violet) 70%,transparent)}
 :root[data-theme="dark"] .pmhead{background:radial-gradient(70% 140% at 85% 0%,color-mix(in srgb,var(--pr-violet) 16%,transparent),transparent 70%)}
 @media (max-width:960px){
-  .pm{grid-template-columns:minmax(0,1fr);gap:16px;padding:16px 16px 56px}
+  .pmshell{grid-template-columns:minmax(0,1fr);gap:16px;padding:16px 16px 56px}
   .pmside{position:static;flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:4px;scrollbar-width:none}
   .pmside::-webkit-scrollbar{display:none}
   .pmnv{flex:none;min-height:40px}.pmnv .ext{margin-left:4px}.pmnv .pmstar{margin-left:2px}
