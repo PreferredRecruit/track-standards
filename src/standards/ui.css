@@ -202,3 +202,5 @@ main{padding-bottom:48px}
 }
 .prh .hdr{padding:0;margin:0;max-width:none;width:auto;justify-self:end}
 .hero.compact{display:none}   /* it only held the pill bar, which now lives in the header */
+/* phones: short text links inside sentences ("LSU", "SEC") get a 32px+ tap area with no change to line spacing (inline padding) */
+@media (max-width:640px){.pg main p a:not([class]),.pg main b>a:not([class]){padding-block:7px}}

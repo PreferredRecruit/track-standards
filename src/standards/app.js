@@ -289,7 +289,7 @@ const V2B=()=>{if(V2C!=null)return V2C;try{const q=new URLSearchParams(location.
      driven by school pages (logo pill 19/65, school pop-up 5.2% vs 2.9%); v2 is now everyone's. ?pv=1 still previews v1. */
   return V2C=true};
 const v2On=()=>V2B()&&!isPar()&&!pickKid()&&!EV.ready;
-const PILLTXT='See who’d recruit you <span aria-hidden="true">›</span>';
+const PILLTXT='Free recruitment evaluation <span aria-hidden="true">›</span>';
 const V2S2={none:["Let's get you <em>in touch.</em>","Coaches recruit who they know. See which ones to contact first."],
   some:["Nice. Let's turn those talks <em>into offers.</em>","See which coaches to focus on first."],
   offers:["Offers mean <em>options.</em>","See who else would want you before you sign."]};
@@ -1679,7 +1679,7 @@ function pairs(raw){let q=nq(raw);const evs=[],mks=[];
 const tbl=(h,rows,numFrom=1)=>`<div class="scroll"><table><thead><tr>${h.map((x,i)=>`<th class="${i>=numFrom?"num":""}">${x}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i>=numFrom?"num":""}">${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 const gl=g=>g==="w"?"women's":"men's";
 /* the AI's evaluation line carries the event + grade like every other button (2026-10-24 UTM audit) */
-const QL=()=>`<p><a href="${esc(quizFor())}" target="_blank" rel="noopener">Looking to run in college? Get your recruitment evaluation ›</a></p>`;
+const QL=()=>`<p><a href="${esc(quizFor())}" target="_blank" rel="noopener">Looking to run in college? Get your free recruitment evaluation ›</a></p>`;
 function spread(list,e,k){const v=list.map(s=>s[k]).filter(x=>parse(x,e)!=null).sort((a,b)=>better(e,parse(a,e),parse(b,e)));if(v.length<4)return null;return [v[Math.floor(v.length*.25)],v[Math.floor(v.length*.75)],v.length]}
 async function answerV1(raw){
   const d=detect(raw), g=d.g||"m", q=d.q;
