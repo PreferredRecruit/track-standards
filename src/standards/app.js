@@ -692,7 +692,7 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   const {bv,mark}=bandBits(s);
   const still=BRQ;BRQ=false;
   let o=`<div class="sec branded simple${still?" still":""}" style="padding-top:0;${bv}"><button class="back" data-back>‹ Back</button>
-  <div class="sband">${mark}<div><small>${/\(/.test(s.n)?esc(s.n.replace(/^.*?\((.*?)\).*$/,"$1"))+" · ":""}${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(s.s):""}</small><h1 class="sname">${esc(s.n.replace(/\s*\(.*?\)\s*/g," ").trim())} Track &amp; Field${s.j?" (NJCAA)":" Standards"}</h1>${s.j?`<a class="tplink1" href="/teams/${tslug(S.school)}" data-tpage="${S.school}">Team results &amp; roster ›</a>`:tsw(S.school,"std")}${s.o?`<span class="offpill">★ Official standards${s.yr?` · ${esc(s.yr)}`:""}${oldChart(s)?" (latest published)":""}</span>`:""}</div><div class="srchips" id="srchips"></div></div>
+  <div class="sband">${mark}<div><small>${/\(/.test(s.n)?esc(s.n.replace(/^.*?\((.*?)\).*$/,"$1"))+" · ":""}${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(s.s):""}</small><h1 class="sname">${esc(s.n.replace(/\s*\(.*?\)\s*/g," ").trim())} Track &amp; Field${s.j?" (NJCAA)":" Standards"}</h1>${s.j?`<a class="tplink1" href="/teams/${tslug(S.school)}" data-tpage="${S.school}">Team results &amp; roster ›</a>`:tsw(S.school,"std")}${s.o?`<span class="offpill">★ Official standards${s.yr?` · ${esc(s.yr)}`:""}${oldChart(s)?" (latest published)":""}</span>`:""}${!s.j&&ACC.member()?`<button type="button" class="ccjump" data-ccjump>${STARI}Coach Contacts</button>`:""}</div><div class="srchips" id="srchips"></div></div>
   <div class="sctl">${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} track &amp; field only</p>`:seg("g",g)}<!--tg--></div><!--scols-->`;   /* school checker removed (Ryan 2026-10-16: "is that even necessary, the kids can clearly see") */
   if(s.j){
     o+=`<div class="verify" style="margin-top:16px"><b>No recruiting levels for junior colleges</b><span>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: junior colleges compete nationally rather than in conferences, so there's no reliable way to predict a program's marks. Below are ${esc(s.n)}'s best marks this season; the full national list, by event, is in Results.</span><a href="/?tab=results&div=NJCAA">NJCAA national list ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
@@ -756,6 +756,10 @@ const ROSTER={},RGRP={sprints:"Sprints",hurdles:"Hurdles",distance:"Distance",ju
 const LTP="https://lt.thepreferredrecruit.com/";
 function premiumUrl(where){const u=new URL(LTP);for(const [k,v] of [["utm_source","standards"],["utm_medium","site"],["utm_campaign","premium"],["utm_content",where]])u.searchParams.set(k,v);return u.toString()}
 const STAR='<span class="ccstar" aria-hidden="true">★</span>';
+const STARI='<span class="ccji" aria-hidden="true">★</span>';
+/* school banner: Premium "Coach Contacts" button next to the official-standards chip (Ryan 2026-11-12) jumps to the coach card */
+document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-ccjump]");if(!b)return;const el=document.getElementById("sroster");if(!el)return;
+  el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"});const c=el.querySelector(".cc");if(c){c.classList.remove("ccflash");void c.offsetWidth;c.classList.add("ccflash")}log("coach_contacts",{detail:"jump"})});
 function ccHTML(rows,nm,ev){const my=stdGrp(ev||"")||"";
   const list=(rows||[]).map(r=>({...r,mine:!!my&&(r.groups||[]).includes(my)})).sort((a,b)=>(b.mine-a.mine)||(/head/i.test(b.title||"")-/head/i.test(a.title||"")));
   if(!list.length)return `<p class="cclk">We don't have ${nm}'s coaches yet. We add colleges every week.</p>`;
