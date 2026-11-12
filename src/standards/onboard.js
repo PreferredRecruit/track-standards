@@ -234,14 +234,17 @@ function bestMark(sub) { const C = core.cfg(); const ms = (sub && sub.marks || [
 function fitChip(info) { if (!info) return ""; const t = info.tier; return `<span class="pmfit ${t ? "t" + t : "tx"}">${t === "T" ? "At Target" : t === "R" ? "At Recruit" : t === "W" ? "At Walk-On" : "Above your mark"}</span>`; }
 function sideNav() {
   const it = (v, l, ic, st) => `<button type="button" class="pmnv${PT === v ? " on" : ""}" data-onb="pt" data-v="${v}"${PT === v ? ' aria-current="page"' : ""}><span class="ic" aria-hidden="true">${ic}</span>${l}${st ? STAR : ""}</button>`;
-  return `<nav class="pmside" aria-label="Your account">${it("dash", "Dashboard", "⌂")}${it("list", "My Colleges", "◎")}${it("cc", "Coach Contacts", "✉", 1)}
+  /* admins: Accounts first (Ryan 2026-11-12: "I can no longer see the accounts on my master account"; it had moved to the end of the menu, off-screen on phones) */
+  const adm = core.admin() ? `<p class="pmgrp">Admin</p>${it("admin", "Accounts", "☰")}${it("aov", "Overview", "◈")}<p class="pmgrp">Your account</p>` : "";
+  return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Dashboard", "⌂")}${it("list", "My Colleges", "◎")}${it("cc", "Coach Contacts", "✉", 1)}
     <a class="pmnv" href="${esc(utm(COURSE_URL, "sidebar"))}" target="_blank" rel="noopener"><span class="ic" aria-hidden="true">▶</span>Go to Course<span class="ext">Whop ↗</span></a>
     ${it("profile", "Profile and marks", "◐")}${it("set", "Settings", "⚙")}
-    ${core.admin() ? `<p class="pmgrp">Admin</p>${it("aov", "Overview", "◈")}${it("admin", "Accounts", "☰")}` : ""}
     <div class="pmplan"><b>${STAR} Unlimited Access</b><span><i class="dot"></i>${core.admin() ? "Admin · always on" : "Active"}</span></div></nav>`;
 }
+let PTADM = false;
 function premiumView() {
   const C = core.cfg();
+  if (!PTADM && core.admin()) { PTADM = true; if (PT === "dash") PT = "admin"; }
   if (PT === "list" || PT === "dash") { const k = aid() || "me"; if (LISTK !== k) { LISTK = k; LIST = null; loadList(); } }
   let body = "";
   if (PT === "dash") body = dashView(); else if (PT === "list") body = listView(); else if (PT === "cc") body = ccView(); else if (PT === "set") body = setView();
