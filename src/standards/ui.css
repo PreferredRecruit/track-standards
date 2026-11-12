@@ -43,7 +43,7 @@ h1,h2,h3,.sname{text-wrap:balance}p,li,.intro,.sub{text-wrap:pretty}
 .prh .pill:hover,.prh .prcta:hover{background:var(--pr-violet-press)}
 .prh .pill:active,.prh .prcta:active{transform:translateY(1px)}
 .prh .pl-short{display:none}
-@media (max-width:960px){.prnav{display:none}}
+
 @media (max-width:640px){.prh .hd{padding:0 14px;gap:10px}.prh .logo span{display:none}.prh .pl-long{display:none}.prh .pl-short{display:inline}.prh .acchd span,.prh .prsign span{display:none}.prh .acchd,.prh .prsign{padding:0 11px}}
 
 /* buttons: flat violet for the one main action, ink for secondary; no gradients, no glows */
@@ -183,3 +183,22 @@ main{padding-bottom:48px}
 
 /* Ryan 2026-11-12: the menu is Standards / Results / Rankings; the AI tab stays in the DOM (Help and ?tab=ask open it) but never shows */
 .switch button[hidden]{display:none}
+
+/* Header section nav (Ryan 2026-11-12: "the primary, most obvious way to switch between views"). Desktop: logo | Standards / Results /
+   Rankings centred | help, account, evaluation. Phones and tablets: the same three tabs as a full-width second row of the sticky header,
+   so they stay on screen on every page. Replaces the hero pill bar and the static pages' .prtabs. */
+.prh .hd{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:16px}
+.prh .hdr{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0}
+.prh .hdr .acchd,.prh .hdr .prsign{margin-left:0}
+.prh .prnav{display:flex;gap:2px;margin:0;padding:4px;border-radius:var(--r-pill);background:var(--pr-soft,#F3F2F7)}
+.prh .prnav a,.prh .prnav button{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 18px;border-radius:var(--r-pill);font-size:14px;font-weight:600;color:var(--pr-mute,#4A4A52);background:none;transition:color var(--dur-1) var(--ease-out),background-color var(--dur-1) var(--ease-out)}
+.prh .prnav a:hover,.prh .prnav button:hover{color:var(--pr-ink,#0B0B0F);background:none}
+.prh .prnav [aria-current="page"],.prh .prnav [aria-current="page"]:hover{background:var(--pr-black);color:#fff}
+.hero .switch,.prtabs{display:none}
+@media (max-width:960px){
+  .prh .hd{grid-template-columns:auto minmax(0,1fr);height:auto;row-gap:8px;padding-top:9px;padding-bottom:10px}
+  .prh .prnav{grid-column:1 / -1;grid-row:2}
+  .prh .prnav a,.prh .prnav button{flex:1 1 0;min-height:40px;padding:0 10px}
+}
+.prh .hdr{padding:0;margin:0;max-width:none;width:auto;justify-self:end}
+.hero.compact{display:none}   /* it only held the pill bar, which now lives in the header */

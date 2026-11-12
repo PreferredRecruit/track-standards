@@ -2413,6 +2413,13 @@ function slide(sel,indId,key){const a=document.querySelector(sel+' [aria-selecte
   const p=LASTX[key];ind.style.transition="none";if(p){ind.style.width=p[0]+"px";ind.style.transform=`translateX(${p[1]}px)`}
   else{ind.style.width=a.offsetWidth+"px";ind.style.transform=`translateX(${a.offsetLeft}px)`}
   ind.offsetWidth;ind.style.transition="";ind.style.width=a.offsetWidth+"px";ind.style.transform=`translateX(${a.offsetLeft}px)`;LASTX[key]=[a.offsetWidth,a.offsetLeft]}
+/* view memory for refreshes (Ryan 2026-11-12): the filters that aren't in the URL, plus the scroll position, kept per tab for this tab's session */
+const VIEW={key:"prView1",skip:{swap:1,pendAth:1,hl:1,hlGo:1,pend:1,cdd:1,fopen:1},
+  save(){try{const r={};for(const k in R){if(!this.skip[k])r[k]=R[k]}sessionStorage.setItem(this.key,JSON.stringify({u:location.pathname+location.search,t:S.tab,r,s:{f:S.f,div:S.div,conf:S.conf,st:S.st},y:scrollY}))}catch(e){}},
+  restore(){try{const o=JSON.parse(sessionStorage.getItem(this.key)||"null");if(!o||o.u!==location.pathname+location.search||o.t!==S.tab)return;
+    if(S.tab==="results")Object.assign(R,o.r);if(S.tab==="standards"&&S.run)Object.assign(S,o.s);
+    const y=+o.y||0;if(y>0){const t0=Date.now(),go=()=>{if(document.documentElement.scrollHeight>=y+innerHeight||Date.now()-t0>4000)scrollTo(0,y);else setTimeout(go,120)};setTimeout(go,60)}}catch(e){}}};
+addEventListener("pagehide",()=>{if(S.school==null)VIEW.save()});
 function render(){
   const onSchool=S.school!=null;
   $("hero").hidden=onSchool||(S.tab==="results"&&TM.i!=null);
@@ -2597,7 +2604,7 @@ document.addEventListener("submit",ev=>{const fid=ev.target&&ev.target.id;if(fid
     tag('link[rel="canonical"]', () => { const l = document.createElement("link"); l.rel = "canonical"; return l; }).href = "https://trackandfieldstandards.com" + path;
     const s = tag("script#pr-ld", () => { const x = document.createElement("script"); x.id = "pr-ld"; x.type = "application/ld+json"; return x; }); s.textContent = JSON.stringify(ld || {});
   };
-  let FIRST_ROUTE = true;
+  let FIRST_ROUTE = true, RELOAD = false;
   window.__prMeta = setMeta;
   const route = slug => {
     { const tm = location.pathname.match(/^\/teams\/([^/]+)/); if (tm) { const ts = tm[1].replace(/\.html$/, ""); let i = SCH.findIndex((x, k) => tslug(k) === ts); if (i < 0) { const h = hits(ts.replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
@@ -2620,7 +2627,9 @@ document.addEventListener("submit",ev=>{const fid=ev.target&&ev.target.id;if(fid
     { /* Ryan 2026-10-16: "if i search a standard and i go back home or refresh the standards are stuck on the screen".
          Refresh = a fresh form (the search params are dropped); back/forward follow the URL; shared links still open the results. */
       const nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
-      if (FIRST_ROUTE && nav && nav.type === "reload" && location.search) history.replaceState({}, "", location.pathname);
+      /* Ryan 2026-11-12 reverses 2026-10-16: a refresh keeps the visitor exactly where they were (the URL plus the filters saved for this tab
+         below); only the logo starts over. */
+      RELOAD = FIRST_ROUTE && nav && nav.type === "reload";
       FIRST_ROUTE = false;
       const q = new URLSearchParams(location.search);   /* shared result links: /?g=m&e=100m&m=10.95 */
       { const gq = +q.get("gr"); if (gq >= 9 && gq <= 12 && INT.gr !== gq) { INT.gr = gq; S.gr = gq; saveInt(); log("grade", {}); } }   /* grade from the SEO-page mark checker */
@@ -2636,6 +2645,7 @@ document.addEventListener("submit",ev=>{const fid=ev.target&&ev.target.id;if(fid
       else if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); if (q.get("cmp")) ccFromUrl(q.get("cmp"));
         /* athlete profile links: /?tab=results&season=2026-outdoor&div=NCAA%20D1&athlete=<TFRRS id> (results pages link every name here) */
         if (/^\d+$/.test(q.get("athlete") || "")) { if (seasons().includes(q.get("season"))) R.season = q.get("season"); R.sel = [R.div]; R.conf = ""; R.q = ""; R.team = null; R.ath = null; TM.i = null; CC.on = false; R.pendAth = q.get("athlete"); } } }
+    if (RELOAD) VIEW.restore();
     S.school = null; setMeta("College Track & Field Recruiting Standards & Rankings", `Recruiting standards for ${NSTD.toLocaleString()} college track and field programs: walk-on, recruit and scholarship times for NCAA D1, D2, D3 and NAIA, plus results since 2016.`, "/",
       {"@context": "https://schema.org", "@type": "WebSite", name: "Preferred Recruit Track & Field Standards", url: "https://trackandfieldstandards.com/"}); render(); if (S.run) armOffer();
   };

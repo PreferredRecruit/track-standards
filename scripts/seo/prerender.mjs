@@ -111,13 +111,13 @@ function phoneCols(pathname, body) {
     return `<table${t}>${rows}</table>`;
   });
 }
-/* phone section bar (Ryan 2026-11-11): the app's Standards / Results / Rankings / Guides / AI pills on every static page, current one in ink */
+/* header section nav (Ryan 2026-11-12): Standards / Results / Rankings centred in the header on desktop, a full-width row of the sticky header on phones; current one in ink */
 function prTabs(pathname) {
   const p = pathname || "";
   const cur = /^\/(standards|schools|colleges|how-fast|states|conferences|explore)/.test(p) ? 0 : /^\/(results|athletes|champions|meets|teams)/.test(p) ? 1
     : /^\/(rankings|power)/.test(p) ? 2 : -1;
   const T = [["/", "Standards"], ["/?tab=results", "Results"], ["/rankings.html", "Rankings"]];  /* Ryan 2026-11-12: menu is Standards / Results / Rankings; guides are footer + in-page links only, AI via Help */
-  return `<nav class="prtabs" aria-label="Sections">${T.map(([u, n], i) => `<a href="${u}"${i === cur ? ' aria-current="page"' : ""}>${n}</a>`).join("")}</nav>`;
+  return `<nav class="prnav" aria-label="Sections">${T.map(([u, n], i) => `<a href="${u}"${i === cur ? ' aria-current="page"' : ""}>${n}</a>`).join("")}</nav>`;
 }
 function page({ title, desc, pathname, crumbs, h1, intro, body, ld }) {
   if (!/^\/(guides|for-coaches)\.html$/.test(pathname) && !/^\/rankings/.test(pathname)) body = withChecker(pathname, body);
@@ -171,9 +171,9 @@ thead th{position:sticky;top:64px;z-index:2}@media(max-width:560px){thead th{top
 .skip{position:absolute;left:-9999px}.skip:focus{left:12px;top:12px;z-index:99;background:#fff;padding:8px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
 td .cfm{display:none}@media(max-width:560px){.evtbl th,.evtbl td{padding:10px 7px;font-size:13px}.evtbl th{font-size:12px;letter-spacing:.04em}.evtbl td:first-child,.evtbl th:first-child{padding-left:12px}.evtbl th.cf,.evtbl td.cf{display:none}td .cfm{display:block;font-size:12px;font-weight:500;color:var(--mute);margin-top:2px}}
 @media(max-width:560px){td,th{padding:11px 12px}td{font-size:14px}header div{flex-wrap:nowrap;padding:10px 16px}header nav{gap:0}header nav a.cta{padding:8px 14px;font-size:13.5px}header nav a.cta .l{display:none}header nav a.cta .s{display:inline}header a.logo small{letter-spacing:.12em}}</style><link rel="preload" href="/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/ui.css"><script defer src="/hm.js"></script></head><body><a class="skip" href="#main">Skip to content</a>
-<header class="prh"><div class="hd"><a class="logo" href="/"><img src="/ts-icon-192.png" alt=""><span><b>Track Standards</b><small>by Preferred Recruit</small></span></a><nav class="prnav" aria-label="Sections"><a href="/">Standards</a><a href="/?tab=results">Results</a><a href="/rankings.html">Rankings</a></nav><a class="prsign" href="/account"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>Sign in</span></a><a class="prcta" href="${QUIZ}"><span class="pl-long">Free recruitment evaluation</span><span class="pl-short">Free evaluation</span></a></div></header>
+<header class="prh"><div class="hd"><a class="logo" href="/"><img src="/ts-icon-192.png" alt=""><span><b>Track Standards</b><small>by Preferred Recruit</small></span></a>${prTabs(pathname)}<div class="hdr"><a class="prsign" href="/account"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>Sign in</span></a><a class="prcta" href="${QUIZ}"><span class="pl-long">Free recruitment evaluation</span><span class="pl-short">Free evaluation</span></a></div></div></header>
 <script>/* same header as the app (2026-11-02): a signed-in visitor sees "My account" */try{if(/(?:^|; )pr_rt=/.test(document.cookie)){var a=document.querySelector(".prsign span");if(a)a.textContent="My account"}}catch(e){}</script>
-${prTabs(pathname)}<main id="main"><div class="bc">${crumbs.map(([n, u], i) => i < crumbs.length - 1 ? `<a href="${u}">${esc(n)}</a> › ` : esc(n)).join("")}</div>
+<main id="main"><div class="bc">${crumbs.map(([n, u], i) => i < crumbs.length - 1 ? `<a href="${u}">${esc(n)}</a> › ` : esc(n)).join("")}</div>
 <h1>${String(h1).replace(/(\d{4}-\d{2})\b/g, '<span style="white-space:nowrap">$1</span>').replace(/Track (&amp;|&) Field/g, "Track&nbsp;&amp;&nbsp;Field")}</h1>${intro ? `<p class="intro">${intro}</p>` : ""}${body}
 <div class="cta"><b>Looking to run in college?</b> Preferred Recruit gets athletes' marks in front of college coaches. <a href="${QUIZ}">Get your free recruitment evaluation ›</a></div></main>
 <footer><div><a href="/explore.html">Explore every school, conference and result</a> · <a href="/guides.html">Recruiting guides</a> · <a href="/privacy.html">Privacy</a><span>Standards updated ${DATES.db} · Results updated ${DATES.data} · © ${new Date().getFullYear()} <a href="https://thepreferredrecruit.org/?utm_source=standards&amp;utm_medium=footer&amp;utm_campaign=PRstandards">Preferred Recruit</a></span></div></footer>
