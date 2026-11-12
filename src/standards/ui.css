@@ -201,6 +201,16 @@ main{padding-bottom:48px}
   .prh .prnav a,.prh .prnav button{flex:1 1 0;min-height:40px;padding:0 10px}
 }
 .prh .hdr{padding:0;margin:0;max-width:none;width:auto;justify-self:end}
+/* Header balance (Ryan 2026-11-12: Standards / Results / Rankings stay in the middle, nothing overlaps Rankings). On one-row
+   widths the side columns never shrink below their contents, and the right side gets more compact as the window narrows
+   (short evaluation label under 1280px, icon-only account button under 1024px), so the centred tabs always have room. */
+@media (min-width:961px){.prh .hd{grid-template-columns:minmax(max-content,1fr) auto minmax(max-content,1fr)}}
+@media (min-width:961px) and (max-width:1279px){.prh .pl-long{display:none}.prh .pl-short{display:inline}}
+@media (min-width:961px) and (max-width:1023px){.prh .acchd span,.prh .prsign span{display:none}.prh .acchd,.prh .prsign{padding:0 11px}}
+/* signed-in members carry the Premium star in the account button, so they get the short label on every one-row width
+   and the icon-only button up to 1099px */
+@media (min-width:961px){.prh .hdr:has(.acchd.mem) .pl-long{display:none}.prh .hdr:has(.acchd.mem) .pl-short{display:inline}}
+@media (min-width:961px) and (max-width:1099px){.prh .acchd.mem span{display:none}.prh .acchd.mem{padding:0 11px}}
 .hero.compact{display:none}   /* it only held the pill bar, which now lives in the header */
 /* phones: short text links inside sentences ("LSU", "SEC") get a 32px+ tap area with no change to line spacing (inline padding) */
 @media (max-width:640px){.pg main p a:not([class]),.pg main b>a:not([class]){padding-block:7px}}

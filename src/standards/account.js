@@ -204,7 +204,7 @@ export function ensureHead() {
   else if (!b.firstChild) headBtn();
 }
 function headBtn() { const b = document.getElementById("acchd"); if (!b) return; const t = SES ? (member() ? "My account" : "Finish account") : "Sign in";
-  b.setAttribute("aria-label", t); b.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>${t}</span>${member() ? badge(14) : ""}`; }
+  b.setAttribute("aria-label", t); b.classList.toggle("mem", !!member()); b.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>${t}</span>${member() ? badge(14) : ""}`; }
 export const isOpen = () => { const el = document.getElementById("acc"); return !!(el && el.classList.contains("on")); };
 function open(v, why) { shell(); CFG.onOpen && CFG.onOpen(); VIEW = v; MSG = ""; if (why) WHY = why; draw(); const el = document.getElementById("acc"); el.classList.add("on"); el.setAttribute("aria-hidden", "false"); const bg = document.getElementById("accbg"); bg.hidden = false; requestAnimationFrame(() => bg.classList.add("on")); CFG.log && CFG.log("account", { detail: "open-" + v, placement: WHY || undefined }); setTimeout(() => { const f = el.querySelector("input,select"); f && f.focus(); }, 60); }
 /* phones: the confirm link often opens in another browser, so the tab that signed up never learns it worked (2026-11-05: 49% of phone
