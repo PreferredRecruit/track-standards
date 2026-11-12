@@ -182,7 +182,7 @@ function doneView() {
    then the premium resources, locked until the low-ticket purchase, unlocked in place after it. live with the low-ticket launch (2026-11-12). ---------- */
 const LT_URL = "https://lt.thepreferredrecruit.com/";   /* Abe's sales page; confirm the exact path before launch */
 const KIT_P = [["cc", "Coach Contacts", "Every coach's name, position and email ($17 add-on)"], ["list", "My College List", "Rank up to 25 colleges against your marks"],
-  ["course", "The 7-Day Roadmap course", "Videos, email and DM scripts, tracker, on Whop"], ["dark", "Premium Dark", "A sleek dark look for the whole site"]];
+  ["course", "The 7-Day Roadmap course", "Videos, email and DM templates and the tracker, right here"], ["dark", "Premium Dark", "A sleek dark look for the whole site"]];
 const LOCK = '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>';
 function kit() {
   const sub = par() ? KIDS[SEL] : D, P = core.premium(), info = core.premiumInfo() || {};
@@ -219,12 +219,74 @@ function kitView() {
   return head + later;
 }
 /* ---------- Premium account (Ryan 2026-11-12): sidebar, dashboard, My College List, Coach Contacts, Settings (Premium Dark / White),
-   and the Admin section for admin emails. The course itself lives on Whop; "Go to Course" opens it. $27 = Premium, $17 = coach emails. ---------- */
-const COURSE_URL = "https://whop.com/home/";   /* the buyer's Whop home (their communities); swap for the exact 7-Day Roadmap course link when Ryan sends it */
+   and the Admin section for admin emails. The course lives here too (Course tab, migration 020). $27 = Premium, $17 = coach emails. ---------- */
 let PT = "dash", LIST = null, LISTK = null, LF = "all", LSORT = "rank", CCQ = "", CCS = null, AOV = null, OPEN = null, LMSG = "";
 const ROS = {};
 const STAR = '<span class="pmstar" aria-hidden="true">★</span>';
 const utm = (url, where) => { const u = new URL(url); for (const [k, v] of [["utm_source", "standards"], ["utm_medium", "account"], ["utm_campaign", "premium"], ["utm_content", where]]) u.searchParams.set(k, v); return u.toString(); };
+/* ---------- Course (Ryan 2026-11-12: "build the entire product on the platform"): the 7-Day Roadmap and the Playbook library
+   moved off Whop/Skool. Titles are visible to every Premium account; locked lessons show a lock. Lesson text and videos come
+   from course_item / signed storage links only when the account unlocks that tier (migration 020). ---------- */
+let CAT = null, LES = null, LESD = null, VSRC = null, CMSG = "";
+const CLOCK = svg(LOCK, 14).replace("<svg", '<svg class="crslk"');  /* same lock as the Premium kit list */
+const EVAL_URL = "https://app.thepreferredrecruit.com/parentfunnel/?utm_source=standards&utm_medium=account&utm_campaign=premium&utm_content=course-lock";
+const cmins = s => s ? (s < 60 ? s + " sec" : Math.round(s / 60) + " min") : "";
+const kindIc = k => k === "video" ? "▶" : k === "tool" ? "↗" : "☰";
+function mdLite(t) {
+  const inl = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  const out = []; let list = null;
+  for (const raw of String(t || "").split("\n")) { const l = raw.trimEnd();
+    const m = l.match(/^(\d+)\.\s+(.*)$/) || l.match(/^[-•]\s+(.*)$/);
+    if (/^#{1,3}\s/.test(l)) { if (list) { out.push(`</${list}>`); list = null; } out.push(`<h3>${inl(l.replace(/^#+\s/, ""))}</h3>`); continue; }
+    if (m) { const k = /^\d/.test(l) ? "ol" : "ul"; if (list !== k) { if (list) out.push(`</${list}>`); out.push(`<${k}>`); list = k; } out.push(`<li>${inl(m[m.length - 1])}</li>`); continue; }
+    if (list) { out.push(`</${list}>`); list = null; }
+    out.push(l.trim() ? `<p>${inl(l)}</p>` : ""); }
+  if (list) out.push(`</${list}>`);
+  return out.join("");
+}
+const isTpl = it => /template/i.test(it.section || "") || /template/i.test(it.title);
+function loadCat() { core.api("/rest/v1/rpc/course_catalog", { method: "POST", body: {} }).then(r => { CAT = r || []; render(); }).catch(e => { CAT = { err: e.message }; render(); }); }
+function courseView() {
+  if (LES) return lessonView();
+  if (!CAT) { loadCat(); return `<div class="pmtitle"><h1>Course</h1></div><p class="pmempty">Loading…</p>`; }
+  if (CAT.err) return `<div class="pmtitle"><h1>Course</h1></div><p class="acerr">Couldn't load the course. ${esc(CAT.err)}</p>`;
+  const courses = []; for (const it of CAT) { let c = courses.find(x => x.k === it.course); if (!c) courses.push(c = { k: it.course, t: it.course_title, items: [] }); c.items.push(it); }
+  const block = c => { const open = c.items.some(i => i.unlocked), n = c.items.length, secs = [];
+    for (const it of c.items) { let s = secs.find(x => x.t === (it.section || "")); if (!s) secs.push(s = { t: it.section || "", items: [] }); s.items.push(it); }
+    const row = it => `<button type="button" class="crsi${it.unlocked ? "" : " locked"}" data-onb="cl" data-v="${esc(it.id)}"${it.unlocked ? "" : ' aria-label="' + esc(it.title) + ' (locked)"'}>
+      <span class="crsic" aria-hidden="true">${it.unlocked ? kindIc(it.kind) : CLOCK}</span>
+      <span class="crst"><b>${esc(it.title)}</b>${it.summary ? `<small>${esc(it.summary)}</small>` : ""}</span>
+      <span class="crsm">${it.soon ? '<span class="crsoon">Coming soon</span>' : cmins(it.video_secs)}</span></button>`;
+    return `<section class="crs${open ? "" : " gated"}"><div class="crsh"><div><h2>${open ? "" : CLOCK + " "}${esc(c.t)}</h2><p>${n} lesson${n === 1 ? "" : "s"}${open ? "" : " · Playbook members"}</p></div>
+      ${open ? "" : `<a class="acbtn crsbuy" href="${esc(EVAL_URL)}" target="_blank" rel="noopener">Book a free evaluation</a>`}</div>
+      ${open ? "" : `<p class="crsgate">The full Playbook library comes with the Preferred Recruit program. Book a free evaluation to talk with our team.</p>`}
+      ${secs.map(s => `${s.t ? `<h3 class="crss">${esc(s.t)}</h3>` : ""}<div class="crsl">${s.items.map(row).join("")}</div>`).join("")}</section>`; };
+  const mine = courses.filter(c => c.items.some(i => i.unlocked)), rest = courses.filter(c => !c.items.some(i => i.unlocked));
+  return `<div class="pmtitle"><h1>Course</h1><p>Your 7-Day Roadmap: one step a day, with every template and tool in one place.</p></div>
+    ${CMSG ? `<p class="pmnote" role="status">${CMSG}</p>` : ""}${mine.map(block).join("")}
+    ${rest.length ? `<h2 class="crsmore">More from Preferred Recruit</h2>${rest.map(block).join("")}` : ""}`;
+}
+function openLesson(id) {
+  const it = (CAT || []).find(x => x.id === id); if (!it) return;
+  if (!it.unlocked) { CMSG = `${CLOCK} <b>${esc(it.title)}</b> is part of the Playbook library. Book a free evaluation to talk with our team about it.`; render(); return; }
+  CMSG = ""; LES = it; LESD = null; VSRC = null; render(); layer().scrollTo(0, 0);
+  core.api("/rest/v1/rpc/course_item", { method: "POST", body: { item: id } }).then(d => { if (LES !== it) return; LESD = d || {}; render();
+    if (d && d.video_path && !d.soon) core.api("/storage/v1/object/sign/course/" + d.video_path.split("/").map(encodeURIComponent).join("/"), { method: "POST", body: { expiresIn: 7200 } })
+      .then(s => { if (LES !== it) return; VSRC = s && (s.signedURL || s.signedUrl) ? core.URL + "/storage/v1" + (s.signedURL || s.signedUrl) : ""; render(); }).catch(() => { VSRC = ""; render(); }); })
+    .catch(e => { LESD = { err: e.message }; render(); });
+}
+function lessonView() {
+  const it = LES, d = LESD, list = (CAT || []).filter(x => x.course === it.course && x.unlocked), i = list.findIndex(x => x.id === it.id), prev = list[i - 1], next = list[i + 1];
+  let media = "";
+  if (it.kind === "video" || (d && d.video_path)) media = it.soon || (d && d.soon) ? `<div class="crsv soon"><span aria-hidden="true">▶</span><b>Video coming soon</b><small>We're recording this walkthrough. The steps below work today.</small></div>`
+    : VSRC ? `<video class="crsv" controls playsinline preload="metadata" src="${esc(VSRC)}"></video>` : VSRC === "" ? `<div class="crsv soon"><b>Video couldn't load</b><small>Refresh the page to try again.</small></div>` : `<div class="crsv soon"><small>Loading video…</small></div>`;
+  const body = !d ? `<p class="pmempty">Loading…</p>` : d.err ? `<p class="acerr">${esc(d.err === "locked" ? "This lesson is locked." : d.err)}</p>`
+    : (d.body ? (isTpl(it) ? `<div class="crsdoc tpl"><div class="crstb"><button type="button" class="acbtn" data-onb="ccopy">Copy template</button></div><div class="crspre">${esc(d.body)}</div></div>` : `<div class="crsdoc">${mdLite(d.body)}</div>`) : (it.soon ? "" : `<p class="pmempty">Nothing to read here yet.</p>`))
+      + (d.link ? `<p class="crslink"><a class="acbtn" href="${esc(d.link)}" ${/^https?:/.test(d.link) ? 'target="_blank" rel="noopener"' : ""}>${/spreadsheets/.test(d.link) ? "Make your copy of the tracker ↗" : /^\//.test(d.link) ? "Open the standards" : "Open ↗"}</a></p>` : "");
+  return `<div class="crsback"><button type="button" class="onbback" data-onb="cback">‹ ${esc(it.course_title)}</button></div>
+    <article class="crslesson"><p class="crskick">${esc(it.section || it.course_title)}</p><h1>${esc(it.title)}</h1>${media}${body}
+    <div class="crsnav">${prev ? `<button type="button" class="onbback" data-onb="cl" data-v="${esc(prev.id)}">‹ ${esc(prev.title)}</button>` : "<span></span>"}${next ? `<button type="button" class="acbtn" data-onb="cl" data-v="${esc(next.id)}">Next: ${esc(next.title)} ›</button>` : ""}</div></article>`;
+}
 const PSUB = () => par() ? KIDS[SEL] : D;
 const aid = () => par() && KIDS[SEL] ? KIDS[SEL].id : null;
 const CATS = [["dream", "Dream"], ["target", "Target"], ["reach", "Reach"]];
@@ -237,7 +299,7 @@ function sideNav() {
   /* admins: Accounts first (Ryan 2026-11-12: "I can no longer see the accounts on my master account"; it had moved to the end of the menu, off-screen on phones) */
   const adm = core.admin() ? `<p class="pmgrp">Admin</p>${it("admin", "Accounts", "☰")}${it("aov", "Overview", "◈")}<p class="pmgrp">Your account</p>` : "";
   return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Dashboard", "⌂")}${it("list", "My Colleges", "◎")}${it("cc", "Coach Contacts", "✉", 1)}
-    <a class="pmnv" href="${esc(utm(COURSE_URL, "sidebar"))}" target="_blank" rel="noopener"><span class="ic" aria-hidden="true">▶</span>Go to Course<span class="ext">Whop ↗</span></a>
+    ${it("course", "Course", "▶", 1)}
     ${it("profile", "Profile and marks", "◐")}${it("set", "Settings", "⚙")}
     <div class="pmplan"><b>${STAR} Unlimited Access</b><span><i class="dot"></i>${core.admin() ? "Admin · always on" : "Active"}</span></div></nav>`;
 }
@@ -247,7 +309,7 @@ function premiumView() {
   if (!PTADM && core.admin()) { PTADM = true; if (PT === "dash") PT = "admin"; }
   if (PT === "list" || PT === "dash") { const k = aid() || "me"; if (LISTK !== k) { LISTK = k; LIST = null; loadList(); } }
   let body = "";
-  if (PT === "dash") body = dashView(); else if (PT === "list") body = listView(); else if (PT === "cc") body = ccView(); else if (PT === "set") body = setView();
+  if (PT === "dash") body = dashView(); else if (PT === "list") body = listView(); else if (PT === "cc") body = ccView(); else if (PT === "set") body = setView(); else if (PT === "course") body = courseView();
   else if (PT === "aov" && core.admin()) body = aovView(); else if (PT === "admin" && core.admin()) body = adminView();
   else body = D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`;
   return top(NAV) + `<div class="pmshell">${sideNav()}<section class="pmmain">${body}</section></div>`;
@@ -263,7 +325,7 @@ function dashView() {
   const L = (LIST || []).slice(0, 5), sub = PSUB() || D, b = bestMark(sub)[0], C = core.cfg();
   return headRow() + `<div class="pmpaths">
     <button type="button" class="pmpath pri" data-onb="pt" data-v="cc"><span class="ic" aria-hidden="true">✉</span><span><b>${STAR} Coach Contacts</b><small>${core.emails() ? "Get any college coach's email" : "Coach emails are the $17 add-on"}</small></span><span class="pmgo" aria-hidden="true">›</span></button>
-    <a class="pmpath" href="${esc(utm(COURSE_URL, "dashboard"))}" target="_blank" rel="noopener"><span class="ic" aria-hidden="true">▶</span><span><b>${STAR} Go to Course</b><small>Your 7-Day Roadmap on Whop</small></span><span class="pmgo" aria-hidden="true">↗</span></a></div>
+    <button type="button" class="pmpath" data-onb="pt" data-v="course"><span class="ic" aria-hidden="true">▶</span><span><b>${STAR} Your 7-Day Roadmap</b><small>Videos, templates and tools, one step a day</small></span><span class="pmgo" aria-hidden="true">›</span></button></div>
     <div class="pmcard"><div class="pmch"><h2>My Colleges <small>${LIST ? LIST.length + " of 25" : ""}</small></h2><button type="button" class="onbback" data-onb="pt" data-v="list">${LIST && LIST.length ? "Open list" : "Add colleges"}</button></div>
     ${LIST == null ? `<p class="pmempty">Loading…</p>` : L.length ? L.map((r, i) => { const info = b && C.sinfo ? C.sinfo(r.name, sub.gender || "m", b.e, b.v) : null;
       return `<div class="pmrow"><span class="pmrk">${i + 1}</span><span class="pmnm"><b>${esc(r.name)}</b><small>${esc(info ? info.d : "")}</small></span><span class="pmcat ${r.cat}">${catL(r.cat)}</span>${fitChip(info)}<span class="pmco">${r.coach_name ? STAR + " " + esc(r.coach_name) : ""}</span></div>`; }).join("")
@@ -343,7 +405,7 @@ function setView() {
     <div class="pmcard pmset"><h2>Look</h2><p>Your choice follows you on every page of Track Standards.</p>
     <div class="pmthemes" role="radiogroup" aria-label="Look">${[["dark", "Premium Dark", "Sleek and dark"], ["light", "Premium White", "Clean and bright"]].map(([k, l, d]) => `<button type="button" role="radio" aria-checked="${t === k}" class="pmth ${k}" data-onb="ptheme" data-v="${k}"><span class="sw" aria-hidden="true"></span><b>${l}</b><small>${d}</small></button>`).join("")}</div></div>
     <div class="pmcard pmset"><h2>Your plan</h2><p>${core.admin() ? "Admin account: Premium and coach emails are always on." : `${STAR} Premium${core.emails() ? " with coach emails" : ""}. One-time purchase, lifetime access.`}</p>
-    <div class="pmdf"><a class="onbback" href="${esc(utm(COURSE_URL, "settings"))}" target="_blank" rel="noopener">Go to Course ↗</a><button type="button" class="onbback" data-onb="out">Sign out</button></div></div>`;
+    <div class="pmdf"><button type="button" class="onbback" data-onb="pt" data-v="course">Go to Course</button><button type="button" class="onbback" data-onb="out">Sign out</button></div></div>`;
 }
 function aovView() {
   if (!AOV) { core.api("/rest/v1/rpc/admin_overview", { method: "POST", body: {} }).then(x => { AOV = x || {}; render(); }).catch(e => { AOV = { err: e.message }; render(); }); return `<div class="pmtitle"><h1>Overview</h1></div><p class="pmempty">Loading…</p>`; }
@@ -377,7 +439,10 @@ document.addEventListener("submit", e => { const f = e.target.closest && e.targe
   if (f.dataset.pform === "add") listAdd(document.getElementById("pmadd").value);
   if (f.dataset.pform === "cc") { CCQ = document.getElementById("pmcq").value; const all = core.cfg().schools ? core.cfg().schools() : [], hit = all.find(n => n.toLowerCase() === CCQ.trim().toLowerCase()); if (hit) CCS = hit; render(); const C = core.cfg(); C.log && C.log("coach_contacts", { detail: "search" }); } });
 function premiumAction(a, b) {
-  if (a === "pt") { PT = b.dataset.v; OPEN = null; LMSG = ""; if (PT === "cc") { CCS = null; } render(); layer().scrollTo(0, 0); return true; }
+  if (a === "pt") { PT = b.dataset.v; OPEN = null; LMSG = ""; if (PT === "cc") { CCS = null; } if (PT === "course") { LES = null; CMSG = ""; } render(); layer().scrollTo(0, 0); return true; }
+  if (a === "cl") { openLesson(b.dataset.v); return true; }
+  if (a === "cback") { LES = null; LESD = null; VSRC = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "ccopy") { const t = LESD && LESD.body || ""; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy template"; }, 1800); }).catch(() => { b.textContent = "Select and copy the text below"; }); return true; }
   if (a === "ptheme") { core.setTheme(b.dataset.v); render(); return true; }
   if (a === "lf") { LF = b.dataset.v; render(); return true; }
   if (a === "lsort") { LSORT = b.dataset.v; render(); return true; }

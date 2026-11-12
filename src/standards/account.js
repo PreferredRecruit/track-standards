@@ -57,6 +57,18 @@ function demoApi(path, method, body) {
     return L.slice().sort((a, b) => a.rank - b.rank); }
   if (P.endsWith("/rpc/admin_overview")) return { accounts: 2418, new_week: 142, finished: 1604, premium: 64, emails: 41, premium_week: 9, waiting: 1, lists_opened_week: 311, colleges_listed: 530 };
   if (P.endsWith("/rpc/is_admin")) return DEMO === "admin";
+  if (P.endsWith("/rpc/course_catalog")) { const pb = DEMO === "admin", c7 = { tier: "lt27", course: "7day", course_title: "7-Day Roadmap", course_idx: 0, unlocked: DEMO !== "free" };
+    return [Object.assign({ id: "7day-start", section: "Video walkthroughs", idx: 0, title: "Start here: your 7-Day Roadmap", kind: "video", summary: "How the next 7 days work and what to do first.", soon: true }, c7),
+      Object.assign({ id: "7day-d1", section: "Video walkthroughs", idx: 1, title: "Day 1: Get ready and enter your marks", kind: "video", summary: "Gather the 10 things coaches ask for.", soon: true }, c7),
+      Object.assign({ id: "7day-checklist", section: "Tools", idx: 20, title: "Recruitment checklist: 10 things to have ready", kind: "text", summary: "Everything coaches will ask for." }, c7),
+      Object.assign({ id: "7day-tracker", section: "Tools", idx: 21, title: "Recruitment Tracker", kind: "video", summary: "Your sheet for every school, email and reply.", video_secs: 75 }, c7),
+      Object.assign({ id: "7day-em-1", section: "Email templates: Schools you already qualify for", idx: 100, title: "Email template", kind: "text", summary: "Copy, fill in the [brackets], send from your own email." }, c7),
+      ...["Welcome Athletes and Family!", "1. PR Playbook Overview", "3. College Tracker Sheet Tutorial"].map((t, i) => ({ id: "pb1-0" + i, tier: "pb", course: "pb1", course_title: "PR Playbook 1.0", course_idx: 3, section: "Start here", idx: i, title: t, kind: "video", video_secs: 60 + i * 40, soon: false, unlocked: pb }))]; }
+  if (P.endsWith("/rpc/course_item")) { const id = (body || {}).item || "";
+    return id === "7day-checklist" ? { id, kind: "text", body: "1. **Core-Course GPA and Transcript.** You need at least a **2.3 GPA** in your NCAA core courses for **D1**.\n2. **NCAA Eligibility Center Account.** Sign up at [eligibilitycenter.org](https://web3.ncaa.org/ecwr3/).\n\nOnce **all 10 boxes are checked**, you're ready." }
+      : id === "7day-em-1" ? { id, kind: "text", body: "Subject line\n\n[Grad Year] | [Event] | [First Last]\n\nHey Coach [Coach Last Name],\n\nMy name is [First Last]..." }
+      : { id, kind: "video", soon: /start|d1/.test(id), video_path: /tracker|pb1/.test(id) ? "demo.mp4" : null, link: /tracker/.test(id) ? "https://docs.google.com/spreadsheets/d/x/copy" : null, body: /tracker/.test(id) ? "1. Watch the video.\n2. Tap **Make your copy**." : null }; }
+  if (P.includes("/storage/v1/object/sign/")) return { signedURL: "" };
   return [];
 }
 async function api(path, { method = "GET", body, auth = true, prefer } = {}, retried) {
