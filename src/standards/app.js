@@ -725,7 +725,7 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   /* desktop two columns (Ryan 2026-11-11 audit): standards, season bests and videos left; facts, rank, about and links in a sticky right
      column. Below 961 px the wrappers are plain blocks, so phones keep the single column in the same order as before. */
   setTimeout(()=>schoolRoster(S.school),0);
-  return o.replace("<!--scols-->",`<div class="scols"><div class="scmain">`)+`<div id="sroster"></div><div id="tbest"></div><div id="svid"></div></div><aside class="scside"><div id="sfacts"></div><div id="srank"></div>`+schoolArch(s)+schoolAbout(s,vf)+schoolExtra(s)+`</aside></div>`+brandNote(s,B)+`</div>`}
+  return o.replace("<!--scols-->",`<div class="scols"><div class="scmain">`)+`<div id="tbest"></div><div id="svid"></div></div><aside class="scside"><div id="sfacts"></div><div id="sroster"></div><div id="srank"></div>`+schoolArch(s)+schoolAbout(s,vf)+schoolExtra(s)+`</aside></div>`+brandNote(s,B)+`</div>`}
 /* parent capture (Ryan 2026-10-25, enterprise value: parents buy, but 71 of 100 athlete accounts had no parent contact).
    Signed-in athletes without a parent on file see one card under their results until they add one or close it.
    Saves parent name / email / phone to their own profile (RLS: owner only). No SMS consent is taken here: a parent's

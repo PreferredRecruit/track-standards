@@ -433,6 +433,10 @@ button.pmcat{cursor:pointer}
 .pmadd .in,.pmsearch .in{flex:1 1 auto;width:auto;min-height:44px}
 .pmco small.none{color:var(--pr-faint)}
 .pmccbox .cch{display:none}
+/* school page: Coach Contacts sit in the side column right under the head coach card (Ryan 2026-11-12: "why arent coach contacts
+   under the school"; they were below the full standards table), so rows stack name / email with Copy on the right */
+.scside .cc{margin:12px 0 0;padding:14px 16px}
+.scside .ccl li{grid-template-columns:minmax(0,1fr) auto;gap:2px 10px}.scside .ccl li .ccm{grid-column:1;grid-row:2}.scside .ccl li .rcopy{grid-row:1 / 3;grid-column:2}
 .preval .acbtn{width:auto}
 /* Premium Dark: the selected header tab uses a light pill in dark mode, so its text goes dark */
 :root[data-theme="dark"] .prh .prnav [aria-current="page"],:root[data-theme="dark"] .prh .prnav [aria-current="page"]:hover{color:#0B0B0F}
