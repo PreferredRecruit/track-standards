@@ -44,7 +44,7 @@ function demoApi(path, method, body) {
   if (P.endsWith("/rest/v1/profiles")) { if (method === "PATCH") { db.profile = Object.assign(db.profile || {}, body); put(); return []; } return [prof]; }
   if (P.endsWith("/rest/v1/account_classes")) return [{ class: "A" }];
   if (P.endsWith("/rest/v1/marks")) return [{ event: "400m", mark: 48.92, athlete_id: null }, { event: "200m", mark: 22.10, athlete_id: null }];
-  if (P.endsWith("/rpc/premium_me")) return { premium: DEMO !== "free", emails: DEMO === "premium" || DEMO === "admin", admin: DEMO === "admin", theme: prof.premium_theme };
+  if (P.endsWith("/rpc/premium_me")) return { premium: DEMO !== "free", emails: DEMO === "premium" || DEMO === "admin", admin: DEMO === "admin", call: DEMO === "admin", email: "demo@example.com", theme: prof.premium_theme };
   if (P.endsWith("/rpc/coach_roster")) { if (!(DEMO === "premium" || DEMO === "admin")) throw Object.assign(new Error("emails"), { status: 400 });
     const d = String((body || {}).slug || "college").replace(/-track-standards$/, "").replace(/[^a-z]/g, "").slice(0, 10) + ".example";
     return [["Alex Romero", "Head Coach", ["sprints", "distance"]], ["Kendra Hayes", "Assistant Coach", ["sprints", "hurdles"]], ["Marcus Webb", "Assistant Coach", ["jumps"]], ["Elena Petrova", "Assistant Coach", ["throws"]]]
@@ -57,18 +57,21 @@ function demoApi(path, method, body) {
     return L.slice().sort((a, b) => a.rank - b.rank); }
   if (P.endsWith("/rpc/admin_overview")) return { accounts: 2418, new_week: 142, finished: 1604, premium: 64, emails: 41, premium_week: 9, waiting: 1, lists_opened_week: 311, colleges_listed: 530 };
   if (P.endsWith("/rpc/is_admin")) return DEMO === "admin";
-  if (P.endsWith("/rpc/course_catalog")) { const pb = DEMO === "admin", c7 = { tier: "lt27", course: "7day", course_title: "7-Day Roadmap", course_idx: 0, unlocked: DEMO !== "free" };
-    return [Object.assign({ id: "7day-start", section: "Video walkthroughs", idx: 0, title: "Start here: your 7-Day Roadmap", kind: "video", summary: "How the next 7 days work and what to do first.", soon: true }, c7),
-      Object.assign({ id: "7day-d1", section: "Video walkthroughs", idx: 1, title: "Day 1: Get ready and enter your marks", kind: "video", summary: "Gather the 10 things coaches ask for.", soon: true }, c7),
-      Object.assign({ id: "7day-checklist", section: "Tools", idx: 20, title: "Recruitment checklist: 10 things to have ready", kind: "text", summary: "Everything coaches will ask for." }, c7),
-      Object.assign({ id: "7day-tracker", section: "Tools", idx: 21, title: "Recruitment Tracker", kind: "video", summary: "Your sheet for every school, email and reply.", video_secs: 75 }, c7),
-      Object.assign({ id: "7day-em-1", section: "Email templates: Schools you already qualify for", idx: 100, title: "Email template", kind: "text", summary: "Copy, fill in the [brackets], send from your own email." }, c7),
-      ...["Welcome Athletes and Family!", "1. PR Playbook Overview", "3. College Tracker Sheet Tutorial"].map((t, i) => ({ id: "pb1-0" + i, tier: "pb", course: "pb1", course_title: "PR Playbook 1.0", course_idx: 3, section: "Start here", idx: i, title: t, kind: "video", video_secs: 60 + i * 40, soon: false, unlocked: pb }))]; }
+  if (P.endsWith("/rpc/course_catalog")) { const own = { lt27: DEMO !== "free", em17: DEMO === "premium" || DEMO === "admin", pc97: DEMO === "admin" };
+    const mk = (course, course_title, course_idx, tier, rows) => rows.map(([id, section, title, kind, soon, done], i) => ({ id, tier, course, course_title, course_idx, section, idx: i, title, kind, summary: "", soon: !!soon, done: !!done, unlocked: own[tier], video_secs: kind === "video" && !soon ? 75 : null }));
+    return [...mk("7day", "7-Day Roadmap", 0, "lt27", [["7d-start", "Start here", "How your 7 days work", "text", 0, 1], ["7d-start-video", "Start here", "Welcome video", "video", 1],
+      ["7d-d1-video", "Day 1: Get ready and enter your marks", "Walkthrough video", "video", 1], ["7d-checklist", "Day 1: Get ready and enter your marks", "Prep Checklist: 10 things to have ready", "text", 0, 1], ["7d-marks", "Day 1: Get ready and enter your marks", "Enter your marks on the Standards Site", "tool"],
+      ["7d-targets", "Day 2: Pick your target schools", "Choose the schools to contact first", "tool"], ["7d-tracker", "Day 3: Set up your tracker", "Recruitment Tracker", "video"],
+      ["7d-em-1", "Day 4: Write your first emails", "Schools you already qualify for: email template", "text"], ["7d-dm", "Day 4: Write your first emails", "DM and text script (3 scenarios)", "text"],
+      ["7d-send", "Day 5: Send your first 10", "Send your first 10 emails", "text"], ["7d-reply", "Days 6 and 7: Follow up and reply", "Reply templates: when a coach writes back", "text", 1]]),
+      ...mk("kit", "Coach-Ready Profile Kit", 1, "em17", [["kit-cc", "Coach Contacts", "Coach Contacts: every coach's email", "tool"], ["kit-film", "Profile Kit", "Film checklist by event", "text", 1]]),
+      ...mk("call", "Plan Call", 2, "pc97", [["call-book", "Your Plan Call", "Book your Plan Call", "text"]])]; }
   if (P.endsWith("/rpc/course_item")) { const id = (body || {}).item || "";
-    return id === "7day-checklist" ? { id, kind: "text", body: "1. **Core-Course GPA and Transcript.** You need at least a **2.3 GPA** in your NCAA core courses for **D1**.\n2. **NCAA Eligibility Center Account.** Sign up at [eligibilitycenter.org](https://web3.ncaa.org/ecwr3/).\n\nOnce **all 10 boxes are checked**, you're ready." }
-      : id === "7day-em-1" ? { id, kind: "text", body: "Subject line\n\n[Grad Year] | [Event] | [First Last]\n\nHey Coach [Coach Last Name],\n\nMy name is [First Last]..." }
+    return id === "7d-checklist" ? { id, kind: "text", body: "1. **Core-Course GPA and Transcript.** You need at least a **2.3 GPA** in your NCAA core courses for **D1**.\n2. **NCAA Eligibility Center Account.** Sign up at [eligibilitycenter.org](https://web3.ncaa.org/ecwr3/).\n\nOnce **all 10 boxes are checked**, you're ready." }
+      : id === "7d-em-1" ? { id, kind: "text", body: "Subject line\n\n[Grad Year] | [Event] | [First Last]\n\nHey Coach [Coach Last Name],\n\nMy name is [First Last]..." }
       : { id, kind: "video", soon: /start|d1/.test(id), video_path: /tracker|pb1/.test(id) ? "demo.mp4" : null, link: /tracker/.test(id) ? "https://docs.google.com/spreadsheets/d/x/copy" : null, body: /tracker/.test(id) ? "1. Watch the video.\n2. Tap **Make your copy**." : null }; }
   if (P.includes("/storage/v1/object/sign/")) return { signedURL: "" };
+  if (P.includes("/rest/v1/course_progress")) return [];
   return [];
 }
 async function api(path, { method = "GET", body, auth = true, prefer } = {}, retried) {

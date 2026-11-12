@@ -1,0 +1,7 @@
+-- Applied live 2026-11-12 (see Supabase migrations 022_whop_webhook, 022b/c/d, 023_low_ticket_classroom):
+-- 022  Whop webhook "Standards site unlock" (payment.succeeded, membership.activated) -> edge fn whop-webhook (standard-webhooks
+--      signature, secret in private.app_config + vault whop-webhook.env) -> whop_grant(): Whop product -> lt27 / em17 / pc97 entitlement by email.
+--      Product map lives in premium.whop_product(). premium_me now also returns call (Plan Call) and the account email.
+-- 022c Ryan: "past playbook buyers arent getting access to this": the import was removed and Playbook products grant nothing.
+-- 023  Classroom: only the low-ticket offer (7day = lt27, kit = em17, call = pc97); old Playbook courses deleted;
+--      public.course_progress (own rows only) + course_catalog().done.

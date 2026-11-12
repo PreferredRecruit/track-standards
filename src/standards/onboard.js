@@ -172,7 +172,7 @@ function doneView() {
     `<div class="vabar" role="status"><span>${svg('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', 17)}Viewing <b>${esc(VIEW_AS.name || VIEW_AS.email)}</b>'s account exactly as they see it. Read only.</span>${VIEW_AS.done ? "" : "<em>Profile not finished</em>"}<button type="button" data-onb="vaback">Back to accounts</button></div>` +
     (!D.role ? `<div class="onbwrap one"><section class="onbmain onbdone"><h1>Nothing set up yet</h1><p class="onbsub">This account was created but hasn't started the profile steps.</p></section></div>`
       : D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`);
-  if (core.premium() && D.role) return premiumView();
+  if (D.role && (core.premium() || fam())) return premiumView();   /* free accounts get the same shell with locks (Ryan 2026-11-12) */
   return top(NAV + (IS_ADMIN ? `<button type="button" class="onbtab${TAB === "admin" ? " on" : ""}" data-onb="tab" data-v="admin">Accounts</button><button type="button" class="onbtab${TAB === "profile" ? " on" : ""}" data-onb="tab" data-v="profile">My profile</button>` : "")) +
     `<div class="onbhome"><button type="button" class="onbhb" data-onb="home" data-v="standards">‹ Back to the site</button></div>` + (TAB === "admin" && IS_ADMIN ? adminView()
       : fam() ? `<div class="prlayout">${kit()}<div class="prmainc">${TAB === "kit" ? kitView() : D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : parentView()}</div></div>`
@@ -224,12 +224,16 @@ let PT = "dash", LIST = null, LISTK = null, LF = "all", LSORT = "rank", CCQ = ""
 const ROS = {};
 const STAR = '<span class="pmstar" aria-hidden="true">★</span>';
 const utm = (url, where) => { const u = new URL(url); for (const [k, v] of [["utm_source", "standards"], ["utm_medium", "account"], ["utm_campaign", "premium"], ["utm_content", where]]) u.searchParams.set(k, v); return u.toString(); };
-/* ---------- Course (Ryan 2026-11-12: "build the entire product on the platform"): the 7-Day Roadmap and the Playbook library
-   moved off Whop/Skool. Titles are visible to every Premium account; locked lessons show a lock. Lesson text and videos come
-   from course_item / signed storage links only when the account unlocks that tier (migration 020). ---------- */
-let CAT = null, LES = null, LESD = null, VSRC = null, CMSG = "";
+/* ---------- Classroom (Ryan 2026-11-12: "mirror the layout of Skool"): course cards with progress, then a course page with the
+   module list on the left and the lesson on the right. Only the low-ticket offer: 7-Day Roadmap ($27), Coach-Ready Profile Kit +
+   Coach Contacts ($17), Plan Call ($97). Locked courses show the lock and the Whop unlock page. Text and videos come from
+   course_item / signed storage links only for unlocked accounts (migrations 020, 023). Progress is saved per account. ---------- */
+let CAT = null, CRS = null, LES = null, LESD = null, VSRC = null, CMSG = "";
 const CLOCK = svg(LOCK, 14).replace("<svg", '<svg class="crslk"');  /* same lock as the Premium kit list */
-const EVAL_URL = "https://app.thepreferredrecruit.com/parentfunnel/?utm_source=standards&utm_medium=account&utm_campaign=premium&utm_content=course-lock";
+const CCHK = svg('<path d="M5 12l5 5 9-11"/>', 13);
+const COURSES = { "7day": { k: "lt27", d: "One job a day for 7 days: the checklist, your school list, the tracker, email and DM scripts, and follow-ups." },
+  kit: { k: "em17", d: "Coach Contacts plus what you send with every email: film, a one-page profile and one shareable folder." },
+  call: { k: "pc97", d: "A one-on-one call with our team to plan your athlete's recruiting." } };
 const cmins = s => s ? (s < 60 ? s + " sec" : Math.round(s / 60) + " min") : "";
 const kindIc = k => k === "video" ? "▶" : k === "tool" ? "↗" : "☰";
 function mdLite(t) {
@@ -244,49 +248,87 @@ function mdLite(t) {
   if (list) out.push(`</${list}>`);
   return out.join("");
 }
-const isTpl = it => /template/i.test(it.section || "") || /template/i.test(it.title);
+const isTpl = it => /^7d-(em|dm)/.test(it.id);
 function loadCat() { core.api("/rest/v1/rpc/course_catalog", { method: "POST", body: {} }).then(r => { CAT = r || []; render(); }).catch(e => { CAT = { err: e.message }; render(); }); }
+function courseList() { const cs = []; for (const it of CAT || []) { let c = cs.find(x => x.k === it.course); if (!c) cs.push(c = { k: it.course, t: it.course_title, items: [] }); c.items.push(it); } return cs; }
+const pct = c => { const n = c.items.filter(i => !i.soon).length; return n ? Math.round(c.items.filter(i => i.done && !i.soon).length / n * 100) : 0; };
 function courseView() {
-  if (LES) return lessonView();
-  if (!CAT) { loadCat(); return `<div class="pmtitle"><h1>Course</h1></div><p class="pmempty">Loading…</p>`; }
-  if (CAT.err) return `<div class="pmtitle"><h1>Course</h1></div><p class="acerr">Couldn't load the course. ${esc(CAT.err)}</p>`;
-  const courses = []; for (const it of CAT) { let c = courses.find(x => x.k === it.course); if (!c) courses.push(c = { k: it.course, t: it.course_title, items: [] }); c.items.push(it); }
-  const block = c => { const open = c.items.some(i => i.unlocked), n = c.items.length, secs = [];
-    for (const it of c.items) { let s = secs.find(x => x.t === (it.section || "")); if (!s) secs.push(s = { t: it.section || "", items: [] }); s.items.push(it); }
-    const row = it => `<button type="button" class="crsi${it.unlocked ? "" : " locked"}" data-onb="cl" data-v="${esc(it.id)}"${it.unlocked ? "" : ' aria-label="' + esc(it.title) + ' (locked)"'}>
-      <span class="crsic" aria-hidden="true">${it.unlocked ? kindIc(it.kind) : CLOCK}</span>
-      <span class="crst"><b>${esc(it.title)}</b>${it.summary ? `<small>${esc(it.summary)}</small>` : ""}</span>
-      <span class="crsm">${it.soon ? '<span class="crsoon">Coming soon</span>' : cmins(it.video_secs)}</span></button>`;
-    return `<section class="crs${open ? "" : " gated"}"><div class="crsh"><div><h2>${open ? "" : CLOCK + " "}${esc(c.t)}</h2><p>${n} lesson${n === 1 ? "" : "s"}${open ? "" : " · Playbook members"}</p></div>
-      ${open ? "" : `<a class="acbtn crsbuy" href="${esc(EVAL_URL)}" target="_blank" rel="noopener">Book a free evaluation</a>`}</div>
-      ${open ? "" : `<p class="crsgate">The full Playbook library comes with the Preferred Recruit program. Book a free evaluation to talk with our team.</p>`}
-      ${secs.map(s => `${s.t ? `<h3 class="crss">${esc(s.t)}</h3>` : ""}<div class="crsl">${s.items.map(row).join("")}</div>`).join("")}</section>`; };
-  const mine = courses.filter(c => c.items.some(i => i.unlocked)), rest = courses.filter(c => !c.items.some(i => i.unlocked));
-  return `<div class="pmtitle"><h1>Course</h1><p>Your 7-Day Roadmap: one step a day, with every template and tool in one place.</p></div>
-    ${CMSG ? `<p class="pmnote" role="status">${CMSG}</p>` : ""}${mine.map(block).join("")}
-    ${rest.length ? `<h2 class="crsmore">More from Preferred Recruit</h2>${rest.map(block).join("")}` : ""}`;
+  if (!CAT) { loadCat(); return `<div class="pmtitle"><h1>Classroom</h1></div><p class="pmempty">Loading…</p>`; }
+  if (CAT.err) return `<div class="pmtitle"><h1>Classroom</h1></div><p class="acerr">Couldn't load the classroom. ${esc(CAT.err)}</p>`;
+  if (CRS) { const c = courseList().find(x => x.k === CRS); if (c && c.items.some(i => i.unlocked)) return coursePage(c); CRS = null; }
+  const card = c => { const meta = COURSES[c.k] || {}, P = PRODS[meta.k] || {}, open = c.items.some(i => i.unlocked), p = pct(c), n = c.items.length;
+    return `<button type="button" class="clc${open ? "" : " locked"}" data-onb="copen" data-v="${esc(c.k)}">
+      <span class="clcov"><span class="clcl">Preferred Recruit</span><b>${esc(c.t)}</b>${open ? "" : `<span class="clclk">${CLOCK} Locked</span>`}</span>
+      <span class="clcb"><b>${esc(c.t)}</b><small>${esc(meta.d || "")}</small>
+      ${open ? `<span class="clbar" aria-label="${p}% complete"><i style="width:${p}%"></i></span><span class="clpct">${p}% complete · ${n} lessons</span>`
+        : `<span class="clbuy">${esc(P.price || "")} · Unlock on Whop</span>`}</span></button>`; };
+  return `<div class="pmtitle"><h1>Classroom</h1><p>Everything from your Preferred Recruit purchase, in one place.</p></div>
+    ${CMSG ? `<p class="pmnote" role="status">${CMSG}</p>` : ""}<div class="clgrid">${courseList().map(card).join("")}</div>`;
 }
-function openLesson(id) {
+function coursePage(c) {
+  const p = pct(c), secs = []; for (const it of c.items) { let s = secs.find(x => x.t === (it.section || "")); if (!s) secs.push(s = { t: it.section || "", items: [] }); s.items.push(it); }
+  if (!LES || LES.course !== c.k) { const first = c.items.find(i => !i.done && !i.soon) || c.items[0]; setTimeout(() => openLesson(first.id, true), 0); }
+  const row = it => `<button type="button" class="cmi${LES && LES.id === it.id ? " on" : ""}${it.done ? " done" : ""}" data-onb="cl" data-v="${esc(it.id)}"${LES && LES.id === it.id ? ' aria-current="true"' : ""}>
+    <span class="cmic" aria-hidden="true">${it.done ? CCHK : kindIc(it.kind)}</span><span class="cmt">${esc(it.title)}</span>${it.soon ? '<span class="crsoon">Soon</span>' : ""}</button>`;
+  const doneN = c.items.filter(i => i.done).length, cur = secs.find(s => s.items.some(i => LES && i.id === LES.id));
+  const mods = secs.map(s => `<details class="cmod"${!LES || s === cur || secs.length < 4 ? " open" : ""}><summary><span>${esc(s.t)}</span><small>${s.items.filter(i => i.done).length}/${s.items.length}</small></summary>${s.items.map(row).join("")}</details>`).join("");
+  return `<div class="crsback"><button type="button" class="onbback" data-onb="cback">‹ Classroom</button></div>
+    <div class="cpage"><aside class="cside" aria-label="Lessons"><div class="csh"><h2>${esc(c.t)}</h2><span class="clbar"><i style="width:${p}%"></i></span><small>${p}% complete · ${doneN} of ${c.items.length}</small></div>
+      <details class="cmobile"><summary>All lessons · ${p}% complete</summary>${mods}</details><div class="cmods">${mods}</div></aside>
+      <article class="crslesson">${LES ? lessonBody(c) : `<p class="pmempty">Loading…</p>`}</article></div>`;
+}
+function openLesson(id, quiet) {
   const it = (CAT || []).find(x => x.id === id); if (!it) return;
-  if (!it.unlocked) { CMSG = `${CLOCK} <b>${esc(it.title)}</b> is part of the Playbook library. Book a free evaluation to talk with our team about it.`; render(); return; }
-  CMSG = ""; LES = it; LESD = null; VSRC = null; render(); layer().scrollTo(0, 0);
+  if (!it.unlocked) { BUYK = (COURSES[it.course] || {}).k || "lt27"; BUYMSG = ""; PT = "buy"; render(); layer().scrollTo(0, 0); return; }
+  CMSG = ""; CRS = it.course; LES = it; LESD = null; VSRC = null; render(); if (!quiet) { const a = document.querySelector(".crslesson"); if (a && innerWidth < 961) a.scrollIntoView({ block: "start" }); }
+  if (it.soon && it.kind === "video") { LESD = { soon: true }; render(); return; }
   core.api("/rest/v1/rpc/course_item", { method: "POST", body: { item: id } }).then(d => { if (LES !== it) return; LESD = d || {}; render();
     if (d && d.video_path && !d.soon) core.api("/storage/v1/object/sign/course/" + d.video_path.split("/").map(encodeURIComponent).join("/"), { method: "POST", body: { expiresIn: 7200 } })
       .then(s => { if (LES !== it) return; VSRC = s && (s.signedURL || s.signedUrl) ? core.URL + "/storage/v1" + (s.signedURL || s.signedUrl) : ""; render(); }).catch(() => { VSRC = ""; render(); }); })
     .catch(e => { LESD = { err: e.message }; render(); });
 }
-function lessonView() {
-  const it = LES, d = LESD, list = (CAT || []).filter(x => x.course === it.course && x.unlocked), i = list.findIndex(x => x.id === it.id), prev = list[i - 1], next = list[i + 1];
-  let media = "";
-  if (it.kind === "video" || (d && d.video_path)) media = it.soon || (d && d.soon) ? `<div class="crsv soon"><span aria-hidden="true">▶</span><b>Video coming soon</b><small>We're recording this walkthrough. The steps below work today.</small></div>`
-    : VSRC ? `<video class="crsv" controls playsinline preload="metadata" src="${esc(VSRC)}"></video>` : VSRC === "" ? `<div class="crsv soon"><b>Video couldn't load</b><small>Refresh the page to try again.</small></div>` : `<div class="crsv soon"><small>Loading video…</small></div>`;
-  const body = !d ? `<p class="pmempty">Loading…</p>` : d.err ? `<p class="acerr">${esc(d.err === "locked" ? "This lesson is locked." : d.err)}</p>`
-    : (d.body ? (isTpl(it) ? `<div class="crsdoc tpl"><div class="crstb"><button type="button" class="acbtn" data-onb="ccopy">Copy template</button></div><div class="crspre">${esc(d.body)}</div></div>` : `<div class="crsdoc">${mdLite(d.body)}</div>`) : (it.soon ? "" : `<p class="pmempty">Nothing to read here yet.</p>`))
-      + (d.link ? `<p class="crslink"><a class="acbtn" href="${esc(d.link)}" ${/^https?:/.test(d.link) ? 'target="_blank" rel="noopener"' : ""}>${/spreadsheets/.test(d.link) ? "Make your copy of the tracker ↗" : /^\//.test(d.link) ? "Open the standards" : "Open ↗"}</a></p>` : "");
-  return `<div class="crsback"><button type="button" class="onbback" data-onb="cback">‹ ${esc(it.course_title)}</button></div>
-    <article class="crslesson"><p class="crskick">${esc(it.section || it.course_title)}</p><h1>${esc(it.title)}</h1>${media}${body}
-    <div class="crsnav">${prev ? `<button type="button" class="onbback" data-onb="cl" data-v="${esc(prev.id)}">‹ ${esc(prev.title)}</button>` : "<span></span>"}${next ? `<button type="button" class="acbtn" data-onb="cl" data-v="${esc(next.id)}">Next: ${esc(next.title)} ›</button>` : ""}</div></article>`;
+function markDone(it, on) {
+  it.done = on; render();
+  (on ? core.api("/rest/v1/course_progress", { method: "POST", body: { item_id: it.id }, prefer: "resolution=ignore-duplicates,return=minimal" })
+      : core.api("/rest/v1/course_progress?item_id=eq." + encodeURIComponent(it.id), { method: "DELETE" })).catch(() => { it.done = !on; render(); });
 }
+function lessonBody(c) {
+  const it = LES, d = LESD, list = c.items, i = list.findIndex(x => x.id === it.id), prev = list[i - 1], next = list[i + 1];
+  let media = "";
+  if (it.kind === "video" || (d && d.video_path)) media = it.soon ? `<div class="crsv soon"><span aria-hidden="true">▶</span><b>Video coming soon</b><small>We're recording this walkthrough. Everything else in this module works today.</small></div>`
+    : VSRC ? `<video class="crsv" controls playsinline preload="metadata" src="${esc(VSRC)}"></video>` : VSRC === "" ? `<div class="crsv soon"><b>Video couldn't load</b><small>Refresh the page to try again.</small></div>` : `<div class="crsv soon"><small>Loading video…</small></div>`;
+  const lk = d && d.link ? (d.link === "#cc" ? `<button type="button" class="acbtn" data-onb="pt" data-v="cc">Open Coach Contacts</button>` : d.link === "/" ? `<a class="acbtn" href="/">Open the Standards Site</a>`
+    : `<a class="acbtn" href="${esc(d.link)}" target="_blank" rel="noopener">${/spreadsheets/.test(d.link) ? "Make your copy of the tracker ↗" : "Open ↗"}</a>`) : "";
+  const body = !d ? `<p class="pmempty">Loading…</p>` : d.err ? `<p class="acerr">${esc(d.err === "locked" ? "This lesson is locked." : d.err)}</p>`
+    : (d.body ? (isTpl(it) ? `<div class="crsdoc tpl"><div class="crstb"><button type="button" class="acbtn" data-onb="ccopy">Copy template</button></div><div class="crspre">${esc(d.body)}</div></div>` : `<div class="crsdoc">${mdLite(d.body)}</div>`)
+      : it.soon ? `<div class="crsdoc"><p>${esc(it.summary || "")}</p><p class="crssoon">This one is on its way. It will show up here as soon as it's ready.</p></div>` : "") + (lk ? `<p class="crslink">${lk}</p>` : "");
+  return `<p class="crskick">${esc(it.section || it.course_title)}</p><h1>${esc(it.title)}</h1>${media}${body}
+    <div class="crsdone">${it.soon ? "" : `<button type="button" class="${it.done ? "onbback" : "acbtn"}" data-onb="cdone">${it.done ? CCHK + " Completed" : "Mark as complete"}</button>`}</div>
+    <div class="crsnav">${prev ? `<button type="button" class="onbback" data-onb="cl" data-v="${esc(prev.id)}">‹ Previous</button>` : "<span></span>"}${next ? `<button type="button" class="acbtn" data-onb="cl" data-v="${esc(next.id)}">Next lesson ›</button>` : ""}</div>`;
+}
+/* ---------- what each Whop purchase unlocks (migration 022: Whop webhook -> entitlements, claimed by email on sign-in) ---------- */
+const BUY = { lt27: LT_URL, em17: LT_URL, pc97: LT_URL };   /* Abe's Whop sales page; swap in direct Whop checkout links for the $17 / $97 add-ons when Abe sends them */
+const PRODS = {
+  lt27: { name: "Premium + 7-Day Roadmap", price: "$27 one time", gets: ["The 7-Day Roadmap course: videos, email and DM templates, checklist and tracker", "My College List: rank up to 25 colleges against your marks", "Premium Dark and Premium White for the whole site"] },
+  em17: { name: "Coach Contacts", price: "$17 add-on", gets: ["Every college coach's name, position and email", "The coach for your event first", "A dedicated coach page for every school"] },
+  pc97: { name: "Plan Call", price: "$97 add-on", gets: ["A one-on-one call to plan your recruiting", "Booked from the email you get after checkout"] } };
+const owns = k => k === "lt27" ? core.premium() : k === "em17" ? core.emails() : k === "pc97" ? !!(core.admin() || (core.premiumInfo() || {}).call) : true;
+const NEEDS = { list: "lt27", cc: "em17", call: "pc97" };
+let BUYK = null, BUYMSG = "";
+const buyUrl = (k, where) => utm(BUY[k], "lock-" + k + "-" + where);
+function buyView(k) {
+  const P = PRODS[k], em = (core.premiumInfo() || {}).email || (core.ses() && core.ses().user ? core.ses().user.email : "");
+  return `<div class="pmbuy"><span class="pmpill">${CLOCK} Locked</span><h1>${esc(P.name)}</h1><p class="pmbuyp">${esc(P.price)}</p>
+    <ul class="pmbuyl">${P.gets.map(g => `<li>${esc(g)}</li>`).join("")}</ul>
+    <a class="acbtn pmbuyb" href="${esc(buyUrl(k, "page"))}" target="_blank" rel="noopener">Get it on Whop</a>
+    <div class="pmunl"><h2>How it unlocks</h2><ol>
+      <li>Check out on Whop with <b>${em ? esc(em) : "the email you use here"}</b>.</li>
+      <li>Stay signed in here with that same email. There's nothing to enter.</li>
+      <li>It unlocks on its own, usually within a minute. Your Whop email also has every asset.</li></ol>
+      <p>Used a different email at checkout? Sign in here with that email instead, or reply to your Whop receipt and we'll move it over.</p>
+      <button type="button" class="onbback" data-onb="recheck">I already bought it. Check again</button>${BUYMSG ? `<p class="pmbuym" role="status">${BUYMSG}</p>` : ""}</div></div>`;
+}
+function callView() { PT = "course"; CRS = "call"; LES = null; return courseView(); }
 const PSUB = () => par() ? KIDS[SEL] : D;
 const aid = () => par() && KIDS[SEL] ? KIDS[SEL].id : null;
 const CATS = [["dream", "Dream"], ["target", "Target"], ["reach", "Reach"]];
@@ -295,33 +337,52 @@ function bestMark(sub) { const C = core.cfg(); const ms = (sub && sub.marks || [
   ms.forEach(m => { m.n = C.fits ? C.fits(m.e, sub.gender || "m", m.v) : 0; }); return ms.sort((a, b) => b.n - a.n); }
 function fitChip(info) { if (!info) return ""; const t = info.tier; return `<span class="pmfit ${t ? "t" + t : "tx"}">${t === "T" ? "At Target" : t === "R" ? "At Recruit" : t === "W" ? "At Walk-On" : "Above your mark"}</span>`; }
 function sideNav() {
-  const it = (v, l, ic, st) => `<button type="button" class="pmnv${PT === v ? " on" : ""}" data-onb="pt" data-v="${v}"${PT === v ? ' aria-current="page"' : ""}><span class="ic" aria-hidden="true">${ic}</span>${l}${st ? STAR : ""}</button>`;
+  const it = (v, l, ic, st) => { const k = NEEDS[v], lk = k && !owns(k);
+    return `<button type="button" class="pmnv${PT === v ? " on" : ""}${lk ? " lk" : ""}" data-onb="pt" data-v="${v}"${PT === v ? ' aria-current="page"' : ""}${lk ? ' aria-label="' + l + ' (locked)"' : ""}><span class="ic" aria-hidden="true">${ic}</span>${l}${lk ? `<span class="pmlk">${CLOCK}</span>` : st ? STAR : ""}</button>`; };
   /* admins: Accounts first (Ryan 2026-11-12: "I can no longer see the accounts on my master account"; it had moved to the end of the menu, off-screen on phones) */
   const adm = core.admin() ? `<p class="pmgrp">Admin</p>${it("admin", "Accounts", "☰")}${it("aov", "Overview", "◈")}<p class="pmgrp">Your account</p>` : "";
-  return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Dashboard", "⌂")}${it("list", "My Colleges", "◎")}${it("cc", "Coach Contacts", "✉", 1)}
-    ${it("course", "Course", "▶", 1)}
-    ${it("profile", "Profile and marks", "◐")}${it("set", "Settings", "⚙")}
-    <div class="pmplan"><b>${STAR} Unlimited Access</b><span><i class="dot"></i>${core.admin() ? "Admin · always on" : "Active"}</span></div></nav>`;
+  const P = core.premium();
+  return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Dashboard", "⌂")}${it("course", "Classroom", "▶", 1)}${it("cc", "Coach Contacts", "✉", 1)}${it("list", "My Colleges", "◎", 1)}${it("call", "Plan Call", "☎", 1)}
+    <p class="pmgrp">Account</p>${it("profile", "Profile and marks", "◐")}${it("set", "Settings", "⚙")}
+    <div class="pmplan">${P ? `<b>${STAR} ${core.admin() ? "Admin" : "Premium"}</b><span><i class="dot"></i>${core.admin() ? "Everything unlocked" : "Active"}</span>`
+      : `<b>Free account</b><span>Unlock the course, college list and more.</span><a class="acbtn" href="${esc(buyUrl("lt27", "sidebar"))}" target="_blank" rel="noopener">Get Premium · $27</a>`}</div></nav>`;
+}
+/* phone: app-style bottom bar + a full menu sheet (Ryan 2026-11-12: "premium website customization for mobile/phone views") */
+let SHEET = false;
+function phoneNav() {
+  const b = (v, l, ic) => `<button type="button" class="pmtb${PT === v ? " on" : ""}" data-onb="pt" data-v="${v}"${PT === v ? ' aria-current="page"' : ""}><span aria-hidden="true">${ic}</span>${l}</button>`;
+  return `<nav class="pmtabs" aria-label="Account menu">${b("dash", "Home", "⌂")}${b("course", "Course", "▶")}${b("cc", "Coaches", "✉")}${b("list", "Colleges", "◎")}
+    <button type="button" class="pmtb${SHEET ? " on" : ""}" data-onb="sheet" aria-expanded="${SHEET}"><span aria-hidden="true">☰</span>Menu</button></nav>
+    ${SHEET ? `<div class="pmsheetbg" data-onb="sheet"></div><div class="pmsheet" role="dialog" aria-label="Menu">${sideNav()}</div>` : ""}`;
 }
 let PTADM = false;
 function premiumView() {
   const C = core.cfg();
   if (!PTADM && core.admin()) { PTADM = true; if (PT === "dash") PT = "admin"; }
-  if (PT === "list" || PT === "dash") { const k = aid() || "me"; if (LISTK !== k) { LISTK = k; LIST = null; loadList(); } }
+  if ((PT === "list" || PT === "dash") && core.premium()) { const k = aid() || "me"; if (LISTK !== k) { LISTK = k; LIST = null; loadList(); } }
   let body = "";
-  if (PT === "dash") body = dashView(); else if (PT === "list") body = listView(); else if (PT === "cc") body = ccView(); else if (PT === "set") body = setView(); else if (PT === "course") body = courseView();
+  if (NEEDS[PT] && !owns(NEEDS[PT])) body = buyView(NEEDS[PT]);
+  else if (PT === "buy" && BUYK) body = buyView(BUYK);
+  else if (PT === "call") body = callView();
+  else if (PT === "dash") body = dashView(); else if (PT === "list") body = listView(); else if (PT === "cc") body = ccView(); else if (PT === "set") body = setView(); else if (PT === "course") body = courseView();
   else if (PT === "aov" && core.admin()) body = aovView(); else if (PT === "admin" && core.admin()) body = adminView();
   else body = D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`;
-  return top(NAV) + `<div class="pmshell">${sideNav()}<section class="pmmain">${body}</section></div>`;
+  return top(NAV) + `<div class="pmshell">${sideNav()}<section class="pmmain">${body}</section></div>` + phoneNav();
 }
 function headRow() {
   const sub = PSUB() || D, C = core.cfg(), ms = bestMark(sub).slice(0, 3);
-  return `<div class="pmhead"><span class="pcav pmav">${avatarHtml(sub, 20)}</span><div class="pmwho"><h1>${esc(nameOf(sub) || "Your profile")} <span class="pmpill">${core.admin() ? "Admin" : STAR + " Premium"}</span></h1>
+  return `<div class="pmhead"><span class="pcav pmav">${avatarHtml(sub, 20)}</span><div class="pmwho"><h1>${esc(nameOf(sub) || "Your profile")} <span class="pmpill">${core.admin() ? "Admin" : core.premium() ? STAR + " Premium" : "Free"}</span></h1>
     <p>${esc([sub.year ? "Class of " + sub.year : "", sub.school || ""].filter(Boolean).join(" · "))}</p></div>
     <div class="pmmarks">${ms.length ? ms.map(m => `<div class="pmmk"><small>${evName(m.e, sub.gender)}</small><b>${esc(m.m)}</b><span>${m.n.toLocaleString()} colleges fit</span></div>`).join("")
       : `<button type="button" class="pmmk add" data-onb="pt" data-v="profile">+ Add a mark</button>`}</div></div>`;
 }
 function dashView() {
+  if (!core.premium()) return headRow() + `<div class="pmpaths">
+    <button type="button" class="pmpath pri" data-onb="pt" data-v="course"><span class="ic" aria-hidden="true">▶</span><span><b>The 7-Day Roadmap</b><small>See every lesson. Unlock it with Premium.</small></span><span class="pmgo" aria-hidden="true">›</span></button>
+    <button type="button" class="pmpath" data-onb="pt" data-v="cc"><span class="ic" aria-hidden="true">✉</span><span><b>Coach Contacts</b><small>Every college coach's email ($17 add-on)</small></span><span class="pmgo">${CLOCK}</span></button></div>
+    <div class="pmcard pmup"><div><h2>${STAR} Premium</h2><p>The 7-Day Roadmap, My College List and Premium Dark. $27 one time.</p></div>
+    <a class="acbtn" href="${esc(buyUrl("lt27", "dashboard"))}" target="_blank" rel="noopener">Get Premium on Whop</a>
+    <p class="pmupn">Bought it? It unlocks by itself when you're signed in with the email you used at checkout.</p></div>`;
   const L = (LIST || []).slice(0, 5), sub = PSUB() || D, b = bestMark(sub)[0], C = core.cfg();
   return headRow() + `<div class="pmpaths">
     <button type="button" class="pmpath pri" data-onb="pt" data-v="cc"><span class="ic" aria-hidden="true">✉</span><span><b>${STAR} Coach Contacts</b><small>${core.emails() ? "Get any college coach's email" : "Coach emails are the $17 add-on"}</small></span><span class="pmgo" aria-hidden="true">›</span></button>
@@ -397,7 +458,7 @@ function ccView() {
     ${q ? `<div class="pmcard pmres">${hits.length ? hits.map(n => { const info = C.sinfo ? C.sinfo(n, sub.gender || "m", b && b.e, b && b.v) : null;
       return `<button type="button" class="pmrow" data-onb="ccs" data-v="${esc(n)}"><span class="pmnm"><b>${esc(n)}</b><small>${esc(info ? [info.d, info.c].filter(Boolean).join(" · ") : "")}</small></span>${fitChip(info)}<span class="pmgo" aria-hidden="true">›</span></button>`; }).join("") : `<p class="pmempty">No college matches "${esc(CCQ)}". Try part of the name.</p>`}</div>`
       : pick.length ? `<div class="pmquick"><p>From My Colleges</p><div>${pick.map(r => `<button type="button" class="pmq" data-onb="ccs" data-v="${esc(r.name)}"><b>${esc(r.name)}</b><span class="pmcat ${r.cat}">${catL(r.cat)}</span></button>`).join("")}</div></div>` : ""}
-    <ol class="pmhow"><li><b>Search a college</b><span>Any college on Track Standards</span></li><li><b>Find your event's coach</b><span>Listed first, with their title</span></li><li><b>Copy the email</b><span>Send it from your own inbox</span></li></ol></div>`;
+    <ol class="pmunl"><li><b>Search a college</b><span>Any college on Track Standards</span></li><li><b>Find your event's coach</b><span>Listed first, with their title</span></li><li><b>Copy the email</b><span>Send it from your own inbox</span></li></ol></div>`;
 }
 function setView() {
   const t = core.theme();
@@ -439,9 +500,13 @@ document.addEventListener("submit", e => { const f = e.target.closest && e.targe
   if (f.dataset.pform === "add") listAdd(document.getElementById("pmadd").value);
   if (f.dataset.pform === "cc") { CCQ = document.getElementById("pmcq").value; const all = core.cfg().schools ? core.cfg().schools() : [], hit = all.find(n => n.toLowerCase() === CCQ.trim().toLowerCase()); if (hit) CCS = hit; render(); const C = core.cfg(); C.log && C.log("coach_contacts", { detail: "search" }); } });
 function premiumAction(a, b) {
-  if (a === "pt") { PT = b.dataset.v; OPEN = null; LMSG = ""; if (PT === "cc") { CCS = null; } if (PT === "course") { LES = null; CMSG = ""; } render(); layer().scrollTo(0, 0); return true; }
-  if (a === "cl") { openLesson(b.dataset.v); return true; }
-  if (a === "cback") { LES = null; LESD = null; VSRC = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "pt") { SHEET = false; BUYMSG = ""; PT = b.dataset.v; OPEN = null; LMSG = ""; if (PT === "cc") { CCS = null; } if (PT === "course") { CRS = null; LES = null; CMSG = ""; } render(); layer().scrollTo(0, 0); return true; }
+  if (a === "cl") { SHEET = false; openLesson(b.dataset.v); return true; }
+  if (a === "sheet") { SHEET = !SHEET; render(); return true; }
+  if (a === "recheck") { BUYMSG = "Checking…"; render(); core.loadProfile().then(() => { const k = BUYK || NEEDS[PT]; BUYMSG = k && owns(k) ? "Unlocked. You're all set." : "Not unlocked yet. If you just paid, give it a minute and check again."; CAT = null; render(); }); return true; }
+  if (a === "cback") { CRS = null; LES = null; LESD = null; VSRC = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "copen") { const c = courseList().find(x => x.k === b.dataset.v); if (!c) return true; if (!c.items.some(i => i.unlocked)) { BUYK = (COURSES[c.k] || {}).k || "lt27"; BUYMSG = ""; PT = "buy"; render(); layer().scrollTo(0, 0); return true; } CRS = c.k; LES = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "cdone") { if (LES) markDone(LES, !LES.done); return true; }
   if (a === "ccopy") { const t = LESD && LESD.body || ""; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy template"; }, 1800); }).catch(() => { b.textContent = "Select and copy the text below"; }); return true; }
   if (a === "ptheme") { core.setTheme(b.dataset.v); render(); return true; }
   if (a === "lf") { LF = b.dataset.v; render(); return true; }
