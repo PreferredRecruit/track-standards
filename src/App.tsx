@@ -11,6 +11,7 @@ const App = () => (
       <Route path="/schools/:schoolSlug" element={<StandardsHome />} />
       <Route path="/teams/:teamSlug" element={<StandardsHome />} />
       <Route path="/teams/:teamSlug/coaches" element={<StandardsHome />} />
+      <Route path="/teams/:teamSlug/coaches/:coachSlug" element={<StandardsHome />} />
       <Route path="/onboarding" element={<StandardsHome />} />
       <Route path="/readiness" element={<StandardsHome />} />
       <Route path="/account" element={<StandardsHome />} />

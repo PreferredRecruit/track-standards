@@ -692,7 +692,7 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   const {bv,mark}=bandBits(s);
   const still=BRQ;BRQ=false;
   let o=`<div class="sec branded simple${still?" still":""}" style="padding-top:0;${bv}"><button class="back" data-back>‹ Back</button>
-  <div class="sband">${mark}<div><small>${/\(/.test(s.n)?esc(s.n.replace(/^.*?\((.*?)\).*$/,"$1"))+" · ":""}${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(s.s):""}</small><h1 class="sname">${esc(s.n.replace(/\s*\(.*?\)\s*/g," ").trim())} Track &amp; Field${s.j?" (NJCAA)":" Standards"}</h1>${s.j?`<a class="tplink1" href="/teams/${tslug(S.school)}" data-tpage="${S.school}">Team results &amp; roster ›</a>`:tsw(S.school,"std")}${s.o?`<span class="offpill">★ Official standards${s.yr?` · ${esc(s.yr)}`:""}${oldChart(s)?" (latest published)":""}</span>`:""}${!s.j&&ACC.member()?`<a class="offpill ccpill" href="/teams/${tslug(S.school)}/coaches" data-tcc="${S.school}">${STARI}Coach Contacts <span aria-hidden="true">›</span></a>`:""}</div><div class="srchips" id="srchips"></div></div>
+  <div class="sband">${mark}<div><small>${/\(/.test(s.n)?esc(s.n.replace(/^.*?\((.*?)\).*$/,"$1"))+" · ":""}${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(s.s):""}</small><h1 class="sname">${esc(s.n.replace(/\s*\(.*?\)\s*/g," ").trim())} Track &amp; Field${s.j?" (NJCAA)":" Standards"}</h1>${s.j?`<a class="tplink1" href="/teams/${tslug(S.school)}" data-tpage="${S.school}">Team results &amp; roster ›</a>`:tsw(S.school,"std")}${s.o?`<span class="offpill">★ Official standards${s.yr?` · ${esc(s.yr)}`:""}${oldChart(s)?" (latest published)":""}</span>`:""}${!s.j&&ACC.member()?`<a class="ccbtn" href="/teams/${tslug(S.school)}/coaches" data-tcc="${S.school}"><span class="ccbi" aria-hidden="true">★</span><span class="ccbt"><b>Coach Contacts</b><small>Names, roles and emails</small></span><span class="ccba" aria-hidden="true">›</span></a>`:""}</div><div class="srchips" id="srchips"></div></div>
   <div class="sctl">${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} track &amp; field only</p>`:seg("g",g)}<!--tg--></div><!--scols-->`;   /* school checker removed (Ryan 2026-10-16: "is that even necessary, the kids can clearly see") */
   if(s.j){
     o+=`<div class="verify" style="margin-top:16px"><b>No recruiting levels for junior colleges</b><span>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: junior colleges compete nationally rather than in conferences, so there's no reliable way to predict a program's marks. Below are ${esc(s.n)}'s best marks this season; the full national list, by event, is in Results.</span><a href="/?tab=results&div=NJCAA">NJCAA national list ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
@@ -766,25 +766,77 @@ function ccHTML(rows,nm,ev){const my=stdGrp(ev||"")||"";
   return `<ul class="ccl">${first.map(row).join("")}</ul>${rest.length?`<details class="ccmore"><summary><span class="o">Show all ${list.length} coaches</span><span class="c">Show fewer</span></summary><ul class="ccl">${rest.map(row).join("")}</ul></details>`:""}<p class="ccnote">${list.length} coach${list.length>1?"es":""}${when}. Copy an address and send from your own email.</p>`}
 /* dedicated Coach Contacts page (Ryan 2026-11-12: "a separate dedicated webpage, similar to how roster pages look, where all the
    coach contacts are listed name by name"): /teams/<school>/coaches, grouped like the roster, your event's coaches first */
-function ccFull(rows,nm,ev){const my=stdGrp(ev||"")||"";
+const cslug=n=>String(n||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+const cini=n=>String(n||"").split(/\s+/).filter(Boolean).map(w=>w[0]).slice(0,2).join("").toUpperCase();
+const cgrps=r=>(r.groups||[]).map(g=>RGRP[g]||g).join(", ");
+const cdate=d=>d?new Date(d+"T12:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"";
+function ccFull(rows,nm,ev,i){const my=stdGrp(ev||"")||"";
   const list=(rows||[]).map(r=>({...r,mine:!!my&&(r.groups||[]).includes(my)}));
   if(!list.length)return `<p class="cclk">We don't have ${nm}'s coaches yet. We add colleges every week.</p>`;
   const ini=n=>String(n||"").split(/\s+/).filter(Boolean).map(w=>w[0]).slice(0,2).join("").toUpperCase();
-  const card=r=>`<div class="tpa ccpa${r.mine?" mine":""}"><span class="tpav" aria-hidden="true">${esc(ini(r.name))}</span><span class="ccpi"><b>${esc(r.name)}</b><small>${r.mine?'<span class="ccev">Your event</span> · ':""}${esc(r.title||"Coach")}${(r.groups||[]).length?" · "+r.groups.map(g=>RGRP[g]||g).join(", "):""}</small><span class="ccm">${esc(r.email)}</span></span><button type="button" class="rcopy" data-copy="${esc(r.email)}" aria-label="Copy ${esc(r.name)}'s email">Copy</button></div>`;
+  const card=r=>`<div class="tpa ccpa${r.mine?" mine":""}"><span class="tpav" aria-hidden="true">${esc(ini(r.name))}</span><span class="ccpi"><a class="cclink" href="/teams/${tslug(i)}/coaches/${cslug(r.name)}" data-tcoach="${cslug(r.name)}"><b>${esc(r.name)}</b></a><small>${r.mine?'<span class="ccev">Your event</span> · ':""}${esc(r.title||"Coach")}${(r.groups||[]).length?" · "+r.groups.map(g=>RGRP[g]||g).join(", "):""}</small><span class="ccm">${esc(r.email)}</span></span><button type="button" class="rcopy" data-copy="${esc(r.email)}" aria-label="Copy ${esc(r.name)}'s email">Copy</button><span class="ccgo" aria-hidden="true">›</span></div>`;
   const ord=(a,b)=>(b.mine-a.mine)||String(a.name).localeCompare(String(b.name));
   const head=list.filter(r=>/head/i.test(r.title||"")),asst=list.filter(r=>!head.includes(r)&&/coach/i.test(r.title||"")),staff=list.filter(r=>!head.includes(r)&&!asst.includes(r));
   const when=list.find(r=>r.verified_at);
   return [["Head coaches",head],["Assistant coaches",asst],["Staff",staff]].filter(([,l])=>l.length).map(([l,g])=>`<div class="ah2">${l} <span>${g.length}</span></div><div class="tpros ccros">${g.sort(ord).map(card).join("")}</div>`).join("")+
-    `<p class="note">${list.length} coach${list.length>1?"es":""}${when?` · checked ${esc(new Date(when.verified_at+"T12:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}))}`:""}. Copy an address and send from your own email.</p>`}
-function loadCC(el,i,isNow,full){if(!el)return;const s=SCH[i];if(!s||s.j)return;const slug=(s.os&&s.os[0])||slugOf(s.n),nm=esc(s.t||s.n),ev=INT.e||S.e||"";
+    `<p class="note">${list.length} coach${list.length>1?"es":""}${when?` · checked ${esc(new Date(when.verified_at+"T12:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}))}`:""}. Tap a coach for their full page, or copy an address and send from your own email.</p>`}
+/* coach bio page (Ryan 2026-11-12: "each coach's entry should be clickable, leading to a full coach bio page that mirrors the structure
+   of a school website ... organized and clean to make accessing coaching notes and information intuitive"): /teams/<school>/coaches/<coach>.
+   Only facts we hold: name, position, event groups, email, date checked, the school's standards for those events and the athletes in that
+   group (TFRRS). No invented bio text. "My notes" are the member's own notes, kept on this device. */
+const CNK="prCoachNotes1";
+const cnGet=()=>{try{return JSON.parse(localStorage.getItem(CNK)||"{}")||{}}catch(e){return {}}};
+const cnKey=(i,cs)=>{const u=ACC.core&&ACC.core.ses()&&ACC.core.ses().user;return (u?u.id:"anon")+"|"+tslug(i)+"|"+cs};
+function cnSet(k,f){const all=cnGet(),v={...(all[k]||{}),...f};if(!v.n&&!v.e)delete all[k];else all[k]=v;try{localStorage.setItem(CNK,JSON.stringify(all))}catch(e){}return v}
+function ccBio(rows,i,cs,ev){const s=SCH[i],nm=esc(s.t||s.n),list=rows||[],c=list.find(r=>cslug(r.name)===cs);
+  const back=`<p class="cbback"><a class="lnk" href="/teams/${tslug(i)}/coaches" data-tcoach="">‹ All ${nm} coaches</a></p>`;
+  if(!c)return back+`<p class="cclk">We couldn't find that coach on ${nm}'s staff. They may have moved on. The full staff list is above.</p>`;
+  const first=esc(String(c.name).split(/\s+/)[0]),my=stdGrp(ev||"")||"",grps=(c.groups||[]).slice(),mine=!!my&&grps.includes(my);
+  const g=TM.g,p4=isP4(s),d3=!p4&&!(RULES[s.d]||[])[1],head=/head|director/i.test(c.title||"");
+  if(window.__prMeta)window.__prMeta(`${c.name}, ${c.title||"Coach"} · ${s.t||s.n} Track & Field | Track Standards`,`${c.name}, ${c.title||"coach"} at ${s.n} track and field.`,location.pathname);
+  /* events this coach covers; a head coach with no group gets the member's own event */
+  const sg=grps.length?grps:my?[my]:[];
+  const evs=EVENTS.filter(e=>sg.includes(stdGrp(e))&&((s[g]||{})[e]||(((s.om||{})[g]||{})[e]))&&!noGrp(s,g,e));
+  const gseg=(s.ng||[]).length?"":`<div class="seg" role="group" aria-label="Men or women"><button type="button" data-tg="m" aria-pressed="${g==="m"}">Men</button><button type="button" data-tg="w" aria-pressed="${g==="w"}">Women</button></div>`;
+  const std=evs.length?`<section class="cbsec"><div class="cbsh"><h3>${grps.length?`What ${first}'s athletes need to run`:"Your event at "+nm}</h3>${gseg}</div>
+    <div class="scroll"><table><thead><tr><th>Event</th><th class="num">Target</th>${d3?"":`<th class="num">Recruit</th>`}${p4?"":`<th class="num">Walk‑On</th>`}</tr></thead><tbody>${evs.map(e=>`<tr${stdGrp(e)===my&&e===ev?' class="me"':""}><td>${esc(e)}</td><td class="num">${disp(s,g,e,0)}</td>${d3?"":`<td class="num">${disp(s,g,e,1)}</td>`}${p4?"":`<td class="num">${disp(s,g,e,2)}</td>`}</tr>`).join("")}</tbody></table></div>
+    <p class="cbfine">${nm}'s ${g==="m"?"men's":"women's"} recruiting standards (college events). <a href="/schools/${window.__prSlug(i)}" data-school="${i}">All ${nm} standards ›</a></p></section>`:"";
+  /* athletes in this coach's group, from the team's TFRRS data */
+  const M=sg.length?tModel(i,TM.sea,g):null;let ath="";
+  if(sg.length){if(!M||M.loading&&!M.roster.length)ath=`<p class="cclk">Loading athletes…</p>`;else{
+    const L=M.roster.map(r=>{const b=(M.best.get(r.n.toLowerCase())||[]).filter(([e])=>sg.includes(stdGrp(ename(e)))).sort((a,b)=>eord(a[0])-eord(b[0]));return {r,b}}).filter(x=>x.b.length).sort((a,b)=>a.r.n.localeCompare(b.r.n));
+    const card=({r,b})=>{const tag=r.ai!=null&&M.F?`button type="button" data-tath="${r.ai}"`:"div";return `<${tag} class="tpa"><span class="tpav" aria-hidden="true">${esc(cini(r.n))}</span><span><b>${esc(r.n)}</b><small>${esc(yr(r.yr)||"")}${b.length?" · "+b.slice(0,2).map(([e,mk])=>`${esc(ename(e))} ${esc(mk)}`).join(" · "):""}</small></span></${tag.split(" ")[0]}>`};
+    ath=L.length?`<div class="tpros">${L.slice(0,12).map(card).join("")}</div>${L.length>12?`<p class="cbfine">${L.length-12} more in the <a href="/teams/${tslug(i)}" data-ttab="roster">full roster ›</a></p>`:""}`:`<p class="cclk">No ${g==="m"?"men's":"women's"} ${esc(grps.map(x=>(RGRP[x]||x).toLowerCase()).join(" or "))} marks for ${nm} in ${esc(seasonLabel(TM.sea))} yet.</p>`}
+    ath=`<section class="cbsec"><div class="cbsh"><h3>${nm} ${esc(cgrps({groups:sg}).toLowerCase())} athletes</h3><span class="cbsea">${esc(seasonLabel(TM.sea))}</span></div>${ath}</section>`}
+  const n=cnGet()[cnKey(i,cs)]||{},others=list.filter(r=>r!==c).sort((a,b)=>(/head/i.test(b.title||"")-/head/i.test(a.title||""))||String(a.name).localeCompare(String(b.name)));
+  return back+`<article class="cbio">
+  <header class="cbhd"><span class="cbav" aria-hidden="true">${esc(cini(c.name))}</span>
+    <div class="cbid"><p class="cbk">${nm} Track &amp; Field</p><h2>${esc(c.name)}</h2><p class="cbt">${esc(c.title||"Coach")}</p>
+      <div class="cbchips">${mine?'<span class="cbme">Coaches your event</span>':""}${grps.map(x=>`<span>${esc(RGRP[x]||x)}</span>`).join("")}${!grps.length&&head?"<span>Whole program</span>":""}</div></div>
+    <div class="cbact"><a class="cbmail" href="mailto:${esc(c.email)}" data-cbmailto>Email ${first}</a><button type="button" class="rcopy cbcopy" data-copy="${esc(c.email)}" aria-label="Copy ${esc(c.name)}'s email">Copy email</button></div>
+  </header>
+  <div class="cbcols"><div class="cbmain">${std}${ath}${!std&&!ath?`<section class="cbsec"><p class="cclk">${first} ${head?"leads the whole program":"works across the program"}, so there's no single event group. Pick your event on the <a href="/schools/${window.__prSlug(i)}" data-school="${i}">${nm} standards page ›</a></p></section>`:""}</div>
+  <aside class="cbside">
+    <section class="cbcard"><h3>Contact</h3><dl><div><dt>Email</dt><dd><a href="mailto:${esc(c.email)}" data-cbmailto>${esc(c.email)}</a></dd></div><div><dt>Position</dt><dd>${esc(c.title||"Coach")}</dd></div>${grps.length?`<div><dt>Event groups</dt><dd>${esc(cgrps(c))}</dd></div>`:""}${c.verified_at?`<div><dt>Checked</dt><dd>${esc(cdate(c.verified_at))}</dd></div>`:""}</dl></section>
+    <section class="cbcard cbnotes"><h3>My notes</h3><label class="sr" for="cbnote">Your notes on ${esc(c.name)}</label><textarea id="cbnote" data-cn="${esc(cnKey(i,cs))}" maxlength="2000" placeholder="What you sent, what they said, what to follow up on">${esc(n.n||"")}</textarea>
+      <div class="cbnr"><button type="button" class="cbsent${n.e?" on":""}" data-cbsent="${esc(cnKey(i,cs))}" aria-pressed="${!!n.e}">${n.e?`Emailed ${esc(cdate(n.e))}`:`I emailed ${first} today`}</button><span class="cbsaved" aria-live="polite"></span></div>
+      <small>Only you see these. They're saved on this device.</small></section>
+    ${others.length?`<section class="cbcard"><h3>Also on staff</h3><ul class="cbstaff">${others.map(r=>`<li><a href="/teams/${tslug(i)}/coaches/${cslug(r.name)}" data-tcoach="${cslug(r.name)}"><b>${esc(r.name)}</b><small>${esc(r.title||"Coach")}</small></a></li>`).join("")}</ul></section>`:""}
+  </aside></div></article>`}
+/* notes autosave + "I emailed them today" */
+document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="cbnote")return;cnSet(t.dataset.cn,{n:t.value.slice(0,2000)});const m=t.closest(".cbnotes").querySelector(".cbsaved");if(m){m.textContent="Saved";clearTimeout(m._t);m._t=setTimeout(()=>{m.textContent=""},1200)}});
+document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-cbsent]");if(b){const k=b.dataset.cbsent,cur=(cnGet()[k]||{}).e,v=cnSet(k,{e:cur?"":new Date().toISOString().slice(0,10)});
+    b.classList.toggle("on",!!v.e);b.setAttribute("aria-pressed",String(!!v.e));b.textContent=v.e?`Emailed ${cdate(v.e)}`:b.textContent.replace(/^Emailed.*$/,"I emailed them today");log("coach_note",{detail:v.e?"emailed":"unmark"});return}
+  if(ev.target.closest&&ev.target.closest("[data-cbmailto]"))log("coach_mailto",{})});
+function loadCC(el,i,isNow,full,coach){if(!el)return;const s=SCH[i];if(!s||s.j)return;const slug=(s.os&&s.os[0])||slugOf(s.n),nm=esc(s.t||s.n),ev=INT.e||S.e||"";
   const head=full?"":`<div class="cch"><h3>Coach Contacts ${STAR}</h3></div>`;
   if(!ACC.member()){el.innerHTML=full?`<section class="cc">${head}<p class="cclk">Every coach's name, position and email for ${nm} comes with Premium. <a href="${esc(premiumUrl("coach-page"))}" target="_blank" rel="noopener">See Premium</a></p></section>`:"";return}
   if(!ACC.premium()){el.innerHTML=`<section class="cc">${head}<p class="cclk">Every coach's name, position and email for ${nm} comes with Premium. <a href="${esc(premiumUrl("school-coach-contacts"))}" target="_blank" rel="noopener">See Premium</a></p></section>`;return}
   if(!ACC.emails()){el.innerHTML=`<section class="cc">${head}<p class="cclk">Coach emails are the $17 add-on to Premium. Questions? <a href="mailto:support@thepreferredrecruit.com">support@thepreferredrecruit.com</a></p></section>`;return}
-  const draw=r=>{if(isNow())el.innerHTML=full?ccFull(r,nm,ev):`<section class="cc">${head}${ccHTML(r,nm,ev)}</section>`};
+  const draw=r=>{if(isNow())el.innerHTML=coach?ccBio(r,i,coach,ev):full?ccFull(r,nm,ev,i):`<section class="cc">${head}${ccHTML(r,nm,ev)}</section>`};
   if(ROSTER[slug])return draw(ROSTER[slug]);
   el.innerHTML=`<section class="cc">${head}<p class="cclk">Loading coaches…</p></section>`;
-  ACC.core.api("/rest/v1/rpc/coach_roster",{method:"POST",body:{slug}}).then(r=>{ROSTER[slug]=r||[];draw(ROSTER[slug]);log("coach_contacts",{school:s.n,detail:full?"page":"card"})})
+  ACC.core.api("/rest/v1/rpc/coach_roster",{method:"POST",body:{slug}}).then(r=>{ROSTER[slug]=r||[];draw(ROSTER[slug]);log("coach_contacts",{school:s.n,detail:coach?"bio":full?"page":"card"})})
     .catch(e=>{if(isNow())el.innerHTML=`<section class="cc">${head}<p class="cclk">${/limit/.test(e.message)?"You've opened a lot of colleges today. More open tomorrow.":"Couldn't load the coaches. Try again in a minute."}</p></section>`})}
 function schoolRoster(i){if(i==null)return;loadCC(document.getElementById("sroster"),i,()=>S.school===i)}
 document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest(".rcopy");if(!b)return;const v=b.dataset.copy;const ok=()=>{b.textContent="Copied";b.classList.add("ok");setTimeout(()=>{b.textContent="Copy";b.classList.remove("ok")},1400)};log("coach_copy",{});if(navigator.clipboard)navigator.clipboard.writeText(v).then(ok).catch(()=>{});else ok()});
@@ -1481,7 +1533,7 @@ function multiResults(){
    season best, TFRRS-style) and Roster (by class). Tap an athlete for their college bests and full meet history.
    D1: /data/roster/<TFRRS slug>.dat (scripts/tfrrs/build_teams.py: rosters + every athlete's TFRRS history).
    Other levels: built in the browser from the season's TFRRS lists (athletes who made a list). */
-const TM={i:null,g:"m",sea:"",tab:"results",ath:null,ev:"",open:{}};
+const TM={i:null,g:"m",sea:"",tab:"results",ath:null,ev:"",open:{},coach:null};
 const TDATA={},TLOAD={};
 const tbase=s=>s&&s.u?s.u.split("/").pop().replace(/\.html$/,"").replace("_college_m_","_college_").replace("_college_f_","_college_"):null;
 const tslug=i=>slugOf(SCH[i].n).replace(/-track-standards$/,"");
@@ -1520,8 +1572,8 @@ function tModel(i,sea,g){const s=SCH[i],b=tbase(s),F=b&&TDATA[b]&&!TDATA[b].none
   return {F,events,roster,best,loading:!LR}}
 function tSeasons(i,g){const s=SCH[i],b=tbase(s),F=b&&TDATA[b]&&!TDATA[b].none?TDATA[b]:null,set=new Set(seaOf(s.d));
   if(F)F.A.forEach(a=>{if(a.g===g&&a.h)a.h.forEach(h=>h[0]&&set.add(h[0]))});return [...set].filter(k=>!k.endsWith("-xc")).sort().reverse()}
-const tpath=i=>"/teams/"+tslug(i)+(TM.tab==="coaches"?"/coaches":"");
-function openTeam(i,push=true,tab){if(i==null||i<0)return;TQ.v="";TM.i=i;TM.ath=null;TM.ev="";TM.open={};TM.tab=tab||"results";TM.g=(SCH[i].ng||[]).includes(R.g)?(R.g==="m"?"w":"m"):R.g;TM.sea="";
+const tpath=i=>"/teams/"+tslug(i)+(TM.tab==="coaches"?"/coaches"+(TM.coach?"/"+TM.coach:""):"");
+function openTeam(i,push=true,tab,coach){if(i==null||i<0)return;TQ.v="";TM.i=i;TM.ath=null;TM.ev="";TM.open={};TM.tab=tab||"results";TM.coach=coach||null;TM.g=(SCH[i].ng||[]).includes(R.g)?(R.g==="m"?"w":"m"):R.g;TM.sea="";
   S.tab="results";S.school=null;CC.on=false;if(push)history.pushState({},"",tpath(i));tMeta(i);R.swap=true;render();scrollTo(0,0);log("team",{school:SCH[i].n,division:SCH[i].d,detail:TM.tab})}
 function closeTeam(){TM.i=null;TM.ath=null;history.pushState({},"","/?tab=results");R.swap=true;render();scrollTo(0,0)}
 function tMeta(i){const s=SCH[i];if(window.__prMeta)window.__prMeta(TM.tab==="coaches"?`${s.t||s.n} Track & Field Coach Contacts | Track Standards`:`${s.t||s.n} Track & Field Results, Roster & Athletes | Preferred Recruit`,`${s.n} track and field: every athlete's season best by event, the full roster by class, and each athlete's meet history (${s.d}${s.c!==s.d?", "+s.c:""}). From TFRRS.`,"/teams/"+tslug(i))}
@@ -1545,7 +1597,7 @@ function teamPage(){const i=TM.i,s=SCH[i];if((s.ng||[]).includes(TM.g))TM.g=TM.g
     <span class="tplinks">${s.u?`<a href="${esc(TM.g==="w"?s.u.replace("_college_m_","_college_f_"):s.u)}" target="_blank" rel="noopener nofollow">TFRRS ›</a>`:""}</span></div></div>`;
   if(TM.ath!=null&&M&&M.F)return o+tAthlete(M.F,TM.ath,s)+`</div>`;
   const tabs=`<div class="tptabs" role="tablist"><button type="button" role="tab" data-ttab="results" aria-selected="${TM.tab==="results"}">Results</button><button type="button" role="tab" data-ttab="roster" aria-selected="${TM.tab==="roster"}">Roster${M&&M.roster.length?` <small>${M.roster.length}</small>`:""}</button>${ACC.member()?`<button type="button" role="tab" data-ttab="coaches" aria-selected="${TM.tab==="coaches"}"><span class="cctl">Coach Contacts</span><span class="ccts" aria-hidden="true">Coaches</span> <span class="ccstar" aria-hidden="true">★</span></button>`:""}</div>`;
-  if(TM.tab==="coaches"){setTimeout(()=>loadCC(document.getElementById("troster"),i,()=>TM.i===i&&TM.tab==="coaches",true),0);return o+tabs+`<div id="troster"><p class="cclk">Loading coaches…</p></div></div>`}
+  if(TM.tab==="coaches"){setTimeout(()=>loadCC(document.getElementById("troster"),i,()=>TM.i===i&&TM.tab==="coaches",true,TM.coach),0);return o+tabs+`<div id="troster"><p class="cclk">Loading coaches…</p></div></div>`}
   o+=`<div class="tpbar">${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} only</p>`:`<div class="seg" role="group" aria-label="Men or women"><button type="button" data-tg="m" aria-pressed="${g==="m"}">Men</button><button type="button" data-tg="w" aria-pressed="${g==="w"}">Women</button></div>`}
     <label class="cmp"><span>Season</span><select id="tsea">${ss.map(k=>`<option value="${k}" ${k===TM.sea?"selected":""}>${esc(seasonLabel(k))}</option>`).join("")}</select></label>${TM.sea.endsWith("outdoor")?windSw():""}</div>${tabs}`;
   if(!M)return o+skeleton()+`</div>`;
@@ -1569,7 +1621,7 @@ function tRoster(M,s){const g=TM.g,F=M.F;if(!M.roster.length)return `<div class=
     `<p class="note">${F?`Roster from TFRRS (${esc(seasonLabel(TM.sea).split(" ")[0])} season).`:"Athletes who made this season's TFRRS lists, not the full roster."}</p>`}
 function tAthlete(F,ai,s){const a=F.A[ai],ys=Object.entries(a.y).sort().reverse(),cur=ys[0]?ys[0][1]:"";
   const tl=`https://tf.tfrrs.org/athletes/${a.u}`;
-  let o=`<p style="margin:14px 2px 0"><button class="lnk" data-tath="-1">‹ ${esc(s.t||s.n)} ${TM.tab==="roster"?"roster":"results"}</button></p>
+  let o=`<p style="margin:14px 2px 0"><button class="lnk" data-tath="-1">‹ ${esc(s.t||s.n)} ${TM.tab==="roster"?"roster":TM.tab==="coaches"?"coaches":"results"}</button></p>
   <div class="ahead"><div class="avt" aria-hidden="true">${esc(a.n.split(" ").map(w=>w[0]).slice(0,2).join(""))}</div><div><h3>${esc(a.n)}</h3><p>${esc([yr(cur),s.t||s.n,s.d].filter(Boolean).join(" · "))}</p></div><a href="${esc(tl)}" target="_blank" rel="noopener nofollow">Full profile on TFRRS ›</a></div>`;
   const bs=(a.b||[]).slice().sort((x,y)=>eord(x[0])-eord(y[0]));
   if(bs.length)o+=`<div class="ah2">College bests</div><div class="pbs">${bs.map(([c,m])=>`<div><small>${esc(ename(c))}</small><b>${esc(m)}</b></div>`).join("")}</div>`;
@@ -2502,7 +2554,7 @@ document.addEventListener("click",ev=>{
   if(ev.target.closest("[data-radv]")){R.adv=true;log("results_more",{});render();return}
   {const rb=S.tab==="rankings"&&ev.target.closest("#app [data-rk]");if(rb&&rb.tagName==="BUTTON"){const k=rb.dataset.rk,v=rb.dataset.val;   /* rankings explorer buttons */
     if(k==="all")RK.all=true;else{RK[k]=v;RK.all=false;if(k==="d")RK.key=null;}rkUrl();render();if(k==="c"){const t=document.querySelector(".rkcats");if(t&&t.getBoundingClientRect().top<0)t.scrollIntoView({block:"start"})}return}}
-  const b=ev.target.closest("button,a[data-tpage],a[data-tcc],[data-ameet]");if(!b||(b.dataset.ameet!==undefined&&ev.target.closest("a[href]")))return;const d=b.dataset;
+  const b=ev.target.closest("button,a[data-tpage],a[data-tcc],a[data-tcoach],a[data-ttab],[data-ameet]");if(!b||(b.dataset.ameet!==undefined&&ev.target.closest("a[href]")))return;const d=b.dataset;
   if(d.tab){const home=b.classList.contains("logo");S.tab=d.tab;S.school=null;TM.i=null;TM.ath=null;R.swap=true;
     /* top-level buttons always land on that section's main page (Ryan 2026-11-08): leave any profile, meet, team or school view,
        and give the address bar the section's own clean URL so a refresh stays on the landing page too */
@@ -2580,7 +2632,8 @@ document.addEventListener("click",ev=>{
   if(d.team){if(+d.team>=0){const D=CACHE[curKey()],ti=D&&schOfTeam(D.teams[+d.team],R.div);if(ti>=0){openTeam(ti);return}}R.ath=null;R.team=+d.team<0?null:+d.team;R.swap=true;render();return}
   if(d.tpage!==undefined){if(ev.metaKey||ev.ctrlKey||ev.shiftKey)return;ev.preventDefault();openTeam(+d.tpage);return}
   if("tclose" in d){closeTeam();return}
-  if(d.ttab){TM.tab=d.ttab;TM.ath=null;if(location.pathname!==tpath(TM.i)){history.pushState({},"",tpath(TM.i));tMeta(TM.i)}R.swap=true;render();return}
+  if(d.tcoach!==undefined){if(ev.metaKey||ev.ctrlKey||ev.shiftKey)return;ev.preventDefault();TM.tab="coaches";TM.coach=d.tcoach||null;TM.ath=null;history.pushState({},"",tpath(TM.i));if(!TM.coach)tMeta(TM.i);R.swap=true;render();scrollTo(0,0);if(TM.coach)log("coach_bio",{school:SCH[TM.i].n});return}
+  if(d.ttab){if(b.tagName==="A"){if(ev.metaKey||ev.ctrlKey||ev.shiftKey)return;ev.preventDefault()}TM.tab=d.ttab;TM.ath=null;TM.coach=null;if(location.pathname!==tpath(TM.i)){history.pushState({},"",tpath(TM.i));tMeta(TM.i)}R.swap=true;render();return}
   if(d.tcc!==undefined){if(ev.metaKey||ev.ctrlKey||ev.shiftKey)return;ev.preventDefault();openTeam(+d.tcc,true,"coaches");return}
   if(d.tg){TM.g=d.tg;TM.ath=null;TM.open={};R.swap=true;render();return}
   if(d.tev!==undefined){TM.ev=d.tev;R.swap=true;render();return}
@@ -2668,7 +2721,7 @@ document.addEventListener("submit",ev=>{const fid=ev.target&&ev.target.id;if(fid
   window.__prMeta = setMeta;
   const route = slug => {
     { const tm = location.pathname.match(/^\/teams\/([^/]+)/); if (tm) { const ts = tm[1].replace(/\.html$/, ""); let i = SCH.findIndex((x, k) => tslug(k) === ts); if (i < 0) { const h = hits(ts.replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
-      if (i >= 0) { const cc = /^\/teams\/[^/]+\/coaches\/?$/.test(location.pathname); if (TM.i !== i) openTeam(i, false, cc ? "coaches" : ""); else { TM.tab = cc ? "coaches" : TM.tab === "coaches" ? "results" : TM.tab; tMeta(i); render(); } if (location.pathname !== tpath(i)) history.replaceState({}, "", tpath(i)); return; } }
+      if (i >= 0) { const cm = location.pathname.match(/^\/teams\/[^/]+\/coaches(?:\/([^/]+))?\/?$/), cc = !!cm, co = cm && cm[1] ? cm[1] : null; if (TM.i !== i) openTeam(i, false, cc ? "coaches" : "", co); else { TM.tab = cc ? "coaches" : TM.tab === "coaches" ? "results" : TM.tab; TM.coach = co; TM.ath = null; tMeta(i); render(); } if (location.pathname !== tpath(i)) history.replaceState({}, "", tpath(i)); return; } }
       else if (TM.i != null) { TM.i = null; TM.ath = null; } }
     if (slug) slug = String(slug).replace(/\.html$/, "");   /* pre-built /schools/<slug>.html pages */
     if (slug) { let i = ALT.has(slug) ? ALT.get(slug) : -1; if (i < 0) { const h = hits(slug.replace(/-track-standards$/, "").replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
