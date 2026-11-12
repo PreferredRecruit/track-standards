@@ -226,3 +226,7 @@ sup.mkf{margin-left:2px;font-size:.55em;font-weight:700;letter-spacing:.02em;col
 .evpill{transition:transform var(--dur-2) var(--ease-out),opacity var(--dur-2) var(--ease-out)}
 body.prscroll .evpill{transform:translateY(calc(100% + 24px));opacity:0;pointer-events:none}
 @media (max-width:960px){#prhelpp{top:124px;max-height:calc(100vh - 140px)}}   /* clear the two-row phone header (2026-11-12) */
+
+/* 6-digit email code field (2026-11-12) */
+#acc .acotpi{font-size:var(--fs-24,24px);font-weight:650;letter-spacing:.3em;text-align:center;font-variant-numeric:tabular-nums}
+#acc .acotpi::placeholder{letter-spacing:.3em;color:var(--pr-faint,#66666F)}
