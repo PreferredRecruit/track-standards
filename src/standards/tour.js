@@ -10,13 +10,16 @@ const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { 
 let O = { DEF: {}, log: () => { }, signedIn: () => false, userId: () => "" }, STEP = -1, STEPS = [];
 
 const steps = () => [
-  { sel: ".switch", t: "Four sections", b: "Standards finds colleges for your time. Results shows the best college marks this season. Rankings shows the top college teams. Recruiting AI answers your questions." },
+  { sel: [".switch", ".prh .prnav"], t: "Four sections", b: "Standards finds colleges for your time. Results shows the best college marks this season. Rankings shows the top college teams. Recruiting AI answers your questions." },
   { sel: "#mf", t: "Find colleges for your time", b: "Pick boys or girls and the event, then type a best time or mark from a meet (like 11.2 or 20-6). Pick the grade and press Search colleges." },
   { sel: "#q", t: "Look up one school", b: "Type any college name to see the marks that school's team looks for, event by event." },
-  { sel: '.switch [data-tab="ask"]', t: "Ask in plain words", b: "Not sure where to look? Ask the Recruiting AI, for example: \"Which colleges fit a 5:10 mile?\"" },
+  { sel: ['.switch [data-tab="ask"]', '.prnav [data-tab="ask"]'], t: "Ask in plain words", b: "Not sure where to look? Ask the Recruiting AI, for example: \"Which colleges fit a 5:10 mile?\"" },
   { sel: "#acchd", t: O.signedIn() ? "Your account" : "Save your times", b: O.signedIn() ? "Your profile lives here: your athlete's events, times and grade, so the site can show the colleges that fit." : "Sign in to save your athlete's events and times so the site remembers them." },
   { sel: "#prhelp", t: "Help is always here", b: "Tap Help any time for quick answers or to watch this tour again." },
 ];
+
+/* a step may list selectors; use the first one on screen (desktop hides the hero pill bar, the header holds the same links) */
+const target = sel => { for (const q of [].concat(sel)) { const e = document.querySelector(q); if (e && e.getClientRects().length) return e; } return null; };
 
 function layer() {
   let el = document.getElementById("prtour");
@@ -25,7 +28,7 @@ function layer() {
 }
 function place() {
   const el = document.getElementById("prtour"); if (!el || STEP < 0) return;
-  const s = STEPS[STEP], tg = document.querySelector(s.sel), hole = el.querySelector(".trhole"), card = el.querySelector(".trcard");
+  const s = STEPS[STEP], tg = target(s.sel), hole = el.querySelector(".trhole"), card = el.querySelector(".trcard");
   if (!tg) { hole.style.cssText = "opacity:0"; card.style.cssText = ""; card.classList.add("mid"); return; }
   card.classList.remove("mid");
   const r = tg.getBoundingClientRect(), p = 8;
@@ -36,7 +39,7 @@ function place() {
   card.style.cssText = `width:${W}px;left:${Math.max(16, Math.min(r.left, innerWidth - W - 16))}px;${below ? `top:${r.bottom + 16}px` : `top:${Math.max(16, r.top - 16 - card.offsetHeight)}px`}`;
 }
 function show(i) {
-  STEP = i; const el = layer(), s = STEPS[i], tg = document.querySelector(s.sel);
+  STEP = i; const el = layer(), s = STEPS[i], tg = target(s.sel);
   document.documentElement.classList.add("onbon", "tron"); el.hidden = false;
   el.querySelector(".trcard").innerHTML = `<p class="trn">${i + 1} of ${STEPS.length}</p><h3 id="trt">${esc(s.t)}</h3><p>${esc(s.b)}</p>
     <div class="trbtns"><button type="button" class="trskip" data-tr="end">${i === STEPS.length - 1 ? "Close" : "Skip tour"}</button><span>${i ? `<button type="button" class="trback" data-tr="back">Back</button>` : ""}<button type="button" class="trnext" data-tr="next">${i === STEPS.length - 1 ? "Got it" : "Next"}</button></span></div>`;
@@ -45,7 +48,7 @@ function show(i) {
 }
 export function start(how = "help") {
   if (!document.getElementById("mf")) { location.href = "/?tour=1"; return; }   /* the tour walks the home page */
-  closeHelp(); STEPS = steps().filter(s => s.sel === "#prhelp" || document.querySelector(s.sel)); O.log("tour", { detail: "start", how }); show(0);
+  closeHelp(); STEPS = steps().filter(s => s.sel === "#prhelp" || target(s.sel)); O.log("tour", { detail: "start", how }); show(0);
 }
 function end(done) {
   const el = document.getElementById("prtour"); if (el) el.hidden = true;

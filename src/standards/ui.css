@@ -101,7 +101,7 @@ html.pm .lvplain{font-size:var(--fs-15)}
 .prh #prhelp{position:static;flex:none;width:36px;height:36px;padding:0;gap:0;font-size:0;justify-content:center;border:1px solid var(--pr-line);background:none;box-shadow:none}
 .prh #prhelp span{width:auto;height:auto;background:none;color:var(--pr-mute);font-size:var(--fs-15);font-weight:650}
 #prhelpp{left:auto;right:16px;top:72px;bottom:auto}
-@media (min-width:961px){.hero.compact .switch{display:none}}   /* the header nav is the same four links */
+@media (min-width:961px){.hero .switch{display:none}}   /* desktop: the header nav holds the same links (Ryan 2026-11-11: section bar is phone/tablet only) */
 main{padding-bottom:48px}
 .simple .sctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px}.simple .sctl .seg,.simple .sctl .evtg{margin:0}
 .simple .back{min-height:32px}
@@ -178,4 +178,5 @@ main{padding-bottom:48px}
 .hdoors b{font-size:17px;font-weight:700}
 .hdoors span{font-size:14px;color:var(--pr-mute,#4A4A52);line-height:var(--lh-snug)}
 .hdoors i{position:absolute;top:50%;right:14px;display:grid;place-items:center;width:28px;height:28px;margin-top:-14px;border-radius:50%;background:color-mix(in srgb,var(--pr-violet) 10%,transparent);color:var(--pr-violet);font-style:normal;font-weight:700}
+@media (min-width:961px){.hdoors{display:none}}   /* phone/tablet only, same reason */
 @media (max-width:640px){.hdoors{grid-template-columns:1fr;gap:8px;margin-top:28px}}
