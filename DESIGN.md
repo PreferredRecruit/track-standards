@@ -47,7 +47,10 @@ Rules:
 
 ## Colour
 
-> Dark mode is retired (Ryan 2026-11-05): every page forces light with `data-theme="light"` and `color-scheme: only light`. The Dark column below is unused.
+> Light for everyone (Ryan 2026-11-05): every page starts with `data-theme="light"` and `color-scheme: only light`.
+> Premium Dark (Ryan 2026-11-12): Premium members choose Premium Dark (default) or Premium White in Settings. Dark sets `data-theme="dark"`
+> on the whole site from account.js (and from `localStorage.prPT` before first paint), using the Dark column below. Any new component must
+> read correctly in both columns; check it with `?demo=premium` on localhost (Settings switches the look).
 
 | Token | Light | Dark | Use |
 |---|---|---|---|

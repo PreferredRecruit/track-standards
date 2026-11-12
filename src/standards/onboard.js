@@ -167,12 +167,228 @@ function wizard() {
 
 /* ---------- profile pages ---------- */
 function doneView() {
+  try { if (sessionStorage.getItem("prKitOpen")) { sessionStorage.removeItem("prKitOpen"); TAB = "kit"; KITV = "roster"; } } catch (e) {}   /* just unlocked: open the kit */
   if (VIEW_AS) return top(`<button type="button" class="onbtab on" data-onb="vaback">‹ Back to accounts</button>`) +
     `<div class="vabar" role="status"><span>${svg('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', 17)}Viewing <b>${esc(VIEW_AS.name || VIEW_AS.email)}</b>'s account exactly as they see it. Read only.</span>${VIEW_AS.done ? "" : "<em>Profile not finished</em>"}<button type="button" data-onb="vaback">Back to accounts</button></div>` +
     (!D.role ? `<div class="onbwrap one"><section class="onbmain onbdone"><h1>Nothing set up yet</h1><p class="onbsub">This account was created but hasn't started the profile steps.</p></section></div>`
       : D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`);
+  if (core.premium() && D.role) return premiumView();
   return top(NAV + (IS_ADMIN ? `<button type="button" class="onbtab${TAB === "admin" ? " on" : ""}" data-onb="tab" data-v="admin">Accounts</button><button type="button" class="onbtab${TAB === "profile" ? " on" : ""}" data-onb="tab" data-v="profile">My profile</button>` : "")) +
-    `<div class="onbhome"><button type="button" class="onbhb" data-onb="home" data-v="standards">‹ Back to the site</button></div>` + (TAB === "admin" && IS_ADMIN ? adminView() : D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`);
+    `<div class="onbhome"><button type="button" class="onbhb" data-onb="home" data-v="standards">‹ Back to the site</button></div>` + (TAB === "admin" && IS_ADMIN ? adminView()
+      : fam() ? `<div class="prlayout">${kit()}<div class="prmainc">${TAB === "kit" ? kitView() : D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : parentView()}</div></div>`
+      : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`);
+}
+/* ---------- recruiting kit (Ryan 2026-11-11, low-ticket product): left column of the account. Free steps that complete the account,
+   then the premium resources, locked until the low-ticket purchase, unlocked in place after it. live with the low-ticket launch (2026-11-12). ---------- */
+const LT_URL = "https://lt.thepreferredrecruit.com/";   /* Abe's sales page; confirm the exact path before launch */
+const KIT_P = [["cc", "Coach Contacts", "Every coach's name, position and email ($17 add-on)"], ["list", "My College List", "Rank up to 25 colleges against your marks"],
+  ["course", "The 7-Day Roadmap course", "Videos, email and DM scripts, tracker, on Whop"], ["dark", "Premium Dark", "A sleek dark look for the whole site"]];
+const LOCK = '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>';
+function kit() {
+  const sub = par() ? KIDS[SEL] : D, P = core.premium(), info = core.premiumInfo() || {};
+  const free = [["Create your account", true], ["Add events and marks", !!(sub && (sub.marks || []).some(m => m[0] && m[1]))], ["Add grad year and GPA", !!(sub && sub.year && sub.gpa)],
+    ["Pick your dream schools", !!(sub && (sub.dream || []).length)], ["Add a profile photo", !!(sub && sub.avatar)]];
+  const done = free.filter(x => x[1]).length;
+  const prem = KIT_P.filter(([k]) => k !== "pkit" || !P || info.bump);
+  const em = core.ses() && core.ses().user ? core.ses().user.email : "", u = new URL(LT_URL);
+  for (const [k, v] of [["utm_source", "standards"], ["utm_medium", "account"], ["utm_campaign", "premium"], ["utm_content", "free-account"]]) u.searchParams.set(k, v);   /* never personal data in links */
+  return `<aside class="kit" aria-label="Your recruiting kit"><h2 class="kith">Your recruiting kit</h2>
+    <div class="kitg"><div class="kitgh"><b>Complete your account</b><span>${done} of ${free.length}</span></div><div class="kitbar"><i style="width:${Math.round(done / free.length * 100)}%"></i></div>
+      <ul>${free.map(([l, ok]) => `<li class="${ok ? "ok" : ""}">${ok ? `<span class="kitic ok">${svg('<path d="M5 12l5 5 9-11"/>', 14)}</span>${l}` : `<button type="button" data-onb="edit"><span class="kitic"></span>${l}</button>`}</li>`).join("")}</ul></div>
+    <div class="kitg${P ? " on" : ""}"><div class="kitgh"><b>${P ? "Premium" : "Premium resources"}</b>${P ? `<span class="kitpro">Unlocked</span>` : ""}</div>
+      <ul>${prem.map(([k, l, d]) => `<li class="${P ? "" : "lk"}">${P ? `<button type="button" data-onb="kit" data-v="${k}" class="${TAB === "kit" && KITV === k ? "on" : ""}"><b>${l}</b><small>${d}</small></button>` : `<span class="kitlk">${svg(LOCK, 14)}<span><b>${l}</b><small>${d}</small></span></span>`}</li>`).join("")}</ul>
+      ${P ? "" : `<a class="kitbuy" href="${esc(u.toString())}" target="_blank" rel="noopener">Get Premium · $27 one time</a><p class="kitnote">Already bought it? Sign in with the email you used at checkout and it unlocks here.</p>`}</div></aside>`;
+}
+let KITV = "roster";
+function kitView() {
+  if (!core.premium()) { TAB = "profile"; return D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : parentView(); }
+  const sub = par() ? KIDS[SEL] : D, [, title, desc] = KIT_P.find(x => x[0] === KITV) || KIT_P[0];
+  if (!sub) { TAB = "profile"; return parentView(); }
+  const C = core.cfg(), m = (sub.marks || []).find(x => x[0] && x[1]) || [], ev = m[0] ? (C.evName ? C.evName(m[0], sub.gender) : m[0]) : "your event";
+  const name = [sub.first, sub.last].filter(Boolean).join(" ") || "Your name", cls = sub.year ? "Class of " + sub.year : "";
+  const head = `<div class="kvh"><h1>${esc(title)}</h1><p class="onbsub">${esc(desc)}</p></div>`;
+  const later = `<div class="kvph"><b>Kit content goes here</b><p>This is where the ${esc(title.toLowerCase())} from the low-ticket kit will live, the same content buyers get by email. Waiting on the final copy from Abe.</p></div>`;
+  if (KITV === "roster") return head + `<div class="kvcard"><p>Open any school page and tap <b>Coaches roster</b> to see every coach with their email. Coaches who work with ${esc(ev)} athletes are listed first.</p>
+      ${(sub.dream || []).length ? `<p class="kvsub">Your dream schools</p><ul class="kvlist">${sub.dream.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : ""}
+      <button type="button" class="acbtn" data-onb="home" data-v="standards">Find your schools</button></div>`;
+  if (KITV === "email") { const subj = `${name} | ${ev} ${m[1] || ""} | ${cls}`.replace(/\s+\|\s+\|/g, " |").trim();
+    const body = `Coach [Last name],\n\nMy name is ${name}, ${cls ? "a " + cls.toLowerCase().replace("class of", "class of") + " " : ""}${ev} athlete${sub.school ? " at " + sub.school : ""}${sub.state ? " in " + sub.state : ""}. My best ${ev} is ${m[1] || "[mark]"}${sub.gpa ? " and I have a " + sub.gpa + " GPA" : ""}.\n\nI'm interested in [School] and would like to learn what it takes to join your program. My results are on Athletic.net: [link].\n\nThank you for your time,\n${name}`;
+    return head + `<div class="kvcard"><p class="kvsub">Subject</p><pre class="kvpre" id="kvsubj">${esc(subj)}</pre><p class="kvsub">Email</p><pre class="kvpre" id="kvbody">${esc(body)}</pre>
+      <div class="kvrow"><button type="button" class="acbtn" data-onb="copy" data-v="kvbody">Copy email</button><button type="button" class="onbback" data-onb="copy" data-v="kvsubj">Copy subject</button></div>
+      <p class="kvnote">Preview draft built from your profile. Abe's final email script replaces this wording.</p></div>`; }
+  return head + later;
+}
+/* ---------- Premium account (Ryan 2026-11-12): sidebar, dashboard, My College List, Coach Contacts, Settings (Premium Dark / White),
+   and the Admin section for admin emails. The course itself lives on Whop; "Go to Course" opens it. $27 = Premium, $17 = coach emails. ---------- */
+const COURSE_URL = "https://whop.com/home/";   /* the buyer's Whop home (their communities); swap for the exact 7-Day Roadmap course link when Ryan sends it */
+let PT = "dash", LIST = null, LISTK = null, LF = "all", LSORT = "rank", CCQ = "", CCS = null, AOV = null, OPEN = null, LMSG = "";
+const ROS = {};
+const STAR = '<span class="pmstar" aria-hidden="true">★</span>';
+const utm = (url, where) => { const u = new URL(url); for (const [k, v] of [["utm_source", "standards"], ["utm_medium", "account"], ["utm_campaign", "premium"], ["utm_content", where]]) u.searchParams.set(k, v); return u.toString(); };
+const PSUB = () => par() ? KIDS[SEL] : D;
+const aid = () => par() && KIDS[SEL] ? KIDS[SEL].id : null;
+const CATS = [["dream", "Dream"], ["target", "Target"], ["reach", "Reach"]];
+const catL = k => (CATS.find(c => c[0] === k) || CATS[1])[1];
+function bestMark(sub) { const C = core.cfg(); const ms = (sub && sub.marks || []).filter(m => m[0] && m[1]).map(m => ({ e: m[0], m: m[1], v: C.parse ? C.parse(m[1], m[0]) : null })).filter(m => m.v != null);
+  ms.forEach(m => { m.n = C.fits ? C.fits(m.e, sub.gender || "m", m.v) : 0; }); return ms.sort((a, b) => b.n - a.n); }
+function fitChip(info) { if (!info) return ""; const t = info.tier; return `<span class="pmfit ${t ? "t" + t : "tx"}">${t === "T" ? "At Target" : t === "R" ? "At Recruit" : t === "W" ? "At Walk-On" : "Above your mark"}</span>`; }
+function sideNav() {
+  const it = (v, l, ic, st) => `<button type="button" class="pmnv${PT === v ? " on" : ""}" data-onb="pt" data-v="${v}"${PT === v ? ' aria-current="page"' : ""}><span class="ic" aria-hidden="true">${ic}</span>${l}${st ? STAR : ""}</button>`;
+  return `<nav class="pmside" aria-label="Your account">${it("dash", "Dashboard", "⌂")}${it("list", "My Colleges", "◎")}${it("cc", "Coach Contacts", "✉", 1)}
+    <a class="pmnv" href="${esc(utm(COURSE_URL, "sidebar"))}" target="_blank" rel="noopener"><span class="ic" aria-hidden="true">▶</span>Go to Course<span class="ext">Whop ↗</span></a>
+    ${it("profile", "Profile and marks", "◐")}${it("set", "Settings", "⚙")}
+    ${core.admin() ? `<p class="pmgrp">Admin</p>${it("aov", "Overview", "◈")}${it("admin", "Accounts", "☰")}` : ""}
+    <div class="pmplan"><b>${STAR} Unlimited Access</b><span><i class="dot"></i>${core.admin() ? "Admin · always on" : "Active"}</span></div></nav>`;
+}
+function premiumView() {
+  const C = core.cfg();
+  if (PT === "list" || PT === "dash") { const k = aid() || "me"; if (LISTK !== k) { LISTK = k; LIST = null; loadList(); } }
+  let body = "";
+  if (PT === "dash") body = dashView(); else if (PT === "list") body = listView(); else if (PT === "cc") body = ccView(); else if (PT === "set") body = setView();
+  else if (PT === "aov" && core.admin()) body = aovView(); else if (PT === "admin" && core.admin()) body = adminView();
+  else body = D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`;
+  return top(NAV) + `<div class="pm">${sideNav()}<section class="pmmain">${body}</section></div>`;
+}
+function headRow() {
+  const sub = PSUB() || D, C = core.cfg(), ms = bestMark(sub).slice(0, 3);
+  return `<div class="pmhead"><span class="pcav pmav">${avatarHtml(sub, 20)}</span><div class="pmwho"><h1>${esc(nameOf(sub) || "Your profile")} <span class="pmpill">${core.admin() ? "Admin" : STAR + " Premium"}</span></h1>
+    <p>${esc([sub.year ? "Class of " + sub.year : "", sub.school || ""].filter(Boolean).join(" · "))}</p></div>
+    <div class="pmmarks">${ms.length ? ms.map(m => `<div class="pmmk"><small>${evName(m.e, sub.gender)}</small><b>${esc(m.m)}</b><span>${m.n.toLocaleString()} colleges fit</span></div>`).join("")
+      : `<button type="button" class="pmmk add" data-onb="pt" data-v="profile">+ Add a mark</button>`}</div></div>`;
+}
+function dashView() {
+  const L = (LIST || []).slice(0, 5), sub = PSUB() || D, b = bestMark(sub)[0], C = core.cfg();
+  return headRow() + `<div class="pmpaths">
+    <button type="button" class="pmpath pri" data-onb="pt" data-v="cc"><span class="ic" aria-hidden="true">✉</span><span><b>${STAR} Coach Contacts</b><small>${core.emails() ? "Get any college coach's email" : "Coach emails are the $17 add-on"}</small></span><span class="pmgo" aria-hidden="true">›</span></button>
+    <a class="pmpath" href="${esc(utm(COURSE_URL, "dashboard"))}" target="_blank" rel="noopener"><span class="ic" aria-hidden="true">▶</span><span><b>${STAR} Go to Course</b><small>Your 7-Day Roadmap on Whop</small></span><span class="pmgo" aria-hidden="true">↗</span></a></div>
+    <div class="pmcard"><div class="pmch"><h2>My Colleges <small>${LIST ? LIST.length + " of 25" : ""}</small></h2><button type="button" class="onbback" data-onb="pt" data-v="list">${LIST && LIST.length ? "Open list" : "Add colleges"}</button></div>
+    ${LIST == null ? `<p class="pmempty">Loading…</p>` : L.length ? L.map((r, i) => { const info = b && C.sinfo ? C.sinfo(r.name, sub.gender || "m", b.e, b.v) : null;
+      return `<div class="pmrow"><span class="pmrk">${i + 1}</span><span class="pmnm"><b>${esc(r.name)}</b><small>${esc(info ? info.d : "")}</small></span><span class="pmcat ${r.cat}">${catL(r.cat)}</span>${fitChip(info)}<span class="pmco">${r.coach_name ? STAR + " " + esc(r.coach_name) : ""}</span></div>`; }).join("")
+      : `<p class="pmempty">Add up to 25 colleges, rank them, and keep the coach you want to email next to each one.</p>`}</div>`;
+}
+async function loadList() {
+  const a = aid(), k = LISTK;
+  const rows = await core.api("/rest/v1/college_list?select=*&order=rank,id&athlete_id=" + (a ? "eq." + a : "is.null")).catch(() => []);
+  if (LISTK !== k) return; LIST = rows || []; render();
+}
+function listView() {
+  const sub = PSUB() || D, b = bestMark(sub)[0], C = core.cfg(), L = LIST || [], full = L.length >= 25;
+  let rows = L.map((r, i) => ({ r, i, info: b && C.sinfo ? C.sinfo(r.name, sub.gender || "m", b.e, b.v) : null })).filter(x => LF === "all" || x.r.cat === LF);
+  if (LSORT === "std") rows = rows.slice().sort((x, y) => (({ T: 0, R: 1, W: 2 })[x.info && x.info.tier] ?? 3) - (({ T: 0, R: 1, W: 2 })[y.info && y.info.tier] ?? 3));
+  const drag = LSORT === "rank";
+  return `<div class="pmtitle"><h1>My Colleges</h1><p>${L.length} of 25${b ? ` · compared with your ${evName(b.e, sub.gender)} (${esc(b.m)})` : ""}</p></div>
+    <div class="pmtool"><form class="pmadd" data-pform="add"><input class="in" id="pmadd" list="pmsch" placeholder="${full ? "Remove one to add another" : "Add a college"}" ${full ? "disabled" : ""} autocomplete="off" aria-label="Add a college"><button class="acbtn" ${full ? "disabled" : ""}>Add</button></form>
+      <div class="pmseg" role="group" aria-label="Show">${[["all", "All"], ...CATS].map(([k, l]) => `<button type="button" data-onb="lf" data-v="${k}" aria-pressed="${LF === k}">${l}</button>`).join("")}</div>
+      <div class="pmseg" role="group" aria-label="Order">${[["rank", "My ranking"], ["std", "Times vs standards"]].map(([k, l]) => `<button type="button" data-onb="lsort" data-v="${k}" aria-pressed="${LSORT === k}">${l}</button>`).join("")}</div></div>
+    ${LMSG ? `<p class="pmmsg" role="status">${esc(LMSG)}</p>` : ""}
+    <datalist id="pmsch">${(C.schools ? C.schools() : []).filter(n => !L.some(r => r.name === n)).map(n => `<option value="${esc(n)}">`).join("")}</datalist>
+    ${LIST == null ? `<p class="pmempty">Loading…</p>` : !L.length ? `<div class="pmcard"><p class="pmempty">Start with your dream school. Type its name above.</p></div>` : `<ol class="pmlist" id="pmlist">${rows.map(({ r, i, info }) => `<li class="pmli" data-id="${r.id}">
+      <div class="pmlr">${drag ? `<button type="button" class="pmh" data-lh="${r.id}" aria-label="Move ${esc(r.name)}, rank ${i + 1}. Use the arrow keys.">⋮⋮</button>` : `<span></span>`}<span class="pmrk">${i + 1}</span>
+      <button type="button" class="pmnm" data-onb="school" data-slug="${esc(info ? info.slug : "")}"><b>${esc(r.name)}</b><small>${esc(info ? [info.d, info.c].filter(Boolean).join(" · ") : "")}</small></button>
+      <button type="button" class="pmcat ${r.cat}" data-onb="lcat" data-id="${r.id}" aria-label="Category ${catL(r.cat)}. Tap to change.">${catL(r.cat)}</button>
+      <span class="pmstd">${fitChip(info)}${info && info.lvs && info.lvs[1] ? `<small>Recruit ${esc(info.lvs[1])}</small>` : ""}</span>
+      <span class="pmco">${r.coach_name ? `<b>${STAR} ${esc(r.coach_name)}</b><small>${esc(r.coach_email || "")}</small>` : core.emails() ? `<small class="none">No coach picked</small>` : ""}</span>
+      ${core.emails() ? `<button type="button" class="pmexp" data-onb="lopen" data-id="${r.id}" aria-expanded="${OPEN === r.id}" aria-label="Coaches at ${esc(r.name)}">›</button>` : `<span></span>`}</div>
+      ${OPEN === r.id ? openRow(r, info) : ""}</li>`).join("")}</ol>`}`;
+}
+function openRow(r, info) {
+  const slug = info && info.slug; if (!slug) return `<div class="pmdrawer"><p class="pmempty">No coaches on file for this college.</p></div>`;
+  const rows = ROS[slug];
+  if (!rows) { core.api("/rest/v1/rpc/coach_roster", { method: "POST", body: { slug } }).then(x => { ROS[slug] = x || []; render(); }).catch(e => { ROS[slug] = []; LMSG = /limit/.test(e.message) ? "You've opened a lot of colleges today. More open tomorrow." : ""; render(); }); return `<div class="pmdrawer"><p class="pmempty">Loading coaches…</p></div>`; }
+  if (!rows.length) return `<div class="pmdrawer"><p class="pmempty">We don't have this college's coaches yet. We add colleges every week.</p><button type="button" class="onbback" data-onb="lrm" data-id="${r.id}">Remove from list</button></div>`;
+  return `<div class="pmdrawer">${rows.map(c => `<div class="pmc"><span><b>${esc(c.name)}</b><small>${esc(c.title || "Coach")}${(c.groups || []).length ? " · " + c.groups.join(", ") : ""}</small></span><span class="pmce">${esc(c.email)}</span>
+    <button type="button" class="rcopy" data-copy="${esc(c.email)}">Copy</button><button type="button" class="pmtrk" data-onb="ltrack" data-id="${r.id}" data-n="${esc(c.name)}" data-e="${esc(c.email)}" aria-pressed="${r.coach_email === c.email}">${r.coach_email === c.email ? "★ Tracking" : "Track"}</button></div>`).join("")}
+    <div class="pmdf"><span>Track one coach to keep them next to this college.</span><button type="button" class="onbback" data-onb="lrm" data-id="${r.id}">Remove from list</button></div></div>`;
+}
+async function listAdd(name) {
+  const C = core.cfg(), list = C.schools ? C.schools() : [], hit = list.find(n => n.toLowerCase() === String(name).trim().toLowerCase());
+  if (!hit) { LMSG = "Pick a college from the list."; return render(); }
+  if ((LIST || []).some(r => r.name === hit)) { LMSG = hit + " is already on your list."; return render(); }
+  if ((LIST || []).length >= 25) { LMSG = "Your list is full. Remove one to add another."; return render(); }
+  const sub = PSUB() || D, b = bestMark(sub)[0], info = C.sinfo ? C.sinfo(hit, sub.gender || "m", b && b.e, b && b.v) : null;
+  const row = { name: hit, slug: info ? info.slug : hit, cat: info && info.tier ? "target" : "reach", rank: (LIST || []).length, athlete_id: aid() };
+  try { const r = await core.api("/rest/v1/college_list", { method: "POST", body: row, prefer: "return=representation" }); LIST.push((r && r[0]) || row); LMSG = hit + " added as " + catL(row.cat) + ".";
+    C.log && C.log("college_list", { detail: "add" }); } catch (e) { LMSG = /full/.test(e.message) ? "Your list is full. Remove one to add another." : "Couldn't add it. Try again."; }
+  render(); const n = document.getElementById("pmadd"); if (n) n.focus();
+}
+const patch = (id, body) => core.api("/rest/v1/college_list?id=eq." + id, { method: "PATCH", body }).catch(() => { LMSG = "Couldn't save that change. Check your connection."; render(); });
+function saveRanks() { (LIST || []).forEach((r, i) => { if (r.rank !== i) { r.rank = i; patch(r.id, { rank: i }); } }); }
+function moveRow(id, to) { const i = LIST.findIndex(r => r.id === id); if (i < 0) return; to = Math.max(0, Math.min(LIST.length - 1, to)); const [r] = LIST.splice(i, 1); LIST.splice(to, 0, r); saveRanks(); render();
+  const h = document.querySelector(`[data-lh="${id}"]`); if (h) h.focus(); }
+function ccView() {
+  const C = core.cfg(), sub = PSUB() || D, b = bestMark(sub)[0];
+  if (!core.emails()) return `<div class="pmland"><span class="pmpill">${STAR} Coach Contacts</span><h1>Coach emails are the $17 add-on</h1><p>Your Premium account includes everything else. Questions about adding coach emails? <a href="mailto:support@thepreferredrecruit.com">support@thepreferredrecruit.com</a></p></div>`;
+  if (CCS) { const info = C.sinfo ? C.sinfo(CCS, sub.gender || "m", b && b.e, b && b.v) : null;
+    setTimeout(() => { const el = document.getElementById("pmcc"); if (el && C.ccLoad) C.ccLoad(el, CCS); }, 0);
+    return `<nav class="pmcrumb" aria-label="Breadcrumb"><button type="button" data-onb="ccback" data-v="land">Coach Contacts</button><span>/</span>${CCQ ? `<button type="button" data-onb="ccback" data-v="res">Search</button><span>/</span>` : ""}<span>${esc(CCS)}</span></nav>
+      <div class="pmtitle"><h1>${esc(info ? info.t : CCS)}</h1><p>${esc(info ? [info.d, info.c].filter(Boolean).join(" · ") : "")}${info && b ? ` · ${evName(b.e, sub.gender)} ${esc(b.m)} ` : ""}${fitChip(info)}</p></div>
+      <div id="pmcc" class="pmccbox"><p class="pmempty">Loading coaches…</p></div>
+      <div class="pmdf"><button type="button" class="onbback" data-onb="school" data-slug="${esc(info ? info.slug : "")}">Standards, results and roster</button>${(LIST || []).some(r => r.name === CCS) ? "" : `<button type="button" class="onbback" data-onb="ccadd">+ Add to My Colleges</button>`}</div>`; }
+  const q = CCQ.trim().toLowerCase(), all = C.schools ? C.schools() : [], hits = q ? all.filter(n => n.toLowerCase().includes(q)).slice(0, 12) : [];
+  const pick = (LIST || []).slice(0, 4);
+  return `<div class="pmland"><span class="pmpill">${STAR} Included with Unlimited Access</span><h1>Get any college coach's email</h1><p>Search a college to see its coaches, what each one coaches, and their email. The coach for your event comes first.</p>
+    <form class="pmsearch" data-pform="cc" role="search"><input class="in" id="pmcq" list="pmall" value="${esc(CCQ)}" placeholder="Search a college, like Texas State" autocomplete="off" aria-label="Search a college"><button class="acbtn">Search</button></form>
+    <datalist id="pmall">${all.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
+    ${q ? `<div class="pmcard pmres">${hits.length ? hits.map(n => { const info = C.sinfo ? C.sinfo(n, sub.gender || "m", b && b.e, b && b.v) : null;
+      return `<button type="button" class="pmrow" data-onb="ccs" data-v="${esc(n)}"><span class="pmnm"><b>${esc(n)}</b><small>${esc(info ? [info.d, info.c].filter(Boolean).join(" · ") : "")}</small></span>${fitChip(info)}<span class="pmgo" aria-hidden="true">›</span></button>`; }).join("") : `<p class="pmempty">No college matches "${esc(CCQ)}". Try part of the name.</p>`}</div>`
+      : pick.length ? `<div class="pmquick"><p>From My Colleges</p><div>${pick.map(r => `<button type="button" class="pmq" data-onb="ccs" data-v="${esc(r.name)}"><b>${esc(r.name)}</b><span class="pmcat ${r.cat}">${catL(r.cat)}</span></button>`).join("")}</div></div>` : ""}
+    <ol class="pmhow"><li><b>Search a college</b><span>Any college on Track Standards</span></li><li><b>Find your event's coach</b><span>Listed first, with their title</span></li><li><b>Copy the email</b><span>Send it from your own inbox</span></li></ol></div>`;
+}
+function setView() {
+  const t = core.theme();
+  return `<div class="pmtitle"><h1>Settings</h1><p>Signed in as ${esc(core.ses() ? core.ses().user.email : "")}</p></div>
+    <div class="pmcard pmset"><h2>Look</h2><p>Your choice follows you on every page of Track Standards.</p>
+    <div class="pmthemes" role="radiogroup" aria-label="Look">${[["dark", "Premium Dark", "Sleek and dark"], ["light", "Premium White", "Clean and bright"]].map(([k, l, d]) => `<button type="button" role="radio" aria-checked="${t === k}" class="pmth ${k}" data-onb="ptheme" data-v="${k}"><span class="sw" aria-hidden="true"></span><b>${l}</b><small>${d}</small></button>`).join("")}</div></div>
+    <div class="pmcard pmset"><h2>Your plan</h2><p>${core.admin() ? "Admin account: Premium and coach emails are always on." : `${STAR} Premium${core.emails() ? " with coach emails" : ""}. One-time purchase, lifetime access.`}</p>
+    <div class="pmdf"><a class="onbback" href="${esc(utm(COURSE_URL, "settings"))}" target="_blank" rel="noopener">Go to Course ↗</a><button type="button" class="onbback" data-onb="out">Sign out</button></div></div>`;
+}
+function aovView() {
+  if (!AOV) { core.api("/rest/v1/rpc/admin_overview", { method: "POST", body: {} }).then(x => { AOV = x || {}; render(); }).catch(e => { AOV = { err: e.message }; render(); }); return `<div class="pmtitle"><h1>Overview</h1></div><p class="pmempty">Loading…</p>`; }
+  if (AOV.err) return `<div class="pmtitle"><h1>Overview</h1></div><p class="acerr">${esc(AOV.err)}</p>`;
+  const n = k => (AOV[k] || 0).toLocaleString(), k = (l, v, s) => `<div class="pmkpi"><small>${l}</small><b>${v}</b><span>${s}</span></div>`;
+  return `<div class="pmtitle"><h1>Overview</h1><p>Live from the accounts database</p></div>
+    <div class="pmkpis">${k("Accounts", n("accounts"), "+" + n("new_week") + " this week")}${k("Finished profiles", n("finished"), Math.round((AOV.finished || 0) / Math.max(1, AOV.accounts || 1) * 100) + "% of accounts")}
+      ${k(STAR + " Premium ($27)", n("premium"), "+" + n("premium_week") + " this week")}${k("Coach emails ($17)", n("emails"), n("waiting") + " orders waiting for an account")}
+      ${k("Colleges opened", n("lists_opened_week"), "coach lists, last 7 days")}${k("Colleges listed", n("colleges_listed"), "on My College Lists")}</div>
+    <div class="pmdf"><button type="button" class="acbtn" data-onb="pt" data-v="admin">Open all accounts</button><button type="button" class="onbback" data-onb="aovr">Refresh</button></div>`;
+}
+/* drag to rank: pointer events (mouse and touch), keyboard arrows on the handle */
+let DRG = null;
+document.addEventListener("pointerdown", e => { const h = e.target.closest && e.target.closest("[data-lh]"); if (!h || PT !== "list") return; e.preventDefault();
+  const li = h.closest(".pmli"); DRG = { li, id: +h.dataset.lh, y0: e.clientY, moved: false, last: undefined }; try { h.setPointerCapture(e.pointerId); } catch (x) {} });
+document.addEventListener("pointermove", e => { if (!DRG) return; if (!DRG.moved && Math.abs(e.clientY - DRG.y0) < 4) return;
+  if (!DRG.moved) { DRG.moved = true; DRG.li.classList.add("drag"); }
+  const ol = document.getElementById("pmlist"); if (!ol) return; const others = [...ol.children].filter(x => x !== DRG.li); let before = null;
+  for (const o of others) { const r = o.getBoundingClientRect(); if (e.clientY < r.top + r.height / 2) { before = o; break; } }
+  if (DRG.last !== before) { DRG.last = before; const t0 = DRG.li.getBoundingClientRect().top; ol.insertBefore(DRG.li, before); DRG.y0 += DRG.li.getBoundingClientRect().top - t0; }
+  DRG.li.style.transform = `translateY(${e.clientY - DRG.y0}px)`; });
+function dragEnd() { if (!DRG) return; const d = DRG; DRG = null; d.li.classList.remove("drag"); d.li.style.transform = ""; if (!d.moved) return;
+  const order = [...document.querySelectorAll("#pmlist .pmli")].map(x => +x.dataset.id);
+  if (LF === "all") LIST.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  else { const pos = LIST.map((r, i) => r.cat === LF ? i : -1).filter(i => i >= 0), moved = order.map(id => LIST.find(r => r.id === id)); pos.forEach((p, k) => { LIST[p] = moved[k]; }); }
+  saveRanks(); render(); }
+document.addEventListener("pointerup", dragEnd); document.addEventListener("pointercancel", dragEnd);
+document.addEventListener("keydown", e => { const h = e.target.closest && e.target.closest("[data-lh]"); if (!h || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return; e.preventDefault();
+  const id = +h.dataset.lh, i = LIST.findIndex(r => r.id === id); moveRow(id, i + (e.key === "ArrowUp" ? -1 : 1)); });
+document.addEventListener("submit", e => { const f = e.target.closest && e.target.closest("[data-pform]"); if (!f) return; e.preventDefault();
+  if (f.dataset.pform === "add") listAdd(document.getElementById("pmadd").value);
+  if (f.dataset.pform === "cc") { CCQ = document.getElementById("pmcq").value; const all = core.cfg().schools ? core.cfg().schools() : [], hit = all.find(n => n.toLowerCase() === CCQ.trim().toLowerCase()); if (hit) CCS = hit; render(); const C = core.cfg(); C.log && C.log("coach_contacts", { detail: "search" }); } });
+function premiumAction(a, b) {
+  if (a === "pt") { PT = b.dataset.v; OPEN = null; LMSG = ""; if (PT === "cc") { CCS = null; } render(); layer().scrollTo(0, 0); return true; }
+  if (a === "ptheme") { core.setTheme(b.dataset.v); render(); return true; }
+  if (a === "lf") { LF = b.dataset.v; render(); return true; }
+  if (a === "lsort") { LSORT = b.dataset.v; render(); return true; }
+  if (a === "lcat") { const r = LIST.find(x => x.id === +b.dataset.id); if (!r) return true; const o = ["dream", "target", "reach"]; r.cat = o[(o.indexOf(r.cat) + 1) % 3]; patch(r.id, { cat: r.cat }); render();
+    const n = document.querySelector(`[data-onb="lcat"][data-id="${r.id}"]`); if (n) n.focus(); return true; }
+  if (a === "lopen") { const id = +b.dataset.id; OPEN = OPEN === id ? null : id; render(); return true; }
+  if (a === "ltrack") { const r = LIST.find(x => x.id === +b.dataset.id); if (!r) return true; r.coach_name = b.dataset.n; r.coach_email = b.dataset.e; patch(r.id, { coach_name: r.coach_name, coach_email: r.coach_email }); render(); return true; }
+  if (a === "lrm") { const id = +b.dataset.id, r = LIST.find(x => x.id === id); if (!r || !confirm(`Remove ${r.name} from your list?`)) return true; LIST = LIST.filter(x => x.id !== id); OPEN = null;
+    core.api("/rest/v1/college_list?id=eq." + id, { method: "DELETE" }).catch(() => {}); saveRanks(); render(); return true; }
+  if (a === "ccs") { CCS = b.dataset.v; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "ccback") { if (b.dataset.v === "land") CCQ = ""; CCS = null; render(); return true; }
+  if (a === "ccadd") { const n = CCS; PT = "list"; LISTK = null; render(); setTimeout(() => listAdd(n), 300); return true; }
+  if (a === "aovr") { AOV = null; render(); return true; }
+  return false;
 }
 function simpleDone() {
   return `<div class="onbwrap one"><section class="onbmain onbdone"><span class="onbok">${svg(CHECK, 26)}</span><h1>Your account is ready</h1>
@@ -474,6 +690,7 @@ export function bind() {
       return render(); }
     const b = e.target.closest("[data-onb]"); if (!b) return; const a = b.dataset.onb; e.preventDefault();
     if (VIEW_AS && RO.has(a)) return;
+    if (!VIEW_AS && premiumAction(a, b)) return;
     if (a === "viewas") return viewAs(b.dataset.u, +b.dataset.i);
     if (a === "vaback") return viewAsEnd();
     if (a === "home") { const v = b.dataset.v || "standards"; history.pushState({}, "", v === "results" ? "/?tab=results" : "/"); hide(); core.changed(); window.__prStandardsRoute && window.__prStandardsRoute(null); const t = document.querySelector(`.switch [data-tab="${v}"]`) || document.querySelector(`[data-tab="${v}"]:not(.logo)`); if (t) t.click(); window.scrollTo(0, 0); return; }
@@ -493,6 +710,8 @@ export function bind() {
     if (a === "banner") { BANNER = !BANNER; return render(); }
     if (a === "theme") return setTheme(b.dataset.v);
     if (a === "tab") { TAB = b.dataset.v; return render(); }
+    if (a === "kit") { KITV = b.dataset.v || "roster"; TAB = "kit"; render(); layer().scrollTo(0, 0); return; }
+    if (a === "copy") { const el = document.getElementById(b.dataset.v); if (el && navigator.clipboard) navigator.clipboard.writeText(el.textContent).then(() => { const t = b.textContent; b.textContent = "Copied"; setTimeout(() => (b.textContent = t), 1600); }).catch(() => {}); return; }
     if (a === "pick") { const f = el.querySelector(`[data-onb-file="${b.dataset.v || "avatar"}"]`); return f && f.click(); }
     if (a === "school") { const slug = b.dataset.slug; history.pushState({}, "", "/schools/" + slug); hide(); core.changed(); window.__prStandardsRoute && window.__prStandardsRoute(slug); return; }
     if (a === "dreamx") { read(); const sub = S(); sub.dream = (sub.dream || []).filter((x, i) => i !== +b.dataset.i); return render(); }

@@ -724,7 +724,8 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   const vm=o.match(/<div class="verify">[\s\S]*?<\/div>/),vf=vm?vm[0]:"";if(vf)o=o.replace(vf,"");
   /* desktop two columns (Ryan 2026-11-11 audit): standards, season bests and videos left; facts, rank, about and links in a sticky right
      column. Below 961 px the wrappers are plain blocks, so phones keep the single column in the same order as before. */
-  return o.replace("<!--scols-->",`<div class="scols"><div class="scmain">`)+`<div id="tbest"></div><div id="svid"></div></div><aside class="scside"><div id="sfacts"></div><div id="srank"></div>`+schoolArch(s)+schoolAbout(s,vf)+schoolExtra(s)+`</aside></div>`+brandNote(s,B)+`</div>`}
+  setTimeout(()=>schoolRoster(S.school),0);
+  return o.replace("<!--scols-->",`<div class="scols"><div class="scmain">`)+`<div id="sroster"></div><div id="tbest"></div><div id="svid"></div></div><aside class="scside"><div id="sfacts"></div><div id="srank"></div>`+schoolArch(s)+schoolAbout(s,vf)+schoolExtra(s)+`</aside></div>`+brandNote(s,B)+`</div>`}
 /* parent capture (Ryan 2026-10-25, enterprise value: parents buy, but 71 of 100 athlete accounts had no parent contact).
    Signed-in athletes without a parent on file see one card under their results until they add one or close it.
    Saves parent name / email / phone to their own profile (RLS: owner only). No SMS consent is taken here: a parent's
@@ -746,6 +747,34 @@ document.addEventListener("click",ev=>{const x=ev.target.closest&&ev.target.clos
    scripts/tfrrs/build_programfacts.py and build_xc_standards.py; loaded once, only when a school opens. */
 let SFX=null,SFXL=null;
 const fmtXC=x=>x==null?"–":Math.floor(x/60)+":"+String((x%60).toFixed(1)).padStart(4,"0");
+/* Coaches roster (premium kit, Ryan 2026-11-11; NOT LIVE until the low-ticket launch): premium accounts see every coach with their email,
+   their own event group first; signed-in accounts without it see one quiet line pointing to the kit; signed-out visitors see nothing */
+const ROSTER={},RGRP={sprints:"Sprints",hurdles:"Hurdles",distance:"Distance",jumps:"Jumps",throws:"Throws",multis:"Multi-events"};
+/* Coach Contacts (Ryan 2026-11-12): name, position and email for a college's coaches, the coach for your event first, the rest behind
+   "Show all". Coach emails come with the $17 add-on (ACC.emails); copying only, no sending from the site. Shown on the school page
+   (#sroster) and as the Coach Contacts tab on the team page (#troster). */
+const LTP="https://lt.thepreferredrecruit.com/";
+function premiumUrl(where){const u=new URL(LTP);for(const [k,v] of [["utm_source","standards"],["utm_medium","site"],["utm_campaign","premium"],["utm_content",where]])u.searchParams.set(k,v);return u.toString()}
+const STAR='<span class="ccstar" aria-hidden="true">★</span>';
+function ccHTML(rows,nm,ev){const my=stdGrp(ev||"")||"";
+  const list=(rows||[]).map(r=>({...r,mine:!!my&&(r.groups||[]).includes(my)})).sort((a,b)=>(b.mine-a.mine)||(/head/i.test(b.title||"")-/head/i.test(a.title||"")));
+  if(!list.length)return `<p class="cclk">We don't have ${nm}'s coaches yet. We add colleges every week.</p>`;
+  const row=r=>`<li class="${r.mine?"mine":""}"><div class="ccw"><b>${esc(r.name)}${r.mine?'<span class="ccev">Your event</span>':""}</b><small>${esc(r.title||"Coach")}${(r.groups||[]).length?" · "+r.groups.map(g=>RGRP[g]||g).join(", "):""}</small></div><span class="ccm">${esc(r.email)}</span><button type="button" class="rcopy" data-copy="${esc(r.email)}" aria-label="Copy ${esc(r.name)}'s email">Copy</button></li>`;
+  const first=list.filter(r=>r.mine).length?list.filter(r=>r.mine):list.slice(0,1),rest=list.filter(r=>!first.includes(r));
+  const when=list[0].verified_at?` · checked ${esc(new Date(list[0].verified_at+"T12:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}))}`:"";
+  return `<ul class="ccl">${first.map(row).join("")}</ul>${rest.length?`<details class="ccmore"><summary><span class="o">Show all ${list.length} coaches</span><span class="c">Show fewer</span></summary><ul class="ccl">${rest.map(row).join("")}</ul></details>`:""}<p class="ccnote">${list.length} coach${list.length>1?"es":""}${when}. Copy an address and send from your own email.</p>`}
+function loadCC(el,i,isNow){if(!el)return;const s=SCH[i];if(!s||s.j)return;const slug=(s.os&&s.os[0])||slugOf(s.n),nm=esc(s.t||s.n),ev=INT.e||S.e||"";
+  const head=`<div class="cch"><h3>Coach Contacts ${STAR}</h3></div>`;
+  if(!ACC.member()){el.innerHTML="";return}
+  if(!ACC.premium()){el.innerHTML=`<section class="cc">${head}<p class="cclk">Every coach's name, position and email for ${nm} comes with Premium. <a href="${esc(premiumUrl("school-coach-contacts"))}" target="_blank" rel="noopener">See Premium</a></p></section>`;return}
+  if(!ACC.emails()){el.innerHTML=`<section class="cc">${head}<p class="cclk">Coach emails are the $17 add-on to Premium. Questions? <a href="mailto:support@thepreferredrecruit.com">support@thepreferredrecruit.com</a></p></section>`;return}
+  const draw=r=>{if(isNow())el.innerHTML=`<section class="cc">${head}${ccHTML(r,nm,ev)}</section>`};
+  if(ROSTER[slug])return draw(ROSTER[slug]);
+  el.innerHTML=`<section class="cc">${head}<p class="cclk">Loading coaches…</p></section>`;
+  ACC.core.api("/rest/v1/rpc/coach_roster",{method:"POST",body:{slug}}).then(r=>{ROSTER[slug]=r||[];draw(ROSTER[slug]);log("coach_contacts",{school:s.n})})
+    .catch(e=>{if(isNow())el.innerHTML=`<section class="cc">${head}<p class="cclk">${/limit/.test(e.message)?"You've opened a lot of colleges today. More open tomorrow.":"Couldn't load the coaches. Try again in a minute."}</p></section>`})}
+function schoolRoster(i){if(i==null)return;loadCC(document.getElementById("sroster"),i,()=>S.school===i)}
+document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest(".rcopy");if(!b)return;const v=b.dataset.copy;const ok=()=>{b.textContent="Copied";b.classList.add("ok");setTimeout(()=>{b.textContent="Copy";b.classList.remove("ok")},1400)};log("coach_copy",{});if(navigator.clipboard)navigator.clipboard.writeText(v).then(ok).catch(()=>{});else ok()});
 function schoolFacts(i){if(i==null)return;const fill=()=>{const el=document.getElementById("sfacts");if(!el||S.school!==i)return;const s=SCH[i],g=S.g,[C,P,X]=SFX;
     const c=C[s.n],p=(P[s.n]||{})[g],x=((X.schools||{})[s.n]||{})[g],st=[];
     if(c&&c.coaches.length)st.push(`<div class="gs gcoach"><span>${/cross country|\bxc\b/i.test(c.coaches[0][1])&&!/track|t&f/i.test(c.coaches[0][1])?"Cross country coach":"Head coach"}</span><b>${esc(c.coaches[0][0])}</b></div>`);
@@ -1501,11 +1530,12 @@ function teamPage(){const i=TM.i,s=SCH[i];if((s.ng||[]).includes(TM.g))TM.g=TM.g
   <div class="sband">${mark}<div><small>${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(ST_NAME[s.s]||s.s):""}</small><h1 class="sname">${esc(nm)} Track &amp; Field</h1>${tsw(i,"team")}
     <span class="tplinks">${s.u?`<a href="${esc(TM.g==="w"?s.u.replace("_college_m_","_college_f_"):s.u)}" target="_blank" rel="noopener nofollow">TFRRS ›</a>`:""}</span></div></div>`;
   if(TM.ath!=null&&M&&M.F)return o+tAthlete(M.F,TM.ath,s)+`</div>`;
-  const tabs=`<div class="tptabs" role="tablist"><button type="button" role="tab" data-ttab="results" aria-selected="${TM.tab==="results"}">Results</button><button type="button" role="tab" data-ttab="roster" aria-selected="${TM.tab==="roster"}">Roster${M&&M.roster.length?` <small>${M.roster.length}</small>`:""}</button></div>`;
+  const tabs=`<div class="tptabs" role="tablist"><button type="button" role="tab" data-ttab="results" aria-selected="${TM.tab==="results"}">Results</button><button type="button" role="tab" data-ttab="roster" aria-selected="${TM.tab==="roster"}">Roster${M&&M.roster.length?` <small>${M.roster.length}</small>`:""}</button>${ACC.member()?`<button type="button" role="tab" data-ttab="coaches" aria-selected="${TM.tab==="coaches"}">Coach Contacts <span class="ccstar" aria-hidden="true">★</span></button>`:""}</div>`;
   o+=`<div class="tpbar">${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} only</p>`:`<div class="seg" role="group" aria-label="Men or women"><button type="button" data-tg="m" aria-pressed="${g==="m"}">Men</button><button type="button" data-tg="w" aria-pressed="${g==="w"}">Women</button></div>`}
     <label class="cmp"><span>Season</span><select id="tsea">${ss.map(k=>`<option value="${k}" ${k===TM.sea?"selected":""}>${esc(seasonLabel(k))}</option>`).join("")}</select></label>${TM.sea.endsWith("outdoor")?windSw():""}</div>${tabs}`;
   if(!M)return o+skeleton()+`</div>`;
   if(TM.tab==="roster")return o+tRoster(M,s)+`</div>`;
+  if(TM.tab==="coaches"){setTimeout(()=>loadCC(document.getElementById("troster"),i,()=>TM.i===i&&TM.tab==="coaches"),0);return o+`<div id="troster"></div></div>`}
   const evs=M.events;
   if(!evs.length)return o+`<div class="soon">No ${g==="m"?"men's":"women's"} marks for ${esc(nm)} in ${esc(seasonLabel(TM.sea))} yet. Try another season.${s.u?` <a href="${esc(s.u)}" target="_blank" rel="noopener nofollow">See the team on TFRRS ›</a>`:""}</div></div>`;
   if(TM.ev&&!evs.some(([c])=>c===TM.ev))TM.ev="";
@@ -2684,7 +2714,12 @@ document.addEventListener("submit",ev=>{const fid=ev.target&&ev.target.id;if(fid
       u.searchParams.set("utm_term",[o.e,o.grade?"g"+o.grade:"",...keep].filter(Boolean).join(" "));for(const [k,v] of [["pr_grade",o.grade],["pr_mark",o.m]])if(v)u.searchParams.set(k,v);else u.searchParams.delete(k);return u.toString()}catch(e){return QUIZ}},
     quiz:o=>{const u=new URL(quizFor()),keep=(u.searchParams.get("utm_term")||"").split(" ").filter(t=>/^([tc](A\+|[ABCSM])|w[PAS])$/.test(t));u.searchParams.set("utm_content","readiness");
       u.searchParams.set("utm_term",[o.e,o.grade?"g"+o.grade:"","readiness-"+o.score,...keep].filter(Boolean).join(" "));
-      for(const [k,v] of [["pr_grade",o.grade],["pr_mark",o.m],["pr_status",o.stage]])if(v)u.searchParams.set(k,v);else u.searchParams.delete(k);return u.toString()},schools:(()=>{let L=null;return ()=>L||(L=SCH.filter(x=>!x.j).map(x=>x.n).sort())})(),onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,nstd:NSTD,fits:(e,g,v)=>SCH.filter(s=>tier(s,g,e,v)).length,fmt:(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v),stats:(e,g,v)=>{const L=[];SCH.forEach((s,i)=>{const t=tier(s,g,e,v);if(t)L.push({s,i,t})});const c=k=>L.filter(x=>x.t===k).length;
+      for(const [k,v] of [["pr_grade",o.grade],["pr_mark",o.m],["pr_status",o.stage]])if(v)u.searchParams.set(k,v);else u.searchParams.delete(k);return u.toString()},schools:(()=>{let L=null;return ()=>L||(L=SCH.filter(x=>!x.j).map(x=>x.n).sort())})(),onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,nstd:NSTD,fits:(e,g,v)=>SCH.filter(s=>tier(s,g,e,v)).length,
+    /* premium account (2026-11-12): one college for My College List / Coach Contacts: slug, division, levels in high school terms, tier for this mark */
+    ccLoad:(el,name)=>{const i=SCH.findIndex(x=>x.n===name&&!x.j);if(i>=0)loadCC(el,i,()=>document.body.contains(el))},
+    sinfo:(name,g,e,v)=>{const s=SCH.find(x=>x.n===name&&!x.j);if(!s)return null;const i=SCH.indexOf(s),L=e&&s[g]?hsLevels(s,g,e):{t:null};
+      return {n:s.n,t:s.t||s.n,slug:(s.os&&s.os[0])||slugOf(s.n),d:s.d,c:s.c,lv:(L.t||[]).map(x=>x?parse(String(x),e):null),lvs:L.t||[],tier:e&&v!=null&&s[g]?tier(s,g,e,v):null,field:FIELD.has(e),i}},
+fmt:(e,v)=>FIELD.has(e)?v.toFixed(2)+"m":fmtT(v),stats:(e,g,v)=>{const L=[];SCH.forEach((s,i)=>{const t=tier(s,g,e,v);if(t)L.push({s,i,t})});const c=k=>L.filter(x=>x.t===k).length;
     const top=["T","R","W"].map(k=>L.filter(x=>x.t===k&&DIVS.includes(x.s.d)).sort((a,b)=>DIVS.indexOf(a.s.d)-DIVS.indexOf(b.s.d)||(b.s.o?1:0)-(a.s.o?1:0)||a.s.n.localeCompare(b.s.n))[0]).filter(Boolean).map(x=>({n:x.s.t||x.s.n,d:x.s.d,lv:TN[x.t],slug:SLUG[x.i]}));
     const nm=nearMiss(g,e,v);return {n:L.length,T:c("T"),R:c("R"),W:c("W"),near:nm.n?{n:nm.n,lv:TN[nm.lvl],gap:nm.gap}:null,top}},intent:INT,sid:SID,log,onChange:()=>{fromProfile();render()}}).then(()=>{fromProfile();render();if(READY.isPage())READY.show()});
 }

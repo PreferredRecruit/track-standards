@@ -13,8 +13,10 @@ const GPA = [["3_5_plus","3.5 or higher"],["3_0_to_3_49","3.0 to 3.49"],["2_3_to
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
 const SEEN = new Set();
-let KIDS = [], MINE = [], RESENT = 0, CLS = null, PRV = null;
+let KIDS = [], MINE = [], RESENT = 0, CLS = null, PRV = null, PREM = null;
 let CFG = {}, SES = null, PRO = null, VIEW = "signup", MSG = "", BUSY = false, WHY = "";
+const PREVIEW_HOST = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+if (PREVIEW_HOST) { const q = new URLSearchParams(location.search).get("premium"); if (q === "locked" || q === "unlocked" || q === "real") { try { if (q === "real") localStorage.removeItem("prPremPreview"); else localStorage.setItem("prPremPreview", JSON.stringify(q)); } catch (e) {} } }
 /* the account pages load on demand (2026-11-02 speed pass: 59 KB most visitors never use). Same calls as before. */
 let ONBM = null;
 const onb = () => ONBM || (ONBM = import("./onboard.js").then(m => { m.bind(); return m; }));
@@ -31,7 +33,34 @@ const store = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catc
 const CK = "pr_rt";
 const cookie = { get() { const m = document.cookie.match(/(?:^|; )pr_rt=([^;]*)/); try { return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch (e) { return null; } },
   set(v) { try { document.cookie = v ? `${CK}=${encodeURIComponent(JSON.stringify(v))}; Max-Age=${400 * 86400}; Path=/; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}` : `${CK}=; Max-Age=0; Path=/; SameSite=Lax`; } catch (e) {} } };
+/* localhost-only demo accounts (2026-11-12): ?demo=premium|emails|free|admin shows the account pages with sample data and no sign-in,
+   so previews and design:shots can open them. Never active on the live site (PREVIEW_HOST is localhost only). ?demo=off ends it. */
+const DEMO = (() => { if (!/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return null; try { const q = new URLSearchParams(location.search).get("demo");
+  if (q === "off") localStorage.removeItem("prDemo"); else if (q) localStorage.setItem("prDemo", q); return localStorage.getItem("prDemo"); } catch (e) { return null; } })();
+function demoApi(path, method, body) {
+  const P = path.split("?")[0], db = (() => { try { return JSON.parse(localStorage.getItem("prDemoDb")) || {}; } catch (e) { return {}; } })(), put = () => { try { localStorage.setItem("prDemoDb", JSON.stringify(db)); } catch (e) {} };
+  const prof = Object.assign({ id: "demo-user", role: "athlete", gender: "m", first_name: "Jordan", last_name: "Ellis", grad_year: 2027, gpa: 3.6, gpa_band: "3_5_plus", state: "TX", high_school: "Westlake High School", finished_at: "2026-11-01T12:00:00Z", tier: "A", dream_schools: ["Texas State University"], premium_theme: "dark" }, db.profile || {});
+  if (P.endsWith("/auth/v1/token")) return { access_token: "demo", refresh_token: "demo", expires_in: 86400, user: { id: "demo-user", email: "demo@example.com" } };
+  if (P.endsWith("/rest/v1/profiles")) { if (method === "PATCH") { db.profile = Object.assign(db.profile || {}, body); put(); return []; } return [prof]; }
+  if (P.endsWith("/rest/v1/account_classes")) return [{ class: "A" }];
+  if (P.endsWith("/rest/v1/marks")) return [{ event: "400m", mark: 48.92, athlete_id: null }, { event: "200m", mark: 22.10, athlete_id: null }];
+  if (P.endsWith("/rpc/premium_me")) return { premium: DEMO !== "free", emails: DEMO === "premium" || DEMO === "admin", admin: DEMO === "admin", theme: prof.premium_theme };
+  if (P.endsWith("/rpc/coach_roster")) { if (!(DEMO === "premium" || DEMO === "admin")) throw Object.assign(new Error("emails"), { status: 400 });
+    const d = String((body || {}).slug || "college").replace(/-track-standards$/, "").replace(/[^a-z]/g, "").slice(0, 10) + ".example";
+    return [["Alex Romero", "Head Coach", ["sprints", "distance"]], ["Kendra Hayes", "Assistant Coach", ["sprints", "hurdles"]], ["Marcus Webb", "Assistant Coach", ["jumps"]], ["Elena Petrova", "Assistant Coach", ["throws"]]]
+      .map(([n, t, g]) => ({ name: n, title: t, groups: g, gender: "both", email: n.split(" ")[0][0].toLowerCase() + n.split(" ")[1].toLowerCase() + "@" + d, verified_at: "2026-11-10" })); }
+  if (P.endsWith("/rest/v1/college_list")) { const L = db.list || (db.list = []);
+    if (method === "POST") { if (L.length >= 25) throw Object.assign(new Error("list full"), { status: 400 }); const r = Object.assign({ id: Date.now() }, body); L.push(r); put(); return [r]; }
+    const id = +((path.match(/id=eq\.(\d+)/) || [])[1] || 0);
+    if (method === "PATCH") { const r = L.find(x => x.id === id); if (r) Object.assign(r, body); put(); return []; }
+    if (method === "DELETE") { db.list = L.filter(x => x.id !== id); put(); return []; }
+    return L.slice().sort((a, b) => a.rank - b.rank); }
+  if (P.endsWith("/rpc/admin_overview")) return { accounts: 2418, new_week: 142, finished: 1604, premium: 64, emails: 41, premium_week: 9, waiting: 1, lists_opened_week: 311, colleges_listed: 530 };
+  if (P.endsWith("/rpc/is_admin")) return DEMO === "admin";
+  return [];
+}
 async function api(path, { method = "GET", body, auth = true, prefer } = {}, retried) {
+  if (DEMO) return demoApi(path, method, body);
   const h = { apikey: KEY, "Content-Type": "application/json" };
   if (auth && SES) h.Authorization = "Bearer " + SES.access_token;
   if (prefer) h.Prefer = prefer;
@@ -77,11 +106,16 @@ async function restore() {
   await fresh(true);
 }
 async function loadProfile() {
-  if (!(await fresh())) { PRO = null; cacheRank(); return null; }
+  if (!(await fresh())) { PRO = null; PREM = null; applyTheme(); cacheRank(); return null; }
   const rows = await api("/rest/v1/profiles?select=*&id=eq." + SES.user.id).catch(() => []);
   PRO = rows && rows[0] || null; KIDS = []; MINE = [];
   CLS = null; if (PRO) { const cr = await api("/rest/v1/account_classes?select=class&user_id=eq." + SES.user.id).catch(() => []); CLS = cr && cr[0] ? cr[0].class : null; }
   cacheRank(); prBadge();
+  /* premium kit (Ryan x Abe 2026-11-11): buyers of the low-ticket product. live with the low-ticket launch (2026-11-12); on localhost the
+     preview switch (localStorage prPremPreview = "locked" | "unlocked") shows either state without a purchase */
+  PREM = null; try { PREM = await api("/rest/v1/rpc/premium_me", { method: "POST", body: {} }); } catch (e) { PREM = null; }
+  if (PREVIEW_HOST) { const pv = store.get("prPremPreview"); if (pv === "locked") PREM = { premium: false }; else if (pv === "unlocked" && !(PREM && PREM.premium)) PREM = { premium: true, bump: true, preview: true }; }
+  applyTheme();
   if (PRO && PRO.role === "athlete") { const ms = await api("/rest/v1/marks?select=event,mark&user_id=eq." + SES.user.id + "&athlete_id=is.null").catch(() => []); MINE = (ms || []).map(m => ({ e: m.event, v: +m.mark })); }
   if (PRO && PRO.role === "parent") {
     const [ks, ms] = await Promise.all([api("/rest/v1/athletes?select=id,first_name,gender,grad_year,grade,gpa,tier,dream_schools&parent_id=eq." + SES.user.id + "&order=created_at").catch(() => []), api("/rest/v1/marks?select=event,mark,athlete_id&user_id=eq." + SES.user.id).catch(() => [])]);
@@ -134,6 +168,9 @@ if (typeof window !== "undefined") window.prRank = () => rankTag();
 /* static SEO pages have no account code: they read this cached tag (tier + class only) */
 function cacheRank() { try { const r = rankTag(); if (r) localStorage.setItem("prRank", r); else localStorage.removeItem("prRank"); } catch (e) {} }
 export const profile = () => PRO;
+export const premium = () => !!(PREM && (PREM.premium || PREM.admin));
+export const emails = () => !!(PREM && (PREM.emails || PREM.bump || PREM.admin));
+export const premiumInfo = () => PREM;
 export const kids = () => KIDS;
 /* the signed-in athlete's own PRs ({e, v}), for "where would you fit" in Compare */
 export const myMarks = () => MINE;
@@ -318,7 +355,7 @@ async function saveFinish() {
   } catch (e) { BUSY = false; fail("Couldn't save. " + e.message); }
 }
 function fail(m) { MSG = m; BUSY = false; draw(); }
-function changed() { headBtn(); CFG.onChange && CFG.onChange(); }
+function changed() { headBtn(); CFG.onChange && CFG.onChange(); if (SES && store.get(PK)) premiumLink(); }   /* finish a pending unlock after sign-in */
 
 async function submit(id) {
   if (id === "accp") return saveFinish();
@@ -400,7 +437,7 @@ async function fromHash() {
   if (h.get("type") === "recovery") open("reset"); else if (!member()) ONB.go("/onboarding"); else if (ONB.isPage()) ONB.show();
 }
 
-function signOut() { api("/auth/v1/logout", { method: "POST" }).catch(() => {}); keep(null); PRO = null; cacheRank(); for (const k in FORM) delete FORM[k]; changed(); }
+function signOut() { api("/auth/v1/logout", { method: "POST" }).catch(() => {}); keep(null); PRO = null; PREM = null; applyTheme(); cacheRank(); for (const k in FORM) delete FORM[k]; changed(); }
 /* re-engagement bars (Ryan 2026-10-21: "on-site pop-up reminders for when they return"). Once per visit each, bottom of the screen:
    - signed up, email never confirmed (remembered in this browser): confirm reminder + "Send it again"
    - signed-in member missing PRs / GPA / class (or a parent with no athlete yet): finish-profile reminder
@@ -448,9 +485,37 @@ function joinLater() {
     bar("prNudge-join", `<p><b>Make a free account.</b> <span>Save your athlete's times, see every college that fits and ask the Recruiting AI as much as you want.</span></p><button type="button" class="prnb" data-acc="signup" data-why="nudge">Create free account</button>`);
   }, 2000);
 }
-export const core = { badge, badgeSvg, prVerified, URL: URL_, KEY, ST, api, fresh, loadProfile, changed, signOut, member, profile: () => PRO, ses: () => SES, cfg: () => CFG };
+/* the unlock link from the purchase email (/premium?claim=<token>) or Abe's thank-you page button (/premium?order=ord_...).
+   Signed in: unlock this account, then open the kit. Signed out: keep the link, ask them to sign up or sign in, finish after. */
+const PK = "prPremClaim";
+async function premiumLink() {
+  if (location.pathname === "/premium") { const q = new URLSearchParams(location.search), c = q.get("claim"), o = q.get("order"), em = q.get("email");
+    if (c || o) store.set(PK, { c, o, em, t: Date.now() });
+    history.replaceState(null, "", member() ? "/account" : "/onboarding"); }
+  const p = store.get(PK); if (!p) return;
+  if (Date.now() - (p.t || 0) > 7 * 864e5) { store.set(PK, null); return; }
+  if (!SES) { if (p.em) FORM._email = p.em; open("signup"); MSG = "Create your free account to unlock your coach list. Use the same email you used at checkout" + (p.em ? ": " + p.em : "") + "."; draw(); return; }
+  let r = ""; try { r = p.c ? await api("/rest/v1/rpc/premium_claim", { method: "POST", body: { token: p.c } }) : await api("/rest/v1/rpc/premium_claim_order", { method: "POST", body: { order_id: p.o } }); } catch (e) { r = "error"; }
+  if (r === "ok") { store.set(PK, null); await loadProfile(); changed(); CFG.log && CFG.log("account", { detail: "premium-claim" }); try { sessionStorage.setItem("prKitOpen", "1"); } catch (e) {} }
+  else if (r === "pending") { /* the purchase is still on its way from checkout: try again on the next page load */ }
+  else store.set(PK, null);
+}
+/* Premium Dark / Premium White (Ryan 2026-11-12): a Premium member's choice, saved on the account (profiles.premium_theme, default dark).
+   It switches the whole site, using the dark tokens already in standards.css and ui.css. Everyone else stays on the light site. */
+const PTK = "prPT";
+function applyTheme() {
+  const dark = !!(PREM && (PREM.premium || PREM.admin)) && (PREM.theme || "dark") === "dark";
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  try { dark ? localStorage.setItem(PTK, "dark") : localStorage.removeItem(PTK); } catch (e) {}
+}
+async function setTheme(t) {
+  if (!PREM) return; PREM.theme = t === "light" ? "light" : "dark"; applyTheme();
+  if (SES) api("/rest/v1/profiles?id=eq." + SES.user.id, { method: "PATCH", body: { premium_theme: PREM.theme } }).catch(() => {});
+}
+export const core = { premium: () => !!(PREM && (PREM.premium || PREM.admin)), emails: () => !!(PREM && (PREM.emails || PREM.bump || PREM.admin)), admin: () => !!(PREM && PREM.admin),
+  theme: () => (PREM && PREM.theme) || "dark", setTheme, demo: () => DEMO, premiumInfo: () => PREM, badge, badgeSvg, prVerified, URL: URL_, KEY, ST, api, fresh, loadProfile, changed, signOut, member, profile: () => PRO, ses: () => SES, cfg: () => CFG };
 export async function init(cfg) {
-  CFG = cfg || {}; SES = store.get(SK); shell(); headBtn();
+  CFG = cfg || {}; SES = DEMO ? { access_token: "demo", refresh_token: "demo", expires_at: Math.floor(Date.now() / 1000) + 86400, user: { id: "demo-user", email: "demo@example.com" } } : store.get(SK); shell(); headBtn();
   document.addEventListener("click", e => {
     const sh = e.target.closest("[data-show]");
     if (sh) { e.preventDefault(); const show = sh.textContent === "Show"; sh.closest(".acf").parentElement.querySelectorAll(".acpw input").forEach(i => i.type = show ? "text" : "password"); document.querySelectorAll("#accb .acshow").forEach(x => { x.textContent = show ? "Hide" : "Show"; x.setAttribute("aria-label", show ? "Hide password" : "Show password"); }); return; }
@@ -497,6 +562,7 @@ export async function init(cfg) {
   document.addEventListener("click", e => { const j = e.target.closest('#prnudge [data-acc="signup"]'); if (!j) return; const el = document.getElementById("prnudge"); if (el) setTimeout(() => el.remove(), 0); CFG.log && CFG.log("account", { detail: "nudge-click-join" }); });   /* the [data-acc] handler opens sign-up */
   setTimeout(nudges, 4000);   /* after the page settles, never on arrival */
   /* Ryan 2026-10-19: a signed-in account must finish its profile before using the site */
+  await premiumLink();
   if (ONB.isPage()) ONB.show(); else if (SES && !member() && !/^\/(privacy|admin)\.html$/.test(location.pathname)) ONB.go("/onboarding");
   return member();
 }
