@@ -692,7 +692,7 @@ function school(){const s=SCH[S.school];if((s.ng||[]).includes(S.g))S.g=S.g==="m
   const {bv,mark}=bandBits(s);
   const still=BRQ;BRQ=false;
   let o=`<div class="sec branded simple${still?" still":""}" style="padding-top:0;${bv}"><button class="back" data-back>‹ Back</button>
-  <div class="sband">${mark}<div><small>${/\(/.test(s.n)?esc(s.n.replace(/^.*?\((.*?)\).*$/,"$1"))+" · ":""}${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(s.s):""}</small><h1 class="sname">${esc(s.n.replace(/\s*\(.*?\)\s*/g," ").trim())} Track &amp; Field${s.j?" (NJCAA)":" Standards"}</h1>${s.j?`<a class="tplink1" href="/teams/${tslug(S.school)}" data-tpage="${S.school}">Team results &amp; roster ›</a>`:tsw(S.school,"std")}${s.o?`<span class="offpill">★ Official standards${s.yr?` · ${esc(s.yr)}`:""}${oldChart(s)?" (latest published)":""}</span>`:""}${!s.j&&ACC.member()?`<button type="button" class="ccjump" data-ccjump>${STARI}Coach Contacts</button>`:""}</div><div class="srchips" id="srchips"></div></div>
+  <div class="sband">${mark}<div><small>${/\(/.test(s.n)?esc(s.n.replace(/^.*?\((.*?)\).*$/,"$1"))+" · ":""}${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(s.s):""}</small><h1 class="sname">${esc(s.n.replace(/\s*\(.*?\)\s*/g," ").trim())} Track &amp; Field${s.j?" (NJCAA)":" Standards"}</h1>${s.j?`<a class="tplink1" href="/teams/${tslug(S.school)}" data-tpage="${S.school}">Team results &amp; roster ›</a>`:tsw(S.school,"std")}${s.o?`<span class="offpill">★ Official standards${s.yr?` · ${esc(s.yr)}`:""}${oldChart(s)?" (latest published)":""}</span>`:""}${!s.j&&ACC.member()?`<a class="offpill ccpill" href="/teams/${tslug(S.school)}/coaches" data-tcc="${S.school}">${STARI}Coach Contacts <span aria-hidden="true">›</span></a>`:""}</div><div class="srchips" id="srchips"></div></div>
   <div class="sctl">${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} track &amp; field only</p>`:seg("g",g)}<!--tg--></div><!--scols-->`;   /* school checker removed (Ryan 2026-10-16: "is that even necessary, the kids can clearly see") */
   if(s.j){
     o+=`<div class="verify" style="margin-top:16px"><b>No recruiting levels for junior colleges</b><span>This site doesn't set Target, Recruit or Walk-On levels for NJCAA programs: junior colleges compete nationally rather than in conferences, so there's no reliable way to predict a program's marks. Below are ${esc(s.n)}'s best marks this season; the full national list, by event, is in Results.</span><a href="/?tab=results&div=NJCAA">NJCAA national list ›</a>${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">Team on TFRRS ›</a>`:""}</div>`;
@@ -757,9 +757,6 @@ const LTP="https://lt.thepreferredrecruit.com/";
 function premiumUrl(where){const u=new URL(LTP);for(const [k,v] of [["utm_source","standards"],["utm_medium","site"],["utm_campaign","premium"],["utm_content",where]])u.searchParams.set(k,v);return u.toString()}
 const STAR='<span class="ccstar" aria-hidden="true">★</span>';
 const STARI='<span class="ccji" aria-hidden="true">★</span>';
-/* school banner: Premium "Coach Contacts" button next to the official-standards chip (Ryan 2026-11-12) jumps to the coach card */
-document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-ccjump]");if(!b)return;const el=document.getElementById("sroster");if(!el)return;
-  el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"});const c=el.querySelector(".cc");if(c){c.classList.remove("ccflash");void c.offsetWidth;c.classList.add("ccflash")}log("coach_contacts",{detail:"jump"})});
 function ccHTML(rows,nm,ev){const my=stdGrp(ev||"")||"";
   const list=(rows||[]).map(r=>({...r,mine:!!my&&(r.groups||[]).includes(my)})).sort((a,b)=>(b.mine-a.mine)||(/head/i.test(b.title||"")-/head/i.test(a.title||"")));
   if(!list.length)return `<p class="cclk">We don't have ${nm}'s coaches yet. We add colleges every week.</p>`;
@@ -767,15 +764,27 @@ function ccHTML(rows,nm,ev){const my=stdGrp(ev||"")||"";
   const first=list.filter(r=>r.mine).length?list.filter(r=>r.mine):list.slice(0,1),rest=list.filter(r=>!first.includes(r));
   const when=list[0].verified_at?` · checked ${esc(new Date(list[0].verified_at+"T12:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}))}`:"";
   return `<ul class="ccl">${first.map(row).join("")}</ul>${rest.length?`<details class="ccmore"><summary><span class="o">Show all ${list.length} coaches</span><span class="c">Show fewer</span></summary><ul class="ccl">${rest.map(row).join("")}</ul></details>`:""}<p class="ccnote">${list.length} coach${list.length>1?"es":""}${when}. Copy an address and send from your own email.</p>`}
-function loadCC(el,i,isNow){if(!el)return;const s=SCH[i];if(!s||s.j)return;const slug=(s.os&&s.os[0])||slugOf(s.n),nm=esc(s.t||s.n),ev=INT.e||S.e||"";
-  const head=`<div class="cch"><h3>Coach Contacts ${STAR}</h3></div>`;
-  if(!ACC.member()){el.innerHTML="";return}
+/* dedicated Coach Contacts page (Ryan 2026-11-12: "a separate dedicated webpage, similar to how roster pages look, where all the
+   coach contacts are listed name by name"): /teams/<school>/coaches, grouped like the roster, your event's coaches first */
+function ccFull(rows,nm,ev){const my=stdGrp(ev||"")||"";
+  const list=(rows||[]).map(r=>({...r,mine:!!my&&(r.groups||[]).includes(my)}));
+  if(!list.length)return `<p class="cclk">We don't have ${nm}'s coaches yet. We add colleges every week.</p>`;
+  const ini=n=>String(n||"").split(/\s+/).filter(Boolean).map(w=>w[0]).slice(0,2).join("").toUpperCase();
+  const card=r=>`<div class="tpa ccpa${r.mine?" mine":""}"><span class="tpav" aria-hidden="true">${esc(ini(r.name))}</span><span class="ccpi"><b>${esc(r.name)}</b><small>${r.mine?'<span class="ccev">Your event</span> · ':""}${esc(r.title||"Coach")}${(r.groups||[]).length?" · "+r.groups.map(g=>RGRP[g]||g).join(", "):""}</small><span class="ccm">${esc(r.email)}</span></span><button type="button" class="rcopy" data-copy="${esc(r.email)}" aria-label="Copy ${esc(r.name)}'s email">Copy</button></div>`;
+  const ord=(a,b)=>(b.mine-a.mine)||String(a.name).localeCompare(String(b.name));
+  const head=list.filter(r=>/head/i.test(r.title||"")),asst=list.filter(r=>!head.includes(r)&&/coach/i.test(r.title||"")),staff=list.filter(r=>!head.includes(r)&&!asst.includes(r));
+  const when=list.find(r=>r.verified_at);
+  return [["Head coaches",head],["Assistant coaches",asst],["Staff",staff]].filter(([,l])=>l.length).map(([l,g])=>`<div class="ah2">${l} <span>${g.length}</span></div><div class="tpros ccros">${g.sort(ord).map(card).join("")}</div>`).join("")+
+    `<p class="note">${list.length} coach${list.length>1?"es":""}${when?` · checked ${esc(new Date(when.verified_at+"T12:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}))}`:""}. Copy an address and send from your own email.</p>`}
+function loadCC(el,i,isNow,full){if(!el)return;const s=SCH[i];if(!s||s.j)return;const slug=(s.os&&s.os[0])||slugOf(s.n),nm=esc(s.t||s.n),ev=INT.e||S.e||"";
+  const head=full?"":`<div class="cch"><h3>Coach Contacts ${STAR}</h3></div>`;
+  if(!ACC.member()){el.innerHTML=full?`<section class="cc">${head}<p class="cclk">Every coach's name, position and email for ${nm} comes with Premium. <a href="${esc(premiumUrl("coach-page"))}" target="_blank" rel="noopener">See Premium</a></p></section>`:"";return}
   if(!ACC.premium()){el.innerHTML=`<section class="cc">${head}<p class="cclk">Every coach's name, position and email for ${nm} comes with Premium. <a href="${esc(premiumUrl("school-coach-contacts"))}" target="_blank" rel="noopener">See Premium</a></p></section>`;return}
   if(!ACC.emails()){el.innerHTML=`<section class="cc">${head}<p class="cclk">Coach emails are the $17 add-on to Premium. Questions? <a href="mailto:support@thepreferredrecruit.com">support@thepreferredrecruit.com</a></p></section>`;return}
-  const draw=r=>{if(isNow())el.innerHTML=`<section class="cc">${head}${ccHTML(r,nm,ev)}</section>`};
+  const draw=r=>{if(isNow())el.innerHTML=full?ccFull(r,nm,ev):`<section class="cc">${head}${ccHTML(r,nm,ev)}</section>`};
   if(ROSTER[slug])return draw(ROSTER[slug]);
   el.innerHTML=`<section class="cc">${head}<p class="cclk">Loading coaches…</p></section>`;
-  ACC.core.api("/rest/v1/rpc/coach_roster",{method:"POST",body:{slug}}).then(r=>{ROSTER[slug]=r||[];draw(ROSTER[slug]);log("coach_contacts",{school:s.n})})
+  ACC.core.api("/rest/v1/rpc/coach_roster",{method:"POST",body:{slug}}).then(r=>{ROSTER[slug]=r||[];draw(ROSTER[slug]);log("coach_contacts",{school:s.n,detail:full?"page":"card"})})
     .catch(e=>{if(isNow())el.innerHTML=`<section class="cc">${head}<p class="cclk">${/limit/.test(e.message)?"You've opened a lot of colleges today. More open tomorrow.":"Couldn't load the coaches. Try again in a minute."}</p></section>`})}
 function schoolRoster(i){if(i==null)return;loadCC(document.getElementById("sroster"),i,()=>S.school===i)}
 document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest(".rcopy");if(!b)return;const v=b.dataset.copy;const ok=()=>{b.textContent="Copied";b.classList.add("ok");setTimeout(()=>{b.textContent="Copy";b.classList.remove("ok")},1400)};log("coach_copy",{});if(navigator.clipboard)navigator.clipboard.writeText(v).then(ok).catch(()=>{});else ok()});
@@ -1511,10 +1520,11 @@ function tModel(i,sea,g){const s=SCH[i],b=tbase(s),F=b&&TDATA[b]&&!TDATA[b].none
   return {F,events,roster,best,loading:!LR}}
 function tSeasons(i,g){const s=SCH[i],b=tbase(s),F=b&&TDATA[b]&&!TDATA[b].none?TDATA[b]:null,set=new Set(seaOf(s.d));
   if(F)F.A.forEach(a=>{if(a.g===g&&a.h)a.h.forEach(h=>h[0]&&set.add(h[0]))});return [...set].filter(k=>!k.endsWith("-xc")).sort().reverse()}
-function openTeam(i,push=true){if(i==null||i<0)return;TQ.v="";TM.i=i;TM.ath=null;TM.ev="";TM.open={};TM.tab="results";TM.g=(SCH[i].ng||[]).includes(R.g)?(R.g==="m"?"w":"m"):R.g;TM.sea="";
-  S.tab="results";S.school=null;CC.on=false;if(push)history.pushState({},"","/teams/"+tslug(i));tMeta(i);R.swap=true;render();scrollTo(0,0);log("team",{school:SCH[i].n,division:SCH[i].d})}
+const tpath=i=>"/teams/"+tslug(i)+(TM.tab==="coaches"?"/coaches":"");
+function openTeam(i,push=true,tab){if(i==null||i<0)return;TQ.v="";TM.i=i;TM.ath=null;TM.ev="";TM.open={};TM.tab=tab||"results";TM.g=(SCH[i].ng||[]).includes(R.g)?(R.g==="m"?"w":"m"):R.g;TM.sea="";
+  S.tab="results";S.school=null;CC.on=false;if(push)history.pushState({},"",tpath(i));tMeta(i);R.swap=true;render();scrollTo(0,0);log("team",{school:SCH[i].n,division:SCH[i].d,detail:TM.tab})}
 function closeTeam(){TM.i=null;TM.ath=null;history.pushState({},"","/?tab=results");R.swap=true;render();scrollTo(0,0)}
-function tMeta(i){const s=SCH[i];if(window.__prMeta)window.__prMeta(`${s.t||s.n} Track & Field Results, Roster & Athletes | Preferred Recruit`,`${s.n} track and field: every athlete's season best by event, the full roster by class, and each athlete's meet history (${s.d}${s.c!==s.d?", "+s.c:""}). From TFRRS.`,"/teams/"+tslug(i))}
+function tMeta(i){const s=SCH[i];if(window.__prMeta)window.__prMeta(TM.tab==="coaches"?`${s.t||s.n} Track & Field Coach Contacts | Track Standards`:`${s.t||s.n} Track & Field Results, Roster & Athletes | Preferred Recruit`,`${s.n} track and field: every athlete's season best by event, the full roster by class, and each athlete's meet history (${s.d}${s.c!==s.d?", "+s.c:""}). From TFRRS.`,"/teams/"+tslug(i))}
 const schOfTeam=(name,div)=>{const n=tnorm(name);let i=SCH.findIndex(x=>x.d===div&&tkey(x).includes(n));if(i<0)i=SCH.findIndex(x=>tkey(x).includes(n));return i};
 function bandBits(s){const B=brandOf(s);
   const lum=h=>{const c=String(h||"").replace("#","");if(c.length!==6)return 0;const f=x=>{x=parseInt(x,16)/255;return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4)};return .2126*f(c.slice(0,2))+.7152*f(c.slice(2,4))+.0722*f(c.slice(4,6))};
@@ -1534,12 +1544,12 @@ function teamPage(){const i=TM.i,s=SCH[i];if((s.ng||[]).includes(TM.g))TM.g=TM.g
   <div class="sband">${mark}<div><small>${esc(s.d)}${s.c!==s.d?" · "+esc(s.c):""}${s.s?" · "+esc(ST_NAME[s.s]||s.s):""}</small><h1 class="sname">${esc(nm)} Track &amp; Field</h1>${tsw(i,"team")}
     <span class="tplinks">${s.u?`<a href="${esc(TM.g==="w"?s.u.replace("_college_m_","_college_f_"):s.u)}" target="_blank" rel="noopener nofollow">TFRRS ›</a>`:""}</span></div></div>`;
   if(TM.ath!=null&&M&&M.F)return o+tAthlete(M.F,TM.ath,s)+`</div>`;
-  const tabs=`<div class="tptabs" role="tablist"><button type="button" role="tab" data-ttab="results" aria-selected="${TM.tab==="results"}">Results</button><button type="button" role="tab" data-ttab="roster" aria-selected="${TM.tab==="roster"}">Roster${M&&M.roster.length?` <small>${M.roster.length}</small>`:""}</button>${ACC.member()?`<button type="button" role="tab" data-ttab="coaches" aria-selected="${TM.tab==="coaches"}">Coach Contacts <span class="ccstar" aria-hidden="true">★</span></button>`:""}</div>`;
+  const tabs=`<div class="tptabs" role="tablist"><button type="button" role="tab" data-ttab="results" aria-selected="${TM.tab==="results"}">Results</button><button type="button" role="tab" data-ttab="roster" aria-selected="${TM.tab==="roster"}">Roster${M&&M.roster.length?` <small>${M.roster.length}</small>`:""}</button>${ACC.member()?`<button type="button" role="tab" data-ttab="coaches" aria-selected="${TM.tab==="coaches"}"><span class="cctl">Coach Contacts</span><span class="ccts" aria-hidden="true">Coaches</span> <span class="ccstar" aria-hidden="true">★</span></button>`:""}</div>`;
+  if(TM.tab==="coaches"){setTimeout(()=>loadCC(document.getElementById("troster"),i,()=>TM.i===i&&TM.tab==="coaches",true),0);return o+tabs+`<div id="troster"><p class="cclk">Loading coaches…</p></div></div>`}
   o+=`<div class="tpbar">${(s.ng||[]).length?`<p class="onlyg">${g==="m"?"Men's":"Women's"} only</p>`:`<div class="seg" role="group" aria-label="Men or women"><button type="button" data-tg="m" aria-pressed="${g==="m"}">Men</button><button type="button" data-tg="w" aria-pressed="${g==="w"}">Women</button></div>`}
     <label class="cmp"><span>Season</span><select id="tsea">${ss.map(k=>`<option value="${k}" ${k===TM.sea?"selected":""}>${esc(seasonLabel(k))}</option>`).join("")}</select></label>${TM.sea.endsWith("outdoor")?windSw():""}</div>${tabs}`;
   if(!M)return o+skeleton()+`</div>`;
   if(TM.tab==="roster")return o+tRoster(M,s)+`</div>`;
-  if(TM.tab==="coaches"){setTimeout(()=>loadCC(document.getElementById("troster"),i,()=>TM.i===i&&TM.tab==="coaches"),0);return o+`<div id="troster"></div></div>`}
   const evs=M.events;
   if(!evs.length)return o+`<div class="soon">No ${g==="m"?"men's":"women's"} marks for ${esc(nm)} in ${esc(seasonLabel(TM.sea))} yet. Try another season.${s.u?` <a href="${esc(s.u)}" target="_blank" rel="noopener nofollow">See the team on TFRRS ›</a>`:""}</div></div>`;
   if(TM.ev&&!evs.some(([c])=>c===TM.ev))TM.ev="";
@@ -2492,7 +2502,7 @@ document.addEventListener("click",ev=>{
   if(ev.target.closest("[data-radv]")){R.adv=true;log("results_more",{});render();return}
   {const rb=S.tab==="rankings"&&ev.target.closest("#app [data-rk]");if(rb&&rb.tagName==="BUTTON"){const k=rb.dataset.rk,v=rb.dataset.val;   /* rankings explorer buttons */
     if(k==="all")RK.all=true;else{RK[k]=v;RK.all=false;if(k==="d")RK.key=null;}rkUrl();render();if(k==="c"){const t=document.querySelector(".rkcats");if(t&&t.getBoundingClientRect().top<0)t.scrollIntoView({block:"start"})}return}}
-  const b=ev.target.closest("button,a[data-tpage],[data-ameet]");if(!b||(b.dataset.ameet!==undefined&&ev.target.closest("a[href]")))return;const d=b.dataset;
+  const b=ev.target.closest("button,a[data-tpage],a[data-tcc],[data-ameet]");if(!b||(b.dataset.ameet!==undefined&&ev.target.closest("a[href]")))return;const d=b.dataset;
   if(d.tab){const home=b.classList.contains("logo");S.tab=d.tab;S.school=null;TM.i=null;TM.ath=null;R.swap=true;
     /* top-level buttons always land on that section's main page (Ryan 2026-11-08): leave any profile, meet, team or school view,
        and give the address bar the section's own clean URL so a refresh stays on the landing page too */
@@ -2570,7 +2580,8 @@ document.addEventListener("click",ev=>{
   if(d.team){if(+d.team>=0){const D=CACHE[curKey()],ti=D&&schOfTeam(D.teams[+d.team],R.div);if(ti>=0){openTeam(ti);return}}R.ath=null;R.team=+d.team<0?null:+d.team;R.swap=true;render();return}
   if(d.tpage!==undefined){if(ev.metaKey||ev.ctrlKey||ev.shiftKey)return;ev.preventDefault();openTeam(+d.tpage);return}
   if("tclose" in d){closeTeam();return}
-  if(d.ttab){TM.tab=d.ttab;TM.ath=null;R.swap=true;render();return}
+  if(d.ttab){TM.tab=d.ttab;TM.ath=null;if(location.pathname!==tpath(TM.i)){history.pushState({},"",tpath(TM.i));tMeta(TM.i)}R.swap=true;render();return}
+  if(d.tcc!==undefined){if(ev.metaKey||ev.ctrlKey||ev.shiftKey)return;ev.preventDefault();openTeam(+d.tcc,true,"coaches");return}
   if(d.tg){TM.g=d.tg;TM.ath=null;TM.open={};R.swap=true;render();return}
   if(d.tev!==undefined){TM.ev=d.tev;R.swap=true;render();return}
   if(d.topen){TM.open[d.topen]=!TM.open[d.topen];render();return}
@@ -2657,7 +2668,7 @@ document.addEventListener("submit",ev=>{const fid=ev.target&&ev.target.id;if(fid
   window.__prMeta = setMeta;
   const route = slug => {
     { const tm = location.pathname.match(/^\/teams\/([^/]+)/); if (tm) { const ts = tm[1].replace(/\.html$/, ""); let i = SCH.findIndex((x, k) => tslug(k) === ts); if (i < 0) { const h = hits(ts.replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
-      if (i >= 0) { if (TM.i !== i) openTeam(i, false); else { tMeta(i); render(); } if (location.pathname !== "/teams/" + tslug(i)) history.replaceState({}, "", "/teams/" + tslug(i)); return; } }
+      if (i >= 0) { const cc = /^\/teams\/[^/]+\/coaches\/?$/.test(location.pathname); if (TM.i !== i) openTeam(i, false, cc ? "coaches" : ""); else { TM.tab = cc ? "coaches" : TM.tab === "coaches" ? "results" : TM.tab; tMeta(i); render(); } if (location.pathname !== tpath(i)) history.replaceState({}, "", tpath(i)); return; } }
       else if (TM.i != null) { TM.i = null; TM.ath = null; } }
     if (slug) slug = String(slug).replace(/\.html$/, "");   /* pre-built /schools/<slug>.html pages */
     if (slug) { let i = ALT.has(slug) ? ALT.get(slug) : -1; if (i < 0) { const h = hits(slug.replace(/-track-standards$/, "").replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }

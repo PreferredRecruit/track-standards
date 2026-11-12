@@ -13,6 +13,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/teams/:slug/coaches",
+      "destination": "/index.html"
+    },
+    {
       "source": "/onboarding",
       "destination": "/index.html"
     },

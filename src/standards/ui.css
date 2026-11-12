@@ -436,14 +436,20 @@ button.pmcat{cursor:pointer}
 /* school page: Coach Contacts sit in the side column right under the head coach card (Ryan 2026-11-12: "why arent coach contacts
    under the school"; they were below the full standards table), so rows stack name / email with Copy on the right */
 .scside .cc{margin:12px 0 0;padding:14px 16px}
-.ccjump{display:inline-flex;align-items:center;gap:6px;margin:8px 0 0 6px;padding:4px 12px 4px 5px;border:0;border-radius:var(--r-pill);background:var(--pr-violet);color:#fff;font:inherit;font-size:12px;font-weight:700;letter-spacing:.01em;cursor:pointer;vertical-align:baseline;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 0 1px rgba(255,255,255,.35),var(--sh-1);transition:background-color var(--dur-1) var(--ease-out),transform var(--dur-1) var(--ease-out)}
-.ccjump:hover{background:var(--pr-violet-press)}.ccjump:active{transform:translateY(1px)}
-.ccjump:focus-visible{outline:2px solid #fff;outline-offset:2px}
+/* school banner chip to the Coach Contacts page: same box as the official-standards chip, Premium star badge */
+.simple .ccpill{display:inline-flex;align-items:center;gap:6px;margin-left:6px;padding-left:4px;text-decoration:none;vertical-align:baseline;transition:background-color var(--dur-1) var(--ease-out)}
+.simple .ccpill:hover{background:color-mix(in srgb,var(--sbo) 26%,transparent)}
+.simple .ccpill:focus-visible{outline:2px solid var(--sbo);outline-offset:2px}
+@media (max-width:640px){.simple .ccpill{margin-left:0}}
+/* Coach Contacts page: roster-style cards with the email and a Copy button */
+.tpros.ccros{grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr))}
+.tptabs button{white-space:nowrap}.tptabs .ccts{display:none}
+@media (max-width:440px){.tptabs .cctl{display:none}.tptabs .ccts{display:inline}}
+.ccpa{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center}
+.ccpa .ccm{display:block;margin-top:3px;font-size:var(--fs-13)}
+.ccpa.mine{box-shadow:0 0 0 1.5px var(--pr-violet)}
+.ccpa .ccev{color:var(--pr-violet);font-weight:650}
 .ccji{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#fff;color:var(--pr-violet);font-size:11px;line-height:1}
-.cc.ccflash{animation:ccflash 1.4s var(--ease-out)}
-@keyframes ccflash{0%,40%{box-shadow:0 0 0 3px var(--pr-violet),var(--sh-1)}100%{box-shadow:var(--sh-1)}}
-@media (prefers-reduced-motion:reduce){.cc.ccflash{animation:none}}
-@media (max-width:640px){.ccjump{margin-left:0}}
 .scside .ccl li{grid-template-columns:minmax(0,1fr) auto;gap:2px 10px}.scside .ccl li .ccm{grid-column:1;grid-row:2}.scside .ccl li .rcopy{grid-row:1 / 3;grid-column:2}
 .preval .acbtn{width:auto}
 /* Premium Dark: the selected header tab uses a light pill in dark mode, so its text goes dark */
