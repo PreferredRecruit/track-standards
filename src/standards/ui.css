@@ -204,3 +204,20 @@ main{padding-bottom:48px}
 .hero.compact{display:none}   /* it only held the pill bar, which now lives in the header */
 /* phones: short text links inside sentences ("LSU", "SEC") get a 32px+ tap area with no change to line spacing (inline padding) */
 @media (max-width:640px){.pg main p a:not([class]),.pg main b>a:not([class]){padding-block:7px}}
+
+/* Investor polish (Ryan 2026-11-12): one look for every toggle, aligned score column, readable mark flags, roomier cards */
+:is(#app,#main) .rkseg{gap:2px;background:var(--pr-soft,#F3F2F7);border:0;padding:4px;border-radius:var(--r-pill)}
+:is(#app,#main) .rkseg button{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:var(--r-pill);font-size:14px;font-weight:600;color:var(--pr-mute,#4A4A52);transition:color var(--dur-1) var(--ease-out),background-color var(--dur-1) var(--ease-out)}
+:is(#app,#main) .rkseg button:hover{color:var(--pr-ink,#0B0B0F)}
+:is(#app,#main) .rkseg button.on{background:var(--pr-card,#fff);color:var(--pr-ink,#0B0B0F);box-shadow:var(--sh-1)}
+#app select.in[data-rk]{width:auto;min-width:180px;flex:none;min-height:44px;background:var(--pr-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235E5E66' fill='none' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 15px center;padding-right:36px;border:0;border-radius:var(--r-pill);padding-left:16px;font-size:14px;font-weight:600}
+#app .rkcs,#main .rkcs{display:grid;grid-template-columns:auto 40px;align-items:center;gap:8px;justify-items:start}
+:is(#app,#main) .rkcs .ov{justify-self:end}
+:is(#app,#main) .rkcard:not(:has(.pr-mv)) .rkcs{grid-template-columns:auto}   /* no week-to-week moves in this card: badge sits flush right */
+sup.mkf{margin-left:2px;font-size:.55em;font-weight:700;letter-spacing:.02em;color:var(--pr-mute,#4A4A52);vertical-align:super;cursor:help}
+.scside .glance{grid-template-columns:repeat(3,minmax(0,1fr))}
+.scside .glance .gcoach{grid-column:1 / -1;border-right:0;border-bottom:1px solid var(--pr-line)}
+.scside .glance .gs{padding:14px 12px}
+.scside .glance .gs span{letter-spacing:.03em}
+.scside .glance .gs b{font-size:20px}
+@media (max-width:640px){.pbs{grid-template-columns:repeat(2,minmax(0,1fr))}.pbs b{font-size:24px}}

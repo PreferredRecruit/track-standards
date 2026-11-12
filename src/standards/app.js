@@ -2351,9 +2351,9 @@ function rankings(){rkCss();
 /* the controls: division + gender, timeframe (week / month / season) with its picker, then the sections */
 function rkTop(J){const seg=(k,opts,cur,cls="")=>`<div class="rkseg ${cls}">${opts.map(([v,l])=>`<button type="button" data-rk="${k}" data-val="${esc(v)}" class="${v===cur?"on":""}">${esc(l)}</button>`).join("")}</div>`;
   const L=RK.idx.seasons[RK.d]||[],W=J?J.weeks||[]:[],mos=[...new Set(W.map(w=>w.date.slice(0,7)))];
-  const pick=RK.tf==="season"?`<select data-rk="key" aria-label="Season">${L.map(x=>`<option value="${x.key}"${x.key===RK.key?" selected":""}>${esc(x.label)}${x.final?"":" (in season)"}</option>`).join("")}</select>`
-    :RK.tf==="week"?(W.length?`<select data-rk="wk" aria-label="Week">${W.slice().reverse().map(w=>`<option value="${w.date}"${w.date===RK.wk?" selected":""}>${wname(w.date)}</option>`).join("")}</select>`:"")
-    :(mos.length?`<select data-rk="mo" aria-label="Month">${mos.slice().reverse().map(m=>`<option value="${m}"${m===RK.mo?" selected":""}>${mname(m)}</option>`).join("")}</select>`:"");
+  const pick=RK.tf==="season"?`<select class="in" data-rk="key" aria-label="Season">${L.map(x=>`<option value="${x.key}"${x.key===RK.key?" selected":""}>${esc(x.label)}${x.final?"":" (in season)"}</option>`).join("")}</select>`
+    :RK.tf==="week"?(W.length?`<select class="in" data-rk="wk" aria-label="Week">${W.slice().reverse().map(w=>`<option value="${w.date}"${w.date===RK.wk?" selected":""}>${wname(w.date)}</option>`).join("")}</select>`:"")
+    :(mos.length?`<select class="in" data-rk="mo" aria-label="Month">${mos.slice().reverse().map(m=>`<option value="${m}"${m===RK.mo?" selected":""}>${mname(m)}</option>`).join("")}</select>`:"");
   const evs=J?RKE.filter(e=>(J.events[RK.g]||{})[e]&&J.events[RK.g][e].length):[];
   const cats=[["home","Dashboard"],["overall","Overall school"],...RKG.map(([k,l])=>["grp:"+k,l]),["ev","Events"]];
   const ce=RK.c.startsWith("ev:")?RK.c.slice(3):null,cg=ce?rkGrpOf(ce):RK.c.startsWith("grp:")?RK.c.slice(4):null,cc=ce?(cg?"grp:"+cg:"ev"):RK.c;
@@ -2424,6 +2424,13 @@ const VIEW={key:"prView1",skip:{swap:1,pendAth:1,hl:1,hlGo:1,pend:1,cdd:1,fopen:
     if(S.tab==="results")Object.assign(R,o.r);if(S.tab==="standards"&&S.run)Object.assign(S,o.s);
     const y=+o.y||0;if(y>0){const t0=Date.now(),go=()=>{if(document.documentElement.scrollHeight>=y+innerHeight||Date.now()-t0>4000)scrollTo(0,y);else setTimeout(go,120)};setTimeout(go,60)}}catch(e){}}};
 addEventListener("pagehide",()=>{if(S.school==null)VIEW.save()});
+/* TFRRS mark flags (Ryan 2026-11-12 polish): "6.63 @" / "23.96 #" read as typos. Show the standard notation instead: a small A (altitude)
+   and OT (oversized indoor track), with a tooltip. Runs on text nodes only, so attributes, ranks ("#2") and colours are never touched. */
+const FLAGS={"@":["A","Set at altitude"],"#":["OT","Set on an oversized indoor track"]};
+function markFlags(root){if(!root)return;const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),hit=[];let n;
+  while((n=w.nextNode()))if(/\d\s?[@#]{1,2}\s*$/.test(n.nodeValue)&&!n.parentNode.closest("script,style,textarea,input"))hit.push(n);
+  hit.forEach(t=>{const m=t.nodeValue.match(/^([\s\S]*\d)\s?([@#]{1,2})\s*$/);if(!m)return;const f=document.createDocumentFragment();f.append(m[1]);
+    [...new Set(m[2])].forEach(c=>{const x=document.createElement("sup");x.className="mkf";x.textContent=FLAGS[c][0];x.title=FLAGS[c][1];x.setAttribute("aria-label",FLAGS[c][1]);f.append(x)});t.replaceWith(f)})}
 function render(){
   const onSchool=S.school!=null;
   $("hero").hidden=onSchool||(S.tab==="results"&&TM.i!=null);
@@ -2433,6 +2440,7 @@ function render(){
   $("app").className=(S.tab==="results"||S.tab==="rankings")&&!onSchool?"wide":"";
   const ae=document.activeElement,fid=ae&&/^(tq|tq2|q|rq|cmsa|cmsb)$/.test(ae.id)?ae.id:null,fpos=fid?ae.selectionStart:0,fval=fid?ae.value:"";
   $("app").innerHTML=onSchool?school():{standards,rankings,results,ask}[S.tab]();
+  markFlags($("app"));
   if(fid){const n=$(fid);if(n){n.value=fval;n.focus();try{n.setSelectionRange(fpos,fpos)}catch(e){}if(fid==="q")drop();else teamDrop(fid)}}  /* a data load mid-typing keeps the search box and its list */
   if(S.tab==="standards"&&!onSchool) drop();
   moveInd(); if(S.tab==="standards"&&!onSchool) watchMore();  R.swap=false; ACC.ensureHead&&ACC.ensureHead();
