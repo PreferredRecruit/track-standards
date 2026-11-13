@@ -352,8 +352,10 @@ function modNav() {
   if (!CAT || CAT.err) return "";
   const mods = []; for (const x of CAT) if (x.course === "7day") { let m = mods.find(y => y.t === x.section); if (!m) mods.push(m = { t: x.section, items: [] }); m.items.push(x); }
   if (!mods.length) return "";
-  return `<p class="pmgrp">7-Day Roadmap</p>` + mods.map(m => { const lk = !m.items.some(i => i.unlocked), part = !lk && m.items.some(i => !i.unlocked), on = PT === "course" && CRS === "7day" && LES && LES.section === m.t;
-    return `<button type="button" class="pmnv pmmod${on ? " on" : ""}${lk ? " lk" : ""}" data-onb="cmod" data-v="${esc(m.t)}"${lk ? ' aria-label="' + esc(m.t) + ' (locked)"' : ""}><span class="ic" aria-hidden="true">${m.items.every(i => i.done) ? "✓" : "·"}</span><span class="pmmt">${esc(m.t)}</span>${lk || part ? `<span class="pmlk">${CLOCK}</span>` : ""}</button>`; }).join("");
+  const nav = m => { const lk = !m.items.some(i => i.unlocked), part = !lk && m.items.some(i => !i.unlocked), on = PT === "course" && CRS === "7day" && LES && LES.section === m.t;
+    return `<button type="button" class="pmnv pmmod${on ? " on" : ""}${lk ? " lk" : ""}" data-onb="cmod" data-v="${esc(m.t)}"${lk ? ' aria-label="' + esc(m.t) + ' (locked)"' : ""}><span class="ic" aria-hidden="true">${m.items.every(i => i.done) ? "✓" : "·"}</span><span class="pmmt">${esc(m.t.replace(/^Email templates: /, ""))}</span>${lk || part ? `<span class="pmlk">${CLOCK}</span>` : ""}</button>`; };
+  const tp = "Email templates: ", days = mods.filter(m => !m.t.startsWith(tp)), tpl = mods.filter(m => m.t.startsWith(tp));
+  return `<p class="pmgrp">7-Day Roadmap</p>` + days.map(nav).join("") + (tpl.length ? `<p class="pmgrp">Email templates</p>` + tpl.map(nav).join("") : "");
 }
 /* phone: app-style bottom bar + a full menu sheet (Ryan 2026-11-12: "premium website customization for mobile/phone views") */
 let SHEET = false;

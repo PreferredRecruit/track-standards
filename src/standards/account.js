@@ -58,6 +58,7 @@ function demoApi(path, method, body) {
   if (P.endsWith("/rpc/admin_overview")) return { accounts: 2418, new_week: 142, finished: 1604, premium: 64, emails: 41, premium_week: 9, waiting: 1, lists_opened_week: 311, colleges_listed: 530 };
   if (P.endsWith("/rpc/is_admin")) return DEMO === "admin";
   if (P.endsWith("/rpc/course_catalog")) { const own = { lt27: DEMO !== "free", em17: DEMO === "premium" || DEMO === "admin", pc97: DEMO === "admin" };
+    try { const pre = JSON.parse(localStorage.getItem("prDemoCat")); if (pre) return pre.map(x => Object.assign({}, x, { body: undefined, link: undefined, unlocked: own[x.tier], done: false })); } catch (e) {}   /* local previews with the real catalog */
     const mk = (course, course_title, course_idx, tier, rows) => rows.map(([id, section, title, kind, soon, done], i) => ({ id, tier, course, course_title, course_idx, section, idx: i, title, kind, summary: "", soon: !!soon, done: !!done, unlocked: own[tier], video_secs: kind === "video" && !soon ? 75 : null }));
     return [...mk("7day", "7-Day Roadmap", 0, "lt27", [["7d-start", "Start here", "How your 7 days work", "text", 0, 1], ["7d-start-video", "Start here", "Welcome video", "video", 1],
       ["7d-d1-video", "Day 1: Get ready and enter your marks", "Walkthrough video", "video", 1], ["7d-checklist", "Day 1: Get ready and enter your marks", "Prep Checklist: 10 things to have ready", "text", 0, 1], ["7d-marks", "Day 1: Get ready and enter your marks", "Enter your marks on the Standards Site", "tool"],
@@ -67,6 +68,7 @@ function demoApi(path, method, body) {
       ...mk("7day", "7-Day Roadmap", 0, "em17", [["7d-cc", "Day 4: Write your first emails", "Find each coach's email (Coach Contacts)", "tool"]]),
       ...mk("call", "Plan Call", 2, "pc97", [["call-book", "Your Plan Call", "Book your Plan Call", "text"]])]; }
   if (P.endsWith("/rpc/course_item")) { const id = (body || {}).item || "";
+    try { const pre = JSON.parse(localStorage.getItem("prDemoCat")); const hit = pre && pre.find(x => x.id === id); if (hit) return Object.assign({}, hit, { video_path: hit.video_path ? "demo.mp4" : null }); } catch (e) {}
     return id === "7d-checklist" ? { id, kind: "text", body: "1. **Core-Course GPA and Transcript.** You need at least a **2.3 GPA** in your NCAA core courses for **D1**.\n2. **NCAA Eligibility Center Account.** Sign up at [eligibilitycenter.org](https://web3.ncaa.org/ecwr3/).\n\nOnce **all 10 boxes are checked**, you're ready." }
       : id === "7d-em-1" ? { id, kind: "text", body: "Subject line\n\n[Grad Year] | [Event] | [First Last]\n\nHey Coach [Coach Last Name],\n\nMy name is [First Last]..." }
       : { id, kind: "video", soon: /start|d1/.test(id), video_path: /tracker|pb1/.test(id) ? "demo.mp4" : null, link: /tracker/.test(id) ? "https://docs.google.com/spreadsheets/d/x/copy" : null, body: /tracker/.test(id) ? "1. Watch the video.\n2. Tap **Make your copy**." : null }; }
