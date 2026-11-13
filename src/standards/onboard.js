@@ -33,6 +33,7 @@ const IMG = {};   // storage path → blob URL
 
 const par = () => D.role === "parent";
 const fam = () => D.role === "athlete" || D.role === "parent";
+const NEWUI = () => core.admin() || !!core.demo();   /* admin-only preview of the new account area (Ryan 2026-11-12) */
 const S = () => par() ? K : D;   // the athlete being built or shown
 const QUICK = () => MODE.startsWith("q:");
 const kidOnly = () => par() && MODE !== "onboard" && MODE !== "edit";
@@ -172,7 +173,10 @@ function doneView() {
     `<div class="vabar" role="status"><span>${svg('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', 17)}Viewing <b>${esc(VIEW_AS.name || VIEW_AS.email)}</b>'s account exactly as they see it. Read only.</span>${VIEW_AS.done ? "" : "<em>Profile not finished</em>"}<button type="button" data-onb="vaback">Back to accounts</button></div>` +
     (!D.role ? `<div class="onbwrap one"><section class="onbmain onbdone"><h1>Nothing set up yet</h1><p class="onbsub">This account was created but hasn't started the profile steps.</p></section></div>`
       : D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`);
-  if (D.role && (core.premium() || fam() || core.admin())) return premiumView();   /* free accounts get the same shell with locks (Ryan 2026-11-12) */
+  /* Ryan 2026-11-12: "send it all to my account not to live people yet". The new account area (Home profile, My Recruitment,
+     Coaches, My School List, Customize, View as) shows only to admin accounts (and local ?demo previews) until Ryan launches it;
+     everyone else keeps the earlier account page. Launch = change NEWUI to () => true. */
+  if (D.role && NEWUI()) return premiumView();
   return top(NAV + (IS_ADMIN ? `<button type="button" class="onbtab${TAB === "admin" ? " on" : ""}" data-onb="tab" data-v="admin">Accounts</button><button type="button" class="onbtab${TAB === "profile" ? " on" : ""}" data-onb="tab" data-v="profile">My profile</button>` : "")) +
     `<div class="onbhome"><button type="button" class="onbhb" data-onb="home" data-v="standards">‹ Back to the site</button></div>` + (TAB === "admin" && IS_ADMIN ? adminView()
       : fam() ? `<div class="prlayout">${kit()}<div class="prmainc">${TAB === "kit" ? kitView() : D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : parentView()}</div></div>`
@@ -182,7 +186,7 @@ function doneView() {
    then the premium resources, locked until the low-ticket purchase, unlocked in place after it. live with the low-ticket launch (2026-11-12). ---------- */
 const LT_URL = "https://lt.thepreferredrecruit.com/";   /* Abe's sales page; confirm the exact path before launch */
 const KIT_P = [["cc", "Coach Contacts", "Every coach's name, position and email ($17 add-on)"], ["list", "My College List", "Rank up to 25 colleges against your marks"],
-  ["course", "The 7-Day Roadmap course", "Videos, email and DM templates and the tracker, right here"], ["dark", "Premium Dark", "A sleek dark look for the whole site"]];
+  ["course", "The 7-Day Roadmap course", "Videos, email and DM templates and the tracker"], ["dark", "Premium Dark", "A sleek dark look for the whole site"]];
 const LOCK = '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>';
 function kit() {
   const sub = par() ? KIDS[SEL] : D, P = core.premium(), info = core.premiumInfo() || {};
