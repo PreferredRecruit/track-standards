@@ -396,7 +396,10 @@ document.addEventListener("input", e => { const el = e.target.closest && e.targe
   if (sv) sv.textContent = "Not saved yet"; });
 /* ---------- My Recruitment, simple (Ryan 2026-11-12: "should be able to be used by a 12 year old, the simpler the better,
    when in doubt condense"). One screen per day with tick boxes; the site picks the email; one big Copy button. ---------- */
-let DAY = null, PICKQ = null, TPLLIST = false;
+let DAY = null, PICKQ = null, TPLLIST = false, RSUB = "roadmap";
+/* My Recruitment sub-sections (Ryan 2026-11-12: "clicking My Recruitment should pop out subcategories ... each a distinct sub-section") */
+const RSUBS = [["roadmap", "7-Day Roadmap", "cap"], ["emails", "Email Templates", "mail"], ["dm", "DM Templates", "file"], ["tracker", "Recruitment Tracker", "chart"], ["checklist", "Prep Checklist", "file"]];
+const RSUB_ITEM = { dm: "7d-dm", tracker: "7d-tracker", checklist: "7d-checklist" };
 const TPLPFX = "Email templates: ";
 const SETS = { reg_yes: "Schools you already qualify for", reg_no_d12: "D1 and D2, still building your marks", reg_no_d3n: "D3 and NAIA, still building your marks",
   acad: "Academics-first schools", topd1: "Top academic D1 schools", ivy: "Ivy League and academic D2 schools" };
@@ -413,10 +416,11 @@ function recView() {
   const ds = recDays();
   if (LES && LES.course === "7day") return recLesson(ds);
   if (PICKQ) return pickerView();
+  if (RSUB === "emails") return emailsView();
   if (TPLLIST) return tplListView();
   if (DAY) { const d = ds.find(x => x.t === DAY); if (d) return dayView(d, ds); DAY = null; }
   const open = ds.some(d => d.items.some(i => i.unlocked)), doneN = ds.filter(dayDone).length, cur = curDay(ds);
-  return `<div class="pmtitle"><h1>My Recruitment</h1><p>${open ? `${doneN} of ${ds.length} done. One step at a time.` : "Your 7-Day Roadmap. Unlock it to start."}</p></div>
+  return `<div class="pmtitle"><h1>7-Day Roadmap</h1><p>${open ? `${doneN} of ${ds.length} done. One step at a time.` : "Your 7-Day Roadmap. Unlock it to start."}</p></div>
     <div class="rdbar" aria-hidden="true"><i style="width:${ds.length ? Math.round(doneN / ds.length * 100) : 0}%"></i></div>
     <ol class="rdays">${ds.map((d, i) => { const lk = !d.items.some(x => x.unlocked), dn = dayDone(d), now = !lk && d === cur;
       return `<li><button type="button" class="rday${now ? " now" : ""}${dn ? " done" : ""}${lk ? " lk" : ""}" data-onb="rday" data-v="${esc(d.t)}">
@@ -440,7 +444,8 @@ function dayView(d, ds) {
 function recLesson(ds) {
   const d = ds.find(x => x.t === LES.section), tpl = (LES.section || "").startsWith(TPLPFX);
   const c = { items: d ? dayTasks(d) : [LES] };
-  return `<div class="crsback"><button type="button" class="onbback" data-onb="rlback">‹ ${esc(d ? dayName(d.t) : tpl ? "Day 4" : "My Recruitment")}</button></div>
+  const direct = RSUB_ITEM[RSUB] === LES.id;
+  return `${direct ? "" : `<div class="crsback"><button type="button" class="onbback" data-onb="rlback">‹ ${esc(RSUB === "emails" ? "Email Templates" : d ? dayName(d.t) : tpl ? "Day 4" : "My Recruitment")}</button></div>`}
     <article class="crslesson">${lessonBody(c)}${tpl ? `<p class="rother"><button type="button" class="lnkbtn" data-onb="rtpls">See other emails</button></p>` : ""}</article>`;
 }
 function pickerView() {
@@ -455,6 +460,16 @@ function tplListView() {
   return `<div class="crsback"><button type="button" class="onbback" data-onb="rtplsback">‹ Back</button></div><div class="pmtitle"><h1>All emails</h1><p>Pick any email. Copy it and send from your own inbox.</p></div>
     ${sets.map(s => `<details class="rset"><summary>${esc(s.t.replace(TPLPFX, ""))}</summary>${s.items.map(it => `<button type="button" class="rsi" data-onb="rtask" data-v="${esc(it.id)}">${esc(it.title)}</button>`).join("")}</details>`).join("")}`;
 }
+function emailsView() {
+  const sets = []; for (const x of CAT || []) if ((x.section || "").startsWith(TPLPFX)) { let st = sets.find(y => y.t === x.section); if (!st) sets.push(st = { t: x.section, items: [] }); st.items.push(x); }
+  const open = sets.some(st => st.items.some(i => i.unlocked)), desc = { [SETS.reg_yes]: "Your mark already meets their standards", [SETS.reg_no_d12]: "D1 or D2 school, you're still getting faster",
+    [SETS.reg_no_d3n]: "D3 or NAIA school, you're still getting faster", [SETS.acad]: "Grades matter most", [SETS.topd1]: "Like Stanford or Duke", [SETS.ivy]: "Like Harvard or Bentley" };
+  return `<div class="pmtitle"><h1>Email Templates</h1><p>Find the kind of school, then copy the email. The follow-up is right under it.</p></div>
+    ${open ? `<div class="rhelp"><button type="button" class="acbtn" data-onb="rpick">Help me pick</button><span>Not sure? Answer 2 quick questions.</span></div>` : buyView("lt27")}
+    <div class="ecards">${sets.map(st => { const nm = st.t.replace(TPLPFX, ""), lk = !st.items.some(i => i.unlocked);
+      return `<section class="ecard${lk ? " lk" : ""}"><h2>${lk ? CLOCK + " " : ""}${esc(nm)}</h2><p>${esc(desc[nm] || "")}</p>
+        <div class="ebtns">${st.items.map(it => `<button type="button" class="ebtn${/follow/i.test(it.title) ? " fu" : ""}" data-onb="rtask" data-v="${esc(it.id)}">${esc(it.title)}</button>`).join("")}</div></section>`; }).join("")}</div>`;
+}
 function pickFinish(key) {
   const name = TPLPFX + SETS[key], fu = PICKQ && PICKQ.fu; try { localStorage.setItem("prPick", key); } catch (e) {}
   PICKQ = null; openPicked(name, fu);
@@ -467,8 +482,11 @@ function openPicked(name, fu) {
 }
 function recAction(a, b) {
   const ds = recDays(), v = b.dataset.v;
+  if (a === "rsub") { RSUB = v; PT = "course"; DAY = null; LES = null; LESD = null; TPL = null; PICKQ = null; TPLLIST = false; SHEET = false;
+    if (RSUB_ITEM[v]) openLesson(RSUB_ITEM[v]); else render(); layer().scrollTo(0, 0); return true; }
   if (a === "rday") { DAY = v; LES = null; PICKQ = null; TPLLIST = false; PT = "course"; SHEET = false; render(); layer().scrollTo(0, 0); return true; }
   if (a === "rback") { DAY = null; LES = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "rlback" && RSUB === "emails") { LES = null; LESD = null; TPL = null; render(); layer().scrollTo(0, 0); return true; }
   if (a === "rlback") { const tpl = LES && (LES.section || "").startsWith(TPLPFX); DAY = tpl ? (ds.find(d => /^Day 4/.test(d.t)) || {}).t || null : LES ? LES.section : null; LES = null; LESD = null; TPL = null; render(); layer().scrollTo(0, 0); return true; }
   if (a === "rtick") { const it = (CAT || []).find(x => x.id === v); if (it) markDone(it, !it.done); return true; }
   if (a === "rlock" || a === "rtask") { PT = "course"; openLesson(v); layer().scrollTo(0, 0); return true; }
@@ -515,7 +533,7 @@ function sideNav() {
     <p class="pmgrp">View as</p><div class="pmvas" role="radiogroup" aria-label="View my account as">${vas.map(([k, l]) => `<button type="button" role="radio" aria-checked="${cv === k}" data-onb="viewas" data-v="${k}">${l}</button>`).join("")}</div>
     <p class="pmgrp">Your account</p>` : "";
   const P = core.premium();
-  return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Home", ico("home"))}${it("course", "My Recruitment", ico("cap"))}${it("cc", "Coaches", ico("mail"))}${it("list", "My School List", ico("bookmark"))}
+  return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Home", ico("home"))}${it("course", "My Recruitment", ico("cap"))}${recSub()}${it("cc", "Coaches", ico("mail"))}${it("list", "My School List", ico("bookmark"))}
     <div class="pmsep"></div>${it("profile", "My profile", ico("user"))}${it("set", "Customize", ico("sliders"))}
     <div class="pmplan">${P ? `<b>${STAR} ${core.admin() ? "Admin" : "Premium"}</b><span><i class="dot"></i>${core.admin() ? "Everything unlocked" : "Active"}</span>`
       : `<b>Free account</b><span>Unlock all 7 days.</span><a class="acbtn" href="${esc(buyUrl("lt27", "sidebar"))}" target="_blank" rel="noopener">Unlock · $27</a>`}</div></nav>`;
@@ -529,6 +547,12 @@ function modNav() {
     return `<button type="button" class="pmnv pmmod${on ? " on" : ""}${lk ? " lk" : ""}" data-onb="cmod" data-v="${esc(m.t)}"${lk ? ' aria-label="' + esc(m.t) + ' (locked)"' : ""}><span class="ic" aria-hidden="true">${m.items.every(i => i.done) ? CCHK : ico("dot", 14)}</span><span class="pmmt">${esc(m.t.replace(/^Email templates: /, ""))}</span>${lk || part ? `<span class="pmlk">${CLOCK}</span>` : ""}</button>`; };
   const tp = "Email templates: ", days = mods.filter(m => !m.t.startsWith(tp)), tpl = mods.filter(m => m.t.startsWith(tp));
   return `<p class="pmgrp">7-Day Roadmap</p>` + days.map(nav).join("") + (tpl.length ? `<p class="pmgrp">Email templates</p>` + tpl.map(nav).join("") : "");
+}
+function recSub() {
+  if (PT !== "course") return "";
+  const ds = recDays(), free = ds.length && !ds.some(d => d.items.some(i => i.unlocked));
+  return `<div class="pmsub" role="group" aria-label="My Recruitment">${RSUBS.map(([k, l, ic]) => { const on = RSUB === k;
+    return `<button type="button" class="pmsb${on ? " on" : ""}" data-onb="rsub" data-v="${k}"${on ? ' aria-current="page"' : ""}><span class="ic" aria-hidden="true">${ico(ic, 15)}</span>${l}${free ? `<span class="pmlk">${CLOCK}</span>` : ""}</button>`; }).join("")}</div>`;
 }
 /* phone: app-style bottom bar + a full menu sheet (Ryan 2026-11-12: "premium website customization for mobile/phone views") */
 let SHEET = false;
@@ -688,14 +712,14 @@ document.addEventListener("submit", e => { const f = e.target.closest && e.targe
   if (f.dataset.pform === "add") listAdd(document.getElementById("pmadd").value);
   if (f.dataset.pform === "cc") { CCQ = document.getElementById("pmcq").value; const all = core.cfg().schools ? core.cfg().schools() : [], hit = all.find(n => n.toLowerCase() === CCQ.trim().toLowerCase()); if (hit) CCS = hit; render(); const C = core.cfg(); C.log && C.log("coach_contacts", { detail: "search" }); } });
 function premiumAction(a, b) {
-  if (a === "pt") { SHEET = false; BUYMSG = ""; PT = b.dataset.v; OPEN = null; LMSG = ""; if (PT === "cc") { CCS = null; } if (PT === "course") { CRS = null; LES = null; CMSG = ""; DAY = null; PICKQ = null; TPLLIST = false; TPL = null; } render(); layer().scrollTo(0, 0); return true; }
+  if (a === "pt") { SHEET = false; BUYMSG = ""; PT = b.dataset.v; OPEN = null; LMSG = ""; if (PT === "cc") { CCS = null; } if (PT === "course") { CRS = null; LES = null; CMSG = ""; DAY = null; PICKQ = null; TPLLIST = false; TPL = null; RSUB = "roadmap"; } render(); layer().scrollTo(0, 0); return true; }
   if (a === "cl") { SHEET = false; openLesson(b.dataset.v); return true; }
   if (a === "sheet") { SHEET = !SHEET; render(); return true; }
   if (a === "recheck") { BUYMSG = "Checking…"; render(); core.loadProfile().then(() => { const k = BUYK || NEEDS[PT]; BUYMSG = k && owns(k) ? "Unlocked. You're all set." : "Not unlocked yet. If you just paid, give it a minute and check again."; CAT = null; render(); }); return true; }
   if (a === "cback") { CRS = null; LES = null; LESD = null; VSRC = null; render(); layer().scrollTo(0, 0); return true; }
   if (a === "copen") { const c = courseList().find(x => x.k === b.dataset.v); if (!c) return true; CRS = c.k; LES = null; render(); layer().scrollTo(0, 0); return true; }
   if (/^tp/.test(a) && tplAction(a, b)) return true;
-  if (/^r(day|back|lback|tick|lock|task|pick|follow|pickback|pickans|tpls|tplsback)$/.test(a) && recAction(a, b)) return true;
+  if (/^r(sub|day|back|lback|tick|lock|task|pick|follow|pickback|pickans|tpls|tplsback)$/.test(a) && recAction(a, b)) return true;
   if (a === "cnext") { PT = "course"; openLesson(b.dataset.v); layer().scrollTo(0, 0); return true; }
   if (a === "viewas") { core.setViewAs(b.dataset.v); pvCat(); PT = b.dataset.v === "admin" ? "admin" : "dash"; DAY = null; LES = null; PICKQ = null; TPLLIST = false; SHEET = false; render(); layer().scrollTo(0, 0); return true; }
   if (a === "cmod") { SHEET = false; PT = "course"; CRS = "7day"; LES = null; MODQ = b.dataset.v; render(); layer().scrollTo(0, 0); return true; }
