@@ -361,7 +361,6 @@ function tplEditor(it) {
   const edited = T.cur.subject !== T.filled.subject || T.cur.body !== T.filled.body;
   const ckl = (k, arr, title) => arr.length ? `<div class="tpcard"><h3>${title}</h3><ul class="tpck">${arr.map((x, i) => { const on = !!T.ck[k + i];
     return `<li><button type="button" class="${on ? "on" : ""}" data-onb="tpck" data-v="${k + i}" aria-pressed="${on}"><span class="bx" aria-hidden="true">${on ? CCHK : ""}</span><span class="tx">${esc(x)}</span></button></li>`; }).join("")}</ul></div>` : "";
-  const mailto = "mailto:?subject=" + encodeURIComponent(T.cur.subject) + "&body=" + encodeURIComponent(T.cur.body);
   return `<div class="tpwrap"><div class="tped">
     <div class="tphead"><span class="tpstat ${n ? "" : "ok"}">${n ? `${n} blank${n === 1 ? "" : "s"} left` : `${CCHK} Ready to send`}</span>
       <span class="tpsave">${T.msg ? esc(T.msg) : T.saved ? "Saved to your account" : edited ? "Not saved yet" : "Default template"}</span></div>
@@ -371,7 +370,7 @@ function tplEditor(it) {
     ${uniq.length ? `<div class="tpblanks"><small>Tap a blank to jump to it</small>${uniq.map(b => `<button type="button" class="tpb" data-onb="tpjump" data-v="${esc(b)}">${esc(b)}</button>`).join("")}</div>` : ""}
     <div class="tpact"><button type="button" class="onbback" data-onb="tpfill">Refill my details</button><button type="button" class="acbtn" data-onb="tpcopy" data-v="body">Copy ${/^7d-dm/.test(it.id) ? "message" : "email"}</button>
       <button type="button" class="onbback" data-onb="tpsave">Save</button>${edited || T.saved ? `<button type="button" class="onbback" data-onb="tpreset">Reset to default</button>` : ""}
-      ${T.def.subject ? `<a class="onbback" href="${esc(mailto)}">Open in my email app</a>` : ""}</div></div>
+</div><p class="tpnote">Copy it and send from your own email. Nothing is sent from this site.</p></div>
     <aside class="tprail">${T.def.how ? `<div class="tpcard"><h3>How to use this</h3><p>${esc(T.def.how)}</p></div>` : ""}${ckl("b", T.def.before, "Before you start, have these ready")}${ckl("c", T.def.check, "Check before you send")}
       ${T.def.next ? `<div class="tpcard tpnext"><p>${esc(T.def.next)}</p></div>` : ""}</aside></div>`;
 }

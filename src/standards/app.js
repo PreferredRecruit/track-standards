@@ -813,11 +813,11 @@ function ccBio(rows,i,cs,ev){const s=SCH[i],nm=esc(s.t||s.n),list=rows||[],c=lis
   <header class="cbhd"><span class="cbav" aria-hidden="true">${esc(cini(c.name))}</span>
     <div class="cbid"><p class="cbk">${nm} Track &amp; Field</p><h2>${esc(c.name)}</h2><p class="cbt">${esc(c.title||"Coach")}</p>
       <div class="cbchips">${mine?'<span class="cbme">Coaches your event</span>':""}${grps.map(x=>`<span>${esc(RGRP[x]||x)}</span>`).join("")}${!grps.length&&head?"<span>Whole program</span>":""}</div></div>
-    <div class="cbact"><a class="cbmail" href="mailto:${esc(c.email)}" data-cbmailto>Email ${first}</a><button type="button" class="rcopy cbcopy" data-copy="${esc(c.email)}" aria-label="Copy ${esc(c.name)}'s email">Copy email</button></div>
+    <div class="cbact"><button type="button" class="rcopy cbcopy" data-copy="${esc(c.email)}" aria-label="Copy ${esc(c.name)}'s email">Copy email</button></div>
   </header>
   <div class="cbcols"><div class="cbmain">${std}${ath}${!std&&!ath?`<section class="cbsec"><p class="cclk">${first} ${head?"leads the whole program":"works across the program"}, so there's no single event group. Pick your event on the <a href="/schools/${window.__prSlug(i)}" data-school="${i}">${nm} standards page ›</a></p></section>`:""}</div>
   <aside class="cbside">
-    <section class="cbcard"><h3>Contact</h3><dl><div><dt>Email</dt><dd><a href="mailto:${esc(c.email)}" data-cbmailto>${esc(c.email)}</a></dd></div><div><dt>Position</dt><dd>${esc(c.title||"Coach")}</dd></div>${grps.length?`<div><dt>Event groups</dt><dd>${esc(cgrps(c))}</dd></div>`:""}${c.verified_at?`<div><dt>Checked</dt><dd>${esc(cdate(c.verified_at))}</dd></div>`:""}</dl></section>
+    <section class="cbcard"><h3>Contact</h3><dl><div><dt>Email</dt><dd><span class="cbem">${esc(c.email)}</span></dd></div><div><dt>Position</dt><dd>${esc(c.title||"Coach")}</dd></div>${grps.length?`<div><dt>Event groups</dt><dd>${esc(cgrps(c))}</dd></div>`:""}${c.verified_at?`<div><dt>Checked</dt><dd>${esc(cdate(c.verified_at))}</dd></div>`:""}</dl></section>
     <section class="cbcard cbnotes"><h3>My notes</h3><label class="sr" for="cbnote">Your notes on ${esc(c.name)}</label><textarea id="cbnote" data-cn="${esc(cnKey(i,cs))}" maxlength="2000" placeholder="What you sent, what they said, what to follow up on">${esc(n.n||"")}</textarea>
       <div class="cbnr"><button type="button" class="cbsent${n.e?" on":""}" data-cbsent="${esc(cnKey(i,cs))}" aria-pressed="${!!n.e}">${n.e?`Emailed ${esc(cdate(n.e))}`:`I emailed ${first} today`}</button><span class="cbsaved" aria-live="polite"></span></div>
       <small>Only you see these. They're saved on this device.</small></section>
