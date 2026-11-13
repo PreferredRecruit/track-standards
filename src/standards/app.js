@@ -8,6 +8,7 @@ async function unpack(r){ return await new Response(r.body.pipeThrough(new Decom
    from the data branch doesn't have them, so they are merged here the same way (prerender.mjs mergeConfMeets) */
 async function withConfMeets(key, D){
   if (D.lists.some(L => L.champ && L.conf)) return D;
+  if (!/-(d[123]|naia|njcaa|nwac)$/.test(key)) return D;   /* only these divisions have conference-meet files (NCCAA/USCAA 404'd) */
   try { const r = await fetch("/data/confmeets/" + key + ".dat"); if (!r.ok) return D; const C = await unpack(r);
     const ix = (arr, s) => { let i = arr.indexOf(s); if (i < 0) { i = arr.length; arr.push(s); } return i; }, tm = C.teams.map(t => ix(D.teams, t)), mm = C.meets.map(m => ix(D.meets, m));
     for (const L of C.lists) for (const g of Object.keys(L.g)) for (const rows of Object.values(L.g[g])) for (const r of rows) { r[3] = tm[r[3]]; r[6] = mm[r[6]]; }
