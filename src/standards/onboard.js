@@ -269,8 +269,8 @@ function loadCat() { core.api("/rest/v1/rpc/course_catalog", { method: "POST", b
 function courseList() { const cs = []; for (const it of CAT || []) { let c = cs.find(x => x.k === it.course); if (!c) cs.push(c = { k: it.course, t: it.course_title, items: [] }); c.items.push(it); } return cs; }
 const pct = c => { const n = c.items.filter(i => !i.soon).length; return n ? Math.round(c.items.filter(i => i.done && !i.soon).length / n * 100) : 0; };
 function courseView() {
-  if (!CAT) { loadCat(); return `<div class="pmtitle"><h1>Classroom</h1></div><p class="pmempty">Loading…</p>`; }
-  if (CAT.err) return `<div class="pmtitle"><h1>Classroom</h1></div><p class="acerr">Couldn't load the classroom. ${esc(CAT.err)}</p>`;
+  if (!CAT) { loadCat(); return `<div class="pmtitle"><h1>My Recruitment</h1></div><p class="pmempty">Loading…</p>`; }
+  if (CAT.err) return `<div class="pmtitle"><h1>My Recruitment</h1></div><p class="acerr">Couldn't load My Recruitment. ${esc(CAT.err)}</p>`;
   if (CRS) { const c = courseList().find(x => x.k === CRS); if (c) return coursePage(c); CRS = null; }
   const card = c => { const meta = COURSES[c.k] || {}, P = PRODS[meta.k] || {}, open = c.items.some(i => i.unlocked), p = pct(c), n = c.items.length;
     return `<button type="button" class="clc${open ? "" : " locked"}" data-onb="copen" data-v="${esc(c.k)}">
@@ -278,7 +278,7 @@ function courseView() {
       <span class="clcb"><b>${esc(c.t)}</b><small>${esc(meta.d || "")}</small>
       ${open ? `<span class="clbar" aria-label="${p}% complete"><i style="width:${p}%"></i></span><span class="clpct">${p}% complete · ${n} lessons</span>`
         : `<span class="clbuy">${esc(P.price || "")} · Unlock on Whop</span>`}</span></button>`; };
-  return `<div class="pmtitle"><h1>Classroom</h1><p>Everything from your Preferred Recruit purchase, in one place.</p></div>
+  return `<div class="pmtitle"><h1>My Recruitment</h1><p>Everything from your Preferred Recruit purchase, in one place.</p></div>
     ${CMSG ? `<p class="pmnote" role="status">${CMSG}</p>` : ""}<div class="clgrid">${courseList().map(card).join("")}</div>`;
 }
 function coursePage(c) {
@@ -288,7 +288,7 @@ function coursePage(c) {
     <span class="cmic${it.unlocked ? "" : " lk"}" aria-hidden="true">${!it.unlocked ? CLOCK : it.done ? CCHK : kindIc(it.kind)}</span><span class="cmt">${esc(it.title)}</span>${it.unlocked && it.soon ? '<span class="crsoon">Soon</span>' : ""}</button>`;
   const doneN = c.items.filter(i => i.done).length, cur = secs.find(s => s.items.some(i => LES && i.id === LES.id));
   const mods = secs.map(s => `<details class="cmod"${!LES || s === cur || secs.length < 4 ? " open" : ""}><summary><span>${esc(s.t)}</span><small>${s.items.filter(i => i.done).length}/${s.items.length}</small></summary>${s.items.map(row).join("")}</details>`).join("");
-  return `<div class="crsback"><button type="button" class="onbback" data-onb="cback">‹ Classroom</button></div>
+  return `<div class="crsback"><button type="button" class="onbback" data-onb="cback">‹ My Recruitment</button></div>
     <div class="cpage"><aside class="cside" aria-label="Lessons"><div class="csh"><h2>${esc(c.t)}</h2><span class="clbar"><i style="width:${p}%"></i></span><small>${p}% complete · ${doneN} of ${c.items.length}</small></div>
       <details class="cmobile"><summary>All lessons · ${p}% complete</summary>${mods}</details><div class="cmods">${mods}</div></aside>
       <article class="crslesson">${LES ? lessonBody(c) : `<p class="pmempty">Loading…</p>`}</article></div>`;
@@ -426,7 +426,7 @@ function sideNav() {
   /* admins: Accounts first (Ryan 2026-11-12: "I can no longer see the accounts on my master account"; it had moved to the end of the menu, off-screen on phones) */
   const adm = core.admin() ? `<p class="pmgrp">Admin</p>${it("admin", "Accounts", ico("users"))}${it("aov", "Overview", ico("chart"))}<p class="pmgrp">Your account</p>` : "";
   const P = core.premium();
-  return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Dashboard", ico("home"))}${it("course", "Classroom", ico("cap"), 1)}${it("cc", "Coach Contacts", ico("mail"), 1)}${it("list", "My Colleges", ico("bookmark"), 1)}
+  return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Dashboard", ico("home"))}${it("course", "My Recruitment", ico("cap"), 1)}${it("cc", "Coach Contacts", ico("mail"), 1)}${it("list", "My Colleges", ico("bookmark"), 1)}
     ${modNav()}<p class="pmgrp">Account</p>${it("profile", "Profile and marks", ico("user"))}${it("set", "Settings", ico("sliders"))}
     <div class="pmplan">${P ? `<b>${STAR} ${core.admin() ? "Admin" : "Premium"}</b><span><i class="dot"></i>${core.admin() ? "Everything unlocked" : "Active"}</span>`
       : `<b>Free account</b><span>Unlock the course, college list and more.</span><a class="acbtn" href="${esc(buyUrl("lt27", "sidebar"))}" target="_blank" rel="noopener">Get Premium · $27</a>`}</div></nav>`;
@@ -445,7 +445,7 @@ function modNav() {
 let SHEET = false;
 function phoneNav() {
   const b = (v, l, ic) => `<button type="button" class="pmtb${PT === v ? " on" : ""}" data-onb="pt" data-v="${v}"${PT === v ? ' aria-current="page"' : ""}><span aria-hidden="true">${ic}</span>${l}</button>`;
-  return `<nav class="pmtabs" aria-label="Account menu">${b("dash", "Home", ico("home", 20))}${b("course", "Course", ico("cap", 20))}${b("cc", "Coaches", ico("mail", 20))}${b("list", "Colleges", ico("bookmark", 20))}
+  return `<nav class="pmtabs" aria-label="Account menu">${b("dash", "Home", ico("home", 20))}${b("course", "Recruitment", ico("cap", 20))}${b("cc", "Coaches", ico("mail", 20))}${b("list", "Colleges", ico("bookmark", 20))}
     <button type="button" class="pmtb${SHEET ? " on" : ""}" data-onb="sheet" aria-expanded="${SHEET}"><span aria-hidden="true">${ico("menu", 20)}</span>Menu</button></nav>
     ${SHEET ? `<div class="pmsheetbg" data-onb="sheet"></div><div class="pmsheet" role="dialog" aria-label="Menu">${sideNav()}</div>` : ""}`;
 }
