@@ -414,6 +414,13 @@ const dayName = t => t.split(": ")[0], dayJob = t => t.split(": ")[1] || (t === 
 const dayTasks = d => d.items.filter(i => !isWalk(i));
 const dayDone = d => { const t = dayTasks(d).filter(i => !i.soon && i.unlocked); return t.length > 0 && t.every(i => i.done); };
 const curDay = ds => ds.find(d => !dayDone(d)) || ds[ds.length - 1];
+/* "You are here" trail on every My Recruitment page (Ryan 2026-11-12: easy to get back, no confusing back buttons) */
+function crumbs(parts) {
+  return `<nav class="crumbs" aria-label="You are here">${parts.map((p, i) => i < parts.length - 1
+    ? `<button type="button" class="crb" data-onb="${p[1]}" data-v="${esc(p[2] || "")}">${esc(p[0])}</button><span class="crsep" aria-hidden="true">›</span>`
+    : `<span class="crc" aria-current="page">${esc(p[0])}</span>`).join("")}</nav>`;
+}
+const CR_HUB = ["My Recruitment", "rsub", "hub"], CR_MAP = ["7-Day Roadmap", "rsub", "roadmap"], CR_EM = ["Email Templates", "rsub", "emails"];
 function recView() {
   if (!CAT) { loadCat(); return `<div class="pmtitle"><h1>My Recruitment</h1></div><p class="pmempty">Loading…</p>`; }
   if (CAT.err) return `<div class="pmtitle"><h1>My Recruitment</h1></div><p class="acerr">Couldn't load My Recruitment. ${esc(CAT.err)}</p>`;
@@ -425,7 +432,7 @@ function recView() {
   if (TPLLIST) return tplListView();
   if (DAY) { const d = ds.find(x => x.t === DAY); if (d) return dayView(d, ds); DAY = null; }
   const open = ds.some(d => d.items.some(i => i.unlocked)), doneN = ds.filter(dayDone).length, cur = curDay(ds);
-  return `<div class="pmtitle"><h1>7-Day Roadmap</h1><p>${open ? `${doneN} of ${ds.length} done. One step at a time.` : "Your 7-Day Roadmap. Unlock it to start."}</p></div>
+  return crumbs([CR_HUB, ["7-Day Roadmap"]]) + `<div class="pmtitle"><h1>7-Day Roadmap</h1><p>${open ? `${doneN} of ${ds.length} done. One step at a time.` : "Your 7-Day Roadmap. Unlock it to start."}</p></div>
     <div class="rdbar" aria-hidden="true"><i style="width:${ds.length ? Math.round(doneN / ds.length * 100) : 0}%"></i></div>
     <ol class="rdays">${ds.map((d, i) => { const lk = !d.items.some(x => x.unlocked), dn = dayDone(d), now = !lk && d === cur;
       return `<li><button type="button" class="rday${now ? " now" : ""}${dn ? " done" : ""}${lk ? " lk" : ""}" data-onb="rday" data-v="${esc(d.t)}">
@@ -440,7 +447,7 @@ function dayView(d, ds) {
       <button type="button" class="rck" data-onb="${t.unlocked && !t.soon ? "rtick" : act(t)}" data-v="${esc(t.id)}" aria-pressed="${!!t.done}" aria-label="${esc(label(t))}: ${t.done ? "done" : "not done"}">${!t.unlocked ? CLOCK : t.done ? CCHK : ""}</button>
       <button type="button" class="rtt" data-onb="${act(t)}" data-v="${esc(t.id)}"><b>${esc(label(t))}</b><small>${esc(t.soon ? "Coming soon" : !t.unlocked ? "Coach emails, $17 add-on" : t.summary || "")}</small></button>
       <span class="rgo" aria-hidden="true">›</span></li>`;
-  return `<div class="crsback"><button type="button" class="onbback" data-onb="rback">‹ My Recruitment</button></div>
+  return crumbs([CR_HUB, CR_MAP, [dayName(d.t)]]) + `
     <div class="pmtitle"><p class="rkick">${esc(dayName(d.t))}</p><h1>${esc(dayJob(d.t))}</h1></div>
     ${vid ? `<div class="crsv soon rvid"><span aria-hidden="true">${ico("play", 20)}</span><b>${vid.soon ? "Video coming soon" : esc(vid.title)}</b>${vid.soon ? "<small>The steps below work today.</small>" : ""}</div>` : ""}
     ${lk ? buyView("lt27") : `<ol class="rtasks">${tasks.map(row).join("")}</ol>`}
@@ -450,15 +457,16 @@ function recLesson(ds) {
   const d = ds.find(x => x.t === LES.section), tpl = (LES.section || "").startsWith(TPLPFX);
   const c = { items: d ? dayTasks(d) : [LES] };
   const direct = RSUB_ITEM[RSUB] === LES.id;
-  return `${direct ? "" : `<div class="crsback"><button type="button" class="onbback" data-onb="rlback">‹ ${esc(RSUB === "emails" ? "Email Templates" : d ? dayName(d.t) : tpl ? "Day 4" : "My Recruitment")}</button></div>`}
-    <article class="crslesson">${lessonBody(c)}${tpl ? `<p class="rother"><button type="button" class="lnkbtn" data-onb="rtpls">See other emails</button></p>` : ""}</article>`;
+  const sec = (RSUBS.find(x => x[0] === RSUB) || [])[1];
+  const trail = direct ? [CR_HUB, [sec]] : d ? [CR_HUB, CR_MAP, [dayName(d.t), "rday", d.t], [LES.title]] : [CR_HUB, [LES.title]];
+  return crumbs(trail) + `<article class="crslesson">${lessonBody(c)}</article>`;
 }
 function pickerView() {
   const q = PICKQ, opt = (v, l, s) => `<button type="button" class="rpo" data-onb="rpickans" data-v="${v}"><b>${l}</b>${s ? `<small>${s}</small>` : ""}</button>`;
   const body = q.step === 1 ? `<h1>What kind of school is it?</h1><div class="rpos">${opt("reg", "A regular track program", "Most schools")}${opt("acad", "Grades matter most", "A strong academic school")}${opt("topd1", "Top academic D1", "Like Stanford or Duke")}${opt("ivy", "Ivy League or academic D2", "Like Harvard or Bentley")}</div>`
     : q.step === 2 ? `<h1>Does your mark already meet their standards?</h1><p class="rpq">Look up the school on Track Standards. Walk-on or better counts.</p><div class="rpos">${opt("yes", "Yes", "Walk-on or better")}${opt("no", "Not yet", "I'm still getting faster")}</div>`
     : `<h1>What level is the school?</h1><div class="rpos">${opt("d12", "D1 or D2")}${opt("d3n", "D3 or NAIA")}</div>`;
-  return `<div class="crsback"><button type="button" class="onbback" data-onb="rpickback">‹ Back</button></div><div class="rpick"><p class="rkick">${q.fu ? "Your follow-up" : "Your email"} · question ${q.step}</p>${body}</div>`;
+  return crumbs([CR_HUB, CR_EM, ["Help me pick"]]) + `<div class="rpick"><p class="rkick">${q.fu ? "Your follow-up" : "Your email"} · question ${q.step}</p>${body}</div>`;
 }
 function tplListView() {
   const sets = []; for (const x of CAT || []) if ((x.section || "").startsWith(TPLPFX)) { let s = sets.find(y => y.t === x.section); if (!s) sets.push(s = { t: x.section, items: [] }); s.items.push(x); }
@@ -482,19 +490,37 @@ function hubView() {
     <h2 class="hubh">Add-on</h2>
     <div class="hubg"><button type="button" class="hubc${core.emails() ? "" : " lk"}" data-onb="pt" data-v="cc"><span class="hubi" aria-hidden="true">${core.emails() ? ico("mail", 20) : CLOCK}</span><span class="hubt"><b>Coach emails</b><small>Every college coach's email · $17 add-on</small></span><span class="hubs">${core.emails() ? "Open" : "Locked"}</span></button></div>`;
 }
+let ESEL = null; const EDATA = {};
+const audNow = () => { const sub = PSUB() || D, now = new Date(), senior = now.getFullYear() + (now.getMonth() >= 6 ? 1 : 0); return sub && sub.year && +sub.year <= senior ? "seniors" : "juniors"; };
+function esets() { const sets = []; for (const x of CAT || []) if ((x.section || "").startsWith(TPLPFX)) { let st = sets.find(y => y.t === x.section); if (!st) sets.push(st = { t: x.section, nm: x.section.replace(TPLPFX, ""), items: [] }); st.items.push(x); } return sets; }
+function eSel() { if (!ESEL) { let k = null; try { k = localStorage.getItem("prPick"); } catch (e) {} ESEL = { set: SETS[k] || SETS.reg_yes, fu: false, aud: audNow(), style: 0 }; } return ESEL; }
+const styleOf = t => t.replace(/\s*\((juniors|seniors)\)/i, "").replace(/\s*(email|follow-up)$/i, "").trim();
+function eItem(st, sel) {
+  const pool = st.items.filter(x => /follow/i.test(x.title) === sel.fu), aud = pool.filter(x => x.title.toLowerCase().includes("(" + sel.aud + ")")), list = aud.length ? aud : pool;
+  return { it: list[Math.min(sel.style, list.length - 1)] || pool[0], styles: aud.length ? [] : pool.map(x => styleOf(x.title)), hasAud: pool.some(x => /\((juniors|seniors)\)/i.test(x.title)) };
+}
 function emailsView() {
-  const sets = []; for (const x of CAT || []) if ((x.section || "").startsWith(TPLPFX)) { let st = sets.find(y => y.t === x.section); if (!st) sets.push(st = { t: x.section, items: [] }); st.items.push(x); }
-  const open = sets.some(st => st.items.some(i => i.unlocked)), desc = { [SETS.reg_yes]: "Your mark already meets their standards", [SETS.reg_no_d12]: "D1 or D2 school, you're still getting faster",
-    [SETS.reg_no_d3n]: "D3 or NAIA school, you're still getting faster", [SETS.acad]: "Grades matter most", [SETS.topd1]: "Like Stanford or Duke", [SETS.ivy]: "Like Harvard or Bentley" };
-  return `<div class="pmtitle"><h1>Email Templates</h1><p>Find the kind of school, then copy the email. The follow-up is right under it.</p></div>
-    ${open ? `<div class="rhelp"><button type="button" class="acbtn" data-onb="rpick">Help me pick</button><span>Not sure? Answer 2 quick questions.</span></div>` : buyView("lt27")}
-    <div class="ecards">${sets.map(st => { const nm = st.t.replace(TPLPFX, ""), lk = !st.items.some(i => i.unlocked);
-      return `<section class="ecard${lk ? " lk" : ""}"><h2>${lk ? CLOCK + " " : ""}${esc(nm)}</h2><p>${esc(desc[nm] || "")}</p>
-        <div class="ebtns">${st.items.map(it => `<button type="button" class="ebtn${/follow/i.test(it.title) ? " fu" : ""}" data-onb="rtask" data-v="${esc(it.id)}">${esc(it.title)}</button>`).join("")}</div></section>`; }).join("")}</div>`;
+  const sets = esets(), open = sets.some(st => st.items.some(i => i.unlocked)), sel = eSel(), st = sets.find(x => x.nm === sel.set) || sets[0];
+  const head = crumbs([CR_HUB, ["Email Templates"]]) + `<div class="pmtitle"><h1>Email Templates</h1><p>${open ? "Pick who you're emailing. Your email is ready below." : "The right email for every school, filled in for you."}</p></div>`;
+  if (!open || !st) return head + buyView("lt27");
+  const { it, styles, hasAud } = eItem(st, sel), seg = (on, a, v, l) => `<button type="button" role="radio" aria-checked="${on}" data-onb="${a}" data-v="${v}">${l}</button>`;
+  if (it && !EDATA[it.id]) core.api("/rest/v1/rpc/course_item", { method: "POST", body: { item: it.id } }).then(d => { EDATA[it.id] = d || {}; render(); }).catch(e => { EDATA[it.id] = { err: e.message }; render(); });
+  const d = it && EDATA[it.id];
+  if (d && d.body && (!TPL || TPL.id !== it.id)) loadTpl(it, d);
+  const editor = !d ? `<p class="pmempty">Loading your email…</p>` : d.err ? `<p class="acerr">${esc(d.err)}</p>` : tplEditor(it);
+  return head + `<section class="estep"><h2><span class="enum">1</span>What kind of school?</h2>
+      <div class="etabs" role="radiogroup" aria-label="Kind of school">${sets.map(x => seg(x.nm === st.nm, "eset", x.nm, esc(x.nm))).join("")}</div>
+      <p class="ehelp">Not sure? <button type="button" class="lnkbtn" data-onb="rpick">Answer 2 quick questions</button></p></section>
+    <section class="estep"><h2><span class="enum">2</span>Which email?</h2>
+      <div class="eseg" role="radiogroup" aria-label="First email or follow-up">${seg(!sel.fu, "efu", "0", "First email")}${seg(sel.fu, "efu", "1", "Follow-up (after 7 days)")}</div>
+      ${hasAud ? `<div class="eseg" role="radiogroup" aria-label="Grade">${seg(sel.aud === "juniors", "eaud", "juniors", "Juniors")}${seg(sel.aud === "seniors", "eaud", "seniors", "Seniors")}</div>` : ""}
+      ${styles.length > 1 ? `<p class="elab">Style</p><div class="eseg wrap" role="radiogroup" aria-label="Style">${styles.map((l, i) => seg(i === Math.min(sel.style, styles.length - 1), "estyle", i, esc(l))).join("")}</div>` : ""}</section>
+    <section class="estep"><h2><span class="enum">3</span>Copy it and send it from your own email</h2>${editor}</section>`;
 }
 function pickFinish(key) {
-  const name = TPLPFX + SETS[key], fu = PICKQ && PICKQ.fu; try { localStorage.setItem("prPick", key); } catch (e) {}
-  PICKQ = null; openPicked(name, fu);
+  try { localStorage.setItem("prPick", key); } catch (e) {}
+  const fu = !!(PICKQ && PICKQ.fu); PICKQ = null; eSel(); ESEL.set = SETS[key]; ESEL.fu = fu; ESEL.style = 0; TPL = null;
+  PT = "course"; RSUB = "emails"; DAY = null; LES = null; render(); layer().scrollTo(0, 0);
 }
 function openPicked(name, fu) {
   const sub = PSUB() || D, now = new Date(), senior = now.getFullYear() + (now.getMonth() >= 6 ? 1 : 0), aud = sub && sub.year && +sub.year <= senior ? "seniors" : "juniors";
@@ -512,8 +538,12 @@ function recAction(a, b) {
   if (a === "rlback") { const tpl = LES && (LES.section || "").startsWith(TPLPFX); DAY = tpl ? (ds.find(d => /^Day 4/.test(d.t)) || {}).t || null : LES ? LES.section : null; LES = null; LESD = null; TPL = null; render(); layer().scrollTo(0, 0); return true; }
   if (a === "rtick") { const it = (CAT || []).find(x => x.id === v); if (it) markDone(it, !it.done); return true; }
   if (a === "rlock" || a === "rtask") { PT = "course"; openLesson(v); layer().scrollTo(0, 0); return true; }
-  if (a === "rpick") { PICKQ = { step: 1, fu: false }; render(); layer().scrollTo(0, 0); return true; }
-  if (a === "rfollow") { let k = null; try { k = localStorage.getItem("prPick"); } catch (e) {} if (k && SETS[k]) { openPicked(TPLPFX + SETS[k], true); layer().scrollTo(0, 0); return true; } PICKQ = { step: 1, fu: true }; render(); return true; }
+  if (a === "rpick") { PICKQ = { step: 1, fu: false }; RSUB = "emails"; DAY = null; LES = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "rfollow") { eSel(); ESEL.fu = true; ESEL.style = 0; TPL = null; RSUB = "emails"; DAY = null; LES = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "eset" || a === "efu" || a === "eaud" || a === "estyle") { eSel();
+    if (a === "eset") { ESEL.set = v; ESEL.style = 0; const k = Object.keys(SETS).find(x => SETS[x] === v); try { if (k) localStorage.setItem("prPick", k); } catch (e) {} }
+    if (a === "efu") { ESEL.fu = v === "1"; ESEL.style = 0; } if (a === "eaud") ESEL.aud = v; if (a === "estyle") ESEL.style = +v;
+    TPL = null; render(); return true; }
   if (a === "rpickback") { if (PICKQ && PICKQ.step > 1) PICKQ.step--; else PICKQ = null; render(); return true; }
   if (a === "rpickans") { const q = PICKQ; if (!q) return true;
     if (q.step === 1) { if (v === "reg") { q.step = 2; render(); } else pickFinish(v); return true; }
@@ -747,7 +777,7 @@ function premiumAction(a, b) {
   if (a === "cback") { CRS = null; LES = null; LESD = null; VSRC = null; render(); layer().scrollTo(0, 0); return true; }
   if (a === "copen") { const c = courseList().find(x => x.k === b.dataset.v); if (!c) return true; CRS = c.k; LES = null; render(); layer().scrollTo(0, 0); return true; }
   if (/^tp/.test(a) && tplAction(a, b)) return true;
-  if (/^r(sub|day|back|lback|tick|lock|task|pick|follow|pickback|pickans|tpls|tplsback)$/.test(a) && recAction(a, b)) return true;
+  if (/^(r(sub|day|back|lback|tick|lock|task|pick|follow|pickback|pickans|tpls|tplsback)|eset|efu|eaud|estyle)$/.test(a) && recAction(a, b)) return true;
   if (a === "cnext") { PT = "course"; openLesson(b.dataset.v); layer().scrollTo(0, 0); return true; }
   if (a === "viewas") { core.setViewAs(b.dataset.v); pvCat(); PT = b.dataset.v === "admin" ? "admin" : "dash"; DAY = null; LES = null; PICKQ = null; TPLLIST = false; SHEET = false; render(); layer().scrollTo(0, 0); return true; }
   if (a === "cmod") { SHEET = false; PT = "course"; CRS = "7day"; LES = null; MODQ = b.dataset.v; render(); layer().scrollTo(0, 0); return true; }
