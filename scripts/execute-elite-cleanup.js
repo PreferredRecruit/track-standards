@@ -11,4 +11,4 @@ eliteConferences.forEach(conf => {
   });
 });
 fs.writeFileSync('./src/data/schoolStandards.ts', content);
-console.log(\`Removed \${removed} walkon properties from elite conferences\`);
+console.log(`Removed ${removed} walkon properties from elite conferences`);

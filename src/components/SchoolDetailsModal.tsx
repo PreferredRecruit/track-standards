@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { TierBadge } from "./TierBadge";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SchoolStandards } from "@/data/schoolStandards";
+import { SchoolStandards, type EventStandards } from "@/data/schoolStandards";
 
 interface SchoolDetailsModalProps {
   school: SchoolStandards | null;
@@ -24,7 +24,7 @@ export const SchoolDetailsModal = ({ school, isOpen, onClose }: SchoolDetailsMod
     return value;
   };
 
-  const renderStandardsTable = (standards: Record<string, any> | undefined, title: string) => {
+  const renderStandardsTable = (standards: Record<string, EventStandards> | undefined, title: string) => {
     if (!standards) {
       return (
         <div className="space-y-4">

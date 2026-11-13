@@ -19803,7 +19803,7 @@ export const schoolStandards: SchoolStandards[] = [
   const targetDelta = 0.03; // seconds faster
   const rrDelta = 0.09;     // seconds faster for recruit and walk-on
   const tighten = (evt: EventStandards) => {
-    let t = parseFloat(evt.target) - targetDelta;
+    const t = parseFloat(evt.target) - targetDelta;
     let r = parseFloat(evt.recruit) - rrDelta;
     let w = parseFloat(evt.walkon) - rrDelta;
     if (!Number.isFinite(t) || !Number.isFinite(r) || !Number.isFinite(w)) return;
@@ -20277,8 +20277,8 @@ export const schoolStandards: SchoolStandards[] = [
   ];
 
   easierSchools.forEach(meta => {
-    const male = easeStandards(apu.maleStandards as any);
-    const female = easeStandards(apu.femaleStandards as any);
+    const male = easeStandards(apu.maleStandards as Parameters<typeof easeStandards>[0]);
+    const female = easeStandards(apu.femaleStandards as Parameters<typeof easeStandards>[0]);
     // Exact override for Men's 100m to match example
     male["100m"] = { target: "10.92", recruit: "11.18", walkon: "11.35" };
     schoolStandards.push({
@@ -20613,7 +20613,7 @@ export const schoolStandards: SchoolStandards[] = [
         const newInches = Math.max(0, Math.round(totalInches * (1 - distPct)));
         const newFeet = Math.floor(newInches / 12);
         const newRemInches = newInches % 12;
-        return `${newFeet}'${newRemInches}\"`;
+        return `${newFeet}'${newRemInches}"`;
       }
 
       // Times (ss.xx or mm:ss.xx)

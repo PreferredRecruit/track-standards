@@ -1,5 +1,5 @@
 import { SchoolMatch } from "@/components/ResultsTable";
-import { schoolStandards } from "./schoolStandards";
+import { schoolStandards, type EventStandards } from "./schoolStandards";
 
 // Helper function to convert time/distance to comparable number
 const parsePerformance = (performance: string, event: string): number => {
@@ -35,7 +35,7 @@ const isValidStandard = (value: string | undefined): boolean => {
 };
 
 // Helper function to determine tier based on performance
-const determineTier = (userPerformance: string, standards: any, event: string): "target" | "recruit" | "walkon" | null => {
+const determineTier = (userPerformance: string, standards: Record<string, EventStandards> | undefined, event: string): "target" | "recruit" | "walkon" | null => {
   if (!standards || !standards[event]) return null;
   
   const eventStandards = standards[event];

@@ -404,7 +404,7 @@ async function submit(id) {
       BUSY = false;
       if (VIEW === "signup" && /sending confirmation|smtp/i.test(e.message)) return fail("Our email service was busy for a second. Tap Create account to try again.");
       if (/confirm/i.test(e.message)) { FORM._email = email; PENDPW = pw; VIEW = "check"; MSG = "Confirm your email first. Type the code we sent, or send a new one below."; draw(); watchConfirm(email, pw); return; }
-      fail(/confirm/i.test(e.message) ? "Confirm your email first. Type the code we emailed you." : /invalid login/i.test(e.message) ? "That email and password don't match. Forgot it? Use Email me a sign-in code below, or reset your password." : /already registered|exists/i.test(e.message) ? "That email already has an account. Sign in instead." : /weak|short/i.test(e.message + (e.code || "")) ? "Use at least 6 characters for your password." : e.message);
+      fail(/confirm/i.test(e.message) ? "Confirm your email first. Type the code we emailed you." : /invalid login/i.test(e.message) ? "That email and password don't match. Forgot it? Use Email me a sign-in code below, or reset your password." : /already registered|exists/i.test(e.message) ? "That email already has an account. Sign in instead." : /known|guess|pwned|leak/i.test(e.message) ? "That password is too common. Pick a different one that only you would know." : /weak|short/i.test(e.message + (e.code || "")) ? "Use at least 6 characters for your password." : e.message);
     }
   } else if (id === "accx") {   /* a fresh link: the confirmation email if they never confirmed, else a sign-in link */
     const email = val("acx").trim(); if (!/^\S+@\S+\.\S+$/.test(email)) return fail("Enter a valid email.");
@@ -439,7 +439,7 @@ async function submit(id) {
     const pw = val("acnp"); if (pw.length < 6) return fail("Use at least 6 characters.");
     if (pw !== val("acnp2")) return fail("The two passwords don't match. Type them again.");
     BUSY = true; draw();
-    try { await api("/auth/v1/user", { method: "PUT", body: { password: pw } }); BUSY = false; close(); changed(); } catch (e) { fail(e.message); }
+    try { await api("/auth/v1/user", { method: "PUT", body: { password: pw } }); BUSY = false; close(); changed(); } catch (e) { fail(/known|guess|pwned|leak/i.test(e.message) ? "That password is too common. Pick a different one that only you would know." : e.message); }
   }
 }
 
