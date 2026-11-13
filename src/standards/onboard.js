@@ -319,7 +319,7 @@ function lessonBody(c) {
   const body = !d ? `<p class="pmempty">Loading…</p>` : d.err ? `<p class="acerr">${esc(d.err === "locked" ? "This lesson is locked." : d.err)}</p>`
     : (d.body ? (isTpl(it) ? (TPL && TPL.id === it.id ? tplEditor(it) : (loadTpl(it, d), tplEditor(it))) : `<div class="crsdoc">${mdLite(d.body)}</div>`)
       : it.soon ? `<div class="crsdoc"><p>${esc(it.summary || "")}</p><p class="crssoon">This one is on its way. It will show up here as soon as it's ready.</p></div>` : "") + (lk ? `<p class="crslink">${lk}</p>` : "");
-  return `<p class="crskick">${esc(it.section || it.course_title)}</p><h1>${esc(it.title)}</h1>${media}${body}
+  return `<p class="crskick">${esc((it.section || it.course_title).replace(/^Email templates: /, ""))}</p><h1>${esc(it.title)}</h1>${media}${body}
     <div class="crsdone">${it.soon ? "" : `<button type="button" class="${it.done ? "onbback" : "acbtn"}" data-onb="cdone">${it.done ? CCHK + " Completed" : "Mark as complete"}</button>`}</div>
     <div class="crsnav">${prev ? `<button type="button" class="onbback" data-onb="cl" data-v="${esc(prev.id)}">‹ Previous</button>` : "<span></span>"}${next ? `<button type="button" class="acbtn" data-onb="cl" data-v="${esc(next.id)}">Next lesson ›</button>` : ""}</div>`;
 }
@@ -346,7 +346,7 @@ function fillProfile(s) {
     "state": sub.state, "event": ms[0] && ev(ms[0]), "your events": ms.map(ev).join(", "), "best mark": ms[0] && ms[0][1], "insert best marks": ms.map(m => ev(m) + " " + m[1]).join(", "),
     "phone": D.phone || sub.phone };
   let i = 0;
-  s = s.replace(/\[Event\],\s*\[Mark\]/g, x => { const m = ms[i++]; return m ? `${ev(m)}, ${m[1]}` : x; });
+  s = s.replace(/\[Event\],\s*\[Mark\]/g, x => { const m = ms[i++]; return m ? `${ev(m)}, ${m[1]}` : (i > 1 ? "\u0000" : x); }).split("\n").filter(l => !l.includes("\u0000")).join("\n");
   return s.replace(/\[([^\]\n]{1,60})\]/g, (x, k) => { const v = map[k.trim().toLowerCase()]; return v ? String(v) : x; });
 }
 function loadTpl(it, d) {
@@ -362,24 +362,24 @@ function tplEditor(it) {
   const ckl = (k, arr, title) => arr.length ? `<div class="tpcard"><h3>${title}</h3><ul class="tpck">${arr.map((x, i) => { const on = !!T.ck[k + i];
     return `<li><button type="button" class="${on ? "on" : ""}" data-onb="tpck" data-v="${k + i}" aria-pressed="${on}"><span class="bx" aria-hidden="true">${on ? CCHK : ""}</span><span class="tx">${esc(x)}</span></button></li>`; }).join("")}</ul></div>` : "";
   return `<div class="tpwrap"><div class="tped">
-    <div class="tphead"><span class="tpstat ${n ? "" : "ok"}">${n ? `${n} blank${n === 1 ? "" : "s"} left` : `${CCHK} Ready to send`}</span>
-      <span class="tpsave">${T.msg ? esc(T.msg) : T.saved ? "Saved to your account" : edited ? "Not saved yet" : "Default template"}</span></div>
+    <div class="tphead"><span class="tpstat ${n ? "" : "ok"}">${n ? `Fill in ${n} blank${n === 1 ? "" : "s"}` : `${CCHK} Ready to copy`}</span>
+      <span class="tpsave">${T.msg ? esc(T.msg) : T.saved ? "Saved to your account" : edited ? "Not saved yet" : "Filled in for you"}</span></div>
     ${T.def.subject || T.cur.subject ? `<label class="tplab" for="tpsub">Subject line</label><div class="tprow"><input id="tpsub" class="tpin" data-tp="subject" value="${esc(T.cur.subject)}" autocomplete="off" spellcheck="true"><button type="button" class="onbback tpcp" data-onb="tpcopy" data-v="subject">Copy</button></div>` : ""}
     <label class="tplab" for="tpbody">${/^7d-dm/.test(it.id) ? "Message" : "Email"}</label>
     <textarea id="tpbody" class="tpta" data-tp="body" spellcheck="true" rows="16">${esc(T.cur.body)}</textarea>
     ${uniq.length ? `<div class="tpblanks"><small>Tap a blank to jump to it</small>${uniq.map(b => `<button type="button" class="tpb" data-onb="tpjump" data-v="${esc(b)}">${esc(b)}</button>`).join("")}</div>` : ""}
-    <div class="tpact"><button type="button" class="onbback" data-onb="tpfill">Refill my details</button><button type="button" class="acbtn" data-onb="tpcopy" data-v="body">Copy ${/^7d-dm/.test(it.id) ? "message" : "email"}</button>
-      <button type="button" class="onbback" data-onb="tpsave">Save</button>${edited || T.saved ? `<button type="button" class="onbback" data-onb="tpreset">Reset to default</button>` : ""}
-</div><p class="tpnote">Copy it and send from your own email. Nothing is sent from this site.</p></div>
-    <aside class="tprail">${T.def.how ? `<div class="tpcard"><h3>How to use this</h3><p>${esc(T.def.how)}</p></div>` : ""}${ckl("b", T.def.before, "Before you start, have these ready")}${ckl("c", T.def.check, "Check before you send")}
-      ${T.def.next ? `<div class="tpcard tpnext"><p>${esc(T.def.next)}</p></div>` : ""}</aside></div>`;
+    <button type="button" class="acbtn tpbig" data-onb="tpcopy" data-v="body">Copy ${/^7d-dm/.test(it.id) ? "message" : "email"}</button>
+    <p class="tpnote">Then paste it into your own email and send it.</p>
+    <p class="tpsmall"><button type="button" class="lnkbtn" data-onb="tpsave">Save my changes</button>${edited || T.saved ? ` · <button type="button" class="lnkbtn" data-onb="tpreset">Start over</button>` : ""} · <button type="button" class="lnkbtn" data-onb="tpfill">Refill my details</button></p></div>
+    <details class="tptips"><summary>Tips before you send</summary><div class="tprail">${T.def.how ? `<div class="tpcard"><h3>How to use this</h3><p>${esc(T.def.how)}</p></div>` : ""}${ckl("b", T.def.before, "Before you start, have these ready")}${ckl("c", T.def.check, "Check before you send")}
+      ${T.def.next ? `<div class="tpcard tpnext"><p>${esc(T.def.next)}</p></div>` : ""}</div></details></div>`;
 }
 function tplAction(a, b) {
   if (!TPL) return false;
   if (a === "tpfill") { TPL.cur = { subject: fillProfile(TPL.cur.subject), body: fillProfile(TPL.cur.body) }; TPL.msg = "Filled from your profile. Check it, then save."; render(); return true; }
   if (a === "tpjump") { const ta = document.getElementById("tpbody"), su = document.getElementById("tpsub"), v = b.dataset.v;
     for (const el of [su, ta]) { if (!el) continue; const i = el.value.indexOf(v); if (i >= 0) { el.focus(); el.setSelectionRange(i, i + v.length); return true; } } return true; }
-  if (a === "tpcopy") { const t = b.dataset.v === "subject" ? TPL.cur.subject : TPL.cur.body; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { b.textContent = "Copied"; setTimeout(() => { b.textContent = b.dataset.v === "subject" ? "Copy" : "Copy email"; }, 1600); }).catch(() => {}); return true; }
+  if (a === "tpcopy") { const t = b.dataset.v === "subject" ? TPL.cur.subject : TPL.cur.body; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { b.textContent = "Copied"; setTimeout(() => { b.textContent = b.dataset.v === "subject" ? "Copy" : /^7d-dm/.test(TPL.id) ? "Copy message" : "Copy email"; }, 1600); }).catch(() => {}); return true; }
   if (a === "tpck") { TPL.ck[b.dataset.v] = !TPL.ck[b.dataset.v]; render(); return true; }
   if (a === "tpsave") { TPL.msg = "Saving…"; render(); core.api("/rest/v1/template_edits", { method: "POST", body: { item_id: TPL.id, subject: TPL.cur.subject, body: TPL.cur.body, updated_at: new Date().toISOString() }, prefer: "resolution=merge-duplicates,return=minimal" })
       .then(() => { TPL.saved = true; TPL.msg = "Saved to your account"; render(); }).catch(e => { TPL.msg = "Couldn't save. " + e.message; render(); }); return true; }
@@ -390,28 +390,112 @@ function tplAction(a, b) {
 document.addEventListener("input", e => { const el = e.target.closest && e.target.closest("[data-tp]"); if (!el || !TPL) return; TPL.cur[el.dataset.tp] = el.value; TPL.msg = "";
   if (el.tagName === "TEXTAREA") { el.style.height = "auto"; el.style.height = el.scrollHeight + 4 + "px"; }
   const n = blanks(TPL.cur.subject).length + blanks(TPL.cur.body).length, st = document.querySelector(".tpstat"), sv = document.querySelector(".tpsave");
-  if (st) { st.className = "tpstat" + (n ? "" : " ok"); st.innerHTML = n ? `${n} blank${n === 1 ? "" : "s"} left` : `${CCHK} Ready to send`; }
+  if (st) { st.className = "tpstat" + (n ? "" : " ok"); st.innerHTML = n ? `Fill in ${n} blank${n === 1 ? "" : "s"}` : `${CCHK} Ready to copy`; }
   if (sv) sv.textContent = "Not saved yet"; });
+/* ---------- My Recruitment, simple (Ryan 2026-11-12: "should be able to be used by a 12 year old, the simpler the better,
+   when in doubt condense"). One screen per day with tick boxes; the site picks the email; one big Copy button. ---------- */
+let DAY = null, PICKQ = null, TPLLIST = false;
+const TPLPFX = "Email templates: ";
+const SETS = { reg_yes: "Schools you already qualify for", reg_no_d12: "D1 and D2, still building your marks", reg_no_d3n: "D3 and NAIA, still building your marks",
+  acad: "Academics-first schools", topd1: "Top academic D1 schools", ivy: "Ivy League and academic D2 schools" };
+function recDays() { const ds = []; for (const x of (CAT && !CAT.err ? CAT : [])) { if (x.course !== "7day" || (x.section || "").startsWith(TPLPFX)) continue;
+  let d = ds.find(y => y.t === x.section); if (!d) ds.push(d = { t: x.section, items: [] }); d.items.push(x); } return ds; }
+const isWalk = i => /-video$/.test(i.id);
+const dayName = t => t.split(": ")[0], dayJob = t => t.split(": ")[1] || (t === "Start here" ? "See how your 7 days work" : t);
+const dayTasks = d => d.items.filter(i => !isWalk(i));
+const dayDone = d => { const t = dayTasks(d).filter(i => !i.soon && i.unlocked); return t.length > 0 && t.every(i => i.done); };
+const curDay = ds => ds.find(d => !dayDone(d)) || ds[ds.length - 1];
+function recView() {
+  if (!CAT) { loadCat(); return `<div class="pmtitle"><h1>My Recruitment</h1></div><p class="pmempty">Loading…</p>`; }
+  if (CAT.err) return `<div class="pmtitle"><h1>My Recruitment</h1></div><p class="acerr">Couldn't load My Recruitment. ${esc(CAT.err)}</p>`;
+  const ds = recDays();
+  if (LES && LES.course === "7day") return recLesson(ds);
+  if (PICKQ) return pickerView();
+  if (TPLLIST) return tplListView();
+  if (DAY) { const d = ds.find(x => x.t === DAY); if (d) return dayView(d, ds); DAY = null; }
+  const open = ds.some(d => d.items.some(i => i.unlocked)), doneN = ds.filter(dayDone).length, cur = curDay(ds);
+  return `<div class="pmtitle"><h1>My Recruitment</h1><p>${open ? `${doneN} of ${ds.length} done. One step at a time.` : "Your 7-Day Roadmap. Unlock it to start."}</p></div>
+    <div class="rdbar" aria-hidden="true"><i style="width:${ds.length ? Math.round(doneN / ds.length * 100) : 0}%"></i></div>
+    <ol class="rdays">${ds.map((d, i) => { const lk = !d.items.some(x => x.unlocked), dn = dayDone(d), now = !lk && d === cur;
+      return `<li><button type="button" class="rday${now ? " now" : ""}${dn ? " done" : ""}${lk ? " lk" : ""}" data-onb="rday" data-v="${esc(d.t)}">
+        <span class="rdn" aria-hidden="true">${dn ? CCHK : lk ? CLOCK : i ? i : ico("play", 13)}</span><span class="rdt"><b>${esc(dayName(d.t))}</b><small>${esc(dayJob(d.t))}</small></span>${now ? '<span class="rdgo">Start</span>' : ""}</button></li>`; }).join("")}</ol>
+    ${open ? "" : `<a class="acbtn rdbuy" href="${esc(buyUrl("lt27", "days"))}" target="_blank" rel="noopener">Unlock all 7 days · $27</a>`}`;
+}
+function dayView(d, ds) {
+  const vid = d.items.find(isWalk), tasks = dayTasks(d), i = ds.indexOf(d), nx = ds[i + 1], lk = !d.items.some(x => x.unlocked);
+  const label = t => t.id === "7d-pick" ? "Pick your email and copy it" : t.id === "7d-followup" ? "Send a follow-up email" : t.title;
+  const act = t => !t.unlocked ? "rlock" : t.id === "7d-pick" ? "rpick" : t.id === "7d-followup" ? "rfollow" : "rtask";
+  const row = t => `<li class="rtask${t.done ? " done" : ""}${t.unlocked ? "" : " lk"}">
+      <button type="button" class="rck" data-onb="${t.unlocked && !t.soon ? "rtick" : act(t)}" data-v="${esc(t.id)}" aria-pressed="${!!t.done}" aria-label="${esc(label(t))}: ${t.done ? "done" : "not done"}">${!t.unlocked ? CLOCK : t.done ? CCHK : ""}</button>
+      <button type="button" class="rtt" data-onb="${act(t)}" data-v="${esc(t.id)}"><b>${esc(label(t))}</b><small>${esc(t.soon ? "Coming soon" : !t.unlocked ? "Coach emails, $17 add-on" : t.summary || "")}</small></button>
+      <span class="rgo" aria-hidden="true">›</span></li>`;
+  return `<div class="crsback"><button type="button" class="onbback" data-onb="rback">‹ My Recruitment</button></div>
+    <div class="pmtitle"><p class="rkick">${esc(dayName(d.t))}</p><h1>${esc(dayJob(d.t))}</h1></div>
+    ${vid ? `<div class="crsv soon rvid"><span aria-hidden="true">${ico("play", 20)}</span><b>${vid.soon ? "Video coming soon" : esc(vid.title)}</b>${vid.soon ? "<small>The steps below work today.</small>" : ""}</div>` : ""}
+    ${lk ? buyView("lt27") : `<ol class="rtasks">${tasks.map(row).join("")}</ol>`}
+    ${nx && !lk ? `<div class="rnext"><button type="button" class="acbtn" data-onb="rday" data-v="${esc(nx.t)}">${dayDone(d) ? "Next: " : "Up next: "}${esc(dayName(nx.t))} ›</button></div>` : ""}`;
+}
+function recLesson(ds) {
+  const d = ds.find(x => x.t === LES.section), tpl = (LES.section || "").startsWith(TPLPFX);
+  const c = { items: d ? dayTasks(d) : [LES] };
+  return `<div class="crsback"><button type="button" class="onbback" data-onb="rlback">‹ ${esc(d ? dayName(d.t) : tpl ? "Day 4" : "My Recruitment")}</button></div>
+    <article class="crslesson">${lessonBody(c)}${tpl ? `<p class="rother"><button type="button" class="lnkbtn" data-onb="rtpls">See other emails</button></p>` : ""}</article>`;
+}
+function pickerView() {
+  const q = PICKQ, opt = (v, l, s) => `<button type="button" class="rpo" data-onb="rpickans" data-v="${v}"><b>${l}</b>${s ? `<small>${s}</small>` : ""}</button>`;
+  const body = q.step === 1 ? `<h1>What kind of school is it?</h1><div class="rpos">${opt("reg", "A regular track program", "Most schools")}${opt("acad", "Grades matter most", "A strong academic school")}${opt("topd1", "Top academic D1", "Like Stanford or Duke")}${opt("ivy", "Ivy League or academic D2", "Like Harvard or Bentley")}</div>`
+    : q.step === 2 ? `<h1>Does your mark already meet their standards?</h1><p class="rpq">Look up the school on Track Standards. Walk-on or better counts.</p><div class="rpos">${opt("yes", "Yes", "Walk-on or better")}${opt("no", "Not yet", "I'm still getting faster")}</div>`
+    : `<h1>What level is the school?</h1><div class="rpos">${opt("d12", "D1 or D2")}${opt("d3n", "D3 or NAIA")}</div>`;
+  return `<div class="crsback"><button type="button" class="onbback" data-onb="rpickback">‹ Back</button></div><div class="rpick"><p class="rkick">${q.fu ? "Your follow-up" : "Your email"} · question ${q.step}</p>${body}</div>`;
+}
+function tplListView() {
+  const sets = []; for (const x of CAT || []) if ((x.section || "").startsWith(TPLPFX)) { let s = sets.find(y => y.t === x.section); if (!s) sets.push(s = { t: x.section, items: [] }); s.items.push(x); }
+  return `<div class="crsback"><button type="button" class="onbback" data-onb="rtplsback">‹ Back</button></div><div class="pmtitle"><h1>All emails</h1><p>Pick any email. Copy it and send from your own inbox.</p></div>
+    ${sets.map(s => `<details class="rset"><summary>${esc(s.t.replace(TPLPFX, ""))}</summary>${s.items.map(it => `<button type="button" class="rsi" data-onb="rtask" data-v="${esc(it.id)}">${esc(it.title)}</button>`).join("")}</details>`).join("")}`;
+}
+function pickFinish(key) {
+  const name = TPLPFX + SETS[key], fu = PICKQ && PICKQ.fu; try { localStorage.setItem("prPick", key); } catch (e) {}
+  PICKQ = null; openPicked(name, fu);
+}
+function openPicked(name, fu) {
+  const sub = PSUB() || D, now = new Date(), senior = now.getFullYear() + (now.getMonth() >= 6 ? 1 : 0), aud = sub && sub.year && +sub.year <= senior ? "seniors" : "juniors";
+  const items = (CAT || []).filter(x => x.section === name && (/follow/i.test(x.title) === !!fu));
+  const it = items.find(x => x.title.toLowerCase().includes("(" + aud + ")")) || items[0];
+  if (it) openLesson(it.id); else render();
+}
+function recAction(a, b) {
+  const ds = recDays(), v = b.dataset.v;
+  if (a === "rday") { DAY = v; LES = null; PICKQ = null; TPLLIST = false; PT = "course"; SHEET = false; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "rback") { DAY = null; LES = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "rlback") { const tpl = LES && (LES.section || "").startsWith(TPLPFX); DAY = tpl ? (ds.find(d => /^Day 4/.test(d.t)) || {}).t || null : LES ? LES.section : null; LES = null; LESD = null; TPL = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "rtick") { const it = (CAT || []).find(x => x.id === v); if (it) markDone(it, !it.done); return true; }
+  if (a === "rlock" || a === "rtask") { PT = "course"; openLesson(v); layer().scrollTo(0, 0); return true; }
+  if (a === "rpick") { PICKQ = { step: 1, fu: false }; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "rfollow") { let k = null; try { k = localStorage.getItem("prPick"); } catch (e) {} if (k && SETS[k]) { openPicked(TPLPFX + SETS[k], true); layer().scrollTo(0, 0); return true; } PICKQ = { step: 1, fu: true }; render(); return true; }
+  if (a === "rpickback") { if (PICKQ && PICKQ.step > 1) PICKQ.step--; else PICKQ = null; render(); return true; }
+  if (a === "rpickans") { const q = PICKQ; if (!q) return true;
+    if (q.step === 1) { if (v === "reg") { q.step = 2; render(); } else pickFinish(v); return true; }
+    if (q.step === 2) { if (v === "yes") pickFinish("reg_yes"); else { q.step = 3; render(); } return true; }
+    pickFinish(v === "d12" ? "reg_no_d12" : "reg_no_d3n"); return true; }
+  if (a === "rtpls") { TPLLIST = true; LES = null; TPL = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "rtplsback") { TPLLIST = false; render(); return true; }
+  return false;
+}
 /* ---------- what each Whop purchase unlocks (migration 022: Whop webhook -> entitlements, claimed by email on sign-in) ---------- */
 const BUY = { lt27: LT_URL, em17: LT_URL };   /* Abe's Whop sales page; swap in direct Whop checkout links for the $17 / $97 add-ons when Abe sends them */
 const PRODS = {
-  lt27: { name: "Premium + 7-Day Roadmap", price: "$27 one time", gets: ["The 7-Day Roadmap course: videos, email and DM templates, checklist and tracker", "My College List: rank up to 25 colleges against your marks", "Premium Dark and Premium White for the whole site"] },
-  em17: { name: "Coach emails", price: "$17 add-on to the $27 7-Day Roadmap", gets: ["Every college coach's name, position and email", "The coach for your event first", "A dedicated coach page for every school"] },};
+  lt27: { name: "Your 7-Day Roadmap", price: "$27 one time", gets: ["All 7 days, step by step", "Emails and DMs filled in for you", "Save your colleges"], _old: ["The 7-Day Roadmap course: videos, email and DM templates, checklist and tracker", "My College List: rank up to 25 colleges against your marks", "Premium Dark and Premium White for the whole site"] },
+  em17: { name: "Coach emails", price: "$17 add-on", gets: ["Every college coach's email", "The coach for your event first", "Copy it, send from your own email"], _old: ["Every college coach's name, position and email", "The coach for your event first", "A dedicated coach page for every school"] },};
 const owns = k => k === "lt27" ? core.premium() : k === "em17" ? core.emails() : k === "pc97" ? !!(core.admin() || (core.premiumInfo() || {}).call) : true;
 const NEEDS = { list: "lt27", cc: "em17" };
 let BUYK = null, BUYMSG = "";
 const buyUrl = (k, where) => utm(BUY[k], "lock-" + k + "-" + where);
 function buyView(k) {
-  const P = PRODS[k], em = (core.premiumInfo() || {}).email || (core.ses() && core.ses().user ? core.ses().user.email : "");
+  const P = PRODS[k];
   return `<div class="pmbuy"><span class="pmpill">${CLOCK} Locked</span><h1>${esc(P.name)}</h1><p class="pmbuyp">${esc(P.price)}</p>
     <ul class="pmbuyl">${P.gets.map(g => `<li>${esc(g)}</li>`).join("")}</ul>
-    <a class="acbtn pmbuyb" href="${esc(buyUrl(k, "page"))}" target="_blank" rel="noopener">Get it on Whop</a>
-    <div class="pmunl"><h2>How it unlocks</h2><ol>
-      <li>Check out on Whop with <b>${em ? esc(em) : "the email you use here"}</b>.</li>
-      <li>Stay signed in here with that same email. There's nothing to enter.</li>
-      <li>It unlocks on its own, usually within a minute. Your Whop email also has every asset.</li></ol>
-      <p>Used a different email at checkout? Sign in here with that email instead, or reply to your Whop receipt and we'll move it over.</p>
-      <button type="button" class="onbback" data-onb="recheck">I already bought it. Check again</button>${BUYMSG ? `<p class="pmbuym" role="status">${BUYMSG}</p>` : ""}</div></div>`;
+    <a class="acbtn pmbuyb" href="${esc(buyUrl(k, "page"))}" target="_blank" rel="noopener">Unlock it</a>
+    <p class="pmbuysm">Already bought it? Sign in with the email you used to pay. It unlocks by itself. <button type="button" class="lnkbtn" data-onb="recheck">Check again</button></p>${BUYMSG ? `<p class="pmbuym" role="status">${BUYMSG}</p>` : ""}</div>`;
 }
 const PSUB = () => par() ? KIDS[SEL] : D;
 const aid = () => par() && KIDS[SEL] ? KIDS[SEL].id : null;
@@ -426,10 +510,10 @@ function sideNav() {
   /* admins: Accounts first (Ryan 2026-11-12: "I can no longer see the accounts on my master account"; it had moved to the end of the menu, off-screen on phones) */
   const adm = core.admin() ? `<p class="pmgrp">Admin</p>${it("admin", "Accounts", ico("users"))}${it("aov", "Overview", ico("chart"))}<p class="pmgrp">Your account</p>` : "";
   const P = core.premium();
-  return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Dashboard", ico("home"))}${it("course", "My Recruitment", ico("cap"), 1)}${it("cc", "Coach Contacts", ico("mail"), 1)}${it("list", "My Colleges", ico("bookmark"), 1)}
-    ${modNav()}<p class="pmgrp">Account</p>${it("profile", "Profile and marks", ico("user"))}${it("set", "Settings", ico("sliders"))}
+  return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Home", ico("home"))}${it("course", "My Recruitment", ico("cap"))}${it("cc", "Coaches", ico("mail"))}${it("list", "My Colleges", ico("bookmark"))}
+    <div class="pmsep"></div>${it("profile", "My profile", ico("user"))}${it("set", "Settings", ico("sliders"))}
     <div class="pmplan">${P ? `<b>${STAR} ${core.admin() ? "Admin" : "Premium"}</b><span><i class="dot"></i>${core.admin() ? "Everything unlocked" : "Active"}</span>`
-      : `<b>Free account</b><span>Unlock the course, college list and more.</span><a class="acbtn" href="${esc(buyUrl("lt27", "sidebar"))}" target="_blank" rel="noopener">Get Premium · $27</a>`}</div></nav>`;
+      : `<b>Free account</b><span>Unlock all 7 days.</span><a class="acbtn" href="${esc(buyUrl("lt27", "sidebar"))}" target="_blank" rel="noopener">Unlock · $27</a>`}</div></nav>`;
 }
 /* the course outline in the sidebar (Ryan 2026-11-12: "a bunch of locks on the left side"): each module, locked until bought */
 function modNav() {
@@ -445,7 +529,7 @@ function modNav() {
 let SHEET = false;
 function phoneNav() {
   const b = (v, l, ic) => `<button type="button" class="pmtb${PT === v ? " on" : ""}" data-onb="pt" data-v="${v}"${PT === v ? ' aria-current="page"' : ""}><span aria-hidden="true">${ic}</span>${l}</button>`;
-  return `<nav class="pmtabs" aria-label="Account menu">${b("dash", "Home", ico("home", 20))}${b("course", "Recruitment", ico("cap", 20))}${b("cc", "Coaches", ico("mail", 20))}${b("list", "Colleges", ico("bookmark", 20))}
+  return `<nav class="pmtabs" aria-label="Account menu">${b("dash", "Home", ico("home", 20))}${b("course", "Recruitment", ico("cap", 20))}${b("cc", "Coaches", ico("mail", 20))}
     <button type="button" class="pmtb${SHEET ? " on" : ""}" data-onb="sheet" aria-expanded="${SHEET}"><span aria-hidden="true">${ico("menu", 20)}</span>Menu</button></nav>
     ${SHEET ? `<div class="pmsheetbg" data-onb="sheet"></div><div class="pmsheet" role="dialog" aria-label="Menu">${sideNav()}</div>` : ""}`;
 }
@@ -458,7 +542,7 @@ function premiumView() {
   let body = "";
   if (NEEDS[PT] && !owns(NEEDS[PT])) body = buyView(NEEDS[PT]);
   else if (PT === "buy" && BUYK) body = buyView(BUYK);
-  else if (PT === "dash") body = dashView(); else if (PT === "list") body = listView(); else if (PT === "cc") body = ccView(); else if (PT === "set") body = setView(); else if (PT === "course") body = courseView();
+  else if (PT === "dash") body = dashView(); else if (PT === "list") body = listView(); else if (PT === "cc") body = ccView(); else if (PT === "set") body = setView(); else if (PT === "course") body = recView();
   else if (PT === "aov" && core.admin()) body = aovView(); else if (PT === "admin" && core.admin()) body = adminView();
   else body = D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`;
   return top(NAV) + `<div class="pmshell">${sideNav()}<section class="pmmain">${body}</section></div>` + phoneNav();
@@ -471,30 +555,22 @@ function headRow() {
       : `<button type="button" class="pmmk add" data-onb="pt" data-v="profile">+ Add a mark</button>`}</div></div>`;
 }
 function dashView() {
-  if (!core.premium()) return headRow() + `<div class="pmpaths">
-    <button type="button" class="pmpath pri" data-onb="pt" data-v="course"><span class="ic" aria-hidden="true">${ico("cap")}</span><span><b>The 7-Day Roadmap</b><small>See every lesson. Unlock it with Premium.</small></span><span class="pmgo" aria-hidden="true">›</span></button>
-    <button type="button" class="pmpath" data-onb="pt" data-v="cc"><span class="ic" aria-hidden="true">${ico("mail")}</span><span><b>Coach Contacts</b><small>Every college coach's email ($17 add-on)</small></span><span class="pmgo">${CLOCK}</span></button></div>
-    <div class="pmcard pmup"><div><h2>${STAR} Premium</h2><p>The 7-Day Roadmap, My College List and Premium Dark. $27 one time.</p></div>
-    <a class="acbtn" href="${esc(buyUrl("lt27", "dashboard"))}" target="_blank" rel="noopener">Get Premium on Whop</a>
-    <p class="pmupn">Bought it? It unlocks by itself when you're signed in with the email you used at checkout.</p></div>`;
-  const L = (LIST || []).slice(0, 5), sub = PSUB() || D, b = bestMark(sub)[0], C = core.cfg();
-  /* concept dashboard (Ryan 2026-11-12: "that looks sooo much better and well spaced"): real numbers only */
-  const les = (CAT && !CAT.err ? CAT : []).filter(x => x.course === "7day" && !x.soon && x.unlocked), doneN = les.filter(x => x.done).length, pctD = les.length ? Math.round(doneN / les.length * 100) : 0;
-  const nxt = les.find(x => !x.done), dayOf = nxt && (nxt.section || "").match(/^Days? ([\d and]+)/);
-  const kpi = (l, v, sub2) => `<div class="pmkpi"><span>${l}</span><b>${v}</b><small>${sub2}</small></div>`;
-  const kpis = `<div class="pmkpis">${kpi(b ? `Colleges your ${evName(b.e, sub.gender)} fits` : "Colleges your mark fits", b ? b.n.toLocaleString() : "Add a mark", b ? `With ${esc(b.m)}` : "Your best mark sets this")}
-    ${kpi("Roadmap progress", pctD + "%", `${doneN} of ${les.length} lessons`)}${kpi("My Colleges", LIST ? LIST.length : "…", "of 25 saved")}
-    ${kpi("Coach emails", core.emails() ? "Unlocked" : "Locked", core.emails() ? "Every coach, copy only" : "$17 add-on")}</div>`;
-  const next = nxt ? `<div class="pmnext"><div><span>Next step${dayOf ? "" : ""}</span><b>${esc(nxt.title)}</b><small>${esc(nxt.section || "")}</small></div>
-    <button type="button" class="acbtn" data-onb="cnext" data-v="${esc(nxt.id)}">Continue</button></div>` : "";
-  return headRow() + kpis + next + `<div class="pmpaths">
-    <button type="button" class="pmpath pri" data-onb="pt" data-v="cc"><span class="ic" aria-hidden="true">${ico("mail")}</span><span><b>${STAR} Coach Contacts</b><small>${core.emails() ? "Get any college coach's email" : "Coach emails are the $17 add-on"}</small></span><span class="pmgo" aria-hidden="true">›</span></button>
-    <button type="button" class="pmpath" data-onb="pt" data-v="course"><span class="ic" aria-hidden="true">${ico("cap")}</span><span><b>${STAR} Your 7-Day Roadmap</b><small>Videos, templates and tools, one step a day</small></span><span class="pmgo" aria-hidden="true">›</span></button></div>
-    <div class="pmcard"><div class="pmch"><h2>My Colleges <small>${LIST ? LIST.length + " of 25" : ""}</small></h2><button type="button" class="onbback" data-onb="pt" data-v="list">${LIST && LIST.length ? "Open list" : "Add colleges"}</button></div>
-    ${LIST == null ? `<p class="pmempty">Loading…</p>` : L.length ? L.map((r, i) => { const info = b && C.sinfo ? C.sinfo(r.name, sub.gender || "m", b.e, b.v) : null;
-      return `<div class="pmrow"><span class="pmrk">${i + 1}</span><span class="pmnm"><b>${esc(r.name)}</b><small>${esc(info ? info.d : "")}</small></span><span class="pmcat ${r.cat}">${catL(r.cat)}</span>${fitChip(info)}<span class="pmco">${r.coach_name ? STAR + " " + esc(r.coach_name) : ""}</span></div>`; }).join("")
-      : `<p class="pmempty">Add up to 25 colleges, rank them, and keep the coach you want to email next to each one.</p>`}</div>`;
+  /* one card (Ryan 2026-11-12: "used by a 12 year old ... when in doubt condense") */
+  const sub = PSUB() || D, bm = bestMark(sub)[0], ds = recDays(), open = ds.some(d => d.items.some(i => i.unlocked)), cur = ds.length ? curDay(ds) : null, doneN = ds.filter(dayDone).length;
+  const mark = bm ? `<p class="hmark">Your ${evName(bm.e, sub.gender)} of <b>${esc(bm.m)}</b> fits <b>${bm.n.toLocaleString()}</b> colleges. <button type="button" class="lnkbtn" data-onb="exit">See them</button></p>`
+    : `<p class="hmark">Add your best mark to see every college it fits. <button type="button" class="lnkbtn" data-onb="pt" data-v="profile">Add a mark</button></p>`;
+  if (!CAT) loadCat();
+  if (!open) return `<div class="pmtitle"><h1>Hi ${esc(sub.first || "there")}</h1></div>${mark}
+    <section class="htoday lk"><span class="hk">Your 7-Day Roadmap</span><h2>One step a day to get recruited</h2>
+      <ol class="hdays">${ds.map(d => `<li>${CLOCK}<span><b>${esc(dayName(d.t))}</b> ${esc(dayJob(d.t))}</span></li>`).join("")}</ol>
+      <a class="acbtn" href="${esc(buyUrl("lt27", "home"))}" target="_blank" rel="noopener">Unlock all 7 days · $27</a>
+      <p class="hsm">Bought it? Sign in with the email you used to pay. It unlocks by itself.</p></section>`;
+  return `<div class="pmtitle"><h1>Hi ${esc(sub.first || "there")}</h1></div>${mark}
+    ${cur ? `<section class="htoday"><span class="hk">Today · ${esc(dayName(cur.t))}</span><h2>${esc(dayJob(cur.t))}</h2>
+      <div class="rdbar" aria-label="${doneN} of ${ds.length} done"><i style="width:${Math.round(doneN / ds.length * 100)}%"></i></div><p class="hsm">${doneN} of ${ds.length} done</p>
+      <button type="button" class="acbtn" data-onb="rday" data-v="${esc(cur.t)}">${doneN ? "Continue" : "Start"}</button></section>` : ""}`;
 }
+
 async function loadList() {
   const a = aid(), k = LISTK;
   const rows = await core.api("/rest/v1/college_list?select=*&order=rank,id&athlete_id=" + (a ? "eq." + a : "is.null")).catch(() => []);
@@ -603,13 +679,14 @@ document.addEventListener("submit", e => { const f = e.target.closest && e.targe
   if (f.dataset.pform === "add") listAdd(document.getElementById("pmadd").value);
   if (f.dataset.pform === "cc") { CCQ = document.getElementById("pmcq").value; const all = core.cfg().schools ? core.cfg().schools() : [], hit = all.find(n => n.toLowerCase() === CCQ.trim().toLowerCase()); if (hit) CCS = hit; render(); const C = core.cfg(); C.log && C.log("coach_contacts", { detail: "search" }); } });
 function premiumAction(a, b) {
-  if (a === "pt") { SHEET = false; BUYMSG = ""; PT = b.dataset.v; OPEN = null; LMSG = ""; if (PT === "cc") { CCS = null; } if (PT === "course") { CRS = null; LES = null; CMSG = ""; } render(); layer().scrollTo(0, 0); return true; }
+  if (a === "pt") { SHEET = false; BUYMSG = ""; PT = b.dataset.v; OPEN = null; LMSG = ""; if (PT === "cc") { CCS = null; } if (PT === "course") { CRS = null; LES = null; CMSG = ""; DAY = null; PICKQ = null; TPLLIST = false; TPL = null; } render(); layer().scrollTo(0, 0); return true; }
   if (a === "cl") { SHEET = false; openLesson(b.dataset.v); return true; }
   if (a === "sheet") { SHEET = !SHEET; render(); return true; }
   if (a === "recheck") { BUYMSG = "Checking…"; render(); core.loadProfile().then(() => { const k = BUYK || NEEDS[PT]; BUYMSG = k && owns(k) ? "Unlocked. You're all set." : "Not unlocked yet. If you just paid, give it a minute and check again."; CAT = null; render(); }); return true; }
   if (a === "cback") { CRS = null; LES = null; LESD = null; VSRC = null; render(); layer().scrollTo(0, 0); return true; }
   if (a === "copen") { const c = courseList().find(x => x.k === b.dataset.v); if (!c) return true; CRS = c.k; LES = null; render(); layer().scrollTo(0, 0); return true; }
   if (/^tp/.test(a) && tplAction(a, b)) return true;
+  if (/^r(day|back|lback|tick|lock|task|pick|follow|pickback|pickans|tpls|tplsback)$/.test(a) && recAction(a, b)) return true;
   if (a === "cnext") { PT = "course"; openLesson(b.dataset.v); layer().scrollTo(0, 0); return true; }
   if (a === "cmod") { SHEET = false; PT = "course"; CRS = "7day"; LES = null; MODQ = b.dataset.v; render(); layer().scrollTo(0, 0); return true; }
   if (a === "cdone") { if (LES) markDone(LES, !LES.done); return true; }
