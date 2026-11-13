@@ -226,13 +226,13 @@ const STAR = '<span class="pmstar" aria-hidden="true">★</span>';
 const utm = (url, where) => { const u = new URL(url); for (const [k, v] of [["utm_source", "standards"], ["utm_medium", "account"], ["utm_campaign", "premium"], ["utm_content", where]]) u.searchParams.set(k, v); return u.toString(); };
 /* ---------- Classroom (Ryan 2026-11-12: "mirror the layout of Skool"): course cards with progress, then a course page with the
    module list on the left and the lesson on the right. Only the low-ticket offer: 7-Day Roadmap ($27), Coach-Ready Profile Kit +
-   Coach Contacts ($17), Plan Call ($97). Locked courses show the lock and the Whop unlock page. Text and videos come from
+   Coach Contacts ($17). The $97 Plan Call lives only on Abe's funnel (Ryan 2026-11-12). Locked courses show the lock and the Whop unlock page. Text and videos come from
    course_item / signed storage links only for unlocked accounts (migrations 020, 023). Progress is saved per account. ---------- */
 let MODQ = null, CAT = null, CRS = null, LES = null, LESD = null, VSRC = null, CMSG = "";
 const CLOCK = svg(LOCK, 14).replace("<svg", '<svg class="crslk"');  /* same lock as the Premium kit list */
 const CCHK = svg('<path d="M5 12l5 5 9-11"/>', 13);
 const COURSES = { "7day": { k: "lt27", d: "One job a day for 7 days: the checklist, your school list, the tracker, email and DM scripts, and follow-ups." },
-  call: { k: "pc97", d: "A one-on-one call with our team to plan your athlete's recruiting." } };
+ };
 const cmins = s => s ? (s < 60 ? s + " sec" : Math.round(s / 60) + " min") : "";
 const kindIc = k => ico(k === "video" ? "play" : k === "tool" ? "out" : "file", 12);
 function mdLite(t) {
@@ -393,13 +393,12 @@ document.addEventListener("input", e => { const el = e.target.closest && e.targe
   if (st) { st.className = "tpstat" + (n ? "" : " ok"); st.innerHTML = n ? `${n} blank${n === 1 ? "" : "s"} left` : `${CCHK} Ready to send`; }
   if (sv) sv.textContent = "Not saved yet"; });
 /* ---------- what each Whop purchase unlocks (migration 022: Whop webhook -> entitlements, claimed by email on sign-in) ---------- */
-const BUY = { lt27: LT_URL, em17: LT_URL, pc97: LT_URL };   /* Abe's Whop sales page; swap in direct Whop checkout links for the $17 / $97 add-ons when Abe sends them */
+const BUY = { lt27: LT_URL, em17: LT_URL };   /* Abe's Whop sales page; swap in direct Whop checkout links for the $17 / $97 add-ons when Abe sends them */
 const PRODS = {
   lt27: { name: "Premium + 7-Day Roadmap", price: "$27 one time", gets: ["The 7-Day Roadmap course: videos, email and DM templates, checklist and tracker", "My College List: rank up to 25 colleges against your marks", "Premium Dark and Premium White for the whole site"] },
-  em17: { name: "Coach emails", price: "$17 add-on to the $27 7-Day Roadmap", gets: ["Every college coach's name, position and email", "The coach for your event first", "A dedicated coach page for every school"] },
-  pc97: { name: "Plan Call", price: "$97 add-on", gets: ["A one-on-one call to plan your recruiting", "Booked from the email you get after checkout"] } };
+  em17: { name: "Coach emails", price: "$17 add-on to the $27 7-Day Roadmap", gets: ["Every college coach's name, position and email", "The coach for your event first", "A dedicated coach page for every school"] },};
 const owns = k => k === "lt27" ? core.premium() : k === "em17" ? core.emails() : k === "pc97" ? !!(core.admin() || (core.premiumInfo() || {}).call) : true;
-const NEEDS = { list: "lt27", cc: "em17", call: "pc97" };
+const NEEDS = { list: "lt27", cc: "em17" };
 let BUYK = null, BUYMSG = "";
 const buyUrl = (k, where) => utm(BUY[k], "lock-" + k + "-" + where);
 function buyView(k) {
@@ -414,7 +413,6 @@ function buyView(k) {
       <p>Used a different email at checkout? Sign in here with that email instead, or reply to your Whop receipt and we'll move it over.</p>
       <button type="button" class="onbback" data-onb="recheck">I already bought it. Check again</button>${BUYMSG ? `<p class="pmbuym" role="status">${BUYMSG}</p>` : ""}</div></div>`;
 }
-function callView() { PT = "course"; CRS = "call"; LES = null; return courseView(); }
 const PSUB = () => par() ? KIDS[SEL] : D;
 const aid = () => par() && KIDS[SEL] ? KIDS[SEL].id : null;
 const CATS = [["dream", "Dream"], ["target", "Target"], ["reach", "Reach"]];
@@ -428,7 +426,7 @@ function sideNav() {
   /* admins: Accounts first (Ryan 2026-11-12: "I can no longer see the accounts on my master account"; it had moved to the end of the menu, off-screen on phones) */
   const adm = core.admin() ? `<p class="pmgrp">Admin</p>${it("admin", "Accounts", ico("users"))}${it("aov", "Overview", ico("chart"))}<p class="pmgrp">Your account</p>` : "";
   const P = core.premium();
-  return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Dashboard", ico("home"))}${it("course", "Classroom", ico("cap"), 1)}${it("cc", "Coach Contacts", ico("mail"), 1)}${it("list", "My Colleges", ico("bookmark"), 1)}${it("call", "Plan Call", ico("phone"), 1)}
+  return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Dashboard", ico("home"))}${it("course", "Classroom", ico("cap"), 1)}${it("cc", "Coach Contacts", ico("mail"), 1)}${it("list", "My Colleges", ico("bookmark"), 1)}
     ${modNav()}<p class="pmgrp">Account</p>${it("profile", "Profile and marks", ico("user"))}${it("set", "Settings", ico("sliders"))}
     <div class="pmplan">${P ? `<b>${STAR} ${core.admin() ? "Admin" : "Premium"}</b><span><i class="dot"></i>${core.admin() ? "Everything unlocked" : "Active"}</span>`
       : `<b>Free account</b><span>Unlock the course, college list and more.</span><a class="acbtn" href="${esc(buyUrl("lt27", "sidebar"))}" target="_blank" rel="noopener">Get Premium · $27</a>`}</div></nav>`;
@@ -460,7 +458,6 @@ function premiumView() {
   let body = "";
   if (NEEDS[PT] && !owns(NEEDS[PT])) body = buyView(NEEDS[PT]);
   else if (PT === "buy" && BUYK) body = buyView(BUYK);
-  else if (PT === "call") body = callView();
   else if (PT === "dash") body = dashView(); else if (PT === "list") body = listView(); else if (PT === "cc") body = ccView(); else if (PT === "set") body = setView(); else if (PT === "course") body = courseView();
   else if (PT === "aov" && core.admin()) body = aovView(); else if (PT === "admin" && core.admin()) body = adminView();
   else body = D.role === "athlete" ? `<div class="prwrap">${profileCard(D)}${footer()}</div>` : par() ? parentView() : `<div class="prwrap">${profileCard(D, true)}${footer()}</div>`;
