@@ -844,3 +844,22 @@ button.pmcat{cursor:pointer}
 .etabs button:focus-visible,.eseg button:focus-visible{outline:2px solid var(--pr-violet);outline-offset:2px}
 .eseg{display:inline-flex;gap:6px;margin:0 10px 10px 0;flex-wrap:wrap}.eseg button{min-height:44px;text-align:center}
 .ehelp{margin:10px 0 0;font-size:var(--fs-14);color:var(--pr-mute)}
+/* Coaches search: live results like the main-page school search (2026-11-13) */
+.pmres .pmrl{grid-template-columns:32px minmax(0,1fr) auto 16px;min-height:56px}
+.pmres .pmrl.on{background:var(--pr-soft)}
+.pmres .pmrl:focus-visible{outline:2px solid var(--pr-violet);outline-offset:-2px}
+@media (max-width:640px){.pmres .pmrl{grid-template-columns:32px minmax(0,1fr) 16px}}
+/* Email Templates, copy-only (2026-11-13): First email | Follow-ups tabs, one email card at a time */
+.etab2{display:flex;width:fit-content;gap:4px;padding:4px;margin:0 0 16px;border:1px solid var(--pr-line);border-radius:var(--r-pill);background:var(--pr-card)}
+.etab2 button{min-height:44px;padding:0 18px;border:0;border-radius:var(--r-pill);background:none;color:var(--pr-mute);font:inherit;font-size:var(--fs-14);font-weight:600;cursor:pointer}
+.etab2 button[aria-selected="true"]{background:var(--pr-violet);color:#fff}
+.etab2 button:focus-visible{outline:2px solid var(--pr-violet);outline-offset:2px}
+.ehelp.etop{margin:0 0 14px}
+.tcard{max-width:760px;margin:0 0 16px;padding:18px;border:1px solid var(--pr-line);border-radius:var(--r-3);background:var(--pr-card)}
+.tlab{margin:0 0 12px;font-size:var(--fs-15);font-weight:600}
+.tsub{display:flex;align-items:center;gap:12px;padding:0 0 14px;margin:0 0 14px;border-bottom:1px solid var(--pr-line)}
+.tsub span{flex:1;min-width:0}.tsub small{display:block;font-size:var(--fs-12);color:var(--pr-mute)}.tsub b{display:block;font-size:var(--fs-15);font-weight:600;overflow-wrap:anywhere}
+.tbody{margin:0 0 16px;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:var(--fs-15);line-height:1.6;color:var(--pr-ink)}
+.tcp{width:100%}
+.enote{max-width:760px;margin:0 0 20px;font-size:var(--fs-14);color:var(--pr-mute)}
+.eq{margin:0 0 8px;font-size:var(--fs-14);font-weight:600;color:var(--pr-ink)}

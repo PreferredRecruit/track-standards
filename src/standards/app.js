@@ -571,9 +571,9 @@ function standards(){
   }
   return o+`</div>`;
 }
-function hits(q){q=q.trim().toLowerCase().replace(/\s+/g," ");if(q.length<2)return [];const ws=q.split(" ");
+function hits(q,noJ){q=q.trim().toLowerCase().replace(/\s+/g," ");if(q.length<2)return [];const ws=q.split(" ");
   return SCH.map((s,i)=>{let b=0;if(s.a.includes(q))b=100;else if(ACR[i]===q)b=92;else if(s.a.some(a=>a.startsWith(q)))b=80;else if(ws.every(w=>TOK[i].some(t=>t.startsWith(w))))b=60;
-    return [b?b+(s.o?3:0)+(s.d==="NCAA D1"?2:s.d==="NCAA D2"?1:0):0,i]}).filter(x=>x[0]).sort((a,b)=>b[0]-a[0]||SCH[a[1]].n.localeCompare(SCH[b[1]].n)).slice(0,8).map(x=>[SCH[x[1]],x[1]])}
+    return [b&&!(noJ&&s.j)?b+(s.o?3:0)+(s.d==="NCAA D1"?2:s.d==="NCAA D2"?1:0):0,i]}).filter(x=>x[0]).sort((a,b)=>b[0]-a[0]||SCH[a[1]].n.localeCompare(SCH[b[1]].n)).slice(0,8).map(x=>[SCH[x[1]],x[1]])}
 /* official charts from 2024 (Ryan 2026-10-19: no 2025-27 chart found -> say so professionally) */
 const oldChart=s=>!!(s.o&&!s.cv&&+s.yr&&+s.yr<=2024),OLDNOTE=s=>oldChart(s)?` These are the most recent standards the program has published (${s.yr}). Current requirements may differ, so confirm with the coaching staff.`:"";
 const star=s=>s.o?'<span class="star" title="Official standards, verified">★</span>':"";
@@ -2789,6 +2789,8 @@ document.addEventListener("submit",ev=>{const fid=ev.target&&ev.target.id;if(fid
       u.searchParams.set("utm_term",[o.e,o.grade?"g"+o.grade:"","readiness-"+o.score,...keep].filter(Boolean).join(" "));
       for(const [k,v] of [["pr_grade",o.grade],["pr_mark",o.m],["pr_status",o.stage]])if(v)u.searchParams.set(k,v);else u.searchParams.delete(k);return u.toString()},schools:(()=>{let L=null;return ()=>L||(L=SCH.filter(x=>!x.j).map(x=>x.n).sort())})(),onOpen:()=>{clearTimeout(EV.t);if($("eval").classList.contains("on"))evalOut()},parse:parseMark,events:g=>HSE(g).filter(e=>evs(g).includes(e)),evName:hsName,ph,nstd:NSTD,fits:(e,g,v)=>SCH.filter(s=>tier(s,g,e,v)).length,
     /* premium account (2026-11-12): one college for My College List / Coach Contacts: slug, division, levels in high school terms, tier for this mark */
+    /* the main-page school search (aliases, acronyms, ranking), for the Coaches page: same logic, junior colleges left out (no coach rosters) */
+    find:q=>hits(q,true).map(([x])=>({n:x.n,d:x.d,c:x.c,logo:tlogo(x)})),
     ccLoad:(el,name)=>{const i=SCH.findIndex(x=>x.n===name&&!x.j);if(i>=0)loadCC(el,i,()=>document.body.contains(el))},
     sinfo:(name,g,e,v)=>{const s=SCH.find(x=>x.n===name&&!x.j);if(!s)return null;const i=SCH.indexOf(s),L=e&&s[g]?hsLevels(s,g,e):{t:null};
       return {n:s.n,t:s.t||s.n,slug:(s.os&&s.os[0])||slugOf(s.n),d:s.d,c:s.c,lv:(L.t||[]).map(x=>x?parse(String(x),e):null),lvs:L.t||[],tier:e&&v!=null&&s[g]?tier(s,g,e,v):null,field:FIELD.has(e),i}},

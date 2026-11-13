@@ -326,7 +326,7 @@ function lessonBody(c) {
   const lk = d && d.link ? (d.link === "#list" ? `<button type="button" class="acbtn" data-onb="pt" data-v="list">Open My School List</button>` : d.link === "#cc" ? `<button type="button" class="acbtn" data-onb="pt" data-v="cc">Open Coach Contacts</button>` : d.link === "/" ? `<a class="acbtn" href="/">Open the Standards Site</a>`
     : `<a class="acbtn" href="${esc(d.link)}" target="_blank" rel="noopener">${/spreadsheets/.test(d.link) ? "Make your copy of the tracker ↗" : "Open ↗"}</a>`) : "";
   const body = !d ? `<p class="pmempty">Loading…</p>` : d.err ? `<p class="acerr">${esc(d.err === "locked" ? "This lesson is locked." : d.err)}</p>`
-    : (d.body ? (isTpl(it) ? (TPL && TPL.id === it.id ? tplEditor(it) : (loadTpl(it, d), tplEditor(it))) : `<div class="crsdoc">${mdLite(d.body)}</div>`)
+    : (d.body ? (/^7d-em/.test(it.id) ? tplShow("l", d) : `<div class="crsdoc">${mdLite(d.body)}</div>`)
       : it.soon ? `<div class="crsdoc"><p>${esc(it.summary || "")}</p><p class="crssoon">This one is on its way. It will show up here as soon as it's ready.</p></div>` : "") + (lk ? `<p class="crslink">${lk}</p>` : "");
   return `<p class="crskick">${esc((it.section || it.course_title).replace(/^Email templates: /, ""))}</p><h1>${esc(it.title)}</h1>${media}${body}
     <div class="crsdone">${it.soon ? "" : `<button type="button" class="${it.done ? "onbback" : "acbtn"}" data-onb="cdone">${it.done ? CCHK + " Completed" : "Mark as complete"}</button>`}</div>
@@ -502,27 +502,44 @@ function eItem(st, sel) {
   const pool = st.items.filter(x => /follow/i.test(x.title) === sel.fu), aud = pool.filter(x => x.title.toLowerCase().includes("(" + sel.aud + ")")), list = aud.length ? aud : pool;
   return { it: list[Math.min(sel.style, list.length - 1)] || pool[0], styles: aud.length ? [] : pool.map(x => styleOf(x.title)), hasAud: pool.some(x => /\((juniors|seniors)\)/i.test(x.title)) };
 }
+/* Email Templates (Ryan 2026-11-13): "give them 3 email templates, and 1 follow up sequence ... dont let them edit ... just give
+   them the template"; first email up front, follow-ups on their own tab. Copy only: nothing is edited or saved on the site. */
+const EM3 = [["7d-em-y0zaihe8-0", "My marks already fit", "For schools where your marks already reach their level."],
+  ["7d-em-75vhfbgy-0", "D1 or D2, still improving", "For D1 and D2 schools you're working toward."],
+  ["7d-em-wlmfahbl-0", "D3 or NAIA, still improving", "For D3 and NAIA schools."]], EMFU = "7d-em-75vhfbgy-4";
+let ETAB = "first", EPICK = null; const ECOPY = {};
+const pickIdx = k => k === "reg_no_d12" ? 1 : k === "reg_no_d3n" ? 2 : 0;
+function eLoad(id) { if (!EDATA[id]) { EDATA[id] = { loading: 1 }; core.api("/rest/v1/rpc/course_item", { method: "POST", body: { item: id } }).then(d => { EDATA[id] = d || {}; render(); }).catch(e => { EDATA[id] = { err: e.message }; render(); }); } return EDATA[id]; }
+function tplParts(raw) {
+  const t = String(raw || "").replace(/\r/g, ""), hs = [...t.matchAll(/^Follow-Up #(\d+):\s*([^\n]*)$/gm)];
+  if (!hs.length) { const x = splitTpl(t); return [{ label: "", subject: x.subject, body: x.body }]; }
+  return hs.map((h, i) => { const x = splitTpl(t.slice(h.index, i + 1 < hs.length ? hs[i + 1].index : undefined)), when = h[2].replace(/^Send on\s*/i, "").replace(/\(Last One\)/i, "(last one)");
+    return { label: `Follow-up ${h[1]}${when ? " · " + when : ""}`, subject: x.subject, body: x.body }; });
+}
+function tplCard(key, p) {
+  ECOPY[key + "s"] = p.subject; ECOPY[key + "b"] = p.body;
+  return `<div class="tcard">${p.label ? `<h3 class="tlab">${esc(p.label)}</h3>` : ""}
+    ${p.subject ? `<div class="tsub"><span><small>Subject</small><b>${esc(p.subject)}</b></span><button type="button" class="onbback" data-onb="tcopy" data-v="${key}s" data-l="Copy">Copy</button></div>` : ""}
+    <pre class="tbody">${esc(p.body)}</pre>
+    <button type="button" class="acbtn tcp" data-onb="tcopy" data-v="${key}b" data-l="Copy email">Copy email</button></div>`;
+}
+const ENOTE = `<p class="enote">Change everything in [brackets] to your own details, then send it from your own email.</p>`;
+function tplShow(key, d) { return !d || d.loading ? `<p class="pmempty">Loading…</p>` : d.err ? `<p class="acerr">${esc(d.err)}</p>` : tplParts(d.body).map((x, i) => tplCard(key + i, x)).join("") + ENOTE; }
 function emailsView() {
-  const sets = esets(), open = sets.some(st => st.items.some(i => i.unlocked)), sel = eSel(), st = sets.find(x => x.nm === sel.set) || sets[0];
-  const head = crumbs([CR_HUB, ["Email Templates"]]) + `<div class="pmtitle"><h1>Email Templates</h1><p>${open ? "Pick who you're emailing. Your email is ready below." : "The right email for every school, filled in for you."}</p></div>`;
-  if (!open || !st) return head + buyView("lt27");
-  const { it, styles, hasAud } = eItem(st, sel), seg = (on, a, v, l) => `<button type="button" role="radio" aria-checked="${on}" data-onb="${a}" data-v="${v}">${l}</button>`;
-  if (it && !EDATA[it.id]) core.api("/rest/v1/rpc/course_item", { method: "POST", body: { item: it.id } }).then(d => { EDATA[it.id] = d || {}; render(); }).catch(e => { EDATA[it.id] = { err: e.message }; render(); });
-  const d = it && EDATA[it.id];
-  if (d && d.body && (!TPL || TPL.id !== it.id)) loadTpl(it, d);
-  const editor = !d ? `<p class="pmempty">Loading your email…</p>` : d.err ? `<p class="acerr">${esc(d.err)}</p>` : tplEditor(it);
-  return head + `<section class="estep"><h2><span class="enum">1</span>What kind of school?</h2>
-      <div class="etabs" role="radiogroup" aria-label="Kind of school">${sets.map(x => seg(x.nm === st.nm, "eset", x.nm, esc(x.nm))).join("")}</div>
-      <p class="ehelp">Not sure? <button type="button" class="lnkbtn" data-onb="rpick">Answer 2 quick questions</button></p></section>
-    <section class="estep"><h2><span class="enum">2</span>Which email?</h2>
-      <div class="eseg" role="radiogroup" aria-label="First email or follow-up">${seg(!sel.fu, "efu", "0", "First email")}${seg(sel.fu, "efu", "1", "Follow-up (after 7 days)")}</div>
-      ${hasAud ? `<div class="eseg" role="radiogroup" aria-label="Grade">${seg(sel.aud === "juniors", "eaud", "juniors", "Juniors")}${seg(sel.aud === "seniors", "eaud", "seniors", "Seniors")}</div>` : ""}
-      ${styles.length > 1 ? `<p class="elab">Style</p><div class="eseg wrap" role="radiogroup" aria-label="Style">${styles.map((l, i) => seg(i === Math.min(sel.style, styles.length - 1), "estyle", i, esc(l))).join("")}</div>` : ""}</section>
-    <section class="estep"><h2><span class="enum">3</span>Copy it and send it from your own email</h2>${editor}</section>`;
+  const sets = esets(), open = sets.some(st => st.items.some(i => i.unlocked));
+  const head = crumbs([CR_HUB, ["Email Templates"]]) + `<div class="pmtitle"><h1>Email Templates</h1><p>${open ? "Copy an email, add your details, and send it." : "The emails to send college coaches, ready to copy."}</p></div>`;
+  if (!open) return head + buyView("lt27");
+  if (EPICK == null) { let k = null; try { k = localStorage.getItem("prPick"); } catch (e) {} EPICK = pickIdx(k); }
+  const tab = (k, l) => `<button type="button" role="tab" aria-selected="${ETAB === k}" data-onb="etab" data-v="${k}">${l}</button>`;
+  let o = head + `<div class="etab2" role="tablist" aria-label="Emails">${tab("first", "First email")}${tab("fu", "Follow-ups")}</div>`;
+  if (ETAB === "fu") return o + `<p class="ehelp etop">Only send these if the coach hasn't replied. If they answer, stop and reply to them.</p>` + tplShow("u", eLoad(EMFU));
+  const [id, , who] = EM3[EPICK];
+  return o + `<p class="eq" id="eqh">Which school are you emailing?</p><div class="eseg" role="radiogroup" aria-labelledby="eqh">${EM3.map(([, n], i) => `<button type="button" role="radio" aria-checked="${i === EPICK}" data-onb="epick" data-v="${i}">${esc(n)}</button>`).join("")}</div>
+    <p class="ehelp etop">${esc(who)}</p>` + tplShow("f" + EPICK, eLoad(id));
 }
 function pickFinish(key) {
   try { localStorage.setItem("prPick", key); } catch (e) {}
-  const fu = !!(PICKQ && PICKQ.fu); PICKQ = null; eSel(); ESEL.set = SETS[key]; ESEL.fu = fu; ESEL.style = 0; TPL = null;
+  const fu = !!(PICKQ && PICKQ.fu); PICKQ = null; EPICK = pickIdx(key); ETAB = fu ? "fu" : "first"; TPL = null;
   PT = "course"; RSUB = "emails"; DAY = null; LES = null; render(); layer().scrollTo(0, 0);
 }
 function openPicked(name, fu) {
@@ -542,7 +559,11 @@ function recAction(a, b) {
   if (a === "rtick") { const it = (CAT || []).find(x => x.id === v); if (it) markDone(it, !it.done); return true; }
   if (a === "rlock" || a === "rtask") { PT = "course"; openLesson(v); layer().scrollTo(0, 0); return true; }
   if (a === "rpick") { PICKQ = { step: 1, fu: false }; RSUB = "emails"; DAY = null; LES = null; render(); layer().scrollTo(0, 0); return true; }
-  if (a === "rfollow") { eSel(); ESEL.fu = true; ESEL.style = 0; TPL = null; RSUB = "emails"; DAY = null; LES = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "rfollow") { ETAB = "fu"; TPL = null; RSUB = "emails"; DAY = null; LES = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "etab") { ETAB = v === "fu" ? "fu" : "first"; render(); return true; }
+  if (a === "epick") { EPICK = Math.max(0, Math.min(2, +v || 0)); try { localStorage.setItem("prPick", ["reg_yes", "reg_no_d12", "reg_no_d3n"][EPICK]); } catch (e) {} render(); return true; }
+  if (a === "tcopy") { const t = ECOPY[v] || "", done = ok => { b.textContent = ok ? "Copied" : "Press and hold to copy"; setTimeout(() => { b.textContent = b.dataset.l; }, 1800); };
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => done(1)).catch(() => done(0)); return true; }
   if (a === "eset" || a === "efu" || a === "eaud" || a === "estyle") { eSel();
     if (a === "eset") { ESEL.set = v; ESEL.style = 0; const k = Object.keys(SETS).find(x => SETS[x] === v); try { if (k) localStorage.setItem("prPick", k); } catch (e) {} }
     if (a === "efu") { ESEL.fu = v === "1"; ESEL.style = 0; } if (a === "eaud") ESEL.aud = v; if (a === "estyle") ESEL.style = +v;
@@ -552,7 +573,7 @@ function recAction(a, b) {
     if (q.step === 1) { if (v === "reg") { q.step = 2; render(); } else pickFinish(v); return true; }
     if (q.step === 2) { if (v === "yes") pickFinish("reg_yes"); else { q.step = 3; render(); } return true; }
     pickFinish(v === "d12" ? "reg_no_d12" : "reg_no_d3n"); return true; }
-  if (a === "rtpls") { TPLLIST = true; LES = null; TPL = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "rtpls") { RSUB = "emails"; ETAB = "first"; DAY = null; LES = null; TPL = null; render(); layer().scrollTo(0, 0); return true; }
   if (a === "rtplsback") { TPLLIST = false; render(); return true; }
   return false;
 }
@@ -712,6 +733,22 @@ const patch = (id, body) => core.api("/rest/v1/college_list?id=eq." + id, { meth
 function saveRanks() { (LIST || []).forEach((r, i) => { if (r.rank !== i) { r.rank = i; patch(r.id, { rank: i }); } }); }
 function moveRow(id, to) { const i = LIST.findIndex(r => r.id === id); if (i < 0) return; to = Math.max(0, Math.min(LIST.length - 1, to)); const [r] = LIST.splice(i, 1); LIST.splice(to, 0, r); saveRanks(); render();
   const h = document.querySelector(`[data-lh="${id}"]`); if (h) h.focus(); }
+/* Coaches search = the main-page school search (Ryan 2026-11-13: "same logic"): nicknames and short names (USC, Ole Miss),
+   acronyms, best match first, live as you type, arrow keys + Enter; junior colleges left out (no coach rosters) */
+function ccHits(q) { const C = core.cfg(); return C.find ? C.find(q) : []; }
+function ccResults(q) {
+  if (String(q).trim().length < 2) return "";
+  const C = core.cfg(), sub = PSUB() || D, b = bestMark(sub)[0], h = ccHits(q);
+  if (!h.length) return `<div class="pmcard pmres"><p class="pmempty">No college matches that. Try the full name or a short name like USC.</p></div>`;
+  return `<div class="pmcard pmres" role="listbox" aria-label="Colleges">${h.map((x, k) => { const info = C.sinfo ? C.sinfo(x.n, sub.gender || "m", b && b.e, b && b.v) : null;
+    return `<button type="button" role="option" class="pmrow pmrl${k === 0 ? " on" : ""}" aria-selected="${k === 0}" data-onb="ccs" data-v="${esc(x.n)}">${x.logo || ""}<span class="pmnm"><b>${esc(x.n)}</b><small>${esc([x.d, x.c].filter(Boolean).join(" · "))}</small></span>${fitChip(info)}<span class="pmgo" aria-hidden="true">›</span></button>`; }).join("")}</div>`;
+}
+function ccPaint() { const el = document.getElementById("pmccres"); if (el) el.innerHTML = ccResults(CCQ); const qk = document.querySelector(".pmland .pmquick"); if (qk) qk.hidden = CCQ.trim().length >= 2; }
+document.addEventListener("input", e => { if (e.target.id !== "pmcq") return; CCQ = e.target.value; ccPaint(); });
+document.addEventListener("keydown", e => { if (e.target.id !== "pmcq") return; const bs = [...document.querySelectorAll("#pmccres .pmrl")];
+  if (e.key === "Escape") { CCQ = e.target.value = ""; ccPaint(); return; } if (!bs.length || !/^Arrow(Up|Down)$/.test(e.key)) return; e.preventDefault();
+  let k = bs.findIndex(x => x.classList.contains("on")); k = e.key === "ArrowDown" ? Math.min(bs.length - 1, k + 1) : Math.max(0, k - 1);
+  bs.forEach((x, j) => { x.classList.toggle("on", j === k); x.setAttribute("aria-selected", j === k); }); bs[k].scrollIntoView({ block: "nearest" }); });
 function ccView() {
   const C = core.cfg(), sub = PSUB() || D, b = bestMark(sub)[0];
   if (!core.emails()) return `<div class="pmland"><span class="pmpill">${STAR} Coach Contacts</span><h1>Coach emails are the $17 add-on</h1><p>Your Premium account includes everything else. Questions about adding coach emails? <a href="mailto:support@thepreferredrecruit.com">support@thepreferredrecruit.com</a></p></div>`;
@@ -721,14 +758,11 @@ function ccView() {
       <div class="pmtitle"><h1>${esc(info ? info.t : CCS)}</h1><p>${esc(info ? [info.d, info.c].filter(Boolean).join(" · ") : "")}${info && b ? ` · ${evName(b.e, sub.gender)} ${esc(b.m)} ` : ""}${fitChip(info)}</p></div>
       <div id="pmcc" class="pmccbox"><p class="pmempty">Loading coaches…</p></div>
       <div class="pmdf"><button type="button" class="onbback" data-onb="school" data-slug="${esc(info ? info.slug : "")}">Standards, results and roster</button>${(LIST || []).some(r => r.name === CCS) ? "" : `<button type="button" class="onbback" data-onb="ccadd">+ Add to My Colleges</button>`}</div>`; }
-  const q = CCQ.trim().toLowerCase(), all = C.schools ? C.schools() : [], hits = q ? all.filter(n => n.toLowerCase().includes(q)).slice(0, 12) : [];
   const pick = (LIST || []).slice(0, 4);
   return `<div class="pmland"><span class="pmpill">${STAR} Included with Unlimited Access</span><h1>Get any college coach's email</h1><p>Search a college to see its coaches, what each one coaches, and their email. The coach for your event comes first.</p>
-    <form class="pmsearch" data-pform="cc" role="search"><input class="in" id="pmcq" list="pmall" value="${esc(CCQ)}" placeholder="Search a college, like Texas State" autocomplete="off" aria-label="Search a college"><button class="acbtn">Search</button></form>
-    <datalist id="pmall">${all.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
-    ${q ? `<div class="pmcard pmres">${hits.length ? hits.map(n => { const info = C.sinfo ? C.sinfo(n, sub.gender || "m", b && b.e, b && b.v) : null;
-      return `<button type="button" class="pmrow" data-onb="ccs" data-v="${esc(n)}"><span class="pmnm"><b>${esc(n)}</b><small>${esc(info ? [info.d, info.c].filter(Boolean).join(" · ") : "")}</small></span>${fitChip(info)}<span class="pmgo" aria-hidden="true">›</span></button>`; }).join("") : `<p class="pmempty">No college matches "${esc(CCQ)}". Try part of the name.</p>`}</div>`
-      : pick.length ? `<div class="pmquick"><p>From your school list</p><div>${pick.map(r => `<button type="button" class="pmq" data-onb="ccs" data-v="${esc(r.name)}"><b>${esc(r.name)}</b><span class="pmcat ${r.cat}">${catL(r.cat)}</span></button>`).join("")}</div></div>` : ""}
+    <form class="pmsearch" data-pform="cc" role="search"><input class="in" id="pmcq" value="${esc(CCQ)}" placeholder="Try USC, Oregon or Ole Miss" autocomplete="off" aria-label="Search a college" aria-controls="pmccres"><button class="acbtn">Search</button></form>
+    <div id="pmccres">${ccResults(CCQ)}</div>
+    ${pick.length ? `<div class="pmquick"${CCQ.trim().length >= 2 ? " hidden" : ""}><p>From your school list</p><div>${pick.map(r => `<button type="button" class="pmq" data-onb="ccs" data-v="${esc(r.name)}"><b>${esc(r.name)}</b><span class="pmcat ${r.cat}">${catL(r.cat)}</span></button>`).join("")}</div></div>` : ""}
     <ol class="pmunl"><li><b>Search a college</b><span>Any college on Track Standards</span></li><li><b>Find your event's coach</b><span>Listed first, with their title</span></li><li><b>Copy the email</b><span>Send it from your own inbox</span></li></ol></div>`;
 }
 function setView() {
@@ -771,7 +805,7 @@ document.addEventListener("keydown", e => { const h = e.target.closest && e.targ
   const id = +h.dataset.lh, i = LIST.findIndex(r => r.id === id); moveRow(id, i + (e.key === "ArrowUp" ? -1 : 1)); });
 document.addEventListener("submit", e => { const f = e.target.closest && e.target.closest("[data-pform]"); if (!f) return; e.preventDefault();
   if (f.dataset.pform === "add") listAdd(document.getElementById("pmadd").value);
-  if (f.dataset.pform === "cc") { CCQ = document.getElementById("pmcq").value; const all = core.cfg().schools ? core.cfg().schools() : [], hit = all.find(n => n.toLowerCase() === CCQ.trim().toLowerCase()); if (hit) CCS = hit; render(); const C = core.cfg(); C.log && C.log("coach_contacts", { detail: "search" }); } });
+  if (f.dataset.pform === "cc") { CCQ = document.getElementById("pmcq").value; const on = document.querySelector("#pmccres .pmrl.on") || document.querySelector("#pmccres .pmrl"), h = on ? on.dataset.v : (ccHits(CCQ)[0] || {}).n; if (h) CCS = h; render(); const C = core.cfg(); C.log && C.log("coach_contacts", { detail: "search" }); } });
 function premiumAction(a, b) {
   if (a === "pt") { SHEET = false; BUYMSG = ""; PT = b.dataset.v; OPEN = null; LMSG = ""; if (PT === "cc") { CCS = null; } if (PT === "course") { CRS = null; LES = null; CMSG = ""; DAY = null; PICKQ = null; TPLLIST = false; TPL = null; RSUB = "hub"; } render(); layer().scrollTo(0, 0); return true; }
   if (a === "cl") { SHEET = false; openLesson(b.dataset.v); return true; }
@@ -780,7 +814,7 @@ function premiumAction(a, b) {
   if (a === "cback") { CRS = null; LES = null; LESD = null; VSRC = null; render(); layer().scrollTo(0, 0); return true; }
   if (a === "copen") { const c = courseList().find(x => x.k === b.dataset.v); if (!c) return true; CRS = c.k; LES = null; render(); layer().scrollTo(0, 0); return true; }
   if (/^tp/.test(a) && tplAction(a, b)) return true;
-  if (/^(r(sub|day|back|lback|tick|lock|task|pick|follow|pickback|pickans|tpls|tplsback)|eset|efu|eaud|estyle)$/.test(a) && recAction(a, b)) return true;
+  if (/^(r(sub|day|back|lback|tick|lock|task|pick|follow|pickback|pickans|tpls|tplsback)|eset|efu|eaud|estyle|etab|epick|tcopy)$/.test(a) && recAction(a, b)) return true;
   if (a === "cnext") { PT = "course"; openLesson(b.dataset.v); layer().scrollTo(0, 0); return true; }
   if (a === "viewas") { core.setViewAs(b.dataset.v); pvCat(); PT = b.dataset.v === "admin" ? "admin" : "dash"; DAY = null; LES = null; PICKQ = null; TPLLIST = false; SHEET = false; render(); layer().scrollTo(0, 0); return true; }
   if (a === "cmod") { SHEET = false; PT = "course"; CRS = "7day"; LES = null; MODQ = b.dataset.v; render(); layer().scrollTo(0, 0); return true; }
