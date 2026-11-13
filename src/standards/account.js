@@ -584,6 +584,8 @@ export async function init(cfg) {
   setTimeout(nudges, 4000);   /* after the page settles, never on arrival */
   /* Ryan 2026-10-19: a signed-in account must finish its profile before using the site */
   await premiumLink();
+  /* ?signup=1 opens "create account" for signed-out visitors (Ryan 2026-11-13: email to people whose sign-up failed in the Nov 12 outage) */
+  try { const q = new URLSearchParams(location.search); if (q.get("signup")) { q.delete("signup"); history.replaceState(history.state, "", location.pathname + (q.toString() ? "?" + q : "")); if (!SES) { CFG.log && CFG.log("account", { detail: "signup-link" }); open("signup"); return member(); } } } catch (e) {}
   if (ONB.isPage()) ONB.show(); else if (SES && !member() && !/^\/(privacy|admin)\.html$/.test(location.pathname)) ONB.go("/onboarding");
   return member();
 }
