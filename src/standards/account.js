@@ -184,8 +184,13 @@ if (typeof window !== "undefined") window.prRank = () => rankTag();
 /* static SEO pages have no account code: they read this cached tag (tier + class only) */
 function cacheRank() { try { const r = rankTag(); if (r) localStorage.setItem("prRank", r); else localStorage.removeItem("prRank"); } catch (e) {} }
 export const profile = () => PRO;
-export const premium = () => !!(PREM && (PREM.premium || PREM.admin));
-export const emails = () => !!(PREM && (PREM.emails || PREM.bump || PREM.admin));
+/* admin "View as" (Ryan 2026-11-12: "a toggle on my account to show free version"): admins preview free / $27 / $27+$17 on
+   their own screen only. Nothing changes on the server; admin pages stay reachable to switch back. */
+let PV = null; try { PV = sessionStorage.getItem("prViewAs"); } catch (e) {}
+const pvOn = () => !!(PREM && PREM.admin && PV && PV !== "admin");
+export const premium = () => pvOn() ? PV !== "free" : !!(PREM && (PREM.premium || PREM.admin));
+export const emails = () => pvOn() ? PV === "full" : !!(PREM && (PREM.emails || PREM.bump || PREM.admin));
+function setViewAs(m) { PV = m === "admin" ? null : m; try { PV ? sessionStorage.setItem("prViewAs", PV) : sessionStorage.removeItem("prViewAs"); } catch (e) {} applyTheme(); }
 export const premiumInfo = () => PREM;
 export const kids = () => KIDS;
 /* the signed-in athlete's own PRs ({e, v}), for "where would you fit" in Compare */
@@ -520,7 +525,7 @@ async function premiumLink() {
    It switches the whole site, using the dark tokens already in standards.css and ui.css. Everyone else stays on the light site. */
 const PTK = "prPT";
 function applyTheme() {
-  const dark = !!(PREM && (PREM.premium || PREM.admin)) && (PREM.theme || "dark") === "dark";
+  const dark = premium() && (PREM.theme || "dark") === "dark";
   document.documentElement.dataset.theme = dark ? "dark" : "light";
   try { dark ? localStorage.setItem(PTK, "dark") : localStorage.removeItem(PTK); } catch (e) {}
 }
@@ -528,7 +533,7 @@ async function setTheme(t) {
   if (!PREM) return; PREM.theme = t === "light" ? "light" : "dark"; applyTheme();
   if (SES) api("/rest/v1/profiles?id=eq." + SES.user.id, { method: "PATCH", body: { premium_theme: PREM.theme } }).catch(() => {});
 }
-export const core = { premium: () => !!(PREM && (PREM.premium || PREM.admin)), emails: () => !!(PREM && (PREM.emails || PREM.bump || PREM.admin)), admin: () => !!(PREM && PREM.admin),
+export const core = { premium, emails, admin: () => !!(PREM && PREM.admin), viewAs: () => (pvOn() ? PV : "admin"), setViewAs,
   theme: () => (PREM && PREM.theme) || "dark", setTheme, demo: () => DEMO, premiumInfo: () => PREM, badge, badgeSvg, prVerified, URL: URL_, KEY, ST, api, fresh, loadProfile, changed, signOut, member, profile: () => PRO, ses: () => SES, cfg: () => CFG };
 export async function init(cfg) {
   CFG = cfg || {}; SES = DEMO ? { access_token: "demo", refresh_token: "demo", expires_at: Math.floor(Date.now() / 1000) + 86400, user: { id: "demo-user", email: "demo@example.com" } } : store.get(SK); shell(); headBtn();
