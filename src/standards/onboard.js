@@ -33,7 +33,10 @@ const IMG = {};   // storage path → blob URL
 
 const par = () => D.role === "parent";
 const fam = () => D.role === "athlete" || D.role === "parent";
-const NEWUI = () => core.admin() || !!core.demo();   /* admin-only preview of the new account area (Ryan 2026-11-12) */
+/* new account area preview (Ryan 2026-11-12: "keep the premium versions active only on Abe's account, Malik Metivier's account,
+   and my account" until the videos are filmed). Ryan + Malik are admins; Abe is matched on his confirmed account email. */
+const PREVIEW_EMAILS = ["abe@emberly.io"];
+const NEWUI = () => core.admin() || !!core.demo() || PREVIEW_EMAILS.includes(String((core.premiumInfo() || {}).email || "").toLowerCase());
 const S = () => par() ? K : D;   // the athlete being built or shown
 const QUICK = () => MODE.startsWith("q:");
 const kidOnly = () => par() && MODE !== "onboard" && MODE !== "edit";
