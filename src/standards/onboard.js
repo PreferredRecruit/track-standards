@@ -478,7 +478,16 @@ function dashView() {
     <a class="acbtn" href="${esc(buyUrl("lt27", "dashboard"))}" target="_blank" rel="noopener">Get Premium on Whop</a>
     <p class="pmupn">Bought it? It unlocks by itself when you're signed in with the email you used at checkout.</p></div>`;
   const L = (LIST || []).slice(0, 5), sub = PSUB() || D, b = bestMark(sub)[0], C = core.cfg();
-  return headRow() + `<div class="pmpaths">
+  /* concept dashboard (Ryan 2026-11-12: "that looks sooo much better and well spaced"): real numbers only */
+  const les = (CAT && !CAT.err ? CAT : []).filter(x => x.course === "7day" && !x.soon && x.unlocked), doneN = les.filter(x => x.done).length, pctD = les.length ? Math.round(doneN / les.length * 100) : 0;
+  const nxt = les.find(x => !x.done), dayOf = nxt && (nxt.section || "").match(/^Days? ([\d and]+)/);
+  const kpi = (l, v, sub2) => `<div class="pmkpi"><span>${l}</span><b>${v}</b><small>${sub2}</small></div>`;
+  const kpis = `<div class="pmkpis">${kpi(b ? `Colleges your ${evName(b.e, sub.gender)} fits` : "Colleges your mark fits", b ? b.n.toLocaleString() : "Add a mark", b ? `With ${esc(b.m)}` : "Your best mark sets this")}
+    ${kpi("Roadmap progress", pctD + "%", `${doneN} of ${les.length} lessons`)}${kpi("My Colleges", LIST ? LIST.length : "…", "of 25 saved")}
+    ${kpi("Coach emails", core.emails() ? "Unlocked" : "Locked", core.emails() ? "Every coach, copy only" : "$17 add-on")}</div>`;
+  const next = nxt ? `<div class="pmnext"><div><span>Next step${dayOf ? "" : ""}</span><b>${esc(nxt.title)}</b><small>${esc(nxt.section || "")}</small></div>
+    <button type="button" class="acbtn" data-onb="cnext" data-v="${esc(nxt.id)}">Continue</button></div>` : "";
+  return headRow() + kpis + next + `<div class="pmpaths">
     <button type="button" class="pmpath pri" data-onb="pt" data-v="cc"><span class="ic" aria-hidden="true">${ico("mail")}</span><span><b>${STAR} Coach Contacts</b><small>${core.emails() ? "Get any college coach's email" : "Coach emails are the $17 add-on"}</small></span><span class="pmgo" aria-hidden="true">›</span></button>
     <button type="button" class="pmpath" data-onb="pt" data-v="course"><span class="ic" aria-hidden="true">${ico("cap")}</span><span><b>${STAR} Your 7-Day Roadmap</b><small>Videos, templates and tools, one step a day</small></span><span class="pmgo" aria-hidden="true">›</span></button></div>
     <div class="pmcard"><div class="pmch"><h2>My Colleges <small>${LIST ? LIST.length + " of 25" : ""}</small></h2><button type="button" class="onbback" data-onb="pt" data-v="list">${LIST && LIST.length ? "Open list" : "Add colleges"}</button></div>
@@ -601,6 +610,7 @@ function premiumAction(a, b) {
   if (a === "cback") { CRS = null; LES = null; LESD = null; VSRC = null; render(); layer().scrollTo(0, 0); return true; }
   if (a === "copen") { const c = courseList().find(x => x.k === b.dataset.v); if (!c) return true; CRS = c.k; LES = null; render(); layer().scrollTo(0, 0); return true; }
   if (/^tp/.test(a) && tplAction(a, b)) return true;
+  if (a === "cnext") { PT = "course"; openLesson(b.dataset.v); layer().scrollTo(0, 0); return true; }
   if (a === "cmod") { SHEET = false; PT = "course"; CRS = "7day"; LES = null; MODQ = b.dataset.v; render(); layer().scrollTo(0, 0); return true; }
   if (a === "cdone") { if (LES) markDone(LES, !LES.done); return true; }
   if (a === "ccopy") { const t = LESD && LESD.body || ""; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy template"; }, 1800); }).catch(() => { b.textContent = "Select and copy the text below"; }); return true; }

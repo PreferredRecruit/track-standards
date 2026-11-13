@@ -696,3 +696,24 @@ button.pmcat{cursor:pointer}
 .pmtb span svg{display:block}.cmic svg,.crsic svg{display:block}
 .pmpath .ic svg{display:block;width:20px;height:20px}
 .tpnote{margin:12px 0 0;font-size:var(--fs-12);color:var(--pr-mute)}
+
+/* Concept look in the account area (Ryan 2026-11-12: "that looks sooo much better and well spaced"): roomier shell,
+   quieter dividers in dark, stat cards + next step on the dashboard. Real numbers only. */
+@media (min-width:961px){.pmshell{grid-template-columns:248px minmax(0,1fr);gap:32px;max-width:1280px;padding:28px 32px 72px}}
+.pmnv{min-height:38px}
+.pmside .pmgrp{margin-top:20px}
+.pmkpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0 12px}
+.pmkpi{display:flex;flex-direction:column;gap:4px;padding:16px;border:1px solid var(--pr-line);border-radius:var(--r-2);background:var(--pr-card)}
+.pmkpi span{font-size:var(--fs-12);color:var(--pr-mute)}
+.pmkpi b{font-size:var(--fs-24);font-weight:600;letter-spacing:var(--ls-head);font-variant-numeric:tabular-nums;line-height:var(--lh-tight)}
+.pmkpi small{font-size:var(--fs-12);color:var(--pr-mute)}
+.pmnext{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 12px;padding:18px 20px;border:1px solid color-mix(in srgb,var(--pr-violet) 40%,var(--pr-line));border-radius:var(--r-2);background:color-mix(in srgb,var(--pr-violet) 8%,var(--pr-card))}
+.pmnext div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.pmnext span{font-size:var(--fs-12);font-weight:600;color:var(--pr-violet)}
+.pmnext b{font-size:var(--fs-17);font-weight:600}
+.pmnext small{font-size:var(--fs-13);color:var(--pr-mute)}
+.pmnext .acbtn{display:inline-flex;align-items:center;justify-content:center;flex:none;width:auto;min-height:44px;margin:0;padding:0 20px}
+:root[data-theme="dark"] .pmshell{--pr-line:#22212B}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pmshell{--pr-line:#22212B}}
+@media (max-width:1100px){.pmkpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:960px){.pmshell{padding:16px 16px 110px;gap:16px}.pmnext{flex-direction:column;align-items:stretch}.pmnext .acbtn{width:100%}}
