@@ -64,7 +64,7 @@ function demoApi(path, method, body) {
       ["7d-targets", "Day 2: Pick your target schools", "Choose the schools to contact first", "tool"], ["7d-tracker", "Day 3: Set up your tracker", "Recruitment Tracker", "video"],
       ["7d-em-1", "Day 4: Write your first emails", "Schools you already qualify for: email template", "text"], ["7d-dm", "Day 4: Write your first emails", "DM and text script (3 scenarios)", "text"],
       ["7d-send", "Day 5: Send your first 10", "Send your first 10 emails", "text"], ["7d-reply", "Days 6 and 7: Follow up and reply", "Reply templates: when a coach writes back", "text", 1]]),
-      ...mk("kit", "Coach-Ready Profile Kit", 1, "em17", [["kit-cc", "Coach Contacts", "Coach Contacts: every coach's email", "tool"], ["kit-film", "Profile Kit", "Film checklist by event", "text", 1]]),
+      ...mk("7day", "7-Day Roadmap", 0, "em17", [["7d-cc", "Day 4: Write your first emails", "Find each coach's email (Coach Contacts)", "tool"]]),
       ...mk("call", "Plan Call", 2, "pc97", [["call-book", "Your Plan Call", "Book your Plan Call", "text"]])]; }
   if (P.endsWith("/rpc/course_item")) { const id = (body || {}).item || "";
     return id === "7d-checklist" ? { id, kind: "text", body: "1. **Core-Course GPA and Transcript.** You need at least a **2.3 GPA** in your NCAA core courses for **D1**.\n2. **NCAA Eligibility Center Account.** Sign up at [eligibilitycenter.org](https://web3.ncaa.org/ecwr3/).\n\nOnce **all 10 boxes are checked**, you're ready." }

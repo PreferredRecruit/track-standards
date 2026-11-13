@@ -228,11 +228,10 @@ const utm = (url, where) => { const u = new URL(url); for (const [k, v] of [["ut
    module list on the left and the lesson on the right. Only the low-ticket offer: 7-Day Roadmap ($27), Coach-Ready Profile Kit +
    Coach Contacts ($17), Plan Call ($97). Locked courses show the lock and the Whop unlock page. Text and videos come from
    course_item / signed storage links only for unlocked accounts (migrations 020, 023). Progress is saved per account. ---------- */
-let CAT = null, CRS = null, LES = null, LESD = null, VSRC = null, CMSG = "";
+let MODQ = null, CAT = null, CRS = null, LES = null, LESD = null, VSRC = null, CMSG = "";
 const CLOCK = svg(LOCK, 14).replace("<svg", '<svg class="crslk"');  /* same lock as the Premium kit list */
 const CCHK = svg('<path d="M5 12l5 5 9-11"/>', 13);
 const COURSES = { "7day": { k: "lt27", d: "One job a day for 7 days: the checklist, your school list, the tracker, email and DM scripts, and follow-ups." },
-  kit: { k: "em17", d: "Coach Contacts plus what you send with every email: film, a one-page profile and one shareable folder." },
   call: { k: "pc97", d: "A one-on-one call with our team to plan your athlete's recruiting." } };
 const cmins = s => s ? (s < 60 ? s + " sec" : Math.round(s / 60) + " min") : "";
 const kindIc = k => k === "video" ? "▶" : k === "tool" ? "↗" : "☰";
@@ -255,7 +254,7 @@ const pct = c => { const n = c.items.filter(i => !i.soon).length; return n ? Mat
 function courseView() {
   if (!CAT) { loadCat(); return `<div class="pmtitle"><h1>Classroom</h1></div><p class="pmempty">Loading…</p>`; }
   if (CAT.err) return `<div class="pmtitle"><h1>Classroom</h1></div><p class="acerr">Couldn't load the classroom. ${esc(CAT.err)}</p>`;
-  if (CRS) { const c = courseList().find(x => x.k === CRS); if (c && c.items.some(i => i.unlocked)) return coursePage(c); CRS = null; }
+  if (CRS) { const c = courseList().find(x => x.k === CRS); if (c) return coursePage(c); CRS = null; }
   const card = c => { const meta = COURSES[c.k] || {}, P = PRODS[meta.k] || {}, open = c.items.some(i => i.unlocked), p = pct(c), n = c.items.length;
     return `<button type="button" class="clc${open ? "" : " locked"}" data-onb="copen" data-v="${esc(c.k)}">
       <span class="clcov"><span class="clcl">Preferred Recruit</span><b>${esc(c.t)}</b>${open ? "" : `<span class="clclk">${CLOCK} Locked</span>`}</span>
@@ -267,9 +266,9 @@ function courseView() {
 }
 function coursePage(c) {
   const p = pct(c), secs = []; for (const it of c.items) { let s = secs.find(x => x.t === (it.section || "")); if (!s) secs.push(s = { t: it.section || "", items: [] }); s.items.push(it); }
-  if (!LES || LES.course !== c.k) { const first = c.items.find(i => !i.done && !i.soon) || c.items[0]; setTimeout(() => openLesson(first.id, true), 0); }
+  if (!LES || LES.course !== c.k) { const first = (MODQ && c.items.find(i => i.section === MODQ)) || c.items.find(i => i.unlocked && !i.done && !i.soon) || c.items[0]; MODQ = null; setTimeout(() => openLesson(first.id, true), 0); }
   const row = it => `<button type="button" class="cmi${LES && LES.id === it.id ? " on" : ""}${it.done ? " done" : ""}" data-onb="cl" data-v="${esc(it.id)}"${LES && LES.id === it.id ? ' aria-current="true"' : ""}>
-    <span class="cmic" aria-hidden="true">${it.done ? CCHK : kindIc(it.kind)}</span><span class="cmt">${esc(it.title)}</span>${it.soon ? '<span class="crsoon">Soon</span>' : ""}</button>`;
+    <span class="cmic${it.unlocked ? "" : " lk"}" aria-hidden="true">${!it.unlocked ? CLOCK : it.done ? CCHK : kindIc(it.kind)}</span><span class="cmt">${esc(it.title)}</span>${it.unlocked && it.soon ? '<span class="crsoon">Soon</span>' : ""}</button>`;
   const doneN = c.items.filter(i => i.done).length, cur = secs.find(s => s.items.some(i => LES && i.id === LES.id));
   const mods = secs.map(s => `<details class="cmod"${!LES || s === cur || secs.length < 4 ? " open" : ""}><summary><span>${esc(s.t)}</span><small>${s.items.filter(i => i.done).length}/${s.items.length}</small></summary>${s.items.map(row).join("")}</details>`).join("");
   return `<div class="crsback"><button type="button" class="onbback" data-onb="cback">‹ Classroom</button></div>
@@ -279,7 +278,7 @@ function coursePage(c) {
 }
 function openLesson(id, quiet) {
   const it = (CAT || []).find(x => x.id === id); if (!it) return;
-  if (!it.unlocked) { BUYK = (COURSES[it.course] || {}).k || "lt27"; BUYMSG = ""; PT = "buy"; render(); layer().scrollTo(0, 0); return; }
+  if (!it.unlocked) { CMSG = ""; CRS = it.course; LES = it; LESD = null; VSRC = null; BUYMSG = ""; render(); return; }
   CMSG = ""; CRS = it.course; LES = it; LESD = null; VSRC = null; render(); if (!quiet) { const a = document.querySelector(".crslesson"); if (a && innerWidth < 961) a.scrollIntoView({ block: "start" }); }
   if (it.soon && it.kind === "video") { LESD = { soon: true }; render(); return; }
   core.api("/rest/v1/rpc/course_item", { method: "POST", body: { item: id } }).then(d => { if (LES !== it) return; LESD = d || {}; render();
@@ -293,6 +292,7 @@ function markDone(it, on) {
       : core.api("/rest/v1/course_progress?item_id=eq." + encodeURIComponent(it.id), { method: "DELETE" })).catch(() => { it.done = !on; render(); });
 }
 function lessonBody(c) {
+  if (!LES.unlocked) return `<p class="crskick">${esc(LES.section || LES.course_title)}</p><h1>${esc(LES.title)}</h1>` + buyView(LES.tier);
   const it = LES, d = LESD, list = c.items, i = list.findIndex(x => x.id === it.id), prev = list[i - 1], next = list[i + 1];
   let media = "";
   if (it.kind === "video" || (d && d.video_path)) media = it.soon ? `<div class="crsv soon"><span aria-hidden="true">▶</span><b>Video coming soon</b><small>We're recording this walkthrough. Everything else in this module works today.</small></div>`
@@ -310,7 +310,7 @@ function lessonBody(c) {
 const BUY = { lt27: LT_URL, em17: LT_URL, pc97: LT_URL };   /* Abe's Whop sales page; swap in direct Whop checkout links for the $17 / $97 add-ons when Abe sends them */
 const PRODS = {
   lt27: { name: "Premium + 7-Day Roadmap", price: "$27 one time", gets: ["The 7-Day Roadmap course: videos, email and DM templates, checklist and tracker", "My College List: rank up to 25 colleges against your marks", "Premium Dark and Premium White for the whole site"] },
-  em17: { name: "Coach Contacts", price: "$17 add-on", gets: ["Every college coach's name, position and email", "The coach for your event first", "A dedicated coach page for every school"] },
+  em17: { name: "Coach emails", price: "$17 add-on to the $27 7-Day Roadmap", gets: ["Every college coach's name, position and email", "The coach for your event first", "A dedicated coach page for every school"] },
   pc97: { name: "Plan Call", price: "$97 add-on", gets: ["A one-on-one call to plan your recruiting", "Booked from the email you get after checkout"] } };
 const owns = k => k === "lt27" ? core.premium() : k === "em17" ? core.emails() : k === "pc97" ? !!(core.admin() || (core.premiumInfo() || {}).call) : true;
 const NEEDS = { list: "lt27", cc: "em17", call: "pc97" };
@@ -343,9 +343,17 @@ function sideNav() {
   const adm = core.admin() ? `<p class="pmgrp">Admin</p>${it("admin", "Accounts", "☰")}${it("aov", "Overview", "◈")}<p class="pmgrp">Your account</p>` : "";
   const P = core.premium();
   return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Dashboard", "⌂")}${it("course", "Classroom", "▶", 1)}${it("cc", "Coach Contacts", "✉", 1)}${it("list", "My Colleges", "◎", 1)}${it("call", "Plan Call", "☎", 1)}
-    <p class="pmgrp">Account</p>${it("profile", "Profile and marks", "◐")}${it("set", "Settings", "⚙")}
+    ${modNav()}<p class="pmgrp">Account</p>${it("profile", "Profile and marks", "◐")}${it("set", "Settings", "⚙")}
     <div class="pmplan">${P ? `<b>${STAR} ${core.admin() ? "Admin" : "Premium"}</b><span><i class="dot"></i>${core.admin() ? "Everything unlocked" : "Active"}</span>`
       : `<b>Free account</b><span>Unlock the course, college list and more.</span><a class="acbtn" href="${esc(buyUrl("lt27", "sidebar"))}" target="_blank" rel="noopener">Get Premium · $27</a>`}</div></nav>`;
+}
+/* the course outline in the sidebar (Ryan 2026-11-12: "a bunch of locks on the left side"): each module, locked until bought */
+function modNav() {
+  if (!CAT || CAT.err) return "";
+  const mods = []; for (const x of CAT) if (x.course === "7day") { let m = mods.find(y => y.t === x.section); if (!m) mods.push(m = { t: x.section, items: [] }); m.items.push(x); }
+  if (!mods.length) return "";
+  return `<p class="pmgrp">7-Day Roadmap</p>` + mods.map(m => { const lk = !m.items.some(i => i.unlocked), part = !lk && m.items.some(i => !i.unlocked), on = PT === "course" && CRS === "7day" && LES && LES.section === m.t;
+    return `<button type="button" class="pmnv pmmod${on ? " on" : ""}${lk ? " lk" : ""}" data-onb="cmod" data-v="${esc(m.t)}"${lk ? ' aria-label="' + esc(m.t) + ' (locked)"' : ""}><span class="ic" aria-hidden="true">${m.items.every(i => i.done) ? "✓" : "·"}</span><span class="pmmt">${esc(m.t)}</span>${lk || part ? `<span class="pmlk">${CLOCK}</span>` : ""}</button>`; }).join("");
 }
 /* phone: app-style bottom bar + a full menu sheet (Ryan 2026-11-12: "premium website customization for mobile/phone views") */
 let SHEET = false;
@@ -358,6 +366,7 @@ function phoneNav() {
 let PTADM = false;
 function premiumView() {
   const C = core.cfg();
+  if (!CAT) loadCat();
   if (!PTADM && core.admin()) { PTADM = true; if (PT === "dash") PT = "admin"; }
   if ((PT === "list" || PT === "dash") && core.premium()) { const k = aid() || "me"; if (LISTK !== k) { LISTK = k; LIST = null; loadList(); } }
   let body = "";
@@ -505,7 +514,8 @@ function premiumAction(a, b) {
   if (a === "sheet") { SHEET = !SHEET; render(); return true; }
   if (a === "recheck") { BUYMSG = "Checking…"; render(); core.loadProfile().then(() => { const k = BUYK || NEEDS[PT]; BUYMSG = k && owns(k) ? "Unlocked. You're all set." : "Not unlocked yet. If you just paid, give it a minute and check again."; CAT = null; render(); }); return true; }
   if (a === "cback") { CRS = null; LES = null; LESD = null; VSRC = null; render(); layer().scrollTo(0, 0); return true; }
-  if (a === "copen") { const c = courseList().find(x => x.k === b.dataset.v); if (!c) return true; if (!c.items.some(i => i.unlocked)) { BUYK = (COURSES[c.k] || {}).k || "lt27"; BUYMSG = ""; PT = "buy"; render(); layer().scrollTo(0, 0); return true; } CRS = c.k; LES = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "copen") { const c = courseList().find(x => x.k === b.dataset.v); if (!c) return true; CRS = c.k; LES = null; render(); layer().scrollTo(0, 0); return true; }
+  if (a === "cmod") { SHEET = false; PT = "course"; CRS = "7day"; LES = null; MODQ = b.dataset.v; render(); layer().scrollTo(0, 0); return true; }
   if (a === "cdone") { if (LES) markDone(LES, !LES.done); return true; }
   if (a === "ccopy") { const t = LESD && LESD.body || ""; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy template"; }, 1800); }).catch(() => { b.textContent = "Select and copy the text below"; }); return true; }
   if (a === "ptheme") { core.setTheme(b.dataset.v); render(); return true; }

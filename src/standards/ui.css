@@ -657,3 +657,9 @@ button.pmcat{cursor:pointer}
   .cmobile>summary{padding:12px 16px;font-size:var(--fs-14);font-weight:600;cursor:pointer}
   .clcov b{font-size:var(--fs-20)}
 }
+/* sidebar course outline + locked lessons inside a course (2026-11-12) */
+.pmmod{min-height:36px;font-size:var(--fs-13)}.pmmod .pmmt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pmmod .ic{color:var(--pr-violet)}
+.cmic.lk{background:color-mix(in srgb,var(--pr-mute) 14%,transparent);color:var(--pr-mute)}
+.crslesson .pmbuy{margin-top:8px;box-shadow:none}
+.pmmod .pmmt{flex:1;text-align:left}
