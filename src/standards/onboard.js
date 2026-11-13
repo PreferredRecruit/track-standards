@@ -300,12 +300,82 @@ function lessonBody(c) {
   const lk = d && d.link ? (d.link === "#cc" ? `<button type="button" class="acbtn" data-onb="pt" data-v="cc">Open Coach Contacts</button>` : d.link === "/" ? `<a class="acbtn" href="/">Open the Standards Site</a>`
     : `<a class="acbtn" href="${esc(d.link)}" target="_blank" rel="noopener">${/spreadsheets/.test(d.link) ? "Make your copy of the tracker ↗" : "Open ↗"}</a>`) : "";
   const body = !d ? `<p class="pmempty">Loading…</p>` : d.err ? `<p class="acerr">${esc(d.err === "locked" ? "This lesson is locked." : d.err)}</p>`
-    : (d.body ? (isTpl(it) ? `<div class="crsdoc tpl"><div class="crstb"><button type="button" class="acbtn" data-onb="ccopy">Copy template</button></div><div class="crspre">${esc(d.body)}</div></div>` : `<div class="crsdoc">${mdLite(d.body)}</div>`)
+    : (d.body ? (isTpl(it) ? (TPL && TPL.id === it.id ? tplEditor(it) : (loadTpl(it, d), tplEditor(it))) : `<div class="crsdoc">${mdLite(d.body)}</div>`)
       : it.soon ? `<div class="crsdoc"><p>${esc(it.summary || "")}</p><p class="crssoon">This one is on its way. It will show up here as soon as it's ready.</p></div>` : "") + (lk ? `<p class="crslink">${lk}</p>` : "");
   return `<p class="crskick">${esc(it.section || it.course_title)}</p><h1>${esc(it.title)}</h1>${media}${body}
     <div class="crsdone">${it.soon ? "" : `<button type="button" class="${it.done ? "onbback" : "acbtn"}" data-onb="cdone">${it.done ? CCHK + " Completed" : "Mark as complete"}</button>`}</div>
     <div class="crsnav">${prev ? `<button type="button" class="onbback" data-onb="cl" data-v="${esc(prev.id)}">‹ Previous</button>` : "<span></span>"}${next ? `<button type="button" class="acbtn" data-onb="cl" data-v="${esc(next.id)}">Next lesson ›</button>` : ""}</div>`;
 }
+/* ---------- Editable templates (Ryan 2026-11-12: "edit and save them themselves, with a reset to default option";
+   "i want it to be better" than Whop). Subject + email are editable, blanks are counted and one tap away, the athlete's
+   profile fills what it can, and each account keeps its own saved copy (public.template_edits, migration 024). ---------- */
+let TPL = null;   /* { id, def: {subject, body}, cur: {subject, body}, saved, msg, ck: {} } */
+function splitTpl(raw) {
+  const t = String(raw || "").replace(/\r/g, ""), at = re => { const m = t.match(re); return m ? m.index : -1; };
+  const iB = at(/^Before you start[^\n]*$/m), iH = at(/^How to use this\s*$/m), iS = at(/^Subject line\s*$/m), iE = at(/^Email\s*$/m), iC = at(/^Check before you send\s*$/m), iN = at(/^What.s next[^\n]*$/m);
+  if (iS < 0 || iE < 0) return { subject: "", body: t.trim(), before: [], check: [], next: "", how: "" };
+  const cut = (a, b) => a < 0 ? "" : t.slice(a, b < 0 ? undefined : b);
+  const lines = s => s.split("\n").slice(1).map(x => x.replace(/^\s*[✅•-]\s*/, "").trim()).filter(Boolean);
+  const endE = [iC, iN].filter(x => x > iE).sort((a, b) => a - b)[0] ?? -1;
+  return { before: iB >= 0 ? lines(cut(iB, [iH, iS].filter(x => x > iB).sort((a, b) => a - b)[0] ?? iS)) : [],
+    how: iH >= 0 ? lines(cut(iH, iS)).join(" ") : "",
+    subject: cut(iS, iE).split("\n").slice(1).join("\n").trim(), body: cut(iE, endE).split("\n").slice(1).join("\n").trim(),
+    check: iC >= 0 ? lines(cut(iC, iN > iC ? iN : -1)) : [], next: iN >= 0 ? t.slice(iN).split("\n")[0].trim() : "" };
+}
+const blanks = s => (String(s || "").match(/\[[^\]\n]{1,60}\]/g) || []);
+function fillProfile(s) {
+  const sub = PSUB() || D, ms = (sub.marks || []).filter(m => m[0] && m[1]), ev = m => evName(m[0], sub.gender), map = {
+    "first last": nameOf(sub), "your name": nameOf(sub), "grad year": sub.year, "gpa": sub.gpa, "high school": sub.school, "your high school": sub.school,
+    "state": sub.state, "event": ms[0] && ev(ms[0]), "your events": ms.map(ev).join(", "), "best mark": ms[0] && ms[0][1], "insert best marks": ms.map(m => ev(m) + " " + m[1]).join(", "),
+    "phone": D.phone || sub.phone };
+  let i = 0;
+  s = s.replace(/\[Event\],\s*\[Mark\]/g, x => { const m = ms[i++]; return m ? `${ev(m)}, ${m[1]}` : x; });
+  return s.replace(/\[([^\]\n]{1,60})\]/g, (x, k) => { const v = map[k.trim().toLowerCase()]; return v ? String(v) : x; });
+}
+function loadTpl(it, d) {
+  const def = splitTpl(d.body);
+  const filled = { subject: fillProfile(def.subject), body: fillProfile(def.body) };
+  TPL = { id: it.id, def, filled, cur: Object.assign({}, filled), saved: false, msg: "", ck: {} };
+  core.api("/rest/v1/template_edits?item_id=eq." + encodeURIComponent(it.id) + "&select=subject,body", {}).then(r => {
+    if (!TPL || TPL.id !== it.id || !r || !r[0]) return; TPL.cur = { subject: r[0].subject ?? def.subject, body: r[0].body ?? def.body }; TPL.saved = true; render(); }).catch(() => {});
+}
+function tplEditor(it) {
+  const T = TPL, n = blanks(T.cur.subject).length + blanks(T.cur.body).length, uniq = [...new Set(blanks(T.cur.subject).concat(blanks(T.cur.body)))];
+  const edited = T.cur.subject !== T.filled.subject || T.cur.body !== T.filled.body;
+  const ckl = (k, arr, title) => arr.length ? `<div class="tpcard"><h3>${title}</h3><ul class="tpck">${arr.map((x, i) => { const on = !!T.ck[k + i];
+    return `<li><button type="button" class="${on ? "on" : ""}" data-onb="tpck" data-v="${k + i}" aria-pressed="${on}"><span class="bx" aria-hidden="true">${on ? CCHK : ""}</span><span class="tx">${esc(x)}</span></button></li>`; }).join("")}</ul></div>` : "";
+  const mailto = "mailto:?subject=" + encodeURIComponent(T.cur.subject) + "&body=" + encodeURIComponent(T.cur.body);
+  return `<div class="tpwrap"><div class="tped">
+    <div class="tphead"><span class="tpstat ${n ? "" : "ok"}">${n ? `${n} blank${n === 1 ? "" : "s"} left` : `${CCHK} Ready to send`}</span>
+      <span class="tpsave">${T.msg ? esc(T.msg) : T.saved ? "Saved to your account" : edited ? "Not saved yet" : "Default template"}</span></div>
+    ${T.def.subject || T.cur.subject ? `<label class="tplab" for="tpsub">Subject line</label><div class="tprow"><input id="tpsub" class="tpin" data-tp="subject" value="${esc(T.cur.subject)}" autocomplete="off" spellcheck="true"><button type="button" class="onbback tpcp" data-onb="tpcopy" data-v="subject">Copy</button></div>` : ""}
+    <label class="tplab" for="tpbody">${/^7d-dm/.test(it.id) ? "Message" : "Email"}</label>
+    <textarea id="tpbody" class="tpta" data-tp="body" spellcheck="true" rows="16">${esc(T.cur.body)}</textarea>
+    ${uniq.length ? `<div class="tpblanks"><small>Tap a blank to jump to it</small>${uniq.map(b => `<button type="button" class="tpb" data-onb="tpjump" data-v="${esc(b)}">${esc(b)}</button>`).join("")}</div>` : ""}
+    <div class="tpact"><button type="button" class="onbback" data-onb="tpfill">Refill my details</button><button type="button" class="acbtn" data-onb="tpcopy" data-v="body">Copy ${/^7d-dm/.test(it.id) ? "message" : "email"}</button>
+      <button type="button" class="onbback" data-onb="tpsave">Save</button>${edited || T.saved ? `<button type="button" class="onbback" data-onb="tpreset">Reset to default</button>` : ""}
+      ${T.def.subject ? `<a class="onbback" href="${esc(mailto)}">Open in my email app</a>` : ""}</div></div>
+    <aside class="tprail">${T.def.how ? `<div class="tpcard"><h3>How to use this</h3><p>${esc(T.def.how)}</p></div>` : ""}${ckl("b", T.def.before, "Before you start, have these ready")}${ckl("c", T.def.check, "Check before you send")}
+      ${T.def.next ? `<div class="tpcard tpnext"><p>${esc(T.def.next)}</p></div>` : ""}</aside></div>`;
+}
+function tplAction(a, b) {
+  if (!TPL) return false;
+  if (a === "tpfill") { TPL.cur = { subject: fillProfile(TPL.cur.subject), body: fillProfile(TPL.cur.body) }; TPL.msg = "Filled from your profile. Check it, then save."; render(); return true; }
+  if (a === "tpjump") { const ta = document.getElementById("tpbody"), su = document.getElementById("tpsub"), v = b.dataset.v;
+    for (const el of [su, ta]) { if (!el) continue; const i = el.value.indexOf(v); if (i >= 0) { el.focus(); el.setSelectionRange(i, i + v.length); return true; } } return true; }
+  if (a === "tpcopy") { const t = b.dataset.v === "subject" ? TPL.cur.subject : TPL.cur.body; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { b.textContent = "Copied"; setTimeout(() => { b.textContent = b.dataset.v === "subject" ? "Copy" : "Copy email"; }, 1600); }).catch(() => {}); return true; }
+  if (a === "tpck") { TPL.ck[b.dataset.v] = !TPL.ck[b.dataset.v]; render(); return true; }
+  if (a === "tpsave") { TPL.msg = "Saving…"; render(); core.api("/rest/v1/template_edits", { method: "POST", body: { item_id: TPL.id, subject: TPL.cur.subject, body: TPL.cur.body, updated_at: new Date().toISOString() }, prefer: "resolution=merge-duplicates,return=minimal" })
+      .then(() => { TPL.saved = true; TPL.msg = "Saved to your account"; render(); }).catch(e => { TPL.msg = "Couldn't save. " + e.message; render(); }); return true; }
+  if (a === "tpreset") { if (!confirm("Reset this template to the original? Your saved changes will be removed.")) return true; TPL.cur = Object.assign({}, TPL.filled); TPL.msg = "Back to the original";
+    core.api("/rest/v1/template_edits?item_id=eq." + encodeURIComponent(TPL.id), { method: "DELETE" }).catch(() => {}); TPL.saved = false; render(); return true; }
+  return false;
+}
+document.addEventListener("input", e => { const el = e.target.closest && e.target.closest("[data-tp]"); if (!el || !TPL) return; TPL.cur[el.dataset.tp] = el.value; TPL.msg = "";
+  if (el.tagName === "TEXTAREA") { el.style.height = "auto"; el.style.height = el.scrollHeight + 4 + "px"; }
+  const n = blanks(TPL.cur.subject).length + blanks(TPL.cur.body).length, st = document.querySelector(".tpstat"), sv = document.querySelector(".tpsave");
+  if (st) { st.className = "tpstat" + (n ? "" : " ok"); st.innerHTML = n ? `${n} blank${n === 1 ? "" : "s"} left` : `${CCHK} Ready to send`; }
+  if (sv) sv.textContent = "Not saved yet"; });
 /* ---------- what each Whop purchase unlocks (migration 022: Whop webhook -> entitlements, claimed by email on sign-in) ---------- */
 const BUY = { lt27: LT_URL, em17: LT_URL, pc97: LT_URL };   /* Abe's Whop sales page; swap in direct Whop checkout links for the $17 / $97 add-ons when Abe sends them */
 const PRODS = {
@@ -517,6 +587,7 @@ function premiumAction(a, b) {
   if (a === "recheck") { BUYMSG = "Checking…"; render(); core.loadProfile().then(() => { const k = BUYK || NEEDS[PT]; BUYMSG = k && owns(k) ? "Unlocked. You're all set." : "Not unlocked yet. If you just paid, give it a minute and check again."; CAT = null; render(); }); return true; }
   if (a === "cback") { CRS = null; LES = null; LESD = null; VSRC = null; render(); layer().scrollTo(0, 0); return true; }
   if (a === "copen") { const c = courseList().find(x => x.k === b.dataset.v); if (!c) return true; CRS = c.k; LES = null; render(); layer().scrollTo(0, 0); return true; }
+  if (/^tp/.test(a) && tplAction(a, b)) return true;
   if (a === "cmod") { SHEET = false; PT = "course"; CRS = "7day"; LES = null; MODQ = b.dataset.v; render(); layer().scrollTo(0, 0); return true; }
   if (a === "cdone") { if (LES) markDone(LES, !LES.done); return true; }
   if (a === "ccopy") { const t = LESD && LESD.body || ""; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy template"; }, 1800); }).catch(() => { b.textContent = "Select and copy the text below"; }); return true; }

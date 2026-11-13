@@ -663,3 +663,31 @@ button.pmcat{cursor:pointer}
 .cmic.lk{background:color-mix(in srgb,var(--pr-mute) 14%,transparent);color:var(--pr-mute)}
 .crslesson .pmbuy{margin-top:8px;box-shadow:none}
 .pmmod .pmmt{flex:1;text-align:left}
+
+/* Editable templates (2026-11-12): editor + checklist rail */
+.tpwrap{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;margin-top:6px}
+.tped{padding:18px;border:1px solid var(--pr-line);border-radius:var(--r-2);background:var(--pr-card);box-shadow:var(--sh-1)}
+.tphead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.tpstat{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--pr-violet) 14%,transparent);color:var(--pr-violet);font-size:var(--fs-13);font-weight:600}
+.tpstat.ok{background:color-mix(in srgb,#16a34a 16%,transparent);color:#16a34a}
+.tpsave{font-size:var(--fs-12);color:var(--pr-mute)}
+.tplab{display:block;margin:10px 0 6px;font-size:var(--fs-13);font-weight:600;color:var(--pr-mute)}
+.tprow{display:flex;gap:8px}
+.tpin,.tpta{width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--pr-line);border-radius:var(--r-1);background:var(--pr-bg,var(--pr-card));color:var(--pr-ink);font:inherit;font-size:var(--fs-15);line-height:var(--lh-body)}
+.tpta{min-height:340px;resize:vertical}
+.tpin:focus,.tpta:focus{outline:2px solid var(--pr-violet);outline-offset:1px;border-color:transparent}
+.tpcp{flex:none;min-height:44px;margin:0}
+.tpblanks{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}.tpblanks small{width:100%;font-size:var(--fs-12);color:var(--pr-mute)}
+.tpb{padding:5px 10px;border:1px dashed color-mix(in srgb,var(--pr-violet) 55%,transparent);border-radius:var(--r-pill);background:color-mix(in srgb,var(--pr-violet) 6%,transparent);color:var(--pr-violet);font:inherit;font-size:var(--fs-12);font-weight:600;cursor:pointer}
+.tpact{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.tpact .acbtn,.tpact .onbback{display:inline-flex;align-items:center;justify-content:center;width:auto;min-height:44px;margin:0;padding:0 16px;text-decoration:none}
+.tprail{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px;align-items:start}
+.tpcard{padding:14px;border:1px solid var(--pr-line);border-radius:var(--r-2);background:var(--pr-card)}
+.tpcard h3{margin:0 0 8px;font-size:var(--fs-13);font-weight:600}.tpcard p{margin:0;font-size:var(--fs-13);color:var(--pr-mute);line-height:var(--lh-body)}
+.tpnext{background:color-mix(in srgb,var(--pr-violet) 8%,var(--pr-card))}.tpnext p{color:var(--pr-ink);font-weight:600}
+.tpck{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.tpck button{display:grid;grid-template-columns:18px minmax(0,1fr);gap:8px;align-items:start;width:100%;padding:6px 4px;border:0;background:none;color:var(--pr-ink);font:inherit;font-size:var(--fs-13);text-align:left;cursor:pointer}
+.tpck button .tx{display:block;min-width:0}.tpck button .bx{display:grid;place-items:center;width:18px;height:18px;margin-top:1px;border:1.5px solid var(--pr-line);border-radius:5px;color:#fff}
+.tpck button.on .bx{background:var(--pr-violet);border-color:var(--pr-violet)}.tpck button.on{color:var(--pr-mute);text-decoration:line-through}
+.crslesson:has(.tpwrap){max-width:none}
+
