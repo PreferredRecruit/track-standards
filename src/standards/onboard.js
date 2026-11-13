@@ -507,12 +507,12 @@ const PRODS = {
   lt27: { name: "Your 7-Day Roadmap", price: "$27 one time", gets: ["All 7 days, step by step", "Emails and DMs filled in for you", "Your own school list"], _old: ["The 7-Day Roadmap course: videos, email and DM templates, checklist and tracker", "My College List: rank up to 25 colleges against your marks", "Premium Dark and Premium White for the whole site"] },
   em17: { name: "Coach emails", price: "$17 add-on", gets: ["Every college coach's email", "The coach for your event first", "Copy it, send from your own email"], _old: ["Every college coach's name, position and email", "The coach for your event first", "A dedicated coach page for every school"] },};
 const owns = k => k === "lt27" ? core.premium() : k === "em17" ? core.emails() : k === "pc97" ? !!(core.admin() || (core.premiumInfo() || {}).call) : true;
-const NEEDS = { list: "lt27", cc: "em17" };
+const NEEDS = { list: "lt27", cc: "em17", course: "lt27" };   /* My Recruitment is what the $27 unlocks (Ryan 2026-11-12) */
 let BUYK = null, BUYMSG = "";
 const buyUrl = (k, where) => utm(BUY[k], "lock-" + k + "-" + where);
-function buyView(k) {
-  const P = PRODS[k];
-  return `<div class="pmbuy"><span class="pmpill">${CLOCK} Locked</span><h1>${esc(P.name)}</h1><p class="pmbuyp">${esc(P.price)}</p>
+function buyView(k, title) {
+  const P = PRODS[k], sub = title && title !== "7-Day Roadmap";
+  return `<div class="pmbuy"><span class="pmpill">${CLOCK} Locked</span><h1>${esc(sub ? title : P.name)}</h1><p class="pmbuyp">${sub ? `Part of your 7-Day Roadmap · ${esc(P.price)}` : esc(P.price)}</p>
     <ul class="pmbuyl">${P.gets.map(g => `<li>${esc(g)}</li>`).join("")}</ul>
     <a class="acbtn pmbuyb" href="${esc(buyUrl(k, "page"))}" target="_blank" rel="noopener">Unlock it</a>
     <p class="pmbuysm">Already bought it? Sign in with the email you used to pay. It unlocks by itself. <button type="button" class="lnkbtn" data-onb="recheck">Check again</button></p>${BUYMSG ? `<p class="pmbuym" role="status">${BUYMSG}</p>` : ""}</div>`;
@@ -569,7 +569,7 @@ function premiumView() {
   if (!PTADM && core.admin()) { PTADM = true; if (PT === "dash") PT = "admin"; }
   if ((PT === "list" || PT === "dash") && core.premium()) { const k = aid() || "me"; if (LISTK !== k) { LISTK = k; LIST = null; loadList(); } }
   let body = "";
-  if (NEEDS[PT] && !owns(NEEDS[PT])) body = buyView(NEEDS[PT]);
+  if (NEEDS[PT] && !owns(NEEDS[PT])) body = buyView(NEEDS[PT], PT === "course" ? (RSUBS.find(x => x[0] === RSUB) || [])[1] : null);
   else if (PT === "buy" && BUYK) body = buyView(BUYK);
   else if (PT === "dash") body = dashView(); else if (PT === "list") body = listView(); else if (PT === "cc") body = ccView(); else if (PT === "set") body = setView(); else if (PT === "course") body = recView();
   else if (PT === "aov" && core.admin()) body = aovView(); else if (PT === "admin" && core.admin()) body = adminView();
@@ -585,18 +585,33 @@ function headRow() {
     <div class="pmmarks">${ms.length ? ms.map(m => `<div class="pmmk"><small>${evName(m.e, sub.gender)}</small><b>${esc(m.m)}</b><span>${m.n.toLocaleString()} colleges fit</span></div>`).join("")
       : `<button type="button" class="pmmk add" data-onb="pt" data-v="profile">+ Add a mark</button>`}</div></div>`;
 }
+/* athlete Home = an Instagram-style recruiting profile (Ryan 2026-11-12: "like an instagram account but for track recruiting") */
+function igHead(sub) {
+  const C = core.cfg(), cls = CLASSES.find(c => c[0] === +sub.year), bannerImg = sub.banner && IMG[sub.banner], theme = sub.theme || "violet";
+  const marks = (sub.marks || []).filter(m => m[0] && m[1]), bm = bestMark(sub)[0];
+  const line = [cls ? "Class of " + cls[0] : "", sub.school, core.ST && sub.state ? (core.ST[sub.state] || sub.state) : sub.state].filter(Boolean).join(" · ");
+  const stat = (v, l) => `<div class="igst"><b>${v}</b><span>${l}</span></div>`;
+  return `<section class="ighead">
+    <div class="igband prband bt-${esc(theme)}${bannerImg ? " img" : ""}"${bannerImg ? ` style="background-image:url('${bannerImg}')"` : ""}></div>
+    <div class="igrow"><div class="igav">${sub.avatar && IMG[sub.avatar] ? `<img src="${IMG[sub.avatar]}" alt="${esc(nameOf(sub))}">` : `<span>${esc(initials(sub) || "PR")}</span>`}</div>
+      <div class="igid"><h1>${esc(nameOf(sub) || "Your profile")}${vb(20)}</h1><p>${esc(line || (sub.gender ? (sub.gender === "m" ? "Men's" : "Women's") + " track and field" : ""))}</p></div>
+      <div class="igbtns"><button type="button" class="igb" data-onb="pt" data-v="profile">Edit profile</button><button type="button" class="igb" data-onb="pt" data-v="set">Customize</button></div></div>
+    <div class="igstats">${stat(bm ? bm.n.toLocaleString() : "–", "colleges fit")}${stat(marks.length, marks.length === 1 ? "event" : "events")}${stat(esc(sub.gpa) || "–", "GPA")}${stat(cls ? esc(cls[0]) : "–", "class")}</div>
+    <div class="ighl" aria-label="Your events">${marks.map(([e, m]) => `<button type="button" class="ighi" data-onb="pt" data-v="profile"><span class="igring"><span>${esc(m)}</span></span><small>${evName(e, sub.gender)}</small></button>`).join("")}
+      <button type="button" class="ighi add" data-onb="quick" data-v="events"><span class="igring"><span>+</span></span><small>Add PR</small></button></div></section>`;
+}
 function dashView() {
   /* one card (Ryan 2026-11-12: "used by a 12 year old ... when in doubt condense") */
   const sub = PSUB() || D, bm = bestMark(sub)[0], ds = recDays(), open = ds.some(d => d.items.some(i => i.unlocked)), cur = ds.length ? curDay(ds) : null, doneN = ds.filter(dayDone).length;
   const mark = bm ? `<p class="hmark">Your ${evName(bm.e, sub.gender)} of <b>${esc(bm.m)}</b> fits <b>${bm.n.toLocaleString()}</b> colleges. <button type="button" class="lnkbtn" data-onb="exit">See them</button></p>`
     : `<p class="hmark">Add your best mark to see every college it fits. <button type="button" class="lnkbtn" data-onb="pt" data-v="profile">Add a mark</button></p>`;
   if (!CAT) loadCat();
-  if (!open) return `<div class="pmtitle"><h1>Hi ${esc(sub.first || "there")}</h1></div>${mark}
+  if (!open) return `${igHead(sub)}
     <section class="htoday lk"><span class="hk">Your 7-Day Roadmap</span><h2>One step a day to get recruited</h2>
       <ol class="hdays">${ds.map(d => `<li>${CLOCK}<span><b>${esc(dayName(d.t))}</b> ${esc(dayJob(d.t))}</span></li>`).join("")}</ol>
       <a class="acbtn" href="${esc(buyUrl("lt27", "home"))}" target="_blank" rel="noopener">Unlock all 7 days · $27</a>
       <p class="hsm">Bought it? Sign in with the email you used to pay. It unlocks by itself.</p></section>`;
-  return `<div class="pmtitle"><h1>Hi ${esc(sub.first || "there")}</h1></div>${mark}
+  return `${igHead(sub)}
     ${cur ? `<section class="htoday"><span class="hk">Today · ${esc(dayName(cur.t))}</span><h2>${esc(dayJob(cur.t))}</h2>
       <div class="rdbar" aria-label="${doneN} of ${ds.length} done"><i style="width:${Math.round(doneN / ds.length * 100)}%"></i></div><p class="hsm">${doneN} of ${ds.length} done</p>
       <button type="button" class="acbtn" data-onb="rday" data-v="${esc(cur.t)}">${doneN ? "Continue" : "Start"}</button></section>` : ""}`;
