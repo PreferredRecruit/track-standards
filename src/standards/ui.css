@@ -815,3 +815,17 @@ button.pmcat{cursor:pointer}
 .ighi:focus-visible .igring{outline:2px solid var(--pr-violet);outline-offset:2px}
 @media (max-width:640px){.igrow{padding:0 16px}.igstats{margin:14px 16px 0}.ighl{padding:14px 16px 18px}.igav{width:88px;height:88px}.igbtns{width:100%}.igb{flex:1}}
 .igrow{position:relative;z-index:1}.igband{position:relative;z-index:0}.htoday{max-width:760px;box-sizing:border-box}
+/* My Recruitment hub + Home actions (2026-11-12) */
+.hubh{margin:22px 0 10px;font-size:var(--fs-15);font-weight:600;color:var(--pr-mute)}
+.hubg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px;max-width:980px}
+.hubc{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;padding:14px 16px;border:1px solid var(--pr-line);border-radius:var(--r-2);background:var(--pr-card);color:var(--pr-ink);font:inherit;text-align:left;cursor:pointer;min-height:68px}
+.hubc:hover{border-color:color-mix(in srgb,var(--pr-violet) 50%,var(--pr-line))}
+.hubc:focus-visible{outline:2px solid var(--pr-violet);outline-offset:2px}
+.hubi{display:grid;place-items:center;width:40px;height:40px;border-radius:var(--r-1);background:color-mix(in srgb,var(--pr-violet) 14%,transparent);color:var(--pr-violet)}
+.hubc.lk .hubi{background:color-mix(in srgb,var(--pr-mute) 14%,transparent);color:var(--pr-mute)}
+.hubt b{display:block;font-size:var(--fs-15);font-weight:600}.hubt small{display:block;margin-top:2px;font-size:var(--fs-13);color:var(--pr-mute)}
+.hubs{font-size:var(--fs-12);font-weight:600;color:var(--pr-violet);white-space:nowrap}.hubc.lk .hubs{color:var(--pr-mute)}
+.hacts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:10px;max-width:760px}
+.hact{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 16px;border:1px solid var(--pr-line);border-radius:var(--r-2);background:var(--pr-card);color:var(--pr-ink);font:inherit;font-size:var(--fs-14);font-weight:600;text-align:left;cursor:pointer}
+.hact span{color:var(--pr-violet);display:inline-grid}
+.hact:focus-visible{outline:2px solid var(--pr-violet);outline-offset:2px}

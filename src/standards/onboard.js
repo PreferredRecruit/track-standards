@@ -400,7 +400,7 @@ document.addEventListener("input", e => { const el = e.target.closest && e.targe
   if (sv) sv.textContent = "Not saved yet"; });
 /* ---------- My Recruitment, simple (Ryan 2026-11-12: "should be able to be used by a 12 year old, the simpler the better,
    when in doubt condense"). One screen per day with tick boxes; the site picks the email; one big Copy button. ---------- */
-let DAY = null, PICKQ = null, TPLLIST = false, RSUB = "roadmap";
+let DAY = null, PICKQ = null, TPLLIST = false, RSUB = "hub";
 /* My Recruitment sub-sections (Ryan 2026-11-12: "clicking My Recruitment should pop out subcategories ... each a distinct sub-section") */
 const RSUBS = [["roadmap", "7-Day Roadmap", "cap"], ["emails", "Email Templates", "mail"], ["dm", "DM Templates", "file"], ["tracker", "Recruitment Tracker", "chart"], ["checklist", "Prep Checklist", "file"]];
 const RSUB_ITEM = { dm: "7d-dm", tracker: "7d-tracker", checklist: "7d-checklist" };
@@ -420,6 +420,7 @@ function recView() {
   const ds = recDays();
   if (LES && LES.course === "7day") return recLesson(ds);
   if (PICKQ) return pickerView();
+  if (RSUB === "hub") return hubView();
   if (RSUB === "emails") return emailsView();
   if (TPLLIST) return tplListView();
   if (DAY) { const d = ds.find(x => x.t === DAY); if (d) return dayView(d, ds); DAY = null; }
@@ -463,6 +464,23 @@ function tplListView() {
   const sets = []; for (const x of CAT || []) if ((x.section || "").startsWith(TPLPFX)) { let s = sets.find(y => y.t === x.section); if (!s) sets.push(s = { t: x.section, items: [] }); s.items.push(x); }
   return `<div class="crsback"><button type="button" class="onbback" data-onb="rtplsback">‹ Back</button></div><div class="pmtitle"><h1>All emails</h1><p>Pick any email. Copy it and send from your own inbox.</p></div>
     ${sets.map(s => `<details class="rset"><summary>${esc(s.t.replace(TPLPFX, ""))}</summary>${s.items.map(it => `<button type="button" class="rsi" data-onb="rtask" data-v="${esc(it.id)}">${esc(it.title)}</button>`).join("")}</details>`).join("")}`;
+}
+/* My Recruitment = the hub for the $27 low-ticket offer (Ryan 2026-11-12); the 7-Day Roadmap is one part of it */
+function hubView() {
+  const ds = recDays(), open = ds.some(d => d.items.some(i => i.unlocked)), doneN = ds.filter(dayDone).length, cur = ds.length ? curDay(ds) : null;
+  const card = (k, ic, name, desc, status) => `<button type="button" class="hubc${open ? "" : " lk"}" data-onb="rsub" data-v="${k}"><span class="hubi" aria-hidden="true">${open ? ico(ic, 20) : CLOCK}</span>
+    <span class="hubt"><b>${name}</b><small>${desc}</small></span><span class="hubs">${open ? status : "Locked"}</span></button>`;
+  return `<div class="pmtitle"><h1>My Recruitment</h1><p>Everything you need to contact college coaches, in one place.</p></div>
+    ${open ? "" : buyView("lt27")}
+    <h2 class="hubh">${open ? "What's inside" : "What you get"}</h2>
+    <div class="hubg">${card("roadmap", "cap", "7-Day Roadmap", "One step a day for 7 days", cur ? `${doneN} of ${ds.length} done` : "Start")}
+      ${card("emails", "mail", "Email Templates", "The right email for each school, filled in", "Open")}
+      ${card("dm", "file", "DM Templates", "For coaches easier to reach on Instagram", "Open")}
+      ${card("tracker", "chart", "Recruitment Tracker", "Log every school, email and reply", "Open")}
+      ${card("checklist", "file", "Prep Checklist", "The 10 things coaches ask for", "Open")}
+      <button type="button" class="hubc${open ? "" : " lk"}" data-onb="pt" data-v="list"><span class="hubi" aria-hidden="true">${open ? ico("bookmark", 20) : CLOCK}</span><span class="hubt"><b>My School List</b><small>Save up to 25 colleges</small></span><span class="hubs">${open ? "Open" : "Locked"}</span></button></div>
+    <h2 class="hubh">Add-on</h2>
+    <div class="hubg"><button type="button" class="hubc${core.emails() ? "" : " lk"}" data-onb="pt" data-v="cc"><span class="hubi" aria-hidden="true">${core.emails() ? ico("mail", 20) : CLOCK}</span><span class="hubt"><b>Coach emails</b><small>Every college coach's email · $17 add-on</small></span><span class="hubs">${core.emails() ? "Open" : "Locked"}</span></button></div>`;
 }
 function emailsView() {
   const sets = []; for (const x of CAT || []) if ((x.section || "").startsWith(TPLPFX)) { let st = sets.find(y => y.t === x.section); if (!st) sets.push(st = { t: x.section, items: [] }); st.items.push(x); }
@@ -508,17 +526,17 @@ function recAction(a, b) {
 /* ---------- what each Whop purchase unlocks (migration 022: Whop webhook -> entitlements, claimed by email on sign-in) ---------- */
 const BUY = { lt27: LT_URL, em17: LT_URL };   /* Abe's Whop sales page; swap in direct Whop checkout links for the $17 / $97 add-ons when Abe sends them */
 const PRODS = {
-  lt27: { name: "Your 7-Day Roadmap", price: "$27 one time", gets: ["All 7 days, step by step", "Emails and DMs filled in for you", "Your own school list"], _old: ["The 7-Day Roadmap course: videos, email and DM templates, checklist and tracker", "My College List: rank up to 25 colleges against your marks", "Premium Dark and Premium White for the whole site"] },
+  lt27: { name: "My Recruitment", price: "$27 one time", gets: ["The 7-Day Roadmap, step by step", "Email and DM templates, filled in for you", "Recruitment Tracker and Prep Checklist", "Your own school list"], _old: ["The 7-Day Roadmap course: videos, email and DM templates, checklist and tracker", "My College List: rank up to 25 colleges against your marks", "Premium Dark and Premium White for the whole site"] },
   em17: { name: "Coach emails", price: "$17 add-on", gets: ["Every college coach's email", "The coach for your event first", "Copy it, send from your own email"], _old: ["Every college coach's name, position and email", "The coach for your event first", "A dedicated coach page for every school"] },};
 const owns = k => k === "lt27" ? core.premium() : k === "em17" ? core.emails() : k === "pc97" ? !!(core.admin() || (core.premiumInfo() || {}).call) : true;
 const NEEDS = { list: "lt27", cc: "em17", course: "lt27" };   /* My Recruitment is what the $27 unlocks (Ryan 2026-11-12) */
 let BUYK = null, BUYMSG = "";
 const buyUrl = (k, where) => utm(BUY[k], "lock-" + k + "-" + where);
 function buyView(k, title) {
-  const P = PRODS[k], sub = title && title !== "7-Day Roadmap";
-  return `<div class="pmbuy"><span class="pmpill">${CLOCK} Locked</span><h1>${esc(sub ? title : P.name)}</h1><p class="pmbuyp">${sub ? `Part of your 7-Day Roadmap · ${esc(P.price)}` : esc(P.price)}</p>
+  const P = PRODS[k], sub = !!title;
+  return `<div class="pmbuy"><span class="pmpill">${CLOCK} Locked</span><h1>${esc(sub ? title : P.name)}</h1><p class="pmbuyp">${sub ? `Part of My Recruitment · ${esc(P.price)}` : esc(P.price)}</p>
     <ul class="pmbuyl">${P.gets.map(g => `<li>${esc(g)}</li>`).join("")}</ul>
-    <a class="acbtn pmbuyb" href="${esc(buyUrl(k, "page"))}" target="_blank" rel="noopener">Unlock it</a>
+    <a class="acbtn pmbuyb" href="${esc(buyUrl(k, "page"))}" target="_blank" rel="noopener">${k === "lt27" ? "Unlock My Recruitment · $27" : "Unlock coach emails · $17"}</a>
     <p class="pmbuysm">Already bought it? Sign in with the email you used to pay. It unlocks by itself. <button type="button" class="lnkbtn" data-onb="recheck">Check again</button></p>${BUYMSG ? `<p class="pmbuym" role="status">${BUYMSG}</p>` : ""}</div>`;
 }
 const PSUB = () => par() ? KIDS[SEL] : D;
@@ -540,7 +558,7 @@ function sideNav() {
   return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Home", ico("home"))}${it("course", "My Recruitment", ico("cap"))}${recSub()}${it("cc", "Coaches", ico("mail"))}${it("list", "My School List", ico("bookmark"))}
     <div class="pmsep"></div>${it("profile", "My profile", ico("user"))}${it("set", "Customize", ico("sliders"))}
     <div class="pmplan">${P ? `<b>${STAR} ${core.admin() ? "Admin" : "Premium"}</b><span><i class="dot"></i>${core.admin() ? "Everything unlocked" : "Active"}</span>`
-      : `<b>Free account</b><span>Unlock all 7 days.</span><a class="acbtn" href="${esc(buyUrl("lt27", "sidebar"))}" target="_blank" rel="noopener">Unlock · $27</a>`}</div></nav>`;
+      : `<b>Free account</b><span>Unlock My Recruitment.</span><a class="acbtn" href="${esc(buyUrl("lt27", "sidebar"))}" target="_blank" rel="noopener">Unlock · $27</a>`}</div></nav>`;
 }
 /* the course outline in the sidebar (Ryan 2026-11-12: "a bunch of locks on the left side"): each module, locked until bought */
 function modNav() {
@@ -573,7 +591,7 @@ function premiumView() {
   if (!PTADM && core.admin()) { PTADM = true; if (PT === "dash") PT = "admin"; }
   if ((PT === "list" || PT === "dash") && core.premium()) { const k = aid() || "me"; if (LISTK !== k) { LISTK = k; LIST = null; loadList(); } }
   let body = "";
-  if (NEEDS[PT] && !owns(NEEDS[PT])) body = buyView(NEEDS[PT], PT === "course" ? (RSUBS.find(x => x[0] === RSUB) || [])[1] : null);
+  if (NEEDS[PT] && !owns(NEEDS[PT]) && !(PT === "course" && RSUB === "hub")) body = buyView(NEEDS[PT], PT === "course" ? (RSUBS.find(x => x[0] === RSUB) || [])[1] : null);
   else if (PT === "buy" && BUYK) body = buyView(BUYK);
   else if (PT === "dash") body = dashView(); else if (PT === "list") body = listView(); else if (PT === "cc") body = ccView(); else if (PT === "set") body = setView(); else if (PT === "course") body = recView();
   else if (PT === "aov" && core.admin()) body = aovView(); else if (PT === "admin" && core.admin()) body = adminView();
@@ -605,20 +623,11 @@ function igHead(sub) {
       <button type="button" class="ighi add" data-onb="quick" data-v="events"><span class="igring"><span>+</span></span><small>Add PR</small></button></div></section>`;
 }
 function dashView() {
-  /* one card (Ryan 2026-11-12: "used by a 12 year old ... when in doubt condense") */
-  const sub = PSUB() || D, bm = bestMark(sub)[0], ds = recDays(), open = ds.some(d => d.items.some(i => i.unlocked)), cur = ds.length ? curDay(ds) : null, doneN = ds.filter(dayDone).length;
-  const mark = bm ? `<p class="hmark">Your ${evName(bm.e, sub.gender)} of <b>${esc(bm.m)}</b> fits <b>${bm.n.toLocaleString()}</b> colleges. <button type="button" class="lnkbtn" data-onb="exit">See them</button></p>`
-    : `<p class="hmark">Add your best mark to see every college it fits. <button type="button" class="lnkbtn" data-onb="pt" data-v="profile">Add a mark</button></p>`;
-  if (!CAT) loadCat();
-  if (!open) return `${igHead(sub)}
-    <section class="htoday lk"><span class="hk">Your 7-Day Roadmap</span><h2>One step a day to get recruited</h2>
-      <ol class="hdays">${ds.map(d => `<li>${CLOCK}<span><b>${esc(dayName(d.t))}</b> ${esc(dayJob(d.t))}</span></li>`).join("")}</ol>
-      <a class="acbtn" href="${esc(buyUrl("lt27", "home"))}" target="_blank" rel="noopener">Unlock all 7 days · $27</a>
-      <p class="hsm">Bought it? Sign in with the email you used to pay. It unlocks by itself.</p></section>`;
-  return `${igHead(sub)}
-    ${cur ? `<section class="htoday"><span class="hk">Today · ${esc(dayName(cur.t))}</span><h2>${esc(dayJob(cur.t))}</h2>
-      <div class="rdbar" aria-label="${doneN} of ${ds.length} done"><i style="width:${Math.round(doneN / ds.length * 100)}%"></i></div><p class="hsm">${doneN} of ${ds.length} done</p>
-      <button type="button" class="acbtn" data-onb="rday" data-v="${esc(cur.t)}">${doneN ? "Continue" : "Start"}</button></section>` : ""}`;
+  /* Home = the athlete's own account (Ryan 2026-11-12: "The $27 product should not appear on the Home page") */
+  const sub = PSUB() || D;
+  return igHead(sub) + `<div class="hacts"><button type="button" class="hact" data-onb="quick" data-v="events"><span aria-hidden="true">${ico("chart", 18)}</span>Update my PRs</button>
+    <button type="button" class="hact" data-onb="pt" data-v="profile"><span aria-hidden="true">${ico("user", 18)}</span>Edit my profile</button>
+    <button type="button" class="hact" data-onb="exit"><span aria-hidden="true">${ico("cap", 18)}</span>See colleges my marks fit</button></div>`;
 }
 
 async function loadList() {
@@ -731,7 +740,7 @@ document.addEventListener("submit", e => { const f = e.target.closest && e.targe
   if (f.dataset.pform === "add") listAdd(document.getElementById("pmadd").value);
   if (f.dataset.pform === "cc") { CCQ = document.getElementById("pmcq").value; const all = core.cfg().schools ? core.cfg().schools() : [], hit = all.find(n => n.toLowerCase() === CCQ.trim().toLowerCase()); if (hit) CCS = hit; render(); const C = core.cfg(); C.log && C.log("coach_contacts", { detail: "search" }); } });
 function premiumAction(a, b) {
-  if (a === "pt") { SHEET = false; BUYMSG = ""; PT = b.dataset.v; OPEN = null; LMSG = ""; if (PT === "cc") { CCS = null; } if (PT === "course") { CRS = null; LES = null; CMSG = ""; DAY = null; PICKQ = null; TPLLIST = false; TPL = null; RSUB = "roadmap"; } render(); layer().scrollTo(0, 0); return true; }
+  if (a === "pt") { SHEET = false; BUYMSG = ""; PT = b.dataset.v; OPEN = null; LMSG = ""; if (PT === "cc") { CCS = null; } if (PT === "course") { CRS = null; LES = null; CMSG = ""; DAY = null; PICKQ = null; TPLLIST = false; TPL = null; RSUB = "hub"; } render(); layer().scrollTo(0, 0); return true; }
   if (a === "cl") { SHEET = false; openLesson(b.dataset.v); return true; }
   if (a === "sheet") { SHEET = !SHEET; render(); return true; }
   if (a === "recheck") { BUYMSG = "Checking…"; render(); core.loadProfile().then(() => { const k = BUYK || NEEDS[PT]; BUYMSG = k && owns(k) ? "Unlocked. You're all set." : "Not unlocked yet. If you just paid, give it a minute and check again."; CAT = null; render(); }); return true; }
