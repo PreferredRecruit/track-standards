@@ -234,7 +234,7 @@ const CCHK = svg('<path d="M5 12l5 5 9-11"/>', 13);
 const COURSES = { "7day": { k: "lt27", d: "One job a day for 7 days: the checklist, your school list, the tracker, email and DM scripts, and follow-ups." },
   call: { k: "pc97", d: "A one-on-one call with our team to plan your athlete's recruiting." } };
 const cmins = s => s ? (s < 60 ? s + " sec" : Math.round(s / 60) + " min") : "";
-const kindIc = k => k === "video" ? "▶" : k === "tool" ? "↗" : "☰";
+const kindIc = k => ico(k === "video" ? "play" : k === "tool" ? "out" : "file", 12);
 function mdLite(t) {
   const inl = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
   const out = []; let list = null;
@@ -247,6 +247,23 @@ function mdLite(t) {
   if (list) out.push(`</${list}>`);
   return out.join("");
 }
+/* Lucide icons (ISC licence, lucide.dev), inlined as SVG: no runtime dependency (house rule). One stroke style app-wide. */
+const LUC = {
+  home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  cap: '<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  bookmark: '<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>',
+  phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  sliders: '<path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  chart: '<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+  play: '<path d="M6 3l14 9-14 9z"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  out: '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
+  menu: '<path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/>',
+  dot: '<circle cx="12" cy="12" r="3"/>' };
+const ico = (k, n = 18) => svg(LUC[k] || LUC.dot, n);
 const isTpl = it => /^7d-(em|dm)/.test(it.id);
 function loadCat() { core.api("/rest/v1/rpc/course_catalog", { method: "POST", body: {} }).then(r => { CAT = r || []; render(); }).catch(e => { CAT = { err: e.message }; render(); }); }
 function courseList() { const cs = []; for (const it of CAT || []) { let c = cs.find(x => x.k === it.course); if (!c) cs.push(c = { k: it.course, t: it.course_title, items: [] }); c.items.push(it); } return cs; }
@@ -295,7 +312,7 @@ function lessonBody(c) {
   if (!LES.unlocked) return `<p class="crskick">${esc(LES.section || LES.course_title)}</p><h1>${esc(LES.title)}</h1>` + buyView(LES.tier);
   const it = LES, d = LESD, list = c.items, i = list.findIndex(x => x.id === it.id), prev = list[i - 1], next = list[i + 1];
   let media = "";
-  if (it.kind === "video" || (d && d.video_path)) media = it.soon ? `<div class="crsv soon"><span aria-hidden="true">▶</span><b>Video coming soon</b><small>We're recording this walkthrough. Everything else in this module works today.</small></div>`
+  if (it.kind === "video" || (d && d.video_path)) media = it.soon ? `<div class="crsv soon"><span aria-hidden="true">${ico("cap")}</span><b>Video coming soon</b><small>We're recording this walkthrough. Everything else in this module works today.</small></div>`
     : VSRC ? `<video class="crsv" controls playsinline preload="metadata" src="${esc(VSRC)}"></video>` : VSRC === "" ? `<div class="crsv soon"><b>Video couldn't load</b><small>Refresh the page to try again.</small></div>` : `<div class="crsv soon"><small>Loading video…</small></div>`;
   const lk = d && d.link ? (d.link === "#cc" ? `<button type="button" class="acbtn" data-onb="pt" data-v="cc">Open Coach Contacts</button>` : d.link === "/" ? `<a class="acbtn" href="/">Open the Standards Site</a>`
     : `<a class="acbtn" href="${esc(d.link)}" target="_blank" rel="noopener">${/spreadsheets/.test(d.link) ? "Make your copy of the tracker ↗" : "Open ↗"}</a>`) : "";
@@ -410,10 +427,10 @@ function sideNav() {
   const it = (v, l, ic, st) => { const k = NEEDS[v], lk = k && !owns(k);
     return `<button type="button" class="pmnv${PT === v ? " on" : ""}${lk ? " lk" : ""}" data-onb="pt" data-v="${v}"${PT === v ? ' aria-current="page"' : ""}${lk ? ' aria-label="' + l + ' (locked)"' : ""}><span class="ic" aria-hidden="true">${ic}</span>${l}${lk ? `<span class="pmlk">${CLOCK}</span>` : st ? STAR : ""}</button>`; };
   /* admins: Accounts first (Ryan 2026-11-12: "I can no longer see the accounts on my master account"; it had moved to the end of the menu, off-screen on phones) */
-  const adm = core.admin() ? `<p class="pmgrp">Admin</p>${it("admin", "Accounts", "☰")}${it("aov", "Overview", "◈")}<p class="pmgrp">Your account</p>` : "";
+  const adm = core.admin() ? `<p class="pmgrp">Admin</p>${it("admin", "Accounts", ico("users"))}${it("aov", "Overview", ico("chart"))}<p class="pmgrp">Your account</p>` : "";
   const P = core.premium();
-  return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Dashboard", "⌂")}${it("course", "Classroom", "▶", 1)}${it("cc", "Coach Contacts", "✉", 1)}${it("list", "My Colleges", "◎", 1)}${it("call", "Plan Call", "☎", 1)}
-    ${modNav()}<p class="pmgrp">Account</p>${it("profile", "Profile and marks", "◐")}${it("set", "Settings", "⚙")}
+  return `<nav class="pmside" aria-label="Your account">${adm}${it("dash", "Dashboard", ico("home"))}${it("course", "Classroom", ico("cap"), 1)}${it("cc", "Coach Contacts", ico("mail"), 1)}${it("list", "My Colleges", ico("bookmark"), 1)}${it("call", "Plan Call", ico("phone"), 1)}
+    ${modNav()}<p class="pmgrp">Account</p>${it("profile", "Profile and marks", ico("user"))}${it("set", "Settings", ico("sliders"))}
     <div class="pmplan">${P ? `<b>${STAR} ${core.admin() ? "Admin" : "Premium"}</b><span><i class="dot"></i>${core.admin() ? "Everything unlocked" : "Active"}</span>`
       : `<b>Free account</b><span>Unlock the course, college list and more.</span><a class="acbtn" href="${esc(buyUrl("lt27", "sidebar"))}" target="_blank" rel="noopener">Get Premium · $27</a>`}</div></nav>`;
 }
@@ -423,7 +440,7 @@ function modNav() {
   const mods = []; for (const x of CAT) if (x.course === "7day") { let m = mods.find(y => y.t === x.section); if (!m) mods.push(m = { t: x.section, items: [] }); m.items.push(x); }
   if (!mods.length) return "";
   const nav = m => { const lk = !m.items.some(i => i.unlocked), part = !lk && m.items.some(i => !i.unlocked), on = PT === "course" && CRS === "7day" && LES && LES.section === m.t;
-    return `<button type="button" class="pmnv pmmod${on ? " on" : ""}${lk ? " lk" : ""}" data-onb="cmod" data-v="${esc(m.t)}"${lk ? ' aria-label="' + esc(m.t) + ' (locked)"' : ""}><span class="ic" aria-hidden="true">${m.items.every(i => i.done) ? "✓" : "·"}</span><span class="pmmt">${esc(m.t.replace(/^Email templates: /, ""))}</span>${lk || part ? `<span class="pmlk">${CLOCK}</span>` : ""}</button>`; };
+    return `<button type="button" class="pmnv pmmod${on ? " on" : ""}${lk ? " lk" : ""}" data-onb="cmod" data-v="${esc(m.t)}"${lk ? ' aria-label="' + esc(m.t) + ' (locked)"' : ""}><span class="ic" aria-hidden="true">${m.items.every(i => i.done) ? CCHK : ico("dot", 14)}</span><span class="pmmt">${esc(m.t.replace(/^Email templates: /, ""))}</span>${lk || part ? `<span class="pmlk">${CLOCK}</span>` : ""}</button>`; };
   const tp = "Email templates: ", days = mods.filter(m => !m.t.startsWith(tp)), tpl = mods.filter(m => m.t.startsWith(tp));
   return `<p class="pmgrp">7-Day Roadmap</p>` + days.map(nav).join("") + (tpl.length ? `<p class="pmgrp">Email templates</p>` + tpl.map(nav).join("") : "");
 }
@@ -431,8 +448,8 @@ function modNav() {
 let SHEET = false;
 function phoneNav() {
   const b = (v, l, ic) => `<button type="button" class="pmtb${PT === v ? " on" : ""}" data-onb="pt" data-v="${v}"${PT === v ? ' aria-current="page"' : ""}><span aria-hidden="true">${ic}</span>${l}</button>`;
-  return `<nav class="pmtabs" aria-label="Account menu">${b("dash", "Home", "⌂")}${b("course", "Course", "▶")}${b("cc", "Coaches", "✉")}${b("list", "Colleges", "◎")}
-    <button type="button" class="pmtb${SHEET ? " on" : ""}" data-onb="sheet" aria-expanded="${SHEET}"><span aria-hidden="true">☰</span>Menu</button></nav>
+  return `<nav class="pmtabs" aria-label="Account menu">${b("dash", "Home", ico("home", 20))}${b("course", "Course", ico("cap", 20))}${b("cc", "Coaches", ico("mail", 20))}${b("list", "Colleges", ico("bookmark", 20))}
+    <button type="button" class="pmtb${SHEET ? " on" : ""}" data-onb="sheet" aria-expanded="${SHEET}"><span aria-hidden="true">${ico("menu", 20)}</span>Menu</button></nav>
     ${SHEET ? `<div class="pmsheetbg" data-onb="sheet"></div><div class="pmsheet" role="dialog" aria-label="Menu">${sideNav()}</div>` : ""}`;
 }
 let PTADM = false;
@@ -459,15 +476,15 @@ function headRow() {
 }
 function dashView() {
   if (!core.premium()) return headRow() + `<div class="pmpaths">
-    <button type="button" class="pmpath pri" data-onb="pt" data-v="course"><span class="ic" aria-hidden="true">▶</span><span><b>The 7-Day Roadmap</b><small>See every lesson. Unlock it with Premium.</small></span><span class="pmgo" aria-hidden="true">›</span></button>
-    <button type="button" class="pmpath" data-onb="pt" data-v="cc"><span class="ic" aria-hidden="true">✉</span><span><b>Coach Contacts</b><small>Every college coach's email ($17 add-on)</small></span><span class="pmgo">${CLOCK}</span></button></div>
+    <button type="button" class="pmpath pri" data-onb="pt" data-v="course"><span class="ic" aria-hidden="true">${ico("cap")}</span><span><b>The 7-Day Roadmap</b><small>See every lesson. Unlock it with Premium.</small></span><span class="pmgo" aria-hidden="true">›</span></button>
+    <button type="button" class="pmpath" data-onb="pt" data-v="cc"><span class="ic" aria-hidden="true">${ico("mail")}</span><span><b>Coach Contacts</b><small>Every college coach's email ($17 add-on)</small></span><span class="pmgo">${CLOCK}</span></button></div>
     <div class="pmcard pmup"><div><h2>${STAR} Premium</h2><p>The 7-Day Roadmap, My College List and Premium Dark. $27 one time.</p></div>
     <a class="acbtn" href="${esc(buyUrl("lt27", "dashboard"))}" target="_blank" rel="noopener">Get Premium on Whop</a>
     <p class="pmupn">Bought it? It unlocks by itself when you're signed in with the email you used at checkout.</p></div>`;
   const L = (LIST || []).slice(0, 5), sub = PSUB() || D, b = bestMark(sub)[0], C = core.cfg();
   return headRow() + `<div class="pmpaths">
-    <button type="button" class="pmpath pri" data-onb="pt" data-v="cc"><span class="ic" aria-hidden="true">✉</span><span><b>${STAR} Coach Contacts</b><small>${core.emails() ? "Get any college coach's email" : "Coach emails are the $17 add-on"}</small></span><span class="pmgo" aria-hidden="true">›</span></button>
-    <button type="button" class="pmpath" data-onb="pt" data-v="course"><span class="ic" aria-hidden="true">▶</span><span><b>${STAR} Your 7-Day Roadmap</b><small>Videos, templates and tools, one step a day</small></span><span class="pmgo" aria-hidden="true">›</span></button></div>
+    <button type="button" class="pmpath pri" data-onb="pt" data-v="cc"><span class="ic" aria-hidden="true">${ico("mail")}</span><span><b>${STAR} Coach Contacts</b><small>${core.emails() ? "Get any college coach's email" : "Coach emails are the $17 add-on"}</small></span><span class="pmgo" aria-hidden="true">›</span></button>
+    <button type="button" class="pmpath" data-onb="pt" data-v="course"><span class="ic" aria-hidden="true">${ico("cap")}</span><span><b>${STAR} Your 7-Day Roadmap</b><small>Videos, templates and tools, one step a day</small></span><span class="pmgo" aria-hidden="true">›</span></button></div>
     <div class="pmcard"><div class="pmch"><h2>My Colleges <small>${LIST ? LIST.length + " of 25" : ""}</small></h2><button type="button" class="onbback" data-onb="pt" data-v="list">${LIST && LIST.length ? "Open list" : "Add colleges"}</button></div>
     ${LIST == null ? `<p class="pmempty">Loading…</p>` : L.length ? L.map((r, i) => { const info = b && C.sinfo ? C.sinfo(r.name, sub.gender || "m", b.e, b.v) : null;
       return `<div class="pmrow"><span class="pmrk">${i + 1}</span><span class="pmnm"><b>${esc(r.name)}</b><small>${esc(info ? info.d : "")}</small></span><span class="pmcat ${r.cat}">${catL(r.cat)}</span>${fitChip(info)}<span class="pmco">${r.coach_name ? STAR + " " + esc(r.coach_name) : ""}</span></div>`; }).join("")

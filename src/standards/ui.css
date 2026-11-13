@@ -691,3 +691,7 @@ button.pmcat{cursor:pointer}
 .tpck button.on .bx{background:var(--pr-violet);border-color:var(--pr-violet)}.tpck button.on{color:var(--pr-mute);text-decoration:line-through}
 .crslesson:has(.tpwrap){max-width:none}
 
+/* Lucide icons in the account shell (2026-11-12) */
+.pmnv .ic{display:inline-grid;place-items:center;width:18px;height:18px}.pmnv .ic svg{display:block}
+.pmtb span svg{display:block}.cmic svg,.crsic svg{display:block}
+.pmpath .ic svg{display:block;width:20px;height:20px}
