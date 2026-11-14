@@ -2561,8 +2561,12 @@ const VIEW={key:"prView1",skip:{swap:1,pendAth:1,pendMv:1,hl:1,hlGo:1,pend:1,cdd
     const y=+o.y||0;if(y>0){const t0=Date.now(),go=()=>{if(document.documentElement.scrollHeight>=y+innerHeight||Date.now()-t0>4000)scrollTo(0,y);else setTimeout(go,120)};setTimeout(go,60)}}catch(e){}}};
 addEventListener("pagehide",()=>{if(S.school==null)VIEW.save()});
 /* the corner evaluation pill steps aside while the visitor scrolls (Ryan 2026-11-12: it covered table rows on phones) and slides back
-   0.7 s after scrolling stops */
-{let t=0;addEventListener("scroll",()=>{document.body.classList.add("prscroll");clearTimeout(t);t=setTimeout(()=>document.body.classList.remove("prscroll"),700)},{passive:true})}
+   0.7 s after scrolling stops (desktop) */
+{let t=0,ly=scrollY;addEventListener("scroll",()=>{const B=document.body.classList,y=scrollY,dy=y-ly;ly=y;B.add("prscroll");clearTimeout(t);t=setTimeout(()=>B.remove("prscroll"),700);
+  /* phones (Ryan 2026-11-13: "hide on scroll"): after scrolling down it stays out of the way while they read; scrolling back up or
+     reaching the end of the page brings it back */
+  const phone=matchMedia("(max-width:760px)").matches,end=innerHeight+y>=document.documentElement.scrollHeight-80;
+  if(phone&&dy>0&&!end)B.add("prdown");else if(!phone||dy<-4||end||y<40)B.remove("prdown")},{passive:true})}
 /* TFRRS mark flags (Ryan 2026-11-12 polish): "6.63 @" / "23.96 #" read as typos. Show the standard notation instead: a small A (altitude)
    and OT (oversized indoor track), with a tooltip. Runs on text nodes only, so attributes, ranks ("#2") and colours are never touched. */
 const FLAGS={"@":["A","Set at altitude"],"#":["OT","Set on an oversized indoor track"]};
