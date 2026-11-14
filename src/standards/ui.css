@@ -863,3 +863,11 @@ button.pmcat{cursor:pointer}
 .tcp{width:100%}
 .enote{max-width:760px;margin:0 0 20px;font-size:var(--fs-14);color:var(--pr-mute)}
 .eq{margin:0 0 8px;font-size:var(--fs-14);font-weight:600;color:var(--pr-ink)}
+/* tap targets (2026-11-13 audit): on phones every button a thumb uses is at least 40 px tall (house rule) */
+@media (max-width:760px){
+  .prh .logo{min-height:40px}
+  .prh #prhelp,.prh .acchd{width:40px;height:40px}
+  .prh .pill,.prh .prsign,.prh .prcta{height:40px;min-width:40px}
+  .evs button,.chips button,.rel button,.rkch button,.back,.simple .back{min-height:40px}
+  .tsw a,.tsw span{height:40px}
+}

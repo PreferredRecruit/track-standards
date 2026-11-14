@@ -1382,9 +1382,9 @@ const meetSeason=d=>{const y=(String(d).match(/(\d{4})\s*$/)||[])[1],mo=MO.findI
 /* full meet results (scripts/tfrrs/scrape_meets.py + build_meets.py): /data/meets/index.json maps athlete -> meet name -> id */
 /* 2026-11-13 ("make sure we can click into every meet"): /data/meets/all.json = [[id, name, first day, last day]] for every meet
    we hold, so a meet opens from any athlete's history or any Results row, not only from the 177 profile athletes in index.json */
-let MIDX=null,MIDXL=null,MALL=null;const MF={};
+let MIDX=null,MIDXL=null,MALL=null,MSIX=null;const MF={};
 function loadMeetIdx(){if(MIDX||MIDXL)return;const J=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);
-  MIDXL=Promise.all([J("/data/meets/index.json"),J("/data/meets/all.json")]).then(([d,a])=>{MALL=new Map();(a||[]).forEach(x=>{const k=mnorm(x[1]);if(!MALL.has(k))MALL.set(k,[]);MALL.get(k).push(x)});MIDX=d||{};if(R.mv)render()})}
+  MIDXL=Promise.all([J("/data/meets/index.json"),J("/data/meets/all.json"),J("/data/meets/scores/index.json")]).then(([d,a,sc])=>{MSIX=Array.isArray(sc)?new Set(sc):null;MALL=new Map();(a||[]).forEach(x=>{const k=mnorm(x[1]);if(!MALL.has(k))MALL.set(k,[]);MALL.get(k).push(x)});MIDX=d||{};if(R.mv)render()})}
 const isoD=d=>{d=String(d||"");if(/^\d{4}-\d{2}-\d{2}$/.test(d))return d;const p2=n=>String(n).padStart(2,"0");let m=d.match(/^(\d{1,2})\/(\d{1,2})(?:-\d{1,2})?\/(\d{2})$/);if(m)return `20${m[3]}-${p2(m[1])}-${p2(m[2])}`;
   m=d.match(/^([A-Z][a-z]{2})[a-z]*\s+(\d{1,2}).*?(\d{4})\s*$/);const mo=m?MO.indexOf(m[1]):-1;return mo<0?"":`${m[3]}-${p2(mo+1)}-${p2(m[2])}`};
 /* same person under two spellings ("Trent Mcfarland" / "McFarland", "Eddie Nketia" / "Eddie Osei-Nketia"): case, accents and
@@ -1398,7 +1398,7 @@ async function getGz(u){const r=await fetch(u);if(!r.ok)throw new Error(u);retur
    with an official TEAM SCORES table. The panel always shows the official totals; per-athlete points and the "matches" line only
    when our own count reproduced every team exactly (sys = the scoring that did). Unscored meets show no scores at all. */
 const MSC={};
-function loadScores(id){if(MSC[id])return;MSC[id]="…";fetch("/data/meets/scores/"+id+".json").then(r=>r.ok?r.json():"none").catch(()=>"none").then(d=>{MSC[id]=d;if(R.mv)render()})}
+function loadScores(id){if(MSC[id])return;if(MSIX&&!MSIX.has(+id)){MSC[id]="none";return}MSC[id]="…";fetch("/data/meets/scores/"+id+".json").then(r=>r.ok?r.json():"none").catch(()=>"none").then(d=>{MSC[id]=d;if(R.mv)render()})}
 function finalPts(rows,sys){const P=String(sys||"").split(" ")[0].split("-").map(Number).filter(n=>n>0),x2=/x2/.test(sys||""),by={};
   rows.forEach(r=>{const p=+String(r[0]).replace(/\D/g,"");if(p)(by[p]=by[p]||[]).push(r)});const out=new Map();
   Object.entries(by).forEach(([p,g])=>{p=+p;if(p>P.length)return;let t=0;for(let i=p-1;i<Math.min(p-1+g.length,P.length);i++)t+=P[i];g.forEach(r=>out.set(r,t/g.length))});return [out,x2]}
@@ -1450,6 +1450,12 @@ const meetId=mv=>{if(!MIDX||!mv)return null;const m=(mv.path&&MIDX[mv.path])||{}
 /* meet cards for every athlete: profile athletes keep their saved cards; everyone else gets one card per meet built from their
    TFRRS meet history (/data/history), newest first */
 const HMC={};let HWANT=0;
+/* 2026-11-13 (audit: Back left the site from an athlete or a meet): every athlete and meet view pushes its own address,
+   /?tab=results&season=..&div=..&athlete=<TFRRS id>&mt=<meet>&md=<date>; route() reads it back on Back / Forward / refresh / shared link */
+function rUrl(){try{if(S.tab!=="results"||TM.i!=null||CC.on)return;const a=R.mv?R.mv.ath:R.ath,aid=a&&a.path?String(a.path).split("/")[0]:"",q=new URLSearchParams({tab:"results"});
+  if(aid||R.mv){q.set("season",R.season);q.set("div",R.div)}if(/^\d+$/.test(aid))q.set("athlete",aid);
+  if(R.mv){q.set("mt",R.mv.meet);if(R.mv.date)q.set("md",R.mv.date);if(R.mv.e)q.set("me",R.mv.e);if(!a&&R.mv.name)q.set("mn",R.mv.name)}
+  const u="/?"+q;if(location.pathname+location.search!==u)history.pushState({},"",u)}catch(e){}}
 function histMeets(aid){if(HMC[aid])return HMC[aid];const H=histOf(aid);if(!H)return null;const out=[];
   H.filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x[1])&&x[2]).sort((a,b)=>a[1]<b[1]?1:a[1]>b[1]?-1:0).forEach(x=>{const c=out.find(m=>m.meet===x[2]&&Math.abs(dnum(m.date)-dnum(x[1]))<=5);
     if(c){c.rows.push([x[3],x[4],x[5],x[6]]);if(x[1]<c.date)c.date=x[1]}else out.push({meet:x[2],date:x[1],rows:[[x[3],x[4],x[5],x[6]]]})});
@@ -1739,6 +1745,10 @@ function resultsCollege(){
     ${L&&(R.adv||R.cmp||R.multi||R.st)?(()=>{const sts=[...new Set(D.teams.map(teamSt).filter(Boolean))].sort((a,b)=>(ST_NAME[a]||a).localeCompare(ST_NAME[b]||b));return `<label class="sr" for="rs">State</label><select class="in" id="rs"><option value="">All states</option>${sts.map(x=>`<option value="${x}" ${x===R.st?"selected":""}>${esc(ST_NAME[x]||x)}</option>`).join("")}</select>`})():""}
     <div class="search">${MAG}<label class="sr" for="rq">Search a school or athlete</label><input class="in" id="rq" placeholder="Search a school or athlete" value="${esc(R.q)}" autocomplete="off" enterkeyhint="go"><div id="rqd"></div></div></div></div>`;
   if(!D||D.err){o+=ctl(null)+(D&&D.err?`<div class="loading">These results aren't available in the preview.</div>`:skeleton());return o+`</div>`}
+  /* an athlete or meet address (shared link, Back, Forward): the athlete first, then the meet on top */
+  if(R.pendAth){const id=R.pendAth+"/";R.pendAth=null;let hit=null;for(const l of [...D.lists].sort((a,b)=>(b.nat?1:0)-(a.nat?1:0))){for(const g of ["m","w"])for(const [ev,rows] of Object.entries(l.g[g]||{})){const r=rows.find(r=>String(r[9]).startsWith(id));if(r){hit={g,ev,r};break}}if(hit)break}
+    if(hit){R.g=hit.g;R.ev=hit.ev;R.ath={name:hit.r[1],team:hit.r[3],yr:hit.r[2],path:hit.r[9]||""};loadAth()}
+    if(R.pendMv&&R.ath){R.mv=Object.assign(R.pendMv,{name:R.ath.name,ath:R.ath,path:R.ath.path,tname:D.teams[R.ath.team]});R.ath=null}R.pendMv=null}
   if(R.mv){const L0=D.lists.find(l=>l.champ&&mnorm(l.id)===mnorm(R.mv.meet));
     /* a meet we hold in full (all rounds + team scores) opens as its meet page, championships included (Ryan 2026-11-07) */
     if(!MIDX){loadMeetIdx();return o+ctl(D.lists.find(z=>z.nat)||D.lists[0])+skeleton()}
@@ -1750,8 +1760,6 @@ function resultsCollege(){
   o+=ctl(L)+confBar(D,L,miss);
   const listName=L.nat?`${DIVINFO[R.div]||R.div}`:L.label, gname=R.g==="m"?"Men's":"Women's";
   if(R.pend){const ti=D.teams.indexOf(R.pend);R.pend=null;if(ti>=0)R.team=ti}
-  if(R.pendAth){const id=R.pendAth+"/";R.pendAth=null;let hit=null;for(const l of [...D.lists].sort((a,b)=>(b.nat?1:0)-(a.nat?1:0))){for(const g of ["m","w"])for(const [ev,rows] of Object.entries(l.g[g]||{})){const r=rows.find(r=>String(r[9]).startsWith(id));if(r){hit={g,ev,r};break}}if(hit)break}
-    if(hit){R.g=hit.g;R.ev=hit.ev;R.ath={name:hit.r[1],team:hit.r[3],yr:hit.r[2],path:hit.r[9]||""};loadAth()}}
   if(R.ath) return o+athView(D);
   if(R.team!=null){
     const tn=D.teams[R.team], rows=[];evNames.forEach(e=>(E[e]||[]).forEach(r=>{if(r[3]===R.team)rows.push([e,r])}));
@@ -2546,7 +2554,7 @@ function slide(sel,indId,key){const a=document.querySelector(sel+' [aria-selecte
   else{ind.style.width=a.offsetWidth+"px";ind.style.transform=`translateX(${a.offsetLeft}px)`}
   ind.offsetWidth;ind.style.transition="";ind.style.width=a.offsetWidth+"px";ind.style.transform=`translateX(${a.offsetLeft}px)`;LASTX[key]=[a.offsetWidth,a.offsetLeft]}
 /* view memory for refreshes (Ryan 2026-11-12): the filters that aren't in the URL, plus the scroll position, kept per tab for this tab's session */
-const VIEW={key:"prView1",skip:{swap:1,pendAth:1,hl:1,hlGo:1,pend:1,cdd:1,fopen:1},
+const VIEW={key:"prView1",skip:{swap:1,pendAth:1,pendMv:1,hl:1,hlGo:1,pend:1,cdd:1,fopen:1},
   save(){try{const r={};for(const k in R){if(!this.skip[k])r[k]=R[k]}sessionStorage.setItem(this.key,JSON.stringify({u:location.pathname+location.search,t:S.tab,r,s:{f:S.f,div:S.div,conf:S.conf,st:S.st},y:scrollY}))}catch(e){}},
   restore(){try{const o=JSON.parse(sessionStorage.getItem(this.key)||"null");if(!o||o.u!==location.pathname+location.search||o.t!==S.tab)return;
     if(S.tab==="results")Object.assign(R,o.r);if(S.tab==="standards"&&S.run)Object.assign(S,o.s);
@@ -2642,30 +2650,30 @@ document.addEventListener("click",ev=>{
   if(d.pev){R.pev=d.pev;R.pyr="";R.pln=25;const w=document.querySelector(".pgw");if(w&&PGCS){const t=document.createElement("div");t.innerHTML=progBlock(PGCS);const n=t.querySelector(".pgw");if(n){w.replaceWith(n);return}}R.swap=false;render();return}
   if(d.gath){const [aid,sk,div]=d.gath.split("|");if(TM.i!=null){TM.i=null;TM.ath=null;history.pushState({},"",`/?tab=results&season=${sk}&div=${encodeURIComponent(div)}&athlete=${aid}`)}R.season=sk;R.div=div;R.sel=[div];R.conf="";R.q="";R.team=null;R.ath=null;R.pendAth=aid;R.swap=true;render();{const x=$("rqd"),qi=$("rq");if(x)x.innerHTML="";if(qi)qi.value=""}scrollTo(0,0);log("athlete",{from:"search-all",season:sk,division:div});return}
   if(d.rath){const [li,g,ev,i]=d.rath.split("|"),D=CACHE[curKey()],r=D&&((D.lists[+li].g[g]||{})[ev]||[])[+i];if(!r)return;
-    R.conf="";R.g=g;R.ev=ev;R.q="";R.team=null;R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();{const x=$("rqd"),qi=$("rq");if(x)x.innerHTML="";if(qi)qi.value=""}scrollTo(0,0);log("athlete",{athlete:r[1],team:D.teams[r[3]],from:"search"});return}
+    R.conf="";R.g=g;R.ev=ev;R.q="";R.team=null;R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();rUrl();{const x=$("rqd"),qi=$("rq");if(x)x.innerHTML="";if(qi)qi.value=""}scrollTo(0,0);log("athlete",{athlete:r[1],team:D.teams[r[3]],from:"search"});return}
   if(d.rg){R.g=d.rg;R.team=null;R.ath=null;R.swap=true;render();return}
   if(d.rev){R.ev=d.rev;R.swap=true;render();{const el=evLabel(d.rev);intent(el,R.g);log("results_event",{event:el,g:R.g,division:R.div,state:R.st?ST_NAME[R.st]:undefined})}const a=document.querySelector('.evs [aria-pressed="true"]');if(a)a.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});return}
   if(d.rsea){const y0=R.season.split("-")[0];const y=RIDX.some(r=>r.year===y0&&r.season===d.rsea)?y0:RIDX.filter(r=>r.season===d.rsea).map(r=>r.year).sort().pop();R.season=y+"-"+d.rsea;R.list=0;R.team=null;R.ath=null;R.swap=true;render();return}
   if("rmore" in d){R.n+=200;render();return}
-  if(d.ai!==undefined){const D=CACHE[curKey()],E=D.lists[R.list].g[R.g],r=E[d.ae||R.ev][+d.ai];R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();log("athlete",{athlete:r[1],team:D.teams[r[3]],event:evLabel(d.ae||R.ev),g:R.g,division:R.div});const c=document.querySelector(".rcard");if(c)scrollTo({top:c.offsetTop-70,behavior:"smooth"});return}
+  if(d.ai!==undefined){const D=CACHE[curKey()],E=D.lists[R.list].g[R.g],r=E[d.ae||R.ev][+d.ai];R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;R.amn=0;loadAth();render();rUrl();log("athlete",{athlete:r[1],team:D.teams[r[3]],event:evLabel(d.ae||R.ev),g:R.g,division:R.div});const c=document.querySelector(".rcard");if(c)scrollTo({top:c.offsetTop-70,behavior:"smooth"});return}
   if("rfopen" in d){R.fopen=!R.fopen;render();return}
   if("rkf" in d){RK.fopen=!RK.fopen;render();return}
-  if("athback" in d){R.ath=null;R.swap=true;render();return}
+  if("athback" in d){R.ath=null;R.swap=true;render();rUrl();return}
   if("ammore" in d){R.amn=(R.amn||40)+40;render();return}
-  if(d.rmeet!==undefined){const D=CACHE[curKey()];R.mv={meet:d.rmeet,date:d.rmd,e:R.ev||"",name:d.rmn,ath:null,path:d.rmp,tname:D&&D.teams[+d.rmt]};R.team=null;R.q="";R.swap=true;render();scrollTo({top:0});log("results_event",{detail:"meet",meet:d.rmeet,from:"list"});return}
+  if(d.rmeet!==undefined){const D=CACHE[curKey()];R.mv={meet:d.rmeet,date:d.rmd,e:R.ev||"",name:d.rmn,ath:null,path:d.rmp,tname:D&&D.teams[+d.rmt]};R.team=null;R.q="";R.swap=true;render();rUrl();scrollTo({top:0});log("results_event",{detail:"meet",meet:d.rmeet,from:"list"});return}
   if(d.hm!==undefined){if(!R.ath)return;const sea=meetSeason(fmtD(d.hd)),D=CACHE[curKey()];R.mv={meet:d.hm,date:d.hd,e:mevKey(d.he),name:R.ath.name,ath:R.ath,path:R.ath.path,tname:D&&D.teams[R.ath.team]};if(sea&&RIDX.some(x=>x.year+"-"+x.season===sea&&x.div===R.div))R.season=sea;
-    R.ath=null;R.team=null;R.q="";R.swap=true;render();scrollTo({top:0});log("results_event",{detail:"meet",meet:d.hm,from:"log"});return}
-  if(d.mxa!==undefined){const D=CACHE[curKey()],r=meetAth(D,R.g,d.mxa,d.mxt);if(!r)return;R.mv=null;R.conf="";R.q="";R.team=null;R.amn=0;R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();scrollTo({top:0});log("athlete",{athlete:r[1],team:d.mxt,from:"meet"});return}
+    R.ath=null;R.team=null;R.q="";R.swap=true;render();rUrl();scrollTo({top:0});log("results_event",{detail:"meet",meet:d.hm,from:"log"});return}
+  if(d.mxa!==undefined){const D=CACHE[curKey()],r=meetAth(D,R.g,d.mxa,d.mxt);if(!r)return;R.mv=null;R.conf="";R.q="";R.team=null;R.amn=0;R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();rUrl();scrollTo({top:0});log("athlete",{athlete:r[1],team:d.mxt,from:"meet"});return}
   if(d.ameet!==undefined){const AM=R.ath&&athMeets(R.ath),m=AM&&AM[+d.ameet];if(!m)return;const sea=meetSeason(fmtD(m.date)),D0=CACHE[curKey()];
     R.mv={meet:m.meet,date:m.date,e:d.amev?mevKey(d.amev):"",name:R.ath.name,ath:R.ath,path:R.ath.path,tname:D0&&D0.teams[R.ath.team]};if(sea&&RIDX.some(x=>x.year+"-"+x.season===sea&&x.div===R.div))R.season=sea;
-    R.ath=null;R.team=null;R.q="";R.swap=true;render();scrollTo({top:0});log("results_event",{detail:"meet",meet:m.meet});return}
+    R.ath=null;R.team=null;R.q="";R.swap=true;render();rUrl();scrollTo({top:0});log("results_event",{detail:"meet",meet:m.meet});return}
   if(d.mvev!==undefined){R.mv.e=d.mvev;R.mv.rd=null;render();const P=document.querySelector(".mxpanel");if(!P){scrollTo({top:0});return}
     if(P.getBoundingClientRect().top<64)P.scrollIntoView({block:"start"});const C=document.querySelector(".mxri[aria-current]");if(C&&matchMedia("(max-width:640px)").matches)C.scrollIntoView({block:"nearest",inline:"center"});return}
   if(d.mvrd!==undefined){R.mv.rd=+d.mvrd;render();return}
   if(d.mvg){R.g=d.mvg;render();return}
   if(d.atab){R.atab=d.atab;render();return}
-  if("hlback" in d){R.ath=R.hlAth;R.hlAth=null;R.hl=null;R.conf="";R.swap=true;render();return}
-  if("mvback" in d){R.ath=R.mv.ath;R.mv=null;R.swap=true;render();return}
+  if("hlback" in d){R.ath=R.hlAth;R.hlAth=null;R.hl=null;R.conf="";R.swap=true;render();rUrl();return}
+  if("mvback" in d){R.ath=R.mv.ath;R.mv=null;R.swap=true;render();rUrl();return}
   if(d.team){if(+d.team>=0){const D=CACHE[curKey()],ti=D&&schOfTeam(D.teams[+d.team],R.div);if(ti>=0){openTeam(ti);return}}R.ath=null;R.team=+d.team<0?null:+d.team;R.swap=true;render();return}
   if(d.tpage!==undefined){if(ev.metaKey||ev.ctrlKey||ev.shiftKey)return;ev.preventDefault();openTeam(+d.tpage);return}
   if("tclose" in d){closeTeam();return}
@@ -2758,7 +2766,9 @@ document.addEventListener("submit",ev=>{const fid=ev.target&&ev.target.id;if(fid
   window.__prMeta = setMeta;
   const route = slug => {
     { const tm = location.pathname.match(/^\/teams\/([^/]+)/); if (tm) { const ts = tm[1].replace(/\.html$/, ""); let i = SCH.findIndex((x, k) => tslug(k) === ts); if (i < 0) { const h = hits(ts.replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
-      if (i >= 0) { const cm = location.pathname.match(/^\/teams\/[^/]+\/coaches(?:\/([^/]+))?\/?$/), cc = !!cm, co = cm && cm[1] ? cm[1] : null; if (TM.i !== i) openTeam(i, false, cc ? "coaches" : "", co); else { TM.tab = cc ? "coaches" : TM.tab === "coaches" ? "results" : TM.tab; TM.coach = co; TM.ath = null; tMeta(i); render(); } if (location.pathname !== tpath(i)) history.replaceState({}, "", tpath(i)); return; } }
+      if (i >= 0) { const cm = location.pathname.match(/^\/teams\/[^/]+\/coaches(?:\/([^/]+))?\/?$/), cc = !!cm, co = cm && cm[1] ? cm[1] : null; if (TM.i !== i) openTeam(i, false, cc ? "coaches" : "", co); else { TM.tab = cc ? "coaches" : TM.tab === "coaches" ? "results" : TM.tab; TM.coach = co; TM.ath = null; tMeta(i); render(); } if (location.pathname !== tpath(i)) history.replaceState({}, "", tpath(i)); return; }
+      /* a mistyped /teams/<slug> used to show the home page under the bad address (2026-11-13): send it to Results */
+      TM.i = null; TM.ath = null; S.tab = "results"; history.replaceState({}, "", "/?tab=results"); }
       else if (TM.i != null) { TM.i = null; TM.ath = null; } }
     if (slug) slug = String(slug).replace(/\.html$/, "");   /* pre-built /schools/<slug>.html pages */
     if (slug) { let i = ALT.has(slug) ? ALT.get(slug) : -1; if (i < 0) { const h = hits(slug.replace(/-track-standards$/, "").replace(/-/g, " ")); i = h.length ? h[0][1] : -1; }
@@ -2779,6 +2789,7 @@ document.addEventListener("submit",ev=>{const fid=ev.target&&ev.target.id;if(fid
       const nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
       /* Ryan 2026-11-12 reverses 2026-10-16: a refresh keeps the visitor exactly where they were (the URL plus the filters saved for this tab
          below); only the logo starts over. */
+      const POP = !FIRST_ROUTE;   /* Back / Forward: the address is the truth */
       RELOAD = FIRST_ROUTE && nav && nav.type === "reload";
       FIRST_ROUTE = false;
       const q = new URLSearchParams(location.search);   /* shared result links: /?g=m&e=100m&m=10.95 */
@@ -2794,9 +2805,13 @@ document.addEventListener("submit",ev=>{const fid=ev.target&&ev.target.id;if(fid
       else if (q.get("tab") === "ask" && !(q.get("m") && q.get("e"))) S.tab = "ask";
       else if (q.get("tab") === "results") { S.tab = "results"; if (q.get("div") && DIVINFO[q.get("div")]) R.div = q.get("div"); if (q.get("cmp")) ccFromUrl(q.get("cmp"));
         /* athlete profile links: /?tab=results&season=2026-outdoor&div=NCAA%20D1&athlete=<TFRRS id> (results pages link every name here) */
-        if (/^\d+$/.test(q.get("athlete") || "")) { if (seasons().includes(q.get("season"))) R.season = q.get("season"); R.sel = [R.div]; R.conf = ""; R.q = ""; R.team = null; R.ath = null; TM.i = null; CC.on = false; R.pendAth = q.get("athlete"); } } }
+        if (/^\d+$/.test(q.get("athlete") || "")) { if (seasons().includes(q.get("season"))) R.season = q.get("season"); R.sel = [R.div]; R.conf = ""; R.q = ""; R.team = null; R.ath = null; R.mv = null; TM.i = null; CC.on = false; R.pendAth = q.get("athlete");
+          R.pendMv = q.get("mt") ? { meet: q.get("mt"), date: q.get("md") || "", e: q.get("me") || "" } : null; }
+        else if (POP || q.get("mt")) { R.ath = null; R.pendAth = null; R.pendMv = null; R.hlAth = null; if (seasons().includes(q.get("season"))) R.season = q.get("season");
+          R.mv = q.get("mt") ? { meet: q.get("mt"), date: q.get("md") || "", e: q.get("me") || "", name: q.get("mn") || "", ath: null, path: "" } : null; } }
+      else if (POP && location.pathname === "/" && !q.get("tab") && !(q.get("m") && q.get("e"))) S.tab = "standards"; }
     if (RELOAD) VIEW.restore();
-    S.school = null; setMeta("College Track & Field Recruiting Standards & Rankings", `Recruiting standards for ${NSTD.toLocaleString()} college track and field programs: walk-on, recruit and scholarship times for NCAA D1, D2, D3 and NAIA, plus results since 2016.`, "/",
+    S.school = null; setMeta(({ "/account": "Your recruiting account | Track Standards", "/onboarding": "Build your recruiting profile | Track Standards", "/readiness": "Recruiting readiness check | Track Standards" })[location.pathname] || "College Track & Field Recruiting Standards & Rankings", `Recruiting standards for ${NSTD.toLocaleString()} college track and field programs: walk-on, recruit and scholarship times for NCAA D1, D2, D3 and NAIA, plus results since 2016.`, "/",
       {"@context": "https://schema.org", "@type": "WebSite", name: "Preferred Recruit Track & Field Standards", url: "https://trackandfieldstandards.com/"}); render(); if (S.run) armOffer();
   };
   window.__prStandardsRoute = route;

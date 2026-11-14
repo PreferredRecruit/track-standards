@@ -59,6 +59,8 @@ def main(d):
         print(M["id"], M["meet"][:50], {g: (r["sys"], r["ok"]) for g, r in res.items()}, flush=True)
     sd = os.path.join(d, "scores"); os.makedirs(sd, exist_ok=True)
     for k, v in out.items(): json.dump(v, open(os.path.join(sd, k + ".json"), "w"), separators=(",", ":"))   # one small file per meet for the page
+    # 2026-11-13: the page asks only for score files listed here (unscored meets used to 404)
+    json.dump(sorted(int(f[:-5]) for f in os.listdir(sd) if f[:-5].isdigit() and f.endswith(".json")), open(os.path.join(sd, "index.json"), "w"), separators=(",", ":"))
     out["_flags"] = flags
     json.dump({"flags": flags, "meets": len(out) - 1}, open(os.path.join(d, "scores-check.json"), "w"), indent=0)   # review list
     n = len(out) - 1; ok = sum(all(r["ok"] for r in v.values()) for k, v in out.items() if k != "_flags")
