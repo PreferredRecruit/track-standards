@@ -1340,6 +1340,10 @@ header .hd .acchd{flex:none;visibility:visible}
 .pgpt{fill:#7A45F0;stroke:#fff;stroke-width:1.5}.pgpt.pgin2{fill:#fff;stroke:#7A45F0;stroke-width:2}.pgpt.pgprp{fill:#13865a;stroke:#fff;stroke-width:2}.pgpt.pgprp.pgin2{fill:#fff;stroke:#13865a;stroke-width:2.5}
 .pglog{margin-top:12px}.pglog .gh,.pglog .gr{grid-template-columns:118px minmax(0,1fr) 70px 96px}.pglog .pgld{font-weight:600;font-size:14px}.pglog .pgld small,.pglog .pglm small{display:block;color:var(--pr-mute);font-size:12px;font-weight:500}
 .pglog .pglm{font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis}.pglog .pglp{font-size:13px;color:var(--pr-mute)}.pglog .gr.pglpr{background:#F0FBF5}.pgprb{color:#13865a!important;font-weight:800}
+/* meets open from anywhere (2026-11-13): the Results meet column, the every-meet log and names inside a meet are buttons */
+.gmtb,.pglgo,.mxa{border:0;background:none;padding:0;margin:0;font-family:inherit;text-align:left;cursor:pointer}
+.pglgo,.mxa{display:block;color:inherit;max-width:100%}
+.gmtb:hover b,.pglgo:hover,.mxa:hover b{color:var(--pr-accent)}
 @media (max-width:760px){.pglog .gh,.pglog .gr{grid-template-columns:84px minmax(0,1fr) 78px}.pglog .pglp{display:none}.pglog .gh span:nth-child(3){display:none}}
 /* UX audit 2026-10-31 (ui-ux-pro-max): phone fit, contrast, tap targets */
 .simple .scroll tbody td.num small{display:block;margin-top:1px}

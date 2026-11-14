@@ -1305,7 +1305,7 @@ function progChart(rows,ev){const c=ecode(ev),F=tfield(c),pts=rows.filter(x=>x[2
 /* within a season (Ryan 2026-10-24: progression "throughout a specific season and across all the years"): every race from the
    athlete's TFRRS meet history (/data/history/<id % 1024>.dat, scripts/tfrrs/build_history.py), dated on the x axis */
 const HIS={},HISL={};
-function loadHist(id){const b=+id%1024;if(HIS[b]||HISL[b])return;HISL[b]=fetch("/data/history/"+b+".dat").then(r=>{if(!r.ok||typeof DecompressionStream==="undefined")throw 0;return unpack(r)}).then(j=>{HIS[b]=j}).catch(()=>{HIS[b]={}}).then(()=>{const w=document.querySelector(".pgw");if(w&&PGCS){const t=document.createElement("div");t.innerHTML=progBlock(PGCS,PGID);const n=t.querySelector(".pgw");if(n)w.replaceWith(n)}})}
+function loadHist(id){const b=+id%1024;if(HIS[b]||HISL[b])return;HISL[b]=fetch("/data/history/"+b+".dat").then(r=>{if(!r.ok||typeof DecompressionStream==="undefined")throw 0;return unpack(r)}).then(j=>{HIS[b]=j}).catch(()=>{HIS[b]={}}).then(()=>{if(HWANT&&R.ath){HWANT=0;render();return}const w=document.querySelector(".pgw");if(w&&PGCS){const t=document.createElement("div");t.innerHTML=progBlock(PGCS,PGID);const n=t.querySelector(".pgw");if(n)w.replaceWith(n)}})}
 const histOf=id=>{const b=HIS[+id%1024];return b?(b[id]||[]):null};
 const dnum=d=>{const [y,m,dd]=d.split("-").map(Number);return Date.UTC(y,m-1,dd)/864e5};
 /* one date style everywhere (2026-10-25 audit): ISO and TFRRS list dates -> "Jun 5, 2024" */
@@ -1359,7 +1359,7 @@ function careerChart(H,code){const F=tfield(code),ok=x=>!(WIND&&WCODE.has(code)&
   const chips=yrs.length>1?`<div class="evs pgsea" role="group" aria-label="Years"><button type="button" data-pyr="" aria-pressed="${!R.pyr}">All years</button>${yrs.map(z=>`<button type="button" data-pyr="${z}" aria-pressed="${R.pyr===z}">${z}</button>`).join("")}</div>`:"";
   const n=R.pln||25,log=[...pts].reverse();
   return chips+g+`</svg><p class="pgcap"><span><i style="background:#7A45F0"></i>best mark at each meet</span><span><i class="pgin"></i>indoor</span><span><i style="background:#13865a"></i>personal best line</span><b class="${ch>=0?"up":"dn"}">${days.length} meets · ${prs.length} PR${prs.length===1?"":"s"}${R.pyr?" this year":""} · ${ch>=0?"+":""}${(ch*100).toFixed(1)}% from first meet to PR</b></p>
-  <div class="grid pglog"><div class="gh"><span>Date</span><span>Meet</span><span>Place</span><span style="text-align:right">Mark</span></div>${log.slice(0,n).map(x=>`<div class="gr${x.pr?" pglpr":""}"><span class="pgld">${esc(fmt(x[1]))}<small>${esc(seasonLabel(x[0]))}</small></span><span class="pglm">${esc(x[2])}${x.nr>1?`<small>${x.nr} rounds</small>`:""}</span><span class="pglp">${esc(x[6]||"–")}</span><span class="gmk">${esc(x[4])}${x.pr?`<small class="pgprb">PR</small>`:x[5]?`<small>wind ${esc(x[5])}</small>`:""}</span></div>`).join("")}</div>${log.length>n?`<p class="rmorew"><button type="button" class="rmoreb" data-pln>Show ${Math.min(50,log.length-n)} more <small>${n} of ${log.length}</small></button></p>`:""}`}
+  <div class="grid pglog"><div class="gh"><span>Date</span><span>Meet</span><span>Place</span><span style="text-align:right">Mark</span></div>${log.slice(0,n).map(x=>`<div class="gr${x.pr?" pglpr":""}"><span class="pgld">${esc(fmt(x[1]))}<small>${esc(seasonLabel(x[0]))}</small></span><button type="button" class="pglm pglgo" data-hm="${esc(x[2])}" data-hd="${esc(x[1])}" data-he="${esc(code)}" title="See the results at this meet">${esc(x[2])}${x.nr>1?`<small>${x.nr} rounds</small>`:""}</button><span class="pglp">${esc(x[6]||"–")}</span><span class="gmk">${esc(x[4])}${x.pr?`<small class="pgprb">PR</small>`:x[5]?`<small>wind ${esc(x[5])}</small>`:""}</span></div>`).join("")}</div>${log.length>n?`<p class="rmorew"><button type="button" class="rmoreb" data-pln>Show ${Math.min(50,log.length-n)} more <small>${n} of ${log.length}</small></button></p>`:""}`}
 /* the progression box; switching events redraws only this box, so the page doesn't jump */
 let PGCS=null,PGID="";
 function progBlock(cs,aid){PGCS=cs;PGID=aid||PGID;/* every event they've competed in (Ryan 2026-10-24: "toggle to the 200 or click into any other event"); most seasons first */
@@ -1380,8 +1380,18 @@ const mevKey=c=>MEV[c]||(c=String(c??""),/^(\d+)H$/.test(c)?c.replace(/H$/," Hur
 const mnorm=x=>String(x||"").toLowerCase().replace(/&/g,"and").replace(/\btrack and field\b|\bt and f\b|\btf\b/g,"tf").replace(/[^a-z0-9]+/g," ").trim();
 const meetSeason=d=>{const y=(String(d).match(/(\d{4})\s*$/)||[])[1],mo=MO.findIndex(x=>String(d).startsWith(x));if(!y||mo<0)return null;return mo===11?(+y+1)+"-indoor":mo<=2?y+"-indoor":y+"-outdoor"};
 /* full meet results (scripts/tfrrs/scrape_meets.py + build_meets.py): /data/meets/index.json maps athlete -> meet name -> id */
-let MIDX=null,MIDXL=null;const MF={};
-function loadMeetIdx(){if(MIDX||MIDXL)return;MIDXL=fetch("/data/meets/index.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>{MIDX=d;if(R.mv)render()})}
+/* 2026-11-13 ("make sure we can click into every meet"): /data/meets/all.json = [[id, name, first day, last day]] for every meet
+   we hold, so a meet opens from any athlete's history or any Results row, not only from the 177 profile athletes in index.json */
+let MIDX=null,MIDXL=null,MALL=null;const MF={};
+function loadMeetIdx(){if(MIDX||MIDXL)return;const J=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);
+  MIDXL=Promise.all([J("/data/meets/index.json"),J("/data/meets/all.json")]).then(([d,a])=>{MALL=new Map();(a||[]).forEach(x=>{const k=mnorm(x[1]);if(!MALL.has(k))MALL.set(k,[]);MALL.get(k).push(x)});MIDX=d||{};if(R.mv)render()})}
+const isoD=d=>{d=String(d||"");if(/^\d{4}-\d{2}-\d{2}$/.test(d))return d;const p2=n=>String(n).padStart(2,"0");let m=d.match(/^(\d{1,2})\/(\d{1,2})(?:-\d{1,2})?\/(\d{2})$/);if(m)return `20${m[3]}-${p2(m[1])}-${p2(m[2])}`;
+  m=d.match(/^([A-Z][a-z]{2})[a-z]*\s+(\d{1,2}).*?(\d{4})\s*$/);const mo=m?MO.indexOf(m[1]):-1;return mo<0?"":`${m[3]}-${p2(mo+1)}-${p2(m[2])}`};
+/* same person under two spellings ("Trent Mcfarland" / "McFarland", "Eddie Nketia" / "Eddie Osei-Nketia"): case, accents and
+   punctuation ignored; otherwise first and last name must both agree */
+const nkey=n=>String(n||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z ]+/g," ").trim().split(/\s+/);
+const sameName=(a,b)=>{if(!a||!b)return false;if(a===b)return true;const x=nkey(a),y=nkey(b);return x.join(" ")===y.join(" ")||(x.length>1&&y.length>1&&x[0]===y[0]&&x[x.length-1]===y[y.length-1])};
+const relayMine=(mv,e,r)=>!!(mv.tname&&/relay/i.test(e)&&r[3]===mv.tname&&(!r[1]||r[1]===r[3]));
 function loadMeet(id){if(MF[id])return;MF[id]="…";getGz("/data/meets/"+id+".dat").then(d=>{MF[id]=d;if(R.mv)render()}).catch(()=>{MF[id]="x";if(R.mv)render()})}
 async function getGz(u){const r=await fetch(u);if(!r.ok)throw new Error(u);return await unpack(r)}
 /* team scores + standings panel (Ryan 2026-11-07): scripts/tfrrs/meet_scores.py writes /data/meets/scores/<id>.json only for meets
@@ -1405,12 +1415,12 @@ function mcat(e){return /relay/i.test(e)?"Relays":/hurdle/i.test(e)?"Hurdles":/s
 const finalOf=rounds=>(rounds||[]).find(r=>/^final/i.test(r[0]))||(rounds||[])[0];
 function fullMeet(M){const mv=R.mv,G=R.g,EV=meetEvents(M),evs=Object.keys(EV).filter(e=>EV[e][G]).sort((a,b)=>eord(ecode(a))-eord(ecode(b))||a.localeCompare(b));
   const tf=M.url;loadScores(M.id);const T=standings(M).T,okP=T&&T.ok,hasG=g=>Object.values(EV).some(x=>x[g]);
-  const mineOf=e=>mv.name&&EV[e][G].flatMap(r=>r[2].map(x=>[r[0],x])).find(([,x])=>x[1]===mv.name);
+  const mineOf=e=>mv.name&&EV[e][G].flatMap(r=>r[2].map(x=>[r[0],x])).find(([,x])=>sameName(x[1],mv.name)||relayMine(mv,e,x));const DL=CACHE[curKey()];
   const ordered=MCAT.map(([c])=>c).flatMap(c=>evs.filter(e=>mcat(e)===c)),want=normEv(mv.e);
   const ev=mv.e==="__ts"&&T?"__ts":evs.includes(want)?want:(ordered.find(e=>mineOf(e))||ordered[0]);
   const win=e=>{const f=finalOf(EV[e][G]);return f&&(f[2].find(r=>String(r[0]).replace(/\D/g,"")==="1")||f[2][0])};
   const cur=on=>on?' aria-current="true"':"";
-  const back=mv.name?`<button class="mxback" data-mvback>‹ ${esc(mv.name)}</button>`:"";
+  const back=`<button class="mxback" data-mvback>‹ ${esc(mv.ath?mv.name:"Back to results")}</button>`;
   const seg=`<div class="seg mseg" role="group" aria-label="Men or women">${["m","w"].filter(hasG).map(g=>`<button data-mvg="${g}" aria-pressed="${g===G}">${g==="m"?"Men":"Women"}</button>`).join("")}</div>`;
   const head=`${back}<div class="mxhd"><div><h2>${esc(M.meet)}</h2><p>${esc(fmtD(mv.date))}</p></div>${seg}</div>`;
   let lastC="";
@@ -1420,19 +1430,35 @@ function fullMeet(M){const mv=R.mv,G=R.g,EV=meetEvents(M),evs=Object.keys(EV).fi
   if(ev==="__ts")panel=`<div class="mxph"><h3>Team scores</h3><span>${T.t.length} teams${okP?" · matches the official scores":""}</span></div>
     <div class="mxrows">${T.t.map((t,i)=>`<div class="mxrow tsr"><i class="pl${i===0?" p1":""}">${i+1}</i><span class="nm"><b>${esc(t[0])}</b></span><span class="mk">${esc(ptsF(t[1]))}<small>pts</small></span></div>`).join("")}</div>`;
   else if(!ev)panel=`<p class="note">No ${G==="m"?"men's":"women's"} results saved for this meet.</p>`;
-  else{const RS=EV[ev][G],rd=Math.min(Math.max(+mv.rd||0,0),RS.length-1),[rnd,wd,rows]=RS[rd];
+  else{const RS=EV[ev][G],mi=mv.rd==null&&mv.name?RS.findIndex(r=>r[2].some(x=>sameName(x[1],mv.name)||relayMine(mv,ev,x))):-1,   /* open on the round the athlete ran (a prelim when they missed the final) */
+      rd=mi>=0?mi:Math.min(Math.max(+mv.rd||0,0),RS.length-1),[rnd,wd,rows]=RS[rd];
     const fin=/^final/i.test(rnd)||RS.length===1,[pts,x2]=okP&&fin?finalPts(rows,T.sys):[new Map(),false],rel=/relay/i.test(ev)&&x2?2:1;
     const tabs=RS.length>1?`<div class="seg mxrds" role="group" aria-label="Round">${RS.map((r,i)=>`<button data-mvrd="${i}" aria-pressed="${i===rd}">${esc(r[0])}</button>`).join("")}</div>`:"";
     panel=`<div class="mxph"><h3>${esc(evLabel(ev))}</h3><span>${esc(RS.length>1?"":rnd)}${RS.length>1?"":" · "}${rows.length} ${/relay/i.test(ev)?"teams":"athletes"}${wd?` · wind ${esc(wd)}`:""}</span></div>${tabs}
     <div class="mxrows">${rows.map(r=>{const p=+String(r[0]).replace(/\D/g,""),pt=pts.get(r),sub=[r[5]?"wind "+esc(r[5]):"",pt?esc(ptsF(pt*rel))+" pts":""].filter(Boolean).join(" · ");
-      return `<div class="mxrow${r[1]===mv.name?" me":""}"><i class="pl${fin&&p===1?" p1":fin&&p&&p<=3?" p3":""}">${esc(r[0]||"–")}</i><span class="nm"><b>${esc(r[1]||r[3])}</b><small>${esc(yr(r[2]))}${r[1]&&r[1]!==r[3]?`<span class="tmm">${r[2]?" · ":""}${esc(r[3])}</span>`:""}</small></span><span class="tm">${r[1]&&r[1]!==r[3]?esc(r[3]):""}</span><span class="mk">${esc(r[4])}${sub?`<small>${sub}</small>`:""}</span></div>`}).join("")}</div>`}
+      const lk=r[1]&&r[1]!==r[3]&&meetAth(DL,G,r[1],r[3]);
+      return `<div class="mxrow${sameName(r[1],mv.name)||relayMine(mv,ev,r)?" me":""}"><i class="pl${fin&&p===1?" p1":fin&&p&&p<=3?" p3":""}">${esc(r[0]||"–")}</i><span class="nm">${lk?`<button type="button" class="mxa" data-mxa="${esc(r[1])}" data-mxt="${esc(r[3])}"><b>${esc(r[1])}</b></button>`:`<b>${esc(r[1]||r[3])}</b>`}<small>${esc(yr(r[2]))}${r[1]&&r[1]!==r[3]?`<span class="tmm">${r[2]?" · ":""}${esc(r[3])}</span>`:""}</small></span><span class="tm">${r[1]&&r[1]!==r[3]?esc(r[3]):""}</span><span class="mk">${esc(r[4])}${sub?`<small>${sub}</small>`:""}</span></div>`}).join("")}</div>`}
   return `<div class="rbody mx${R.swap?" swap":""}">${head}<div class="mxwrap">${rail}<section class="mxpanel">${panel}</section></div>
   <p class="note">Source: <a href="${esc(tf)}" target="_blank" rel="noopener">TFRRS meet results ↗</a></p>${hookRow()}</div>`}
 const ordS=n=>{const v=n%100;return v>=11&&v<=13?"th":["th","st","nd","rd"][n%10]||"th"};
 /* meet id for a meet card (Ryan 2026-11-12): TFRRS reuses meet names every season ("NCAA Division I Outdoor Track & Field
    Championships", "Big Ten Indoor Championships"), so the index keys each meet by "name|dates"; a bare name is only stored when the
    athlete ran that meet in one season */
-const meetId=mv=>{if(!MIDX||!mv||!mv.path)return null;const m=MIDX[mv.path]||{};return m[mv.meet+"|"+mv.date]||m[mv.meet]||null};
+const meetId=mv=>{if(!MIDX||!mv)return null;const m=(mv.path&&MIDX[mv.path])||{},hit=m[mv.meet+"|"+mv.date]||m[mv.meet];if(hit)return hit;
+  const c=MALL&&MALL.get(mnorm(mv.meet));if(!c)return null;const iso=isoD(mv.date);if(!iso)return c.length===1?c[0][0]:null;
+  const t=dnum(iso),x=c.find(x=>t>=dnum(x[2])-1&&t<=dnum(x[3])+1);return x?x[0]:null};
+/* meet cards for every athlete: profile athletes keep their saved cards; everyone else gets one card per meet built from their
+   TFRRS meet history (/data/history), newest first */
+const HMC={};let HWANT=0;
+function histMeets(aid){if(HMC[aid])return HMC[aid];const H=histOf(aid);if(!H)return null;const out=[];
+  H.filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x[1])&&x[2]).sort((a,b)=>a[1]<b[1]?1:a[1]>b[1]?-1:0).forEach(x=>{const c=out.find(m=>m.meet===x[2]&&Math.abs(dnum(m.date)-dnum(x[1]))<=5);
+    if(c){c.rows.push([x[3],x[4],x[5],x[6]]);if(x[1]<c.date)c.date=x[1]}else out.push({meet:x[2],date:x[1],rows:[[x[3],x[4],x[5],x[6]]]})});
+  return HMC[aid]=out}
+const athMeets=a=>{const P=ATH&&a&&ATH[a.path];if(P&&P.meets&&P.meets.length)return P.meets;const aid=a&&a.path?String(a.path).split("/")[0]:"";return aid?histMeets(aid):[]};
+/* athletes named in a meet who are on this season's lists open their own page */
+function meetAth(D,g,name,team){if(!D||!D.lists||!name)return null;const C=D._nm||(D._nm={});let M=C[g];
+  if(!M){M=C[g]=new Map();D.lists.forEach(l=>Object.values(l.g[g]||{}).forEach(rows=>rows.forEach(r=>{if(!r[1])return;const k=r[1]+"|"+D.teams[r[3]];if(!M.has(k)||(r[9]&&!M.get(k)[9]))M.set(k,r)})))}
+  return M.get(name+"|"+team)||null}
 function meetView(D){
   const id=meetId(R.mv);if(!MIDX){loadMeetIdx();return skeleton()}
   if(id){loadMeet(id);const M=MF[id];if(M==="…")return skeleton();if(M&&M!=="x")return fullMeet(M)}
@@ -1441,12 +1467,12 @@ function meetView(D){
   const evs=Object.keys(by).sort((a,b)=>eord(ecode(a))-eord(ecode(b)));let ev=evs.includes(mv.e)?mv.e:evs[0];
   const rows=ev?[...by[ev].values()].sort((p,q)=>{const a=rval(ev,p[4]),b=rval(ev,q[4]);if(a==null)return 1;if(b==null)return -1;return rhigh(ev)?b-a:a-b}):[];
   const tf=`https://tf.tfrrs.org/results_search_page.html?search_query=${encodeURIComponent(mv.meet)}&with_sports=track`;
-  return `<div class="rbody${R.swap?" swap":""}"><p style="margin:14px 2px 0"><button class="lnk" data-mvback>‹ Back to ${esc(mv.name)}</button></p>
+  return `<div class="rbody${R.swap?" swap":""}"><p style="margin:14px 2px 0"><button class="lnk" data-mvback>‹ Back to ${esc(mv.ath?mv.name:"results")}</button></p>
   <div class="rhead"><h3>${esc(mv.meet)}</h3><span>${esc(fmtD(mv.date))} · ${R.g==="m"?"Men":"Women"}</span></div>
   <p class="note" style="margin:6px 2px 12px">Full results from this meet aren't saved on this site yet. These are the ${esc(seasonLabel(R.season))} ${esc(R.div)} list marks that were set here. <a href="${tf}" target="_blank" rel="noopener">Full results on TFRRS ↗</a></p>
   ${evs.length?`<div class="evwrap"><div class="evs" role="group" aria-label="Event">${evs.map(e=>`<button data-mvev="${esc(e)}" aria-pressed="${e===ev}">${esc(evLabel(e))}</button>`).join("")}</div></div>
   <div class="grid raw"><div class="gh"><span>#</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span></div>
-  ${rows.map((r,i)=>`<div class="gr${r[1]===mv.name?" me":""}"><span class="rkb">${i+1}</span><span class="gnmw"><span class="gnm"><b>${esc(r[1]||D.teams[r[3]])}</b></span><small>${esc(yr(r[2]))}</small></span><span class="gtm" style="cursor:default">${esc(D.teams[r[3]])}</span><span class="gmk">${esc(r[4])}${r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span></div>`).join("")}</div>`
+  ${rows.map((r,i)=>`<div class="gr${sameName(r[1],mv.name)?" me":""}"><span class="rkb">${i+1}</span><span class="gnmw"><span class="gnm"><b>${esc(r[1]||D.teams[r[3]])}</b></span><small>${esc(yr(r[2]))}</small></span><span class="gtm" style="cursor:default">${esc(D.teams[r[3]])}</span><span class="gmk">${esc(r[4])}${r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span></div>`).join("")}</div>`
   :`<div class="soon">No ${esc(R.div)} list marks from this meet. <a href="${tf}" target="_blank" rel="noopener">See the results on TFRRS ›</a></div>`}${hookRow()}</div></div>`;
 }
 function athView(D){
@@ -1473,8 +1499,9 @@ function athView(D){
   <div class="ah2">College bests</div><div class="pbs">${pbs.map(([e,m,w,sub])=>{const ad=w&&parseFloat(w)>2;return `<div><small>${esc(e)}</small><b>${esc(m)}${ad?"w":""}</b>${sub?`<span>${esc(sub)}</span>`:""}${w?`<span>wind ${esc(fmtW(w))}${ad?" · aided":""}</span>`:""}</div>`}).join("")}</div>`;
   let mh="";
 
-  if(a.path&&!ATH) mh+=skeleton();
-  else if(P&&P.meets&&P.meets.length) mh+=`<div class="meets">${P.meets.map((m,mi)=>`<article class="mt1 mtgo" data-ameet="${mi}" role="button" tabindex="0" title="See the results at this meet"><div class="mh"><b>${esc(m.meet)} <i class="mtar" aria-hidden="true">›</i></b><span>${esc(fmtD(m.date))}</span></div>${m.rows.map(r=>`<div class="mr" data-ameet="${mi}" data-amev="${esc(r[0])}"><span>${esc(evName(r[0]))}</span><b>${esc(r[1])}${r[2]?`<small>wind ${esc(r[2])}</small>`:""}</b>${r[3]?`<span class="plc ${/^1st/.test(r[3])?"w1":""}">${esc(r[3].replace(/\s*\(P\)/," · Prelim").replace(/\s*\(F\)/," · Final"))}</span>`:"<span></span>"}</div>`).join("")}</article>`).join("")}</div>`;
+  const AM=a.path&&ATH?athMeets(a):null,AN=R.amn||40;if(a.path&&ATH&&AM===null){HWANT=1;loadHist(aid)}
+  if(a.path&&(!ATH||AM===null)) mh+=skeleton();
+  else if(AM&&AM.length) mh+=`<div class="meets">${AM.slice(0,AN).map((m,mi)=>`<article class="mt1 mtgo" data-ameet="${mi}" role="button" tabindex="0" title="See the results at this meet"><div class="mh"><b>${esc(m.meet)} <i class="mtar" aria-hidden="true">›</i></b><span>${esc(fmtD(m.date))}</span></div>${m.rows.map(r=>`<div class="mr" data-ameet="${mi}" data-amev="${esc(r[0])}"><span>${esc(evName(r[0]))}</span><b>${esc(r[1])}${r[2]?`<small>wind ${esc(r[2])}</small>`:""}</b>${r[3]?`<span class="plc ${/^1st/.test(r[3])?"w1":""}">${esc(r[3].replace(/\s*\(P\)/," · Prelim").replace(/\s*\(F\)/," · Final"))}</span>`:"<span></span>"}</div>`).join("")}</article>`).join("")}</div>${AM.length>AN?`<p class="rmorew"><button type="button" class="rmoreb" data-ammore>Show ${Math.min(40,AM.length-AN)} more meets <small>${AN} of ${AM.length}</small></button></p>`:""}`;
   else mh+=`<div class="soon">Every race, round and meet for ${esc(a.name)} is on TFRRS.${tlink?` <a href="${tlink}" target="_blank" rel="noopener">See the full meet history ›</a>`:""}</div>`;
     const rk=`<div class="grid"><div class="gh agr"><span>Event</span><span class="al">List</span><span>Rank</span><span style="text-align:right">Mark</span></div>
   ${Object.values(best).map(m=>`<div class="gr agr"><span style="font-weight:600">${esc(evLabel(m.e))}</span><span class="al" style="color:var(--pr-mute);font-size:14px">${esc(m.l.nat?(DIVINFO[R.div]||R.div)+" national":m.l.label)}</span><span class="rkb" style="width:auto;padding:0 10px;border-radius:999px">#${esc(m.r[0])}</span><span class="gmk">${esc(m.r[4])}${m.r[8]?`<small>${esc(m.r[8])}</small>`:""}</span></div>`).join("")}</div>
@@ -1743,7 +1770,7 @@ function resultsCollege(){
   <div class="rbody${R.swap?" swap":""}">${R.hlAth?`<p style="margin:14px 2px 0"><button class="lnk" data-hlback>‹ Back to ${esc(R.hlAth.name)}</button></p>`:""}<div class="rhead"><h3>${L.nat?"":esc(L.label)+" "}${gname} ${esc(evLabel(R.ev))}</h3><span>${esc(seasonLabel(R.season))} · ${R.st?`${rows.length} of ${all.length} marks from ${esc(ST_NAME[R.st]||R.st)} schools (national rank shown)`:`${all.length} marks`}</span></div>
   ${windNote(L,R.g,R.ev)}${archNote(L)}${tsug}${L.nat?`<div class="stats">${[1,10,25,50].filter(k=>rows[k-1]).map(k=>stR(rows[k-1],k===1?"Best":ord(k)+" best",k===1?"lead":"")).join("")}</div>`:""}
   <div class="grid${L.nat?"":" raw"}"><div class="gh"><span>Rank</span><span>Athlete</span><span>Team</span><span style="text-align:right">Mark</span>${L.nat?"<span>Meet</span>":""}</div>
-  ${rows.slice(0,RCAP(R.n)).map((r,i)=>{const k=L.champ&&+r[0]?+r[0]:all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}${R.hl&&r[1]===R.hl?" me":""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span>${L.nat?`<span class="gmt"><b>${esc(D.meets[r[6]])}</b>${esc(fmtD(r[7]))}</span>`:""}</div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
+  ${rows.slice(0,RCAP(R.n)).map((r,i)=>{const k=L.champ&&+r[0]?+r[0]:all.indexOf(r)+1;return `<div class="gr ${k<=3?"p"+k:""}${R.hl&&r[1]===R.hl?" me":""}"><span class="rkb">${k}</span><span class="gnmw">${r[1]?`<button class="gnm gath" data-ai="${k-1}"><b>${esc(r[1])}</b></button>`:`<span class="gnm"><b>${esc(D.teams[r[3]])}</b></span>`}<small>${esc(yr(r[2]))}${r[9]?` · <a class="tf" href="https://tf.tfrrs.org/athletes/${esc(r[9])}" target="_blank" rel="noopener">TFRRS ↗</a>`:""}</small></span><button class="gtm" data-team="${r[3]}">${esc(D.teams[r[3]])}</button><span class="gmk">${esc(r[4])}${r[8]?`<small>${esc(r[8])}</small>`:r[5]?`<small>wind ${esc(r[5])}</small>`:""}</span>${L.nat?(D.meets[r[6]]?`<button type="button" class="gmt gmtb" data-rmeet="${esc(D.meets[r[6]])}" data-rmd="${esc(r[7]||"")}" data-rmn="${esc(r[1]||"")}" data-rmp="${esc(r[9]||"")}" data-rmt="${r[3]}" title="See the results at this meet"><b>${esc(D.meets[r[6]])}</b>${esc(fmtD(r[7]))}</button>`:`<span class="gmt">${esc(fmtD(r[7]))}</span>`):""}</div>`}).join("")||`<div class="gr"><span></span><span class="gnm"><small>No matches.</small></span></div>`}
   </div>${rwall(rows.length,RCAP(R.n))}${ACC.member()&&rows.length>R.n?`<p class="rmorew"><button type="button" class="rmoreb" data-rmore>Show ${Math.min(200,rows.length-R.n)} more <small>${R.n.toLocaleString()} of ${rows.length.toLocaleString()}</small></button></p>`:""}${hookRow()}
   <p class="note">${L.champ?`Source: TFRRS meet results${D.meets[(all[0]||[])[6]]?`, ${esc(D.meets[all[0][6]])}`:""}. Finals in finishing order, then everyone else by their best mark at the meet.`:"Source: TFRRS performance lists."} Tap a team to see all of its top marks.</p></div></div>`;
   return o;
@@ -2624,10 +2651,15 @@ document.addEventListener("click",ev=>{
   if("rfopen" in d){R.fopen=!R.fopen;render();return}
   if("rkf" in d){RK.fopen=!RK.fopen;render();return}
   if("athback" in d){R.ath=null;R.swap=true;render();return}
-  if(d.ameet!==undefined){const P=ATH&&R.ath&&ATH[R.ath.path],m=P&&P.meets[+d.ameet];if(!m)return;const sea=meetSeason(m.date);
-    R.mv={meet:m.meet,date:m.date,e:d.amev?mevKey(d.amev):"",name:R.ath.name,ath:R.ath,path:R.ath.path};if(sea&&RIDX.some(x=>x.year+"-"+x.season===sea&&x.div===R.div))R.season=sea;
+  if("ammore" in d){R.amn=(R.amn||40)+40;render();return}
+  if(d.rmeet!==undefined){const D=CACHE[curKey()];R.mv={meet:d.rmeet,date:d.rmd,e:R.ev||"",name:d.rmn,ath:null,path:d.rmp,tname:D&&D.teams[+d.rmt]};R.team=null;R.q="";R.swap=true;render();scrollTo({top:0});log("results_event",{detail:"meet",meet:d.rmeet,from:"list"});return}
+  if(d.hm!==undefined){if(!R.ath)return;const sea=meetSeason(fmtD(d.hd)),D=CACHE[curKey()];R.mv={meet:d.hm,date:d.hd,e:mevKey(d.he),name:R.ath.name,ath:R.ath,path:R.ath.path,tname:D&&D.teams[R.ath.team]};if(sea&&RIDX.some(x=>x.year+"-"+x.season===sea&&x.div===R.div))R.season=sea;
+    R.ath=null;R.team=null;R.q="";R.swap=true;render();scrollTo({top:0});log("results_event",{detail:"meet",meet:d.hm,from:"log"});return}
+  if(d.mxa!==undefined){const D=CACHE[curKey()],r=meetAth(D,R.g,d.mxa,d.mxt);if(!r)return;R.mv=null;R.conf="";R.q="";R.team=null;R.amn=0;R.ath={name:r[1],team:r[3],yr:r[2],path:r[9]||""};R.swap=true;loadAth();render();scrollTo({top:0});log("athlete",{athlete:r[1],team:d.mxt,from:"meet"});return}
+  if(d.ameet!==undefined){const AM=R.ath&&athMeets(R.ath),m=AM&&AM[+d.ameet];if(!m)return;const sea=meetSeason(fmtD(m.date)),D0=CACHE[curKey()];
+    R.mv={meet:m.meet,date:m.date,e:d.amev?mevKey(d.amev):"",name:R.ath.name,ath:R.ath,path:R.ath.path,tname:D0&&D0.teams[R.ath.team]};if(sea&&RIDX.some(x=>x.year+"-"+x.season===sea&&x.div===R.div))R.season=sea;
     R.ath=null;R.team=null;R.q="";R.swap=true;render();scrollTo({top:0});log("results_event",{detail:"meet",meet:m.meet});return}
-  if(d.mvev!==undefined){R.mv.e=d.mvev;R.mv.rd=0;render();const P=document.querySelector(".mxpanel");if(!P){scrollTo({top:0});return}
+  if(d.mvev!==undefined){R.mv.e=d.mvev;R.mv.rd=null;render();const P=document.querySelector(".mxpanel");if(!P){scrollTo({top:0});return}
     if(P.getBoundingClientRect().top<64)P.scrollIntoView({block:"start"});const C=document.querySelector(".mxri[aria-current]");if(C&&matchMedia("(max-width:640px)").matches)C.scrollIntoView({block:"nearest",inline:"center"});return}
   if(d.mvrd!==undefined){R.mv.rd=+d.mvrd;render();return}
   if(d.mvg){R.g=d.mvg;render();return}

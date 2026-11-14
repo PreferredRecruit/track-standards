@@ -17,10 +17,12 @@ def main(ath_json, cache_dir, out):
         seen = {}
         for m in re.finditer(r'href="https://(?:www|tf)\.tfrrs\.org/results/(\d+)/([^"/]+)">([^<]+)</a>', h):
             mid, slug, name = m.group(1), m.group(2), " ".join(m.group(3).split())
-            d = re.search(r"([A-Z][a-z]{2} [\d\-]+(?:/[A-Z][a-z]{2} \d+)?, \d{4})", h[m.end():m.end() + 200])
+            # 2026-11-13: TFRRS pads single-digit days ("Jun  5- 8, 2024") and spans months ("Feb 27-Mar 1, 2025"); both were missed,
+            # so those meets had no dated key. The key is the date with its whitespace collapsed, as the meet card shows it.
+            d = re.search(r"([A-Z][a-z]{2}\s+\d{1,2}(?:\s*-\s*(?:[A-Z][a-z]{2}\s+)?\d{1,2})?(?:/[A-Z][a-z]{2} \d+)?,\s+\d{4})", h[m.end():m.end() + 200])
             # Ryan 2026-11-12: TFRRS reuses meet names every season, so a meet is keyed "name|dates" (dates exactly as the meet
             # card shows them); the bare name is kept only when the athlete ran that meet in a single season
-            if d: idmap.setdefault(k, {})[html.unescape(name) + "|" + d.group(1)] = int(mid)
+            if d: idmap.setdefault(k, {})[html.unescape(name) + "|" + " ".join(d.group(1).split())] = int(mid)
             seen.setdefault(html.unescape(name), set()).add(int(mid)); ids[mid] = slug
         for name, s in seen.items():
             if len(s) == 1: idmap.setdefault(k, {})[name] = next(iter(s))
